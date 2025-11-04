@@ -218,34 +218,60 @@ export default function ProviderDashboard() {
     }
   };
 
+  const [stats, setStats] = useState({
+    totalEarnings: 0,
+    thisMonthEarnings: 0,
+    completedJobs: 0,
+    averageRating: 0,
+    activeJobs: 0,
+    totalClients: 0,
+  });
+
   useEffect(() => {
     const loadProviderData = async () => {
       try {
-        // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
-        const isNewUser =
-          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
+        setLoading(true);
 
-        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
-        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
-        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
-          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío
-          setJobs([]);
-          setServiceRequests([]);
-          setLoading(false);
-          return;
-        }
-
-        // Usuario existente - cargar datos reales
+        // Cargar estadísticas reales
+        await loadStats();
+        // Cargar trabajos reales
         await loadJobs();
+        // Cargar solicitudes reales
         await loadServiceRequests();
       } catch (error) {
         logger.error('Error loading provider data:', { error });
+      } finally {
         setLoading(false);
       }
     };
 
-    loadProviderData();
+    if (user) {
+      loadProviderData();
+    }
   }, [user]);
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch('/api/provider/stats', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setStats({
+            totalEarnings: data.data.totalEarnings || 0,
+            thisMonthEarnings: data.data.thisMonthEarnings || 0,
+            completedJobs: data.data.completedJobs || 0,
+            averageRating: data.data.averageRating || 0,
+            activeJobs: data.data.activeJobs || 0,
+            totalClients: 0, // Calcular desde jobs únicos
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Error cargando estadísticas:', { error });
+    }
+  };
 
   const loadJobs = async () => {
     try {
@@ -263,13 +289,30 @@ export default function ProviderDashboard() {
 
   const loadServiceRequests = async () => {
     try {
-      const response = await fetch('/api/services/request');
+      const response = await fetch('/api/provider/requests?status=pending&limit=10', {
+        credentials: 'include',
+      });
       if (response.ok) {
         const data = await response.json();
-        setServiceRequests(data.requests || []);
+        if (data.success) {
+          // Transformar a formato esperado
+          const transformed = (data.requests || []).map((req: any) => ({
+            id: req.id,
+            serviceType: req.serviceType,
+            requesterName: req.clientName || 'Cliente',
+            description: req.description,
+            urgency: req.urgency || 'normal',
+            status: req.status,
+            createdAt: req.createdAt,
+          }));
+          setServiceRequests(transformed);
+        } else {
+          setServiceRequests([]);
+        }
       }
     } catch (error) {
       logger.error('Error cargando solicitudes de servicio:', { error });
+      setServiceRequests([]);
     }
   };
 
@@ -359,12 +402,12 @@ export default function ProviderDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clientes</CardTitle>
+              <CardTitle className="text-sm font-medium">Trabajos Activos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">+3 nuevos esta semana</p>
+              <div className="text-2xl font-bold">{stats.activeJobs}</div>
+              <p className="text-xs text-muted-foreground">En progreso</p>
             </CardContent>
           </Card>
 
@@ -374,8 +417,14 @@ export default function ProviderDashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$2.4M</div>
-              <p className="text-xs text-muted-foreground">+12% vs mes anterior</p>
+              <div className="text-2xl font-bold">
+                ${(stats.thisMonthEarnings / 1000).toFixed(0)}K
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {stats.totalEarnings > 0
+                  ? `Total: $${(stats.totalEarnings / 1000).toFixed(0)}K`
+                  : 'Sin ingresos aún'}
+              </p>
             </CardContent>
           </Card>
 
@@ -385,8 +434,14 @@ export default function ProviderDashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4.8</div>
-              <p className="text-xs text-muted-foreground">★★★★★ Excelente</p>
+              <div className="text-2xl font-bold">
+                {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '0.0'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {stats.averageRating > 0
+                  ? `${'★'.repeat(Math.round(stats.averageRating))} ${stats.completedJobs} trabajos`
+                  : 'Sin calificaciones aún'}
+              </p>
             </CardContent>
           </Card>
         </div>

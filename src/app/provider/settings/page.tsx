@@ -144,22 +144,92 @@ export default function ProviderSettingsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock settings data for provider
-      const mockSettings = {
-        overview: {
-          activeConfigs: 18,
-          configuredServices: 12,
-          activeNotifications: 6,
-          integrations: 3,
-        },
-      };
+      // Cargar perfil real del proveedor
+      const profileResponse = await fetch('/api/provider/profile', {
+        credentials: 'include',
+      });
 
-      setData(mockSettings);
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        if (profileData.success && profileData.profile) {
+          const profile = profileData.profile;
+
+          // Actualizar estado del perfil
+          setProfileData({
+            companyName: profile.companyName || '',
+            contactName: profile.contactName || '',
+            email: profile.email || '',
+            phone: profile.phone || '',
+            address: profile.address || '',
+            description: profile.description || '',
+            website: profile.website || '',
+            taxId: profile.taxId || '',
+          });
+
+          // Actualizar servicios
+          const serviceTypes = profile.serviceTypes || profile.specialties || [];
+          const availableServices = serviceTypes.map((type: string, index: number) => ({
+            id: `service-${index}`,
+            name: type,
+            active: profile.status === 'ACTIVE',
+            price: profile.basePrice || profile.hourlyRate || 0,
+          }));
+
+          setServicesData({
+            availableServices,
+            responseTime: profile.responseTime || '2-4 horas',
+            emergencyService: profile.availability?.emergencies || false,
+            weekendService: profile.availability?.weekends || false,
+          });
+
+          // Calcular estadísticas
+          const statsResponse = await fetch('/api/provider/stats', {
+            credentials: 'include',
+          });
+          let stats: any = {};
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            if (statsData.success) {
+              stats = statsData.data;
+            }
+          }
+
+          setData({
+            overview: {
+              activeConfigs: 0, // Calcular según configuraciones
+              configuredServices: availableServices.length,
+              activeNotifications: Object.values(notificationsData).filter(v => v === true).length,
+              integrations: 0,
+            },
+            stats,
+          });
+        }
+      }
+
+      // Si no hay perfil, usar valores por defecto
+      if (!data) {
+        setData({
+          overview: {
+            activeConfigs: 0,
+            configuredServices: 0,
+            activeNotifications: 0,
+            integrations: 0,
+          },
+        });
+      }
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar los datos');
+      setData({
+        overview: {
+          activeConfigs: 0,
+          configuredServices: 0,
+          activeNotifications: 0,
+          integrations: 0,
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -168,20 +238,62 @@ export default function ProviderSettingsPage() {
   const handleSaveSettings = async (section: string) => {
     try {
       setUploadingDocument(true);
+      setErrorMessage('');
 
-      // Guardar configuración del perfil usando la API correcta
-      const response = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: profileData.contactName,
-          phone: profileData.phone,
-          address: profileData.address,
-        }),
-      });
+      let response: Response;
+
+      if (section === 'perfil') {
+        // Guardar configuración del perfil
+        response = await fetch('/api/provider/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            companyName: profileData.companyName,
+            contactName: profileData.contactName,
+            phone: profileData.phone,
+            address: profileData.address,
+            description: profileData.description,
+            taxId: profileData.taxId,
+          }),
+        });
+      } else if (section === 'servicios') {
+        // Guardar configuración de servicios
+        const serviceTypes = servicesData.availableServices.filter(s => s.active).map(s => s.name);
+
+        response = await fetch('/api/provider/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            serviceTypes,
+            basePrice: servicesData.availableServices[0]?.price || 0,
+            responseTime: servicesData.responseTime,
+            availability: {
+              weekdays: true,
+              weekends: servicesData.weekendService,
+              emergencies: servicesData.emergencyService,
+            },
+          }),
+        });
+      } else {
+        // Otras secciones (notificaciones, seguridad) - usar API de usuario
+        response = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: profileData.contactName,
+            phone: profileData.phone,
+          }),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -192,6 +304,9 @@ export default function ProviderSettingsPage() {
 
       setSuccessMessage(`Configuración de ${section} guardada exitosamente`);
       setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Recargar datos actualizados
+      await loadPageData();
     } catch (error) {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),

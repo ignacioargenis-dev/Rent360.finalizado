@@ -2,69 +2,141 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
-
-// Mock data para trabajos del proveedor
-const mockJobs = [
-  {
-    id: '1',
-    title: 'Reparación de cañerías',
-    client: 'Propiedad Las Condes 123',
-    status: 'En progreso',
-    priority: 'Alta',
-    dueDate: '2024-12-15T14:00:00Z',
-    description: 'Reparación de fuga en baño principal',
-    price: 75000,
-    createdAt: '2024-12-10T10:00:00Z'
-  },
-  {
-    id: '2',
-    title: 'Mantenimiento eléctrico',
-    client: 'Edificio Providencia',
-    status: 'Programado',
-    priority: 'Media',
-    dueDate: '2024-12-16T10:00:00Z',
-    description: 'Revisión completa del sistema eléctrico',
-    price: 120000,
-    createdAt: '2024-12-12T09:00:00Z'
-  },
-  {
-    id: '3',
-    title: 'Instalación de calefacción',
-    client: 'Casa Vitacura',
-    status: 'Pendiente',
-    priority: 'Baja',
-    dueDate: '2024-12-18T09:00:00Z',
-    description: 'Instalación de sistema de calefacción central',
-    price: 250000,
-    createdAt: '2024-12-14T11:00:00Z'
-  }
-];
+import { handleApiError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'PROVIDER') {
+    if (user.role !== 'SERVICE_PROVIDER' && user.role !== 'MAINTENANCE_PROVIDER') {
       return NextResponse.json(
-        { error: 'Acceso no autorizado' },
+        { error: 'Acceso no autorizado. Solo para proveedores.' },
         { status: 403 }
       );
     }
 
-    // En un futuro real, consultaríamos la base de datos
-    // Por ahora retornamos datos mock
-    return NextResponse.json({
-      success: true,
-      jobs: mockJobs
+    // Obtener datos completos del usuario para acceder a las relaciones
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: {
+        serviceProvider: true,
+        maintenanceProvider: true,
+      },
     });
 
+    if (!fullUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
+    }
+
+    let jobs: any[] = [];
+
+    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+      const serviceJobs = await db.serviceJob.findMany({
+        where: {
+          serviceProviderId: fullUser.serviceProvider.id,
+        },
+        include: {
+          requester: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 100,
+      });
+
+      jobs = serviceJobs.map(job => ({
+        id: job.id,
+        title: job.title,
+        client: job.requester.name || 'Cliente',
+        status: mapJobStatus(job.status),
+        priority: getPriorityFromStatus(job.status),
+        dueDate: job.scheduledDate?.toISOString() || job.createdAt.toISOString(),
+        description: job.description,
+        price: job.finalPrice || job.basePrice,
+        createdAt: job.createdAt.toISOString(),
+        serviceType: job.serviceType,
+        rating: job.rating || undefined,
+        feedback: job.feedback || undefined,
+      }));
+    } else if (user.role === 'MAINTENANCE_PROVIDER' && fullUser.maintenanceProvider) {
+      const maintenanceJobs = await db.maintenance.findMany({
+        where: {
+          maintenanceProviderId: fullUser.maintenanceProvider.id,
+        },
+        include: {
+          requester: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          property: {
+            select: {
+              title: true,
+              address: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 100,
+      });
+
+      jobs = maintenanceJobs.map(job => ({
+        id: job.id,
+        title: job.title,
+        client: job.property?.title || job.requester.name || 'Cliente',
+        status: mapJobStatus(job.status),
+        priority: job.priority || 'Media',
+        dueDate: job.scheduledDate?.toISOString() || job.createdAt.toISOString(),
+        description: job.description,
+        price: job.actualCost || job.estimatedCost || 0,
+        createdAt: job.createdAt.toISOString(),
+        serviceType: job.category,
+      }));
+    }
+
+    return NextResponse.json({
+      success: true,
+      jobs,
+    });
   } catch (error) {
-    logger.error('Error obteniendo trabajos del proveedor:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error obteniendo trabajos del proveedor:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const errorResponse = handleApiError(error);
+    return errorResponse;
   }
+}
+
+function mapJobStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    PENDING: 'Pendiente',
+    ACCEPTED: 'Aceptado',
+    IN_PROGRESS: 'En progreso',
+    COMPLETED: 'Completado',
+    CANCELLED: 'Cancelado',
+    ASSIGNED: 'Programado',
+  };
+  return statusMap[status.toUpperCase()] || status;
+}
+
+function getPriorityFromStatus(status: string): string {
+  if (status === 'IN_PROGRESS' || status === 'ACCEPTED') {
+    return 'Alta';
+  }
+  if (status === 'PENDING') {
+    return 'Media';
+  }
+  return 'Baja';
 }
 
 export async function POST(request: NextRequest) {
@@ -72,10 +144,7 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (user.role !== 'PROVIDER') {
-      return NextResponse.json(
-        { error: 'Acceso no autorizado' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Acceso no autorizado' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -99,7 +168,7 @@ export async function POST(request: NextRequest) {
       dueDate: dueDate || new Date().toISOString(),
       priority: priority || 'Media',
       status: 'Pendiente',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     logger.info('Nuevo trabajo creado por proveedor:', { providerId: user.id, jobId: newJob.id });
@@ -107,14 +176,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       job: newJob,
-      message: 'Trabajo creado exitosamente'
+      message: 'Trabajo creado exitosamente',
     });
-
   } catch (error) {
-    logger.error('Error creando trabajo:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error creando trabajo:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

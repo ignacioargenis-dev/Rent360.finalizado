@@ -113,72 +113,104 @@ export default function ProviderEarningsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for provider earnings
-      const mockPayments: JobPayment[] = [
-        {
-          id: '1',
-          jobTitle: 'Reparación de grifería',
-          clientName: 'María González',
-          amount: 85000,
-          status: 'paid',
-          paymentDate: '2024-01-15',
-          dueDate: '2024-01-15',
-          jobDate: '2024-01-10',
-          rating: 5,
-        },
-        {
-          id: '2',
-          jobTitle: 'Instalación de calefacción',
-          clientName: 'Carlos Rodríguez',
-          amount: 250000,
-          status: 'paid',
-          paymentDate: '2024-02-01',
-          dueDate: '2024-02-01',
-          jobDate: '2024-01-25',
-          rating: 4,
-        },
-        {
-          id: '3',
-          jobTitle: 'Mantenimiento eléctrico',
-          clientName: 'Ana López',
-          amount: 120000,
-          status: 'pending',
-          dueDate: '2024-03-15',
-          jobDate: '2024-02-20',
-        },
-        {
-          id: '4',
-          jobTitle: 'Reparación de techo',
-          clientName: 'Pedro Sánchez',
-          amount: 300000,
-          status: 'overdue',
-          dueDate: '2024-01-30',
-          jobDate: '2024-01-15',
-        },
-      ];
+      // Cargar transacciones reales
+      const transactionsResponse = await fetch('/api/provider/transactions?limit=100', {
+        credentials: 'include',
+      });
 
-      const mockStats: EarningsStats = {
-        totalEarned: 755000,
-        thisMonth: 250000,
-        pending: 120000,
-        averagePerJob: 188750,
-        completionRate: 95,
-      };
+      if (transactionsResponse.ok) {
+        const transactionsData = await transactionsResponse.json();
+        if (transactionsData.success && transactionsData.data) {
+          // Transformar transacciones a formato de pagos
+          const transformedPayments: JobPayment[] = transactionsData.data.map((txn: any) => {
+            const job = txn.jobs?.[0] || {};
+            const paymentDate =
+              txn.status === 'COMPLETED' && txn.processedAt
+                ? new Date(txn.processedAt).toISOString().split('T')[0]
+                : undefined;
+            const dueDate = txn.createdAt
+              ? new Date(txn.createdAt).toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0];
 
-      const mockEarnings: EarningsData = {
-        totalEarnings: 755000,
-        thisMonthEarnings: 250000,
-        pendingPayments: 420000,
-        completedJobs: 4,
-        averageRating: 4.5,
-      };
+            let status: 'paid' | 'pending' | 'overdue' = 'pending';
+            if (txn.status === 'COMPLETED') {
+              status = 'paid';
+            } else if (txn.status === 'PENDING' && dueDate) {
+              const due = new Date(dueDate);
+              const now = new Date();
+              status = due < now ? 'overdue' : 'pending';
+            }
 
-      setPayments(mockPayments);
-      setStats(mockStats);
-      setEarnings(mockEarnings);
+            return {
+              id: txn.id,
+              jobTitle: job.notes || txn.notes || 'Trabajo de servicio',
+              clientName: job.clientName || 'Cliente',
+              amount: txn.netAmount || txn.amount || 0,
+              status,
+              paymentDate,
+              dueDate,
+              jobDate: job.date ? new Date(job.date).toISOString().split('T')[0] : dueDate,
+              rating: undefined, // No disponible en transacciones
+            };
+          });
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+          setPayments(transformedPayments);
+
+          // Calcular estadísticas
+          const totalEarned = transformedPayments
+            .filter(p => p.status === 'paid')
+            .reduce((sum, p) => sum + p.amount, 0);
+
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          const thisMonth = transformedPayments
+            .filter(
+              p => p.status === 'paid' && p.paymentDate && new Date(p.paymentDate) >= startOfMonth
+            )
+            .reduce((sum, p) => sum + p.amount, 0);
+
+          const pending = transformedPayments
+            .filter(p => p.status === 'pending' || p.status === 'overdue')
+            .reduce((sum, p) => sum + p.amount, 0);
+
+          const completedCount = transformedPayments.filter(p => p.status === 'paid').length;
+          const averagePerJob = completedCount > 0 ? totalEarned / completedCount : 0;
+
+          setStats({
+            totalEarned,
+            thisMonth,
+            pending,
+            averagePerJob,
+            completionRate:
+              transformedPayments.length > 0
+                ? (completedCount / transformedPayments.length) * 100
+                : 0,
+          });
+
+          setEarnings({
+            totalEarnings: totalEarned,
+            thisMonthEarnings: thisMonth,
+            pendingPayments: pending,
+            completedJobs: completedCount,
+            averageRating: 0, // Calcular desde ratings si necesario
+          });
+        }
+      }
+
+      // Cargar estadísticas generales
+      const statsResponse = await fetch('/api/provider/stats', {
+        credentials: 'include',
+      });
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        if (statsData.success && statsData.data) {
+          setEarnings(prev => ({
+            ...prev,
+            averageRating: statsData.data.averageRating || 0,
+          }));
+        }
+      }
     } catch (error) {
       logger.error('Error loading provider earnings:', {
         error: error instanceof Error ? error.message : String(error),

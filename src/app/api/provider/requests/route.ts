@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { handleApiError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'PROVIDER' && user.role !== 'MAINTENANCE') {
+    if (
+      user.role !== 'SERVICE_PROVIDER' &&
+      user.role !== 'MAINTENANCE_PROVIDER' &&
+      user.role !== 'PROVIDER' &&
+      user.role !== 'MAINTENANCE'
+    ) {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
         { status: 403 }
@@ -18,69 +24,153 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'all';
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
+    const available = searchParams.get('available') === 'true'; // Solicitudes disponibles sin asignar
 
-    // Construir filtros
-    const whereClause: any = {
-      assignedTo: user.id,
-    };
-
-    if (status !== 'all') {
-      whereClause.status = status.toUpperCase();
-    }
-
-    // Obtener solicitudes del proveedor
-    const requests = await db.maintenance.findMany({
-      where: whereClause,
+    // Obtener datos completos del usuario para acceder a las relaciones
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
       include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-            address: true,
-            city: true,
-            commune: true,
-            region: true,
-          },
-        },
+        serviceProvider: true,
+        maintenanceProvider: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-      skip: offset,
     });
 
-    // Transformar datos al formato esperado
-    const transformedRequests = requests.map(request => ({
-      id: request.id,
-      propertyAddress: `${request.property.address}, ${request.property.commune}, ${request.property.city}`,
-      tenantName: 'N/A',
-      tenantEmail: 'N/A',
-      tenantPhone: 'N/A',
-      serviceType: request.category,
-      priority: request.priority.toLowerCase(),
-      title: request.title,
-      description: request.description,
-      scheduledDate: request.scheduledDate?.toISOString().split('T')[0],
-      scheduledTime: request.scheduledTime || 'No especificado',
-      visitDuration: request.visitDuration || 'No especificado',
-      estimatedCost: request.estimatedCost || 0,
-      notes: request.notes || '',
-      images: request.images ? JSON.parse(request.images) : [],
-      status: request.status.toLowerCase(),
-      createdAt: request.createdAt.toISOString(),
-      updatedAt: request.updatedAt.toISOString(),
-    }));
+    if (!fullUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
+    }
+
+    let requests: any[] = [];
+
+    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+      // Solicitudes asignadas al proveedor
+      const whereClause: any = {
+        serviceProviderId: fullUser.serviceProvider.id,
+      };
+
+      if (status !== 'all') {
+        const statusMap: Record<string, string> = {
+          pending: 'PENDING',
+          quoted: 'PENDING', // Las cotizadas pueden estar en PENDING
+          accepted: 'ACCEPTED',
+          completed: 'COMPLETED',
+        };
+        whereClause.status = statusMap[status.toLowerCase()] || status.toUpperCase();
+      }
+
+      const serviceJobs = await db.serviceJob.findMany({
+        where: whereClause,
+        include: {
+          requester: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+        skip: offset,
+      });
+
+      requests = serviceJobs.map(req => ({
+        id: req.id,
+        title: req.title,
+        description: req.description,
+        serviceType: req.serviceType,
+        urgency: 'medium',
+        status: req.status.toLowerCase(),
+        createdAt: req.createdAt.toISOString(),
+        clientName: req.requester.name || 'Cliente',
+        clientEmail: req.requester.email || '',
+        clientPhone: req.requester.phone || '',
+        propertyAddress: '',
+        estimatedPrice: req.basePrice || 0,
+        quotedPrice: req.finalPrice || req.basePrice,
+        acceptedPrice:
+          req.status === 'ACCEPTED' || req.status === 'COMPLETED'
+            ? req.finalPrice || req.basePrice
+            : null,
+        finalPrice: req.finalPrice || null,
+        preferredDate: req.scheduledDate?.toISOString().split('T')[0] || '',
+        completedDate: req.completedDate?.toISOString().split('T')[0] || null,
+        images: req.images ? JSON.parse(req.images) : [],
+        notes: req.notes || '',
+      }));
+    } else if (
+      (user.role === 'MAINTENANCE_PROVIDER' || user.role === 'MAINTENANCE') &&
+      fullUser.maintenanceProvider
+    ) {
+      // Para maintenance providers, usar el modelo Maintenance
+      const whereClause: any = {
+        maintenanceProviderId: fullUser.maintenanceProvider.id,
+      };
+
+      if (status !== 'all') {
+        whereClause.status = status.toUpperCase();
+      }
+
+      const maintenanceRequests = await db.maintenance.findMany({
+        where: whereClause,
+        include: {
+          property: {
+            select: {
+              id: true,
+              title: true,
+              address: true,
+              city: true,
+              commune: true,
+              region: true,
+            },
+          },
+          requester: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+        skip: offset,
+      });
+
+      requests = maintenanceRequests.map(req => ({
+        id: req.id,
+        title: req.title,
+        description: req.description,
+        serviceType: req.category,
+        urgency: req.priority?.toLowerCase() || 'medium',
+        status: req.status.toLowerCase(),
+        createdAt: req.createdAt.toISOString(),
+        clientName: req.requester.name || 'Cliente',
+        clientEmail: req.requester.email || '',
+        clientPhone: req.requester.phone || '',
+        propertyAddress: `${req.property.address}, ${req.property.commune}, ${req.property.city}`,
+        estimatedPrice: req.estimatedCost || 0,
+        preferredDate: req.scheduledDate?.toISOString().split('T')[0] || '',
+        images: req.images ? JSON.parse(req.images) : [],
+        notes: req.notes || '',
+      }));
+    }
 
     logger.info('Solicitudes de proveedor obtenidas', {
       providerId: user.id,
-      count: transformedRequests.length,
+      role: user.role,
+      count: requests.length,
       status,
+      available,
     });
 
     return NextResponse.json({
       success: true,
-      data: transformedRequests,
+      requests: requests,
       pagination: {
         limit,
         offset,
@@ -92,13 +182,7 @@ export async function GET(request: NextRequest) {
     logger.error('Error obteniendo solicitudes de proveedor:', {
       error: error instanceof Error ? error.message : String(error),
     });
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Error interno del servidor',
-      },
-      { status: 500 }
-    );
+    const errorResponse = handleApiError(error);
+    return errorResponse;
   }
 }

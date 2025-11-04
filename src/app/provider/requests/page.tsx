@@ -66,99 +66,7 @@ export default function ProviderRequestsPage() {
     endDate: '',
   });
 
-  const [requests, setRequests] = useState<any[]>([
-    {
-      id: '1',
-      title: 'Reparación de grifería en baño principal',
-      description: 'Grifo de lavamanos pierde agua constantemente. Necesita reparación urgente.',
-      clientName: 'María González',
-      clientEmail: 'maria.gonzalez@email.com',
-      clientPhone: '+56 9 1234 5678',
-      propertyAddress: 'Las Condes 1234, Santiago',
-      serviceType: 'Plomería',
-      urgency: 'high',
-      status: 'pending',
-      createdAt: '2024-01-15T10:30:00',
-      estimatedPrice: 25000,
-      preferredDate: '2024-01-17',
-      images: ['grifo1.jpg', 'grifo2.jpg'],
-      notes: 'Cliente disponible entre 14:00 y 18:00 hrs',
-    },
-    {
-      id: '2',
-      title: 'Mantenimiento eléctrico completo',
-      description: 'Revisión general de instalación eléctrica, cambio de tomacorrientes antiguos.',
-      clientName: 'Carlos Rodríguez',
-      clientEmail: 'carlos.rodriguez@email.com',
-      clientPhone: '+56 9 8765 4321',
-      propertyAddress: 'Providencia 567, Santiago',
-      serviceType: 'Electricidad',
-      urgency: 'medium',
-      status: 'quoted',
-      createdAt: '2024-01-14T14:20:00',
-      estimatedPrice: 45000,
-      quotedPrice: 52000,
-      preferredDate: '2024-01-18',
-      images: [],
-      notes: 'Propiedad tiene 3 dormitorios y 2 baños',
-    },
-    {
-      id: '3',
-      title: 'Pintura de sala y comedor',
-      description: 'Pintura completa de sala de estar y comedor. Colores claros.',
-      clientName: 'Ana Silva',
-      clientEmail: 'ana.silva@email.com',
-      clientPhone: '+56 9 5555 6666',
-      propertyAddress: 'Ñuñoa 789, Santiago',
-      serviceType: 'Pintura',
-      urgency: 'low',
-      status: 'accepted',
-      createdAt: '2024-01-13T09:15:00',
-      estimatedPrice: 35000,
-      quotedPrice: 38000,
-      acceptedPrice: 38000,
-      preferredDate: '2024-01-20',
-      images: ['sala1.jpg'],
-      notes: 'Cliente prefiere tonos neutros',
-    },
-    {
-      id: '4',
-      title: 'Instalación de sistema de riego',
-      description: 'Instalación de sistema automático de riego para jardín de 200m².',
-      clientName: 'Pedro Morales',
-      clientEmail: 'pedro.morales@email.com',
-      clientPhone: '+56 9 7777 8888',
-      propertyAddress: 'Vitacura 345, Santiago',
-      serviceType: 'Jardinería',
-      urgency: 'medium',
-      status: 'completed',
-      createdAt: '2024-01-10T11:45:00',
-      estimatedPrice: 65000,
-      acceptedPrice: 62000,
-      finalPrice: 62000,
-      preferredDate: '2024-01-15',
-      completedDate: '2024-01-16',
-      images: ['jardin1.jpg', 'jardin2.jpg'],
-      notes: 'Sistema incluye programador automático',
-    },
-    {
-      id: '5',
-      title: 'Reparación de puerta de garage',
-      description: 'Motor de puerta automática no funciona correctamente.',
-      clientName: 'Sofía Vargas',
-      clientEmail: 'sofia.vargas@email.com',
-      clientPhone: '+56 9 9999 0000',
-      propertyAddress: 'La Reina 456, Santiago',
-      serviceType: 'Mantenimiento General',
-      urgency: 'high',
-      status: 'pending',
-      createdAt: '2024-01-16T08:30:00',
-      estimatedPrice: 35000,
-      preferredDate: '2024-01-18',
-      images: ['garage1.jpg'],
-      notes: 'Puerta marca Chamberlain, modelo antiguo',
-    },
-  ]);
+  const [requests, setRequests] = useState<any[]>([]);
 
   useEffect(() => {
     loadPageData();
@@ -169,22 +77,81 @@ export default function ProviderRequestsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock requests overview data
-      const overviewData = {
-        totalRequests: requests.length,
-        pendingRequests: requests.filter(r => r.status === 'pending').length,
-        completedRequests: requests.filter(r => r.status === 'completed').length,
-        totalRevenue: requests
-          .filter(r => r.finalPrice || r.acceptedPrice)
-          .reduce((sum, r) => sum + (r.finalPrice || r.acceptedPrice || 0), 0),
-      };
+      // Cargar solicitudes reales desde la API
+      const response = await fetch('/api/provider/requests?status=all&limit=100', {
+        credentials: 'include',
+      });
 
-      setData(overviewData);
+      if (response.ok) {
+        const apiData = await response.json();
+        if (apiData.success && apiData.requests) {
+          // Transformar datos de la API al formato esperado
+          const transformedRequests = apiData.requests.map((req: any) => ({
+            id: req.id,
+            title: req.title || `${req.serviceType} - ${req.clientName}`,
+            description: req.description,
+            clientName: req.clientName,
+            clientEmail: req.clientEmail,
+            clientPhone: req.clientPhone,
+            propertyAddress: req.propertyAddress || '',
+            serviceType: req.serviceType,
+            urgency: req.urgency || 'medium',
+            status: req.status,
+            createdAt: req.createdAt,
+            estimatedPrice: req.estimatedPrice || 0,
+            quotedPrice: req.quotedPrice,
+            acceptedPrice: req.acceptedPrice,
+            finalPrice: req.finalPrice,
+            preferredDate: req.preferredDate,
+            completedDate: req.completedDate,
+            images: req.images || [],
+            notes: req.notes || '',
+          }));
+
+          setRequests(transformedRequests);
+
+          // Calcular estadísticas
+          const overviewData = {
+            totalRequests: transformedRequests.length,
+            pendingRequests: transformedRequests.filter((r: any) => r.status === 'pending').length,
+            completedRequests: transformedRequests.filter((r: any) => r.status === 'completed')
+              .length,
+            totalRevenue: transformedRequests
+              .filter((r: any) => r.finalPrice || r.acceptedPrice)
+              .reduce((sum: number, r: any) => sum + (r.finalPrice || r.acceptedPrice || 0), 0),
+          };
+
+          setData(overviewData);
+        } else {
+          setRequests([]);
+          setData({
+            totalRequests: 0,
+            pendingRequests: 0,
+            completedRequests: 0,
+            totalRevenue: 0,
+          });
+        }
+      } else {
+        setRequests([]);
+        setData({
+          totalRequests: 0,
+          pendingRequests: 0,
+          completedRequests: 0,
+          totalRevenue: 0,
+        });
+      }
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar los datos');
+      setRequests([]);
+      setData({
+        totalRequests: 0,
+        pendingRequests: 0,
+        completedRequests: 0,
+        totalRevenue: 0,
+      });
     } finally {
       setLoading(false);
     }

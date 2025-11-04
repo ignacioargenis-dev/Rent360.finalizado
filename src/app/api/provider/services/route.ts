@@ -2,122 +2,206 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { handleApiError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'PROVIDER' && user.role !== 'MAINTENANCE') {
+    if (
+      user.role !== 'SERVICE_PROVIDER' &&
+      user.role !== 'MAINTENANCE_PROVIDER' &&
+      user.role !== 'PROVIDER' &&
+      user.role !== 'MAINTENANCE'
+    ) {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
         { status: 403 }
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') || 'all';
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
-
-    // Construir filtros
-    const whereClause: any = {
-      serviceProviderId: user.id,
-    };
-
-    if (status !== 'all') {
-      whereClause.status = status.toUpperCase();
-    }
-
-    // Obtener servicios del proveedor
-    const services = await db.serviceJob.findMany({
-      where: whereClause,
+    // Obtener datos completos del usuario para acceder a las relaciones
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
       include: {
-        serviceProvider: {
-          select: {
-            id: true,
-            businessName: true,
-            serviceTypes: true,
-            user: {
-              select: {
-                name: true,
-                email: true,
-                phone: true,
-              },
-            },
-          },
-        },
+        serviceProvider: true,
+        maintenanceProvider: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-      skip: offset,
     });
 
-    // Transformar datos al formato esperado
-    const transformedServices = services.map(service => ({
-      id: service.id,
-      name: service.title,
-      category: service.serviceType,
-      description: service.description,
-      shortDescription: service.description?.substring(0, 100) + '...',
-      pricing: {
-        type: 'fixed',
-        amount: service.basePrice || 0,
-        currency: 'CLP',
-        minimumCharge: 0,
-      },
-      duration: {
-        estimated: '1',
-        unit: 'hours',
-      },
-      features: [],
-      requirements: [],
-      availability: {
-        active: true,
-        regions: [],
-        emergency: false,
-      },
-      images: service.images ? JSON.parse(service.images) : [],
-      tags: [],
-      stats: {
-        views: 0,
-        requests: 0,
-        conversionRate: 0,
-        averageRating: 0,
-        totalReviews: 0,
-      },
-      createdAt: service.createdAt.toISOString(),
-      updatedAt: service.updatedAt.toISOString(),
-    }));
+    if (!fullUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
+    }
+
+    let services: any[] = [];
+
+    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+      // Obtener tipos de servicios ofrecidos desde ServiceProvider
+      const serviceTypesJson = fullUser.serviceProvider.serviceTypes || '[]';
+      let serviceTypes: string[] = [];
+      try {
+        serviceTypes = JSON.parse(serviceTypesJson);
+      } catch {
+        // Si no es JSON válido, usar serviceType como único servicio
+        serviceTypes = [fullUser.serviceProvider.serviceType].filter(Boolean);
+      }
+
+      // Obtener estadísticas de trabajos por tipo de servicio
+      const serviceJobs = await db.serviceJob.findMany({
+        where: {
+          serviceProviderId: fullUser.serviceProvider.id,
+        },
+        select: {
+          serviceType: true,
+          status: true,
+          finalPrice: true,
+          basePrice: true,
+          rating: true,
+        },
+      });
+
+      // Agrupar estadísticas por tipo de servicio
+      const statsByType: Record<string, any> = {};
+      serviceTypes.forEach(type => {
+        const jobsForType = serviceJobs.filter(j => j.serviceType === type);
+        const completedJobs = jobsForType.filter(j => j.status === 'COMPLETED');
+        const ratings = completedJobs.map(j => j.rating).filter(Boolean) as number[];
+        const avgRating =
+          ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
+
+        statsByType[type] = {
+          totalJobs: jobsForType.length,
+          completedJobs: completedJobs.length,
+          avgRating,
+          totalRevenue: completedJobs.reduce(
+            (sum, j) => sum + (j.finalPrice || j.basePrice || 0),
+            0
+          ),
+        };
+      });
+
+      // Crear servicios ofrecidos con estadísticas
+      services = serviceTypes.map((serviceType, index) => {
+        const stats = statsByType[serviceType] || {
+          totalJobs: 0,
+          completedJobs: 0,
+          avgRating: 0,
+          totalRevenue: 0,
+        };
+
+        // Parsear disponibilidad si existe
+        let availability = {
+          weekdays: true,
+          weekends: false,
+          emergencies: false,
+        };
+        try {
+          const availJson = fullUser.serviceProvider?.availability;
+          if (availJson) {
+            availability = JSON.parse(availJson);
+          }
+        } catch {
+          // Usar valores por defecto
+        }
+
+        const sp = fullUser.serviceProvider;
+        return {
+          id: `service-${index}`,
+          name: serviceType,
+          description: `${serviceType} - ${sp?.description || 'Servicio profesional'}`,
+          category: serviceType,
+          price: sp?.basePrice || 0,
+          active: sp?.status === 'ACTIVE',
+          totalJobs: stats.totalJobs,
+          avgRating: stats.avgRating,
+          responseTime: `${sp?.responseTime || 2}-${(sp?.responseTime || 2) + 2} horas`,
+          availability,
+          requirements: [],
+          lastUpdated:
+            sp?.updatedAt.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+        };
+      });
+
+      // Si no hay tipos de servicios definidos, crear uno por defecto
+      if (services.length === 0 && fullUser.serviceProvider?.serviceType) {
+        const sp = fullUser.serviceProvider;
+        services = [
+          {
+            id: 'service-default',
+            name: sp.serviceType,
+            description: sp.description || 'Servicio profesional',
+            category: sp.serviceType,
+            price: sp.basePrice || 0,
+            active: sp.status === 'ACTIVE',
+            totalJobs: 0,
+            avgRating: 0,
+            responseTime: `${sp.responseTime || 2}-${(sp.responseTime || 2) + 2} horas`,
+            availability: {
+              weekdays: true,
+              weekends: false,
+              emergencies: false,
+            },
+            requirements: [],
+            lastUpdated: sp.updatedAt.toISOString().split('T')[0],
+          },
+        ];
+      }
+    } else if (
+      (user.role === 'MAINTENANCE_PROVIDER' || user.role === 'MAINTENANCE') &&
+      fullUser.maintenanceProvider
+    ) {
+      // Para maintenance providers, usar la especialidad
+      const mp = fullUser.maintenanceProvider;
+      const specialty = mp?.specialty || 'Mantenimiento General';
+      let specialties: string[] = [];
+      try {
+        specialties = JSON.parse(mp?.specialties || '[]');
+      } catch {
+        specialties = [specialty];
+      }
+
+      services = specialties.map((spec, index) => ({
+        id: `maintenance-${index}`,
+        name: spec,
+        description: `${spec} - ${mp?.description || 'Servicio de mantenimiento'}`,
+        category: spec,
+        price: mp?.hourlyRate || 0,
+        active: mp?.status === 'ACTIVE',
+        totalJobs: mp?.completedJobs || 0,
+        avgRating: mp?.rating || 0,
+        responseTime: `${mp?.responseTime || 2}-${(mp?.responseTime || 2) + 2} horas`,
+        availability: {
+          weekdays: true,
+          weekends: false,
+          emergencies: true,
+        },
+        requirements: [],
+        lastUpdated:
+          mp?.updatedAt.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      }));
+    }
 
     logger.info('Servicios de proveedor obtenidos', {
-      serviceProviderId: user.id,
-      count: transformedServices.length,
-      status,
+      providerId: user.id,
+      role: user.role,
+      count: services.length,
     });
 
     return NextResponse.json({
       success: true,
-      data: transformedServices,
+      services,
       pagination: {
-        limit,
-        offset,
+        limit: services.length,
+        offset: 0,
         total: services.length,
-        hasMore: services.length === limit,
+        hasMore: false,
       },
     });
   } catch (error) {
     logger.error('Error obteniendo servicios de proveedor:', {
       error: error instanceof Error ? error.message : String(error),
     });
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Error interno del servidor',
-      },
-      { status: 500 }
-    );
+    const errorResponse = handleApiError(error);
+    return errorResponse;
   }
 }

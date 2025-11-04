@@ -38,80 +38,7 @@ export default function ProviderServicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
-  const [services, setServices] = useState<any[]>([
-    {
-      id: '1',
-      name: 'Mantenimiento Eléctrico',
-      description: 'Instalación, reparación y mantenimiento de sistemas eléctricos residenciales',
-      category: 'Electricidad',
-      price: 25000,
-      active: true,
-      totalJobs: 45,
-      avgRating: 4.8,
-      responseTime: '2-4 horas',
-      availability: {
-        weekdays: true,
-        weekends: false,
-        emergencies: true,
-      },
-      requirements: ['Certificación eléctrica', 'Herramientas especializadas'],
-      lastUpdated: '2024-01-15',
-    },
-    {
-      id: '2',
-      name: 'Reparaciones de Plomería',
-      description: 'Reparación de cañerías, grifería y sistemas de agua',
-      category: 'Plomería',
-      price: 30000,
-      active: true,
-      totalJobs: 38,
-      avgRating: 4.6,
-      responseTime: '1-3 horas',
-      availability: {
-        weekdays: true,
-        weekends: true,
-        emergencies: true,
-      },
-      requirements: ['Experiencia en plomería', 'Licencia sanitaria'],
-      lastUpdated: '2024-01-12',
-    },
-    {
-      id: '3',
-      name: 'Pintura y Acabados',
-      description: 'Pintura interior y exterior, preparación de superficies',
-      category: 'Pintura',
-      price: 45000,
-      active: false,
-      totalJobs: 22,
-      avgRating: 4.4,
-      responseTime: '4-6 horas',
-      availability: {
-        weekdays: true,
-        weekends: false,
-        emergencies: false,
-      },
-      requirements: ['Experiencia en pintura', 'Equipo de protección'],
-      lastUpdated: '2024-01-08',
-    },
-    {
-      id: '4',
-      name: 'Jardinería y Paisajismo',
-      description: 'Mantenimiento de jardines, poda y diseño de espacios verdes',
-      category: 'Jardinería',
-      price: 35000,
-      active: true,
-      totalJobs: 29,
-      avgRating: 4.7,
-      responseTime: '3-5 horas',
-      availability: {
-        weekdays: true,
-        weekends: true,
-        emergencies: false,
-      },
-      requirements: ['Conocimientos de botánica', 'Herramientas de jardinería'],
-      lastUpdated: '2024-01-10',
-    },
-  ]);
+  const [services, setServices] = useState<any[]>([]);
 
   useEffect(() => {
     loadPageData();
@@ -122,20 +49,58 @@ export default function ProviderServicesPage() {
       setLoading(true);
       setError(null);
 
-      // Mock services overview data
-      const overviewData = {
-        totalServices: services.length,
-        activeServices: services.filter(s => s.active).length,
-        pendingServices: services.filter(s => !s.active).length,
-        totalRevenue: services.reduce((sum, s) => sum + s.price * s.totalJobs, 0),
-      };
+      // Cargar servicios reales desde la API
+      const response = await fetch('/api/provider/services', {
+        credentials: 'include',
+      });
 
-      setData(overviewData);
+      if (response.ok) {
+        const apiData = await response.json();
+        if (apiData.success && apiData.services) {
+          setServices(apiData.services);
+
+          // Calcular estadísticas
+          const overviewData = {
+            totalServices: apiData.services.length,
+            activeServices: apiData.services.filter((s: any) => s.active).length,
+            pendingServices: apiData.services.filter((s: any) => !s.active).length,
+            totalRevenue: apiData.services.reduce(
+              (sum: number, s: any) => sum + (s.price * s.totalJobs || 0),
+              0
+            ),
+          };
+
+          setData(overviewData);
+        } else {
+          setServices([]);
+          setData({
+            totalServices: 0,
+            activeServices: 0,
+            pendingServices: 0,
+            totalRevenue: 0,
+          });
+        }
+      } else {
+        setServices([]);
+        setData({
+          totalServices: 0,
+          activeServices: 0,
+          pendingServices: 0,
+          totalRevenue: 0,
+        });
+      }
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar los datos');
+      setServices([]);
+      setData({
+        totalServices: 0,
+        activeServices: 0,
+        pendingServices: 0,
+        totalRevenue: 0,
+      });
     } finally {
       setLoading(false);
     }
