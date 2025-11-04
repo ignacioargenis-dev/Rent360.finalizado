@@ -95,51 +95,118 @@ export async function POST(request: NextRequest) {
 
     // Hash de la contraseña
     const hashedPassword = await hashPassword(password);
+    const normalizedRole = role.toUpperCase();
 
-    // Crear usuario con todos los campos
-    const userData = {
-      name,
-      email,
-      password: hashedPassword,
-      role: role.toUpperCase(),
-      avatar: null, // Los usuarios pueden subir su avatar después del registro
-      // Campos obligatorios
-      rut,
-      // Campos opcionales
-      phone: phone || null,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-      gender: gender || null,
-      address: address || null,
-      city: city || null,
-      commune: commune || null,
-      region: region || null,
-      // Campos adicionales de contacto
-      phoneSecondary: phoneSecondary || null,
-      emergencyContact: emergencyContact || null,
-      emergencyPhone: emergencyPhone || null,
-    };
+    // Crear usuario y perfil de proveedor si corresponde en una transacción
+    const result = await db.$transaction(async tx => {
+      // Crear usuario con todos los campos
+      const userData = {
+        name,
+        email,
+        password: hashedPassword,
+        role: normalizedRole,
+        avatar: null,
+        // Campos obligatorios
+        rut,
+        // Campos opcionales
+        phone: phone || null,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+        gender: gender || null,
+        address: address || null,
+        city: city || null,
+        commune: commune || null,
+        region: region || null,
+        // Campos adicionales de contacto
+        phoneSecondary: phoneSecondary || null,
+        emergencyContact: emergencyContact || null,
+        emergencyPhone: emergencyPhone || null,
+      };
 
-    const user = await db.user.create({
-      data: userData,
+      const user = await tx.user.create({
+        data: userData,
+      });
+
+      // Si el usuario se registra como PROVIDER o MAINTENANCE, crear perfil automáticamente
+      if (normalizedRole === 'PROVIDER' || normalizedRole === 'SERVICE_PROVIDER') {
+        // Crear perfil de ServiceProvider
+        await tx.serviceProvider.create({
+          data: {
+            userId: user.id,
+            businessName: name,
+            rut: rut || '00000000-0',
+            serviceType: 'OTHER',
+            serviceTypes: JSON.stringify([]),
+            basePrice: 0,
+            status: 'PENDING_VERIFICATION',
+            isVerified: false,
+            responseTime: 2,
+            availability: JSON.stringify({
+              weekdays: true,
+              weekends: false,
+              emergencies: false,
+            }),
+            address: address || null,
+            city: city || null,
+            region: region || null,
+            description: null,
+          },
+        });
+
+        logger.info('Perfil de ServiceProvider creado automáticamente durante registro', {
+          userId: user.id,
+          email: user.email,
+        });
+      } else if (normalizedRole === 'MAINTENANCE' || normalizedRole === 'MAINTENANCE_PROVIDER') {
+        // Crear perfil de MaintenanceProvider
+        await tx.maintenanceProvider.create({
+          data: {
+            userId: user.id,
+            businessName: name,
+            rut: rut || '00000000-0',
+            specialty: 'Mantenimiento General',
+            specialties: JSON.stringify([]),
+            hourlyRate: 0,
+            status: 'PENDING_VERIFICATION',
+            isVerified: false,
+            responseTime: 2,
+            availability: JSON.stringify({
+              weekdays: true,
+              weekends: false,
+              emergencies: true,
+            }),
+            address: address || null,
+            city: city || null,
+            region: region || null,
+            description: null,
+          },
+        });
+
+        logger.info('Perfil de MaintenanceProvider creado automáticamente durante registro', {
+          userId: user.id,
+          email: user.email,
+        });
+      }
+
+      return user;
     });
 
     // Generar tokens con rol normalizado a MAYÚSCULAS
     const { accessToken, refreshToken } = generateTokens(
-      user.id,
-      user.email,
-      user.role.toUpperCase(),
-      user.name
+      result.id,
+      result.email,
+      result.role.toUpperCase(),
+      result.name
     );
 
     // Crear respuesta con cookies
     const response = NextResponse.json({
       message: 'Registro exitoso',
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role.toUpperCase(),
-        avatar: user.avatar,
+        id: result.id,
+        name: result.name,
+        email: result.email,
+        role: result.role.toUpperCase(),
+        avatar: result.avatar,
       },
     });
 

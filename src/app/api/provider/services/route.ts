@@ -257,7 +257,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
     }
 
-    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+    if (
+      (user.role === 'SERVICE_PROVIDER' || user.role === 'PROVIDER') &&
+      fullUser.serviceProvider
+    ) {
       // Obtener servicios actuales
       const serviceTypesJson = fullUser.serviceProvider.serviceTypes || '[]';
       let serviceTypes: string[] = [];
@@ -365,7 +368,14 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      return NextResponse.json({ error: 'Perfil de proveedor no encontrado' }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'Perfil de proveedor no encontrado',
+          message:
+            'No se encontró un perfil de proveedor asociado a tu cuenta. Si acabas de registrarte, por favor recarga la página. Si el problema persiste, contacta al soporte.',
+        },
+        { status: 404 }
+      );
     }
   } catch (error) {
     logger.error('Error creando servicio:', {
