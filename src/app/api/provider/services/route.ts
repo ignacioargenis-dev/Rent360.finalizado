@@ -208,6 +208,7 @@ export async function GET(request: NextRequest) {
         active: mp?.status === 'ACTIVE',
         totalJobs: mp?.completedJobs || 0,
         avgRating: mp?.rating || 0,
+        duration: `${mp?.responseTime || 2}-${(mp?.responseTime || 2) + 2} horas`,
         responseTime: `${mp?.responseTime || 2}-${(mp?.responseTime || 2) + 2} horas`,
         availability: {
           weekdays: true,
