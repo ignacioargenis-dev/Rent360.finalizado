@@ -170,15 +170,10 @@ export default function ProviderServicesPage() {
     }
   };
 
-  const handleToggleService = async (
-    serviceId: string,
-    serviceName: string,
-    currentActive: boolean
-  ) => {
+  const handleToggleService = async (serviceId: string, currentActive: boolean) => {
     try {
       console.log('🔄 [PROVIDER SERVICES] Activando/desactivando servicio:', {
         serviceId,
-        serviceName,
         currentActive,
         newActive: !currentActive,
       });
@@ -190,8 +185,8 @@ export default function ProviderServicesPage() {
         )
       );
 
-      // Llamar a la API para actualizar en el backend
-      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceName)}`, {
+      // ✅ Llamar a la API para actualizar en el backend usando ID único
+      const response = await fetch(`/api/provider/services/${serviceId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -431,9 +426,7 @@ export default function ProviderServicesPage() {
                       </div>
                       <Switch
                         checked={service.active}
-                        onCheckedChange={() =>
-                          handleToggleService(service.id, service.name, service.active)
-                        }
+                        onCheckedChange={() => handleToggleService(service.id, service.active)}
                       />
                     </div>
 
@@ -467,9 +460,7 @@ export default function ProviderServicesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            router.push(`/provider/services/${encodeURIComponent(service.name)}`)
-                          }
+                          onClick={() => router.push(`/provider/services/${service.id}`)}
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
@@ -477,11 +468,7 @@ export default function ProviderServicesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            router.push(
-                              `/provider/services/${encodeURIComponent(service.name)}/edit`
-                            )
-                          }
+                          onClick={() => router.push(`/provider/services/${service.id}/edit`)}
                         >
                           <Edit className="w-4 h-4 mr-2" />
                           Editar

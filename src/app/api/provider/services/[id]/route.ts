@@ -15,8 +15,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    // El ID es el nombre del servicio (decodificado)
-    const serviceName = decodeURIComponent(params.id);
+    // ✅ El ID es el ID único del servicio
+    const serviceId = params.id;
 
     // Obtener datos completos del usuario
     const fullUser = await db.user.findUnique({
@@ -53,7 +53,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         return NextResponse.json({ error: 'Service Provider no encontrado.' }, { status: 404 });
       }
 
-      let serviceTypes: string[] = [];
+      // ✅ Parsear servicios como objetos con IDs únicos
+      let serviceTypes: Array<string | any> = [];
       try {
         serviceTypes = JSON.parse(freshServiceProvider.serviceTypes || '[]');
       } catch {
@@ -62,10 +63,27 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         }
       }
 
-      // Verificar que el servicio existe
-      if (!serviceTypes.includes(serviceName)) {
+      // ✅ Buscar el servicio por ID único
+      let serviceObj: any = null;
+      for (const item of serviceTypes) {
+        if (typeof item === 'object' && item !== null && item.id === serviceId) {
+          serviceObj = item;
+          break;
+        } else if (typeof item === 'string') {
+          // Migración: generar ID temporal para servicios legacy
+          const legacyId = `svc_${fullUser.serviceProvider.id}_${item.replace(/\s+/g, '_').toLowerCase()}`;
+          if (legacyId === serviceId) {
+            serviceObj = { id: serviceId, name: item };
+            break;
+          }
+        }
+      }
+
+      if (!serviceObj) {
         return NextResponse.json({ error: 'Servicio no encontrado.' }, { status: 404 });
       }
+
+      const serviceName = serviceObj.name || String(serviceObj);
 
       // Obtener estadísticas del servicio
       const serviceJobs = await db.serviceJob.findMany({
@@ -102,28 +120,34 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       }
 
       serviceData = {
-        id: `service-${serviceName}`,
+        id: serviceId, // ✅ Usar ID único del servicio
         name: serviceName,
-        category: serviceName,
-        description: `${serviceName} - ${freshServiceProvider.description || 'Servicio profesional'}`,
-        shortDescription: freshServiceProvider.description || 'Servicio profesional',
-        pricing: {
+        category: serviceObj.category || serviceName,
+        description:
+          serviceObj.description ||
+          `${serviceName} - ${freshServiceProvider.description || 'Servicio profesional'}`,
+        shortDescription:
+          serviceObj.description || freshServiceProvider.description || 'Servicio profesional',
+        pricing: serviceObj.pricing || {
           type: 'fixed',
           amount: freshServiceProvider.basePrice || 0,
           currency: 'CLP',
         },
-        duration: {
+        duration: serviceObj.duration || {
           estimated: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2}`,
           unit: 'hours',
         },
-        features: [],
-        requirements: [],
+        features: serviceObj.features || [],
+        requirements: serviceObj.requirements || [],
         availability: {
-          active: freshServiceProvider.status === 'ACTIVE',
-          ...availability,
+          active:
+            serviceObj.active !== undefined
+              ? serviceObj.active
+              : freshServiceProvider.status === 'ACTIVE',
+          ...(serviceObj.availability || availability),
         },
-        images: [],
-        tags: [],
+        images: serviceObj.images || [],
+        tags: serviceObj.tags || [],
         stats: {
           views: 0,
           requests: serviceJobs.length,
@@ -132,13 +156,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           totalReviews: ratings.length,
           completedJobs: completedJobs.length,
         },
-        createdAt: fullUser.createdAt.toISOString(),
-        updatedAt: freshServiceProvider.updatedAt.toISOString(),
+        createdAt: serviceObj.createdAt || new Date().toISOString(),
+        updatedAt: serviceObj.updatedAt || freshServiceProvider.updatedAt.toISOString(),
       };
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
-      // Similar lógica para maintenance provider
+      // ✅ Similar lógica para maintenance provider - buscar por ID único
       const mp = fullUser.maintenanceProvider;
-      let specialties: string[] = [];
+      let specialties: Array<string | any> = [];
       try {
         specialties = JSON.parse(mp.specialties || '[]');
       } catch {
@@ -147,9 +171,27 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         }
       }
 
-      if (!specialties.includes(serviceName)) {
+      // ✅ Buscar el servicio por ID único
+      let serviceObj: any = null;
+      for (const item of specialties) {
+        if (typeof item === 'object' && item !== null && item.id === serviceId) {
+          serviceObj = item;
+          break;
+        } else if (typeof item === 'string') {
+          // Migración: generar ID temporal para servicios legacy
+          const legacyId = `mnt_${mp.id}_${item.replace(/\s+/g, '_').toLowerCase()}`;
+          if (legacyId === serviceId) {
+            serviceObj = { id: serviceId, name: item };
+            break;
+          }
+        }
+      }
+
+      if (!serviceObj) {
         return NextResponse.json({ error: 'Servicio no encontrado.' }, { status: 404 });
       }
+
+      const serviceName = serviceObj.name || String(serviceObj);
 
       // Obtener estadísticas
       const maintenanceJobs = await db.maintenance.findMany({
@@ -167,29 +209,30 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       const completedJobs = maintenanceJobs.filter(j => j.status === 'COMPLETED');
 
       serviceData = {
-        id: `service-${serviceName}`,
+        id: serviceId, // ✅ Usar ID único del servicio
         name: serviceName,
-        category: serviceName,
-        description: `${serviceName} - ${mp.description || 'Servicio profesional'}`,
-        shortDescription: mp.description || 'Servicio profesional',
-        pricing: {
+        category: serviceObj.category || serviceName,
+        description:
+          serviceObj.description || `${serviceName} - ${mp.description || 'Servicio profesional'}`,
+        shortDescription: serviceObj.description || mp.description || 'Servicio profesional',
+        pricing: serviceObj.pricing || {
           type: 'fixed',
           amount: mp.hourlyRate || 0,
           currency: 'CLP',
         },
-        duration: {
+        duration: serviceObj.duration || {
           estimated: `${mp.responseTime || 2}-${(mp.responseTime || 2) + 2}`,
           unit: 'hours',
         },
-        features: [],
-        requirements: [],
+        features: serviceObj.features || [],
+        requirements: serviceObj.requirements || [],
         availability: {
-          active: mp.status === 'ACTIVE',
-          regions: [],
-          emergency: false,
+          active: serviceObj.active !== undefined ? serviceObj.active : mp.status === 'ACTIVE',
+          regions: serviceObj.availability?.regions || [],
+          emergency: serviceObj.availability?.emergency || false,
         },
-        images: [],
-        tags: [],
+        images: serviceObj.images || [],
+        tags: serviceObj.tags || [],
         stats: {
           views: 0,
           requests: maintenanceJobs.length,
@@ -198,8 +241,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           totalReviews: 0,
           completedJobs: completedJobs.length,
         },
-        createdAt: fullUser.createdAt.toISOString(),
-        updatedAt: mp.updatedAt.toISOString(),
+        createdAt: serviceObj.createdAt || new Date().toISOString(),
+        updatedAt: serviceObj.updatedAt || mp.updatedAt.toISOString(),
       };
     }
 
@@ -231,7 +274,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       );
     }
 
-    const serviceName = decodeURIComponent(params.id);
+    // ✅ El ID es el ID único del servicio
+    const serviceId = params.id;
     const body = await request.json();
     const { active } = body;
 
@@ -262,7 +306,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         return NextResponse.json({ error: 'Service Provider no encontrado.' }, { status: 404 });
       }
 
-      let serviceTypes: string[] = [];
+      // ✅ Parsear servicios como objetos con IDs únicos
+      let serviceTypes: Array<string | any> = [];
       try {
         serviceTypes = JSON.parse(freshServiceProvider.serviceTypes || '[]');
       } catch {
@@ -271,22 +316,64 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         }
       }
 
-      if (!serviceTypes.includes(serviceName)) {
+      // ✅ Buscar el servicio por ID único
+      let serviceIndex = -1;
+      for (let i = 0; i < serviceTypes.length; i++) {
+        const item = serviceTypes[i];
+        if (typeof item === 'object' && item !== null && item.id === serviceId) {
+          serviceIndex = i;
+          break;
+        } else if (typeof item === 'string') {
+          // Migración: generar ID temporal para servicios legacy
+          const legacyId = `svc_${fullUser.serviceProvider.id}_${item.replace(/\s+/g, '_').toLowerCase()}`;
+          if (legacyId === serviceId) {
+            serviceIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (serviceIndex === -1) {
         return NextResponse.json({ error: 'Servicio no encontrado.' }, { status: 404 });
       }
 
-      // Actualizar el estado del proveedor (todos los servicios comparten el mismo estado)
-      // En el futuro, esto podría ser por servicio individual
+      // ✅ Actualizar el estado del servicio en el array
+      if (typeof serviceTypes[serviceIndex] === 'object' && serviceTypes[serviceIndex] !== null) {
+        serviceTypes[serviceIndex].active = active;
+        serviceTypes[serviceIndex].updatedAt = new Date().toISOString();
+      } else {
+        // Si es un string, convertirlo a objeto con ID
+        const serviceName = serviceTypes[serviceIndex];
+        serviceTypes[serviceIndex] = {
+          id: serviceId,
+          name: serviceName,
+          active,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+
       await db.serviceProvider.update({
         where: { id: fullUser.serviceProvider.id },
         data: {
-          status: active ? 'ACTIVE' : 'INACTIVE',
+          serviceTypes: JSON.stringify(serviceTypes),
+          // También actualizar el estado general del proveedor si todos los servicios están inactivos
+          ...(active === false &&
+          serviceTypes.every((s: any) => {
+            if (typeof s === 'object' && s !== null) {
+              return s.active === false;
+            }
+            return false;
+          })
+            ? { status: 'INACTIVE' }
+            : active
+              ? { status: 'ACTIVE' }
+              : {}),
         },
       });
 
       logger.info('Estado de servicio actualizado', {
         serviceProviderId: user.id,
-        serviceName,
+        serviceId,
         active,
       });
 
@@ -295,9 +382,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         message: `Servicio ${active ? 'activado' : 'desactivado'} exitosamente`,
       });
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
-      // Similar para maintenance provider
+      // ✅ Similar para maintenance provider - buscar por ID único
       const mp = fullUser.maintenanceProvider;
-      let specialties: string[] = [];
+      let specialties: Array<string | any> = [];
       try {
         specialties = JSON.parse(mp.specialties || '[]');
       } catch {
@@ -306,20 +393,55 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         }
       }
 
-      if (!specialties.includes(serviceName)) {
+      // ✅ Buscar el servicio por ID único
+      let serviceIndex = -1;
+      for (let i = 0; i < specialties.length; i++) {
+        const item = specialties[i];
+        if (typeof item === 'object' && item !== null && item.id === serviceId) {
+          serviceIndex = i;
+          break;
+        } else if (typeof item === 'string') {
+          // Migración: generar ID temporal para servicios legacy
+          const legacyId = `mnt_${mp.id}_${item.replace(/\s+/g, '_').toLowerCase()}`;
+          if (legacyId === serviceId) {
+            serviceIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (serviceIndex === -1) {
         return NextResponse.json({ error: 'Servicio no encontrado.' }, { status: 404 });
+      }
+
+      // ✅ Actualizar el estado del servicio en el array
+      if (typeof specialties[serviceIndex] === 'object' && specialties[serviceIndex] !== null) {
+        specialties[serviceIndex].active = active;
+        specialties[serviceIndex].updatedAt = new Date().toISOString();
       }
 
       await db.maintenanceProvider.update({
         where: { id: fullUser.maintenanceProvider.id },
         data: {
-          status: active ? 'ACTIVE' : 'INACTIVE',
+          specialties: JSON.stringify(specialties),
+          // También actualizar el estado general del proveedor si todos los servicios están inactivos
+          ...(active === false &&
+          specialties.every((s: any) => {
+            if (typeof s === 'object' && s !== null) {
+              return s.active === false;
+            }
+            return false;
+          })
+            ? { status: 'INACTIVE' }
+            : active
+              ? { status: 'ACTIVE' }
+              : {}),
         },
       });
 
       logger.info('Estado de servicio actualizado', {
         maintenanceProviderId: user.id,
-        serviceName,
+        serviceId,
         active,
       });
 
@@ -350,7 +472,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    const serviceName = decodeURIComponent(params.id);
+    // ✅ El ID es el ID único del servicio
+    const serviceId = params.id;
     const body = await request.json();
     const { name, category, description, pricing, duration, availability } = body;
 
@@ -381,7 +504,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         return NextResponse.json({ error: 'Service Provider no encontrado.' }, { status: 404 });
       }
 
-      let serviceTypes: string[] = [];
+      // ✅ Parsear servicios como objetos con IDs únicos
+      let serviceTypes: Array<string | any> = [];
       try {
         serviceTypes = JSON.parse(freshServiceProvider.serviceTypes || '[]');
       } catch {
@@ -390,26 +514,51 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         }
       }
 
-      if (!serviceTypes.includes(serviceName)) {
-        return NextResponse.json({ error: 'Servicio no encontrado.' }, { status: 404 });
-      }
-
-      // Actualizar el nombre del servicio si se proporciona
-      if (name && name !== serviceName) {
-        const index = serviceTypes.indexOf(serviceName);
-        if (index !== -1) {
-          serviceTypes[index] = name;
+      // ✅ Buscar el servicio por ID único
+      let serviceIndex = -1;
+      for (let i = 0; i < serviceTypes.length; i++) {
+        const item = serviceTypes[i];
+        if (typeof item === 'object' && item !== null && item.id === serviceId) {
+          serviceIndex = i;
+          break;
+        } else if (typeof item === 'string') {
+          // Migración: generar ID temporal para servicios legacy
+          const legacyId = `svc_${fullUser.serviceProvider.id}_${item.replace(/\s+/g, '_').toLowerCase()}`;
+          if (legacyId === serviceId) {
+            serviceIndex = i;
+            break;
+          }
         }
       }
 
-      // Preparar datos de actualización
-      const updateData: any = {};
-
-      if (serviceTypes.length > 0) {
-        updateData.serviceTypes = JSON.stringify(serviceTypes);
+      if (serviceIndex === -1) {
+        return NextResponse.json({ error: 'Servicio no encontrado.' }, { status: 404 });
       }
 
-      if (description) {
+      // ✅ Actualizar el servicio en el array
+      const currentService = serviceTypes[serviceIndex];
+      const updatedService: any =
+        typeof currentService === 'object' && currentService !== null
+          ? { ...currentService }
+          : { id: serviceId, name: currentService };
+
+      if (name) updatedService.name = name;
+      if (category) updatedService.category = category;
+      if (description) updatedService.description = description;
+      if (pricing) updatedService.pricing = pricing;
+      if (duration) updatedService.duration = duration;
+      if (availability) updatedService.availability = availability;
+
+      updatedService.updatedAt = new Date().toISOString();
+      serviceTypes[serviceIndex] = updatedService;
+
+      // Preparar datos de actualización
+      const updateData: any = {
+        serviceTypes: JSON.stringify(serviceTypes), // ✅ Actualizar array completo con servicio modificado
+      };
+
+      // Actualizar campos del proveedor si se proporcionan
+      if (description && !updatedService.description) {
         updateData.description = description;
       }
 
@@ -426,7 +575,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
 
       if (availability) {
-        updateData.availability = JSON.stringify(availability);
+        updateData.availability = JSON.stringify({
+          weekdays: availability.weekdays !== false,
+          weekends: availability.weekends || false,
+          emergencies: availability.emergency || false,
+        });
         if (availability.active !== undefined) {
           updateData.status = availability.active ? 'ACTIVE' : 'INACTIVE';
         }
@@ -440,7 +593,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
       logger.info('Servicio actualizado', {
         serviceProviderId: user.id,
-        serviceName,
+        serviceId,
         changes: { name, category },
       });
 
@@ -449,9 +602,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         message: 'Servicio actualizado exitosamente',
       });
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
-      // Similar para maintenance provider
+      // ✅ Similar para maintenance provider - buscar por ID único
       const mp = fullUser.maintenanceProvider;
-      let specialties: string[] = [];
+      let specialties: Array<string | any> = [];
       try {
         specialties = JSON.parse(mp.specialties || '[]');
       } catch {
@@ -460,13 +613,50 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         }
       }
 
-      if (!specialties.includes(serviceName)) {
+      // ✅ Buscar el servicio por ID único
+      let serviceIndex = -1;
+      for (let i = 0; i < specialties.length; i++) {
+        const item = specialties[i];
+        if (typeof item === 'object' && item !== null && item.id === serviceId) {
+          serviceIndex = i;
+          break;
+        } else if (typeof item === 'string') {
+          // Migración: generar ID temporal para servicios legacy
+          const legacyId = `mnt_${mp.id}_${item.replace(/\s+/g, '_').toLowerCase()}`;
+          if (legacyId === serviceId) {
+            serviceIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (serviceIndex === -1) {
         return NextResponse.json({ error: 'Servicio no encontrado.' }, { status: 404 });
       }
 
-      const updateData: any = {};
+      // ✅ Actualizar el servicio en el array
+      const currentService = specialties[serviceIndex];
+      const updatedService: any =
+        typeof currentService === 'object' && currentService !== null
+          ? { ...currentService }
+          : { id: serviceId, name: currentService };
 
-      if (description) {
+      if (name) updatedService.name = name;
+      if (category) updatedService.category = category;
+      if (description) updatedService.description = description;
+      if (pricing) updatedService.pricing = pricing;
+      if (duration) updatedService.duration = duration;
+      if (availability) updatedService.availability = availability;
+
+      updatedService.updatedAt = new Date().toISOString();
+      specialties[serviceIndex] = updatedService;
+
+      const updateData: any = {
+        specialties: JSON.stringify(specialties), // ✅ Actualizar array completo con servicio modificado
+      };
+
+      // Actualizar campos del proveedor si se proporcionan
+      if (description && !updatedService.description) {
         updateData.description = description;
       }
 
@@ -492,7 +682,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
       logger.info('Servicio actualizado', {
         maintenanceProviderId: user.id,
-        serviceName,
+        serviceId,
       });
 
       return NextResponse.json({

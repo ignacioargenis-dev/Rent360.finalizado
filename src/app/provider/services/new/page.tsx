@@ -297,6 +297,7 @@ export default function NewServicePage() {
       });
 
       console.log('✅ [PROVIDER SERVICES NEW] Servicio creado exitosamente:', {
+        serviceId: data.service?.id,
         name: serviceData.name,
         category: serviceData.category,
         response: data,
@@ -309,8 +310,13 @@ export default function NewServicePage() {
       window.dispatchEvent(new Event('r360-service-created'));
 
       setTimeout(() => {
-        // Redirigir a la página de servicios - forzar recarga completa para mostrar datos actualizados
-        window.location.href = '/provider/services';
+        // ✅ Redirigir a la página de detalles del servicio usando su ID único
+        if (data.service?.id) {
+          window.location.href = `/provider/services/${data.service.id}`;
+        } else {
+          // Fallback: redirigir a la lista de servicios
+          window.location.href = '/provider/services';
+        }
       }, 1500);
     } catch (error) {
       logger.error('Error al crear servicio', { error });

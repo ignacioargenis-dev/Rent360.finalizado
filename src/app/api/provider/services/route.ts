@@ -121,9 +121,59 @@ export async function GET(request: NextRequest) {
         };
       });
 
+      // ✅ Parsear servicios como objetos con IDs únicos
+      // serviceTypes puede ser array de strings (legacy) o array de objetos con IDs
+      const parsedServices: Array<{
+        id: string;
+        name: string;
+        category?: string;
+        description?: string;
+        pricing?: any;
+        duration?: any;
+        availability?: any;
+        active?: boolean;
+        createdAt?: string;
+        updatedAt?: string;
+      }> = [];
+
+      serviceTypes.forEach((item, index) => {
+        if (typeof item === 'string') {
+          // ✅ Migración: convertir string a objeto con ID único
+          // Generar ID único basado en timestamp y hash del nombre
+          const serviceId = `svc_${Date.now()}_${item.replace(/\s+/g, '_').toLowerCase()}_${index}`;
+          parsedServices.push({
+            id: serviceId,
+            name: item,
+            category: item,
+            active: freshServiceProvider.status === 'ACTIVE',
+            createdAt: new Date().toISOString(),
+            updatedAt: freshServiceProvider.updatedAt.toISOString(),
+          });
+        } else if (typeof item === 'object' && item !== null) {
+          // Ya es un objeto con ID
+          const serviceObj = item as any;
+          parsedServices.push({
+            id: serviceObj.id || `svc_${Date.now()}_${index}`,
+            name: serviceObj.name || String(item),
+            category: serviceObj.category || serviceObj.name || String(item),
+            description: serviceObj.description,
+            pricing: serviceObj.pricing,
+            duration: serviceObj.duration,
+            availability: serviceObj.availability,
+            active:
+              serviceObj.active !== undefined
+                ? serviceObj.active
+                : freshServiceProvider.status === 'ACTIVE',
+            createdAt: serviceObj.createdAt || new Date().toISOString(),
+            updatedAt: serviceObj.updatedAt || freshServiceProvider.updatedAt.toISOString(),
+          });
+        }
+      });
+
       // Crear servicios ofrecidos con estadísticas
-      services = serviceTypes.map((serviceType, index) => {
-        const stats = statsByType[serviceType] || {
+      services = parsedServices.map(serviceObj => {
+        const serviceName = serviceObj.name;
+        const stats = statsByType[serviceName] || {
           totalJobs: 0,
           completedJobs: 0,
           avgRating: 0,
@@ -131,44 +181,69 @@ export async function GET(request: NextRequest) {
         };
 
         // Parsear disponibilidad si existe
-        let availability = {
+        let availability = serviceObj.availability || {
           weekdays: true,
           weekends: false,
           emergencies: false,
         };
-        try {
-          const availJson = freshServiceProvider.availability;
-          if (availJson) {
-            availability = JSON.parse(availJson);
+
+        if (typeof availability === 'string') {
+          try {
+            availability = JSON.parse(availability);
+          } catch {
+            availability = {
+              weekdays: true,
+              weekends: false,
+              emergencies: false,
+            };
           }
-        } catch {
-          // Usar valores por defecto
+        }
+
+        // Si no hay disponibilidad en el objeto, parsear desde el provider
+        if (!serviceObj.availability) {
+          try {
+            const availJson = freshServiceProvider.availability;
+            if (availJson) {
+              availability = JSON.parse(availJson);
+            }
+          } catch {
+            // Usar valores por defecto
+          }
         }
 
         return {
-          id: `service-${index}`,
-          name: serviceType,
-          description: `${serviceType} - ${freshServiceProvider.description || 'Servicio profesional'}`,
-          category: serviceType,
-          price: freshServiceProvider.basePrice || 0,
-          active: freshServiceProvider.status === 'ACTIVE',
+          id: serviceObj.id, // ✅ Usar ID único del servicio
+          name: serviceName,
+          description:
+            serviceObj.description ||
+            `${serviceName} - ${freshServiceProvider.description || 'Servicio profesional'}`,
+          category: serviceObj.category || serviceName,
+          price: serviceObj.pricing?.amount || freshServiceProvider.basePrice || 0,
+          active:
+            serviceObj.active !== undefined
+              ? serviceObj.active
+              : freshServiceProvider.status === 'ACTIVE',
           totalJobs: stats.totalJobs,
           avgRating: stats.avgRating,
-          duration: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
+          duration:
+            serviceObj.duration?.estimated ||
+            `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
           responseTime: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
           availability,
           requirements: [],
           lastUpdated:
+            serviceObj.updatedAt ||
             freshServiceProvider.updatedAt.toISOString().split('T')[0] ||
             new Date().toISOString().split('T')[0],
         };
       });
 
-      // Si no hay tipos de servicios definidos, crear uno por defecto
+      // Si no hay tipos de servicios definidos, crear uno por defecto con ID único
       if (services.length === 0 && freshServiceProvider.serviceType) {
+        const defaultServiceId = `svc_${fullUser.serviceProvider.id}_${Date.now()}`;
         services = [
           {
-            id: 'service-default',
+            id: defaultServiceId,
             name: freshServiceProvider.serviceType,
             description: freshServiceProvider.description || 'Servicio profesional',
             category: freshServiceProvider.serviceType,
@@ -199,25 +274,75 @@ export async function GET(request: NextRequest) {
         specialties = [specialty];
       }
 
-      services = specialties.map((spec, index) => ({
-        id: `maintenance-${index}`,
-        name: spec,
-        description: `${spec} - ${mp?.description || 'Servicio de mantenimiento'}`,
-        category: spec,
-        price: mp?.hourlyRate || 0,
-        active: mp?.status === 'ACTIVE',
+      // ✅ Parsear servicios de mantenimiento como objetos con IDs únicos
+      const parsedMaintenanceServices: Array<{
+        id: string;
+        name: string;
+        category?: string;
+        description?: string;
+        pricing?: any;
+        duration?: any;
+        availability?: any;
+        active?: boolean;
+        createdAt?: string;
+        updatedAt?: string;
+      }> = [];
+
+      specialties.forEach((item, index) => {
+        if (typeof item === 'string') {
+          // Migración: convertir string a objeto con ID único
+          const serviceId = `mnt_${mp.id}_${Date.now()}_${item.replace(/\s+/g, '_').toLowerCase()}_${index}`;
+          parsedMaintenanceServices.push({
+            id: serviceId,
+            name: item,
+            category: item,
+            active: mp.status === 'ACTIVE',
+            createdAt: new Date().toISOString(),
+            updatedAt: mp.updatedAt.toISOString(),
+          });
+        } else if (typeof item === 'object' && item !== null) {
+          // Ya es un objeto con ID
+          const serviceObj = item as any;
+          parsedMaintenanceServices.push({
+            id: serviceObj.id || `mnt_${mp.id}_${Date.now()}_${index}`,
+            name: serviceObj.name || String(item),
+            category: serviceObj.category || serviceObj.name || String(item),
+            description: serviceObj.description,
+            pricing: serviceObj.pricing,
+            duration: serviceObj.duration,
+            availability: serviceObj.availability,
+            active: serviceObj.active !== undefined ? serviceObj.active : mp.status === 'ACTIVE',
+            createdAt: serviceObj.createdAt || new Date().toISOString(),
+            updatedAt: serviceObj.updatedAt || mp.updatedAt.toISOString(),
+          });
+        }
+      });
+
+      services = parsedMaintenanceServices.map(serviceObj => ({
+        id: serviceObj.id, // ✅ Usar ID único del servicio
+        name: serviceObj.name,
+        description:
+          serviceObj.description ||
+          `${serviceObj.name} - ${mp?.description || 'Servicio de mantenimiento'}`,
+        category: serviceObj.category || serviceObj.name,
+        price: serviceObj.pricing?.amount || mp?.hourlyRate || 0,
+        active: serviceObj.active !== undefined ? serviceObj.active : mp?.status === 'ACTIVE',
         totalJobs: mp?.completedJobs || 0,
         avgRating: mp?.rating || 0,
-        duration: `${mp?.responseTime || 2}-${(mp?.responseTime || 2) + 2} horas`,
+        duration:
+          serviceObj.duration?.estimated ||
+          `${mp?.responseTime || 2}-${(mp?.responseTime || 2) + 2} horas`,
         responseTime: `${mp?.responseTime || 2}-${(mp?.responseTime || 2) + 2} horas`,
-        availability: {
+        availability: serviceObj.availability || {
           weekdays: true,
           weekends: false,
           emergencies: true,
         },
         requirements: [],
         lastUpdated:
-          mp?.updatedAt.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+          serviceObj.updatedAt ||
+          mp?.updatedAt.toISOString().split('T')[0] ||
+          new Date().toISOString().split('T')[0],
       }));
     }
 
@@ -307,24 +432,45 @@ export async function POST(request: NextRequest) {
     }
 
     if (isServiceProvider(user.role) && fullUser.serviceProvider) {
-      // Obtener servicios actuales
+      // Obtener servicios actuales (pueden ser strings o objetos)
       const serviceTypesJson = fullUser.serviceProvider.serviceTypes || '[]';
-      let serviceTypes: string[] = [];
+      let serviceTypes: Array<string | any> = [];
       try {
         serviceTypes = JSON.parse(serviceTypesJson);
       } catch {
         serviceTypes = [fullUser.serviceProvider.serviceType].filter(Boolean);
       }
 
-      // Verificar si el servicio ya existe
-      if (serviceTypes.includes(name)) {
+      // ✅ Generar ID único para el nuevo servicio
+      const serviceId = `svc_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+      // Verificar si el servicio ya existe (por nombre)
+      const serviceNames = serviceTypes.map((s: any) => (typeof s === 'string' ? s : s.name));
+      if (serviceNames.includes(name)) {
         return NextResponse.json({ error: 'Este servicio ya está registrado' }, { status: 400 });
       }
 
-      // Agregar nuevo servicio
-      serviceTypes.push(name);
+      // ✅ Agregar nuevo servicio como objeto con ID único
+      const newService = {
+        id: serviceId,
+        name,
+        category,
+        description: description || '',
+        pricing: pricing || { type: 'fixed', amount: 0, currency: 'CLP' },
+        duration: pricing?.amount ? { estimated: '2-4', unit: 'hours' } : undefined,
+        availability: availability || {
+          weekdays: true,
+          weekends: false,
+          emergencies: false,
+        },
+        active: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-      // Actualizar el perfil del proveedor
+      serviceTypes.push(newService);
+
+      // Actualizar el perfil del proveedor con el nuevo servicio (con ID único)
       await db.serviceProvider.update({
         where: { id: fullUser.serviceProvider.id },
         data: {
@@ -348,6 +494,7 @@ export async function POST(request: NextRequest) {
 
       logger.info('Servicio agregado exitosamente', {
         providerId: user.id,
+        serviceId,
         serviceName: name,
         serviceCategory: category,
       });
@@ -356,15 +503,16 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Servicio creado exitosamente',
         service: {
+          id: serviceId,
           name,
           category,
           description,
         },
       });
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
-      // Para maintenance providers, usar specialties
+      // ✅ Para maintenance providers, usar specialties con IDs únicos
       const specialtiesJson = fullUser.maintenanceProvider.specialties || '[]';
-      let specialties: string[] = [];
+      let specialties: Array<string | any> = [];
       try {
         specialties = JSON.parse(specialtiesJson);
       } catch {
@@ -373,18 +521,39 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Verificar si la especialidad ya existe
-      if (specialties.includes(name)) {
+      // ✅ Generar ID único para el nuevo servicio
+      const serviceId = `mnt_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+      // Verificar si el servicio ya existe (por nombre)
+      const serviceNames = specialties.map((s: any) => (typeof s === 'string' ? s : s.name));
+      if (serviceNames.includes(name)) {
         return NextResponse.json(
           { error: 'Esta especialidad ya está registrada' },
           { status: 400 }
         );
       }
 
-      // Agregar nueva especialidad
-      specialties.push(name);
+      // ✅ Agregar nuevo servicio como objeto con ID único
+      const newService = {
+        id: serviceId,
+        name,
+        category,
+        description: description || '',
+        pricing: pricing || { type: 'fixed', amount: 0, currency: 'CLP' },
+        duration: pricing?.amount ? { estimated: '2-4', unit: 'hours' } : undefined,
+        availability: availability || {
+          weekdays: true,
+          weekends: false,
+          emergencies: false,
+        },
+        active: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-      // Actualizar el perfil del proveedor
+      specialties.push(newService);
+
+      // Actualizar el perfil del proveedor con el nuevo servicio (con ID único)
       await db.maintenanceProvider.update({
         where: { id: fullUser.maintenanceProvider.id },
         data: {
@@ -393,11 +562,22 @@ export async function POST(request: NextRequest) {
           ...(pricing?.amount && pricing.amount > (fullUser.maintenanceProvider.hourlyRate || 0)
             ? { hourlyRate: pricing.amount }
             : {}),
+          // Actualizar disponibilidad si se proporciona
+          ...(availability
+            ? {
+                availability: JSON.stringify({
+                  weekdays: availability.weekdays !== false,
+                  weekends: availability.weekends || false,
+                  emergencies: availability.emergency || false,
+                }),
+              }
+            : {}),
         },
       });
 
       logger.info('Especialidad agregada exitosamente', {
         providerId: user.id,
+        serviceId,
         specialtyName: name,
       });
 
@@ -405,6 +585,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Especialidad creada exitosamente',
         service: {
+          id: serviceId,
           name,
           category,
           description,

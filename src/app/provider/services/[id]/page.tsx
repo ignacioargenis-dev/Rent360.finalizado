@@ -125,8 +125,8 @@ export default function ServiceDetailPage() {
   const loadService = async () => {
     try {
       setIsLoading(true);
-      // Cargar datos reales desde la API
-      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceId)}`, {
+      // ✅ Cargar datos reales desde la API usando ID único
+      const response = await fetch(`/api/provider/services/${serviceId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

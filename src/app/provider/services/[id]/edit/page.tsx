@@ -147,8 +147,8 @@ export default function EditServicePage() {
     try {
       setIsLoading(true);
 
-      // ✅ Cargar datos reales desde la API
-      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceId)}`, {
+      // ✅ Cargar datos reales desde la API usando ID único
+      const response = await fetch(`/api/provider/services/${serviceId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -368,8 +368,8 @@ export default function EditServicePage() {
     setIsSubmitting(true);
 
     try {
-      // ✅ Llamar a la API real para actualizar el servicio
-      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceId)}`, {
+      // ✅ Llamar a la API real para actualizar el servicio usando ID único
+      const response = await fetch(`/api/provider/services/${serviceId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -420,7 +420,7 @@ export default function EditServicePage() {
       setSuccessMessage('Servicio actualizado exitosamente');
 
       setTimeout(() => {
-        router.push(`/provider/services/${encodeURIComponent(serviceId)}`);
+        router.push(`/provider/services/${serviceId}`);
       }, 2000);
     } catch (error) {
       logger.error('Error al actualizar servicio', {
@@ -438,7 +438,7 @@ export default function EditServicePage() {
   };
 
   const handleCancel = () => {
-    router.push(`/provider/services/${encodeURIComponent(serviceId)}`);
+    router.push(`/provider/services/${serviceId}`);
   };
 
   const formatCurrency = (amount: number) => {
