@@ -45,7 +45,9 @@ export default function ProviderServicesPage() {
 
     // Escuchar eventos de actualización de servicios
     const handleServiceUpdate = () => {
-      console.log('🔄 Evento de actualización de servicios detectado, recargando...');
+      console.log(
+        '🔄 [PROVIDER SERVICES] Evento de actualización de servicios detectado, recargando...'
+      );
       loadPageData();
     };
 
@@ -60,11 +62,15 @@ export default function ProviderServicesPage() {
 
   const loadPageData = async () => {
     try {
+      console.log('🔄 [PROVIDER SERVICES] Iniciando carga de datos...');
       setLoading(true);
       setError(null);
 
       // Cargar servicios reales desde la API - agregar timestamp para evitar caché
-      const response = await fetch(`/api/provider/services?t=${Date.now()}`, {
+      const url = `/api/provider/services?t=${Date.now()}`;
+      console.log('📡 [PROVIDER SERVICES] Llamando a API:', url);
+
+      const response = await fetch(url, {
         credentials: 'include',
         cache: 'no-store',
         headers: {
@@ -73,24 +79,52 @@ export default function ProviderServicesPage() {
         },
       });
 
+      console.log('📥 [PROVIDER SERVICES] Respuesta recibida:', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+      });
+
       if (response.ok) {
         const apiData = await response.json();
+        // ✅ Logs en consola del navegador para diagnóstico
+        console.log('📦 [PROVIDER SERVICES] Datos recibidos de API de servicios:', {
+          success: apiData.success,
+          servicesCount: apiData.services?.length || 0,
+          services: apiData.services,
+          fullResponse: apiData,
+        });
+
         if (apiData.success && apiData.services) {
-          setServices(apiData.services);
+          // ✅ Asegurar que services sea un array válido
+          const servicesArray = Array.isArray(apiData.services) ? apiData.services : [];
+
+          console.log('✅ [PROVIDER SERVICES] Servicios procesados:', {
+            count: servicesArray.length,
+            services: servicesArray,
+          });
+
+          setServices(servicesArray);
 
           // Calcular estadísticas
           const overviewData = {
-            totalServices: apiData.services.length,
-            activeServices: apiData.services.filter((s: any) => s.active).length,
-            pendingServices: apiData.services.filter((s: any) => !s.active).length,
-            totalRevenue: apiData.services.reduce(
+            totalServices: servicesArray.length,
+            activeServices: servicesArray.filter((s: any) => s.active).length,
+            pendingServices: servicesArray.filter((s: any) => !s.active).length,
+            totalRevenue: servicesArray.reduce(
               (sum: number, s: any) => sum + (s.price * s.totalJobs || 0),
               0
             ),
           };
 
+          console.log('📊 [PROVIDER SERVICES] Estadísticas calculadas:', overviewData);
           setData(overviewData);
         } else {
+          console.warn('⚠️ [PROVIDER SERVICES] API no devolvió servicios válidos:', {
+            success: apiData.success,
+            hasServices: !!apiData.services,
+            response: apiData,
+          });
           setServices([]);
           setData({
             totalServices: 0,
@@ -100,6 +134,12 @@ export default function ProviderServicesPage() {
           });
         }
       } else {
+        const errorText = await response.text();
+        console.error('❌ [PROVIDER SERVICES] Error en respuesta de API:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
         setServices([]);
         setData({
           totalServices: 0,
@@ -109,6 +149,10 @@ export default function ProviderServicesPage() {
         });
       }
     } catch (error) {
+      console.error('❌ [PROVIDER SERVICES] Error loading page data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
       });
@@ -121,6 +165,7 @@ export default function ProviderServicesPage() {
         totalRevenue: 0,
       });
     } finally {
+      console.log('✅ [PROVIDER SERVICES] Carga de datos finalizada');
       setLoading(false);
     }
   };

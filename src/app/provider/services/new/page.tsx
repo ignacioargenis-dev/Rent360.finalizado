@@ -296,9 +296,16 @@ export default function NewServicePage() {
         pricing: serviceData.pricing,
       });
 
+      console.log('✅ [PROVIDER SERVICES NEW] Servicio creado exitosamente:', {
+        name: serviceData.name,
+        category: serviceData.category,
+        response: data,
+      });
+
       setSuccessMessage('Servicio creado exitosamente');
 
       // Disparar evento para que la página de servicios se actualice si está abierta
+      console.log('📢 [PROVIDER SERVICES NEW] Disparando evento r360-service-created');
       window.dispatchEvent(new Event('r360-service-created'));
 
       setTimeout(() => {

@@ -74,6 +74,17 @@ export async function GET(request: NextRequest) {
         providerId: fullUser.serviceProvider.id,
         serviceTypesCount: serviceTypes.length,
         serviceTypes,
+        serviceTypesJson,
+        rawServiceTypes: freshServiceProvider.serviceTypes,
+      });
+
+      // ✅ Log detallado para diagnóstico
+      console.log('🔍 [API PROVIDER SERVICES] ServiceProvider encontrado:', {
+        providerId: fullUser.serviceProvider.id,
+        serviceTypesJson,
+        parsedServiceTypes: serviceTypes,
+        serviceTypesCount: serviceTypes.length,
+        rawServiceTypes: freshServiceProvider.serviceTypes,
       });
 
       // Obtener estadísticas de trabajos por tipo de servicio
@@ -126,7 +137,7 @@ export async function GET(request: NextRequest) {
           emergencies: false,
         };
         try {
-          const availJson = fullUser.serviceProvider?.availability;
+          const availJson = freshServiceProvider.availability;
           if (availJson) {
             availability = JSON.parse(availJson);
           }
@@ -214,6 +225,19 @@ export async function GET(request: NextRequest) {
       providerId: user.id,
       role: user.role,
       count: services.length,
+    });
+
+    // ✅ Log detallado para diagnóstico en consola del servidor
+    console.log('📊 [API PROVIDER SERVICES] Servicios finales a enviar:', {
+      providerId: user.id,
+      role: user.role,
+      servicesCount: services.length,
+      services: services.map(s => ({
+        id: s.id,
+        name: s.name,
+        active: s.active,
+        price: s.price,
+      })),
     });
 
     const response = NextResponse.json({

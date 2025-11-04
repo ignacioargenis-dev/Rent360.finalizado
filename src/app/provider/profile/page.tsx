@@ -151,91 +151,151 @@ export default function ProviderProfilePage() {
 
   const loadProfile = async () => {
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsLoading(true);
+      setErrorMessage('');
 
-      // Mock profile data
-      const mockProfile: ProviderProfile = {
+      // ✅ Cargar perfil real desde la API
+      const profileResponse = await fetch('/api/provider/profile', {
+        credentials: 'include',
+      });
+
+      if (!profileResponse.ok) {
+        throw new Error('Error al cargar el perfil del proveedor');
+      }
+
+      const profileData = await profileResponse.json();
+
+      if (!profileData.success || !profileData.profile) {
+        throw new Error('No se encontró el perfil del proveedor');
+      }
+
+      const apiProfile = profileData.profile;
+
+      // ✅ Cargar estadísticas reales
+      const statsResponse = await fetch('/api/provider/stats', {
+        credentials: 'include',
+      });
+
+      let stats = {
+        totalJobs: 0,
+        completedJobs: 0,
+        activeJobs: 0,
+        averageRating: 0,
+        totalReviews: 0,
+        satisfactionRate: 0,
+        repeatClients: 0,
+        averageResponseTime: 0,
+      };
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        if (statsData.success && statsData.data) {
+          stats = {
+            totalJobs: statsData.data.completedJobs + statsData.data.activeJobs || 0,
+            completedJobs: statsData.data.completedJobs || 0,
+            activeJobs: statsData.data.activeJobs || 0,
+            averageRating: statsData.data.averageRating || 0,
+            totalReviews: statsData.data.totalRatings || 0,
+            satisfactionRate: statsData.data.averageRating
+              ? (statsData.data.averageRating / 5) * 100
+              : 0,
+            repeatClients: 0, // TODO: Calcular desde la BD
+            averageResponseTime: apiProfile.responseTime
+              ? parseFloat(apiProfile.responseTime.split('-')[0])
+              : 0,
+          };
+        }
+      }
+
+      // Parsear servicios
+      const serviceTypes = apiProfile.serviceTypes || apiProfile.specialties || [];
+      const categories = Array.isArray(serviceTypes) ? serviceTypes : [];
+      const specialties = Array.isArray(serviceTypes) ? serviceTypes : [];
+
+      // Parsear disponibilidad
+      let availability = {
+        weekdays: true,
+        weekends: false,
+        emergencies: false,
+      };
+      if (apiProfile.availability) {
+        try {
+          availability =
+            typeof apiProfile.availability === 'string'
+              ? JSON.parse(apiProfile.availability)
+              : apiProfile.availability;
+        } catch {
+          // Usar valores por defecto
+        }
+      }
+
+      // Mapear datos de la API al formato del componente
+      const realProfile: ProviderProfile = {
         basicInfo: {
-          companyName: 'Servicios Integrales SPA',
-          contactName: 'Carlos Mendoza',
-          email: 'contacto@serviciosintegrales.cl',
-          phone: '+569 1234 5678',
-          mobile: '+569 8765 4321',
-          website: 'https://serviciosintegrales.cl',
-          logo: '/api/placeholder/200/100',
-          description:
-            'Empresa líder en servicios de mantenimiento y reparación para propiedades residenciales y comerciales. Contamos con más de 15 años de experiencia y un equipo altamente calificado.',
+          companyName: apiProfile.companyName || '',
+          contactName: apiProfile.contactName || '',
+          email: apiProfile.email || '',
+          phone: apiProfile.phone || '',
+          mobile: apiProfile.phone || '',
+          website: apiProfile.website || '',
+          logo: '',
+          description: apiProfile.description || '',
         },
         business: {
           businessType: 'SPA',
-          taxId: '76.123.456-7',
-          registrationNumber: '12345678-9',
-          foundedYear: 2008,
-          employeeCount: '11-50',
+          taxId: apiProfile.taxId || '',
+          registrationNumber: '',
+          foundedYear: new Date().getFullYear() - 5, // Aproximación
+          employeeCount: '1-10',
         },
         address: {
-          street: 'Av. Providencia 1234, Oficina 567',
-          city: 'Santiago',
-          region: 'Metropolitana',
-          postalCode: '7500000',
-          latitude: -33.4489,
-          longitude: -70.6693,
+          street: apiProfile.address || '',
+          city: apiProfile.city || '',
+          region: apiProfile.region || '',
+          postalCode: '',
         },
         services: {
-          categories: ['Electricidad', 'Fontanería', 'Mantenimiento General', 'Pintura'],
-          specialties: [
-            'Instalaciones Eléctricas',
-            'Reparaciones de Emergencia',
-            'Mantenimiento Preventivo',
-            'Renovaciones Menores',
-          ],
-          certifications: [
-            'Certificación SENCE',
-            'ISO 9001:2015',
-            'Certificación de Seguridad Eléctrica',
-          ],
+          categories,
+          specialties,
+          certifications: [],
           insurance: {
-            hasInsurance: true,
-            provider: 'Seguros XYZ',
-            coverage: 'Responsabilidad Civil hasta $100.000.000',
-            expiryDate: '2025-06-15',
+            hasInsurance: false,
+            provider: '',
+            coverage: '',
+            expiryDate: '',
           },
           licensing: {
-            licenseNumber: 'LIC-2024-00123',
-            issuingAuthority: 'Municipalidad de Santiago',
-            expiryDate: '2025-12-31',
+            licenseNumber: '',
+            issuingAuthority: '',
+            expiryDate: '',
           },
         },
         operational: {
           workingHours: {
-            monday: { open: '08:00', close: '18:00', closed: false },
-            tuesday: { open: '08:00', close: '18:00', closed: false },
-            wednesday: { open: '08:00', close: '18:00', closed: false },
-            thursday: { open: '08:00', close: '18:00', closed: false },
-            friday: { open: '08:00', close: '17:00', closed: false },
-            saturday: { open: '09:00', close: '14:00', closed: false },
-            sunday: { open: '00:00', close: '00:00', closed: true },
+            monday: { open: '08:00', close: '18:00', closed: !availability.weekdays },
+            tuesday: { open: '08:00', close: '18:00', closed: !availability.weekdays },
+            wednesday: { open: '08:00', close: '18:00', closed: !availability.weekdays },
+            thursday: { open: '08:00', close: '18:00', closed: !availability.weekdays },
+            friday: { open: '08:00', close: '17:00', closed: !availability.weekdays },
+            saturday: { open: '09:00', close: '14:00', closed: !availability.weekends },
+            sunday: { open: '00:00', close: '00:00', closed: !availability.weekends },
           },
-          serviceAreas: ['Metropolitana', 'Valparaíso', "O'Higgins"],
-          emergencyService: true,
-          responseTime: '2-4 horas',
+          serviceAreas: apiProfile.region ? [apiProfile.region] : [],
+          emergencyService: availability.emergencies || false,
+          responseTime: apiProfile.responseTime || '2-4 horas',
         },
-        stats: {
-          totalJobs: 1247,
-          completedJobs: 1205,
-          activeJobs: 42,
-          averageRating: 4.7,
-          totalReviews: 856,
-          satisfactionRate: 94.2,
-          repeatClients: 234,
-          averageResponseTime: 2.3,
-        },
+        stats,
       };
 
-      setProfile(mockProfile);
+      setProfile(realProfile);
+      setSuccessMessage('Perfil cargado exitosamente');
     } catch (error) {
       logger.error('Error al cargar perfil del proveedor', { error });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al cargar el perfil. Por favor, inténtalo de nuevo.'
+      );
     } finally {
       setIsLoading(false);
     }
