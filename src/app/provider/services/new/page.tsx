@@ -258,8 +258,37 @@ export default function NewServicePage() {
     setIsSubmitting(true);
 
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Llamar a la API real para crear el servicio
+      const response = await fetch('/api/provider/services', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: serviceData.name,
+          category: serviceData.category,
+          description: serviceData.description || serviceData.shortDescription,
+          pricing: {
+            type: serviceData.pricing.type,
+            amount: serviceData.pricing.amount,
+            currency: serviceData.pricing.currency,
+            minimumCharge: serviceData.pricing.minimumCharge,
+          },
+          availability: {
+            weekdays: serviceData.availability.regions.length > 0,
+            weekends: serviceData.availability.regions.length > 0,
+            emergency: serviceData.availability.emergency,
+            regions: serviceData.availability.regions,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Error al crear el servicio');
+      }
 
       logger.info('Servicio creado exitosamente', {
         name: serviceData.name,
@@ -270,11 +299,16 @@ export default function NewServicePage() {
       setSuccessMessage('Servicio creado exitosamente');
 
       setTimeout(() => {
-        router.push('/provider/services');
-      }, 2000);
+        // Redirigir a la página de servicios - forzar recarga completa para mostrar datos actualizados
+        window.location.href = '/provider/services';
+      }, 1500);
     } catch (error) {
       logger.error('Error al crear servicio', { error });
-      setErrorMessage('Error al crear el servicio. Por favor intente nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al crear el servicio. Por favor intente nuevamente.'
+      );
     } finally {
       setIsSubmitting(false);
     }
