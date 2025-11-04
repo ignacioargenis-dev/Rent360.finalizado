@@ -24,7 +24,6 @@ import {
   Save,
   User,
   Settings,
-  Zap,
   Info,
   Lock,
   Camera,
@@ -141,14 +140,27 @@ export default function ProviderSettingsPage() {
             taxId: profile.taxId || '',
           });
 
-          // Actualizar servicios
-          const serviceTypes = profile.serviceTypes || profile.specialties || [];
-          const availableServices = serviceTypes.map((type: string, index: number) => ({
-            id: `service-${index}`,
-            name: type,
-            active: profile.status === 'ACTIVE',
-            price: profile.basePrice || profile.hourlyRate || 0,
-          }));
+          // ✅ Actualizar servicios - manejar tanto objetos con IDs como strings legacy
+          const serviceTypesRaw = profile.serviceTypes || profile.specialties || [];
+          const availableServices = serviceTypesRaw.map((item: any, index: number) => {
+            // Si es un objeto con ID, usarlo directamente
+            if (typeof item === 'object' && item !== null && item.id) {
+              return {
+                id: item.id,
+                name: item.name || String(item),
+                active: item.active !== undefined ? item.active : profile.status === 'ACTIVE',
+                price: item.pricing?.amount || profile.basePrice || profile.hourlyRate || 0,
+              };
+            }
+            // Si es un string (legacy), generar ID temporal
+            const legacyId = `svc_legacy_${index}_${String(item).replace(/\s+/g, '_').toLowerCase()}`;
+            return {
+              id: legacyId,
+              name: String(item),
+              active: profile.status === 'ACTIVE',
+              price: profile.basePrice || profile.hourlyRate || 0,
+            };
+          });
 
           setServicesData({
             availableServices,
@@ -247,6 +259,31 @@ export default function ProviderSettingsPage() {
             logger.error('Error cargando datos de seguridad:', { error });
           }
 
+          // ✅ Cargar preferencias de notificaciones desde bio del usuario
+          try {
+            const userResponseForNotifications = await fetch('/api/auth/me', {
+              credentials: 'include',
+            });
+            if (userResponseForNotifications.ok) {
+              const userDataForNotifications = await userResponseForNotifications.json();
+              if (userDataForNotifications.user?.bio) {
+                try {
+                  const notificationPrefs = JSON.parse(userDataForNotifications.user.bio);
+                  if (typeof notificationPrefs === 'object' && notificationPrefs !== null) {
+                    setNotificationsData(prev => ({
+                      ...prev,
+                      ...notificationPrefs,
+                    }));
+                  }
+                } catch {
+                  // Si no es JSON válido, usar valores por defecto
+                }
+              }
+            }
+          } catch (error) {
+            logger.error('Error cargando preferencias de notificaciones:', { error });
+          }
+
           // Calcular estadísticas
           const statsResponse = await fetch('/api/provider/stats', {
             credentials: 'include',
@@ -260,12 +297,6 @@ export default function ProviderSettingsPage() {
           }
 
           setData({
-            overview: {
-              activeConfigs: 0, // Calcular según configuraciones
-              configuredServices: availableServices.length,
-              activeNotifications: Object.values(notificationsData).filter(v => v === true).length,
-              integrations: 0,
-            },
             stats,
           });
         }
@@ -274,12 +305,7 @@ export default function ProviderSettingsPage() {
       // Si no hay perfil, usar valores por defecto
       if (!data) {
         setData({
-          overview: {
-            activeConfigs: 0,
-            configuredServices: 0,
-            activeNotifications: 0,
-            integrations: 0,
-          },
+          stats: {},
         });
       }
     } catch (error) {
@@ -288,12 +314,7 @@ export default function ProviderSettingsPage() {
       });
       setError('Error al cargar los datos');
       setData({
-        overview: {
-          activeConfigs: 0,
-          configuredServices: 0,
-          activeNotifications: 0,
-          integrations: 0,
-        },
+        stats: {},
       });
     } finally {
       setLoading(false);
@@ -304,6 +325,7 @@ export default function ProviderSettingsPage() {
     try {
       setUploadingDocument(true);
       setErrorMessage('');
+      setSuccessMessage(''); // Limpiar mensaje previo
 
       let response: Response;
 
@@ -325,8 +347,77 @@ export default function ProviderSettingsPage() {
           }),
         });
       } else if (section === 'servicios') {
-        // Guardar configuración de servicios
-        const serviceTypes = servicesData.availableServices.filter(s => s.active).map(s => s.name);
+        // ✅ Guardar configuración de servicios preservando IDs únicos
+        // Obtener servicios actuales del perfil para preservar IDs
+        const profileResponse = await fetch('/api/provider/profile', {
+          credentials: 'include',
+        });
+
+        let existingServices: Array<any> = [];
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (profileData.success && profileData.profile) {
+            const rawServiceTypes =
+              profileData.profile.serviceTypes || profileData.profile.specialties || [];
+            // Parsear servicios existentes (pueden ser objetos o strings)
+            existingServices = rawServiceTypes.map((item: any) => {
+              if (typeof item === 'object' && item !== null && item.id) {
+                return item;
+              }
+              // Si es string, crear objeto con ID temporal
+              return {
+                id: `svc_legacy_${String(item).replace(/\s+/g, '_').toLowerCase()}`,
+                name: String(item),
+                active: true,
+              };
+            });
+          }
+        }
+
+        // ✅ Actualizar servicios preservando IDs únicos
+        const updatedServices = servicesData.availableServices.map(currentService => {
+          // Buscar servicio existente por ID o nombre
+          const existing = existingServices.find(
+            (s: any) => s.id === currentService.id || s.name === currentService.name
+          );
+
+          if (existing) {
+            // Preservar ID y datos existentes, actualizar solo lo necesario
+            return {
+              id: existing.id,
+              name: currentService.name,
+              active: currentService.active,
+              pricing: existing.pricing || {
+                type: 'fixed',
+                amount: currentService.price,
+                currency: 'CLP',
+              },
+              ...(existing.pricing && {
+                pricing: { ...existing.pricing, amount: currentService.price },
+              }),
+            };
+          }
+
+          // Si no existe, crear nuevo servicio con ID único
+          return {
+            id: `svc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            name: currentService.name,
+            active: currentService.active,
+            pricing: {
+              type: 'fixed',
+              amount: currentService.price,
+              currency: 'CLP',
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+        });
+
+        // Calcular precio base (máximo de los servicios activos)
+        const activeServicesPrices = updatedServices
+          .filter(s => s.active)
+          .map(s => s.pricing?.amount || 0);
+        const basePrice = activeServicesPrices.length > 0 ? Math.max(...activeServicesPrices) : 0;
 
         response = await fetch('/api/provider/profile', {
           method: 'PUT',
@@ -335,8 +426,10 @@ export default function ProviderSettingsPage() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            serviceTypes,
-            basePrice: servicesData.availableServices[0]?.price || 0,
+            serviceTypes: updatedServices.map(s => s.name), // Enviar nombres para compatibilidad
+            // ✅ También enviar el array completo de servicios con IDs para preservar estructura
+            services: updatedServices,
+            basePrice,
             responseTime: servicesData.responseTime,
             availability: {
               weekdays: true,
@@ -345,8 +438,55 @@ export default function ProviderSettingsPage() {
             },
           }),
         });
+      } else if (section === 'notificaciones') {
+        // ✅ Guardar preferencias de notificaciones
+        // Guardar en el campo bio del usuario como JSON (similar a runner settings)
+        const notificationPreferences = {
+          newJobs: notificationsData.newJobs,
+          jobUpdates: notificationsData.jobUpdates,
+          payments: notificationsData.payments,
+          reviews: notificationsData.reviews,
+          marketing: notificationsData.marketing,
+          emailNotifications: notificationsData.emailNotifications,
+          smsNotifications: notificationsData.smsNotifications,
+          pushNotifications: notificationsData.pushNotifications,
+        };
+
+        response = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            description: JSON.stringify(notificationPreferences),
+          }),
+        });
+      } else if (section === 'seguridad') {
+        // ✅ Guardar configuración de seguridad
+        // Por ahora solo guardamos en el perfil del usuario
+        // La autenticación de dos factores y otros settings avanzados
+        // se implementarían en endpoints específicos en el futuro
+        response = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: profileData.contactName,
+            phone: profileData.phone,
+          }),
+        });
+      } else if (section === 'documentos') {
+        // ✅ Los documentos se suben individualmente, no se guardan en batch desde aquí
+        // Esta función solo notifica que los documentos están siendo gestionados
+        // La subida real se hace en handleDocumentUpload
+        setSuccessMessage('Los documentos se gestionan individualmente al subirlos');
+        setTimeout(() => setSuccessMessage(''), 3000);
+        return; // No hacer llamada API, solo mostrar mensaje
       } else {
-        // Otras secciones (notificaciones, seguridad) - usar API de usuario
+        // Fallback para otras secciones
         response = await fetch('/api/user/profile', {
           method: 'PUT',
           headers: {
@@ -607,53 +747,6 @@ export default function ProviderSettingsPage() {
           </Card>
         )}
 
-        {/* Header con estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Configuraciones Activas</CardTitle>
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data?.overview.activeConfigs || 18}</div>
-              <p className="text-xs text-muted-foreground">+2 desde el mes pasado</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Servicios Configurados</CardTitle>
-              <Wrench className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data?.overview.configuredServices || 12}</div>
-              <p className="text-xs text-muted-foreground">+1 desde el mes pasado</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Notificaciones Activas</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data?.overview.activeNotifications || 6}</div>
-              <p className="text-xs text-muted-foreground">+1 desde el mes pasado</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Integraciones</CardTitle>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data?.overview.integrations || 3}</div>
-              <p className="text-xs text-muted-foreground">+0 desde el mes pasado</p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Configuración por pestañas */}
         <Tabs defaultValue="profile" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
@@ -742,9 +835,18 @@ export default function ProviderSettingsPage() {
                     onChange={e => handleInputChange('profile', 'website', e.target.value)}
                   />
                 </div>
-                <Button onClick={() => handleSaveSettings('perfil')}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Cambios
+                <Button onClick={() => handleSaveSettings('perfil')} disabled={uploadingDocument}>
+                  {uploadingDocument ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Cambios
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -819,9 +921,21 @@ export default function ProviderSettingsPage() {
                   </div>
                 </div>
 
-                <Button onClick={() => handleSaveSettings('servicios')}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Servicios
+                <Button
+                  onClick={() => handleSaveSettings('servicios')}
+                  disabled={uploadingDocument}
+                >
+                  {uploadingDocument ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Servicios
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -1148,9 +1262,21 @@ export default function ProviderSettingsPage() {
                   </div>
                 </div>
 
-                <Button onClick={() => handleSaveSettings('notificaciones')}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Preferencias
+                <Button
+                  onClick={() => handleSaveSettings('notificaciones')}
+                  disabled={uploadingDocument}
+                >
+                  {uploadingDocument ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Preferencias
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -1247,9 +1373,21 @@ export default function ProviderSettingsPage() {
                   </div>
                 </div>
 
-                <Button onClick={() => handleSaveSettings('seguridad')}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Configuración de Seguridad
+                <Button
+                  onClick={() => handleSaveSettings('seguridad')}
+                  disabled={uploadingDocument}
+                >
+                  {uploadingDocument ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Configuración de Seguridad
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

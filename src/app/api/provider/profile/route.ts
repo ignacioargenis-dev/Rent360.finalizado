@@ -244,8 +244,75 @@ export async function PUT(request: NextRequest) {
       if (basePrice !== undefined) {
         updateData.basePrice = basePrice;
       }
+      // ✅ Manejar servicios: puede venir como array de nombres o como array de objetos con IDs
       if (serviceTypes && Array.isArray(serviceTypes)) {
-        updateData.serviceTypes = JSON.stringify(serviceTypes);
+        // Si viene con objetos completos (services), usar esos
+        const services = (body as any).services;
+        if (
+          services &&
+          Array.isArray(services) &&
+          services.length > 0 &&
+          typeof services[0] === 'object'
+        ) {
+          // Preservar estructura completa con IDs únicos
+          updateData.serviceTypes = JSON.stringify(services);
+        } else {
+          // Si viene solo como array de nombres, obtener servicios actuales y actualizar
+          const currentServiceTypesJson = fullUser.serviceProvider.serviceTypes || '[]';
+          let currentServices: Array<any> = [];
+          try {
+            currentServices = JSON.parse(currentServiceTypesJson);
+          } catch {
+            // Si no es JSON válido, crear array desde serviceTypes
+            currentServices = serviceTypes.map((name: string, index: number) => ({
+              id: `svc_${user.id}_${Date.now()}_${index}`,
+              name,
+              active: true,
+              pricing: { type: 'fixed', amount: basePrice || 0, currency: 'CLP' },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }));
+          }
+
+          // Actualizar servicios existentes o crear nuevos
+          const updatedServices = serviceTypes.map((name: string) => {
+            const existing = currentServices.find(
+              (s: any) => (typeof s === 'object' && s !== null && s.name === name) || s === name
+            );
+
+            if (existing) {
+              // Preservar ID y datos existentes
+              if (typeof existing === 'object' && existing !== null && existing.id) {
+                return {
+                  ...existing,
+                  name,
+                  updatedAt: new Date().toISOString(),
+                };
+              }
+              // Si es string, convertirlo a objeto
+              return {
+                id: `svc_${user.id}_${Date.now()}_${name.replace(/\s+/g, '_').toLowerCase()}`,
+                name,
+                active: true,
+                pricing: { type: 'fixed', amount: basePrice || 0, currency: 'CLP' },
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+            }
+
+            // Crear nuevo servicio
+            return {
+              id: `svc_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+              name,
+              active: true,
+              pricing: { type: 'fixed', amount: basePrice || 0, currency: 'CLP' },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+          });
+
+          updateData.serviceTypes = JSON.stringify(updatedServices);
+        }
       }
       if (availability) {
         updateData.availability = JSON.stringify(availability);
@@ -286,8 +353,75 @@ export async function PUT(request: NextRequest) {
       if (hourlyRate !== undefined) {
         updateData.hourlyRate = hourlyRate;
       }
+      // ✅ Manejar especialidades: puede venir como array de nombres o como array de objetos con IDs
       if (serviceTypes && Array.isArray(serviceTypes)) {
-        updateData.specialties = JSON.stringify(serviceTypes);
+        // Si viene con objetos completos (services), usar esos
+        const services = (body as any).services;
+        if (
+          services &&
+          Array.isArray(services) &&
+          services.length > 0 &&
+          typeof services[0] === 'object'
+        ) {
+          // Preservar estructura completa con IDs únicos
+          updateData.specialties = JSON.stringify(services);
+        } else {
+          // Si viene solo como array de nombres, obtener servicios actuales y actualizar
+          const currentSpecialtiesJson = fullUser.maintenanceProvider?.specialties || '[]';
+          let currentSpecialties: Array<any> = [];
+          try {
+            currentSpecialties = JSON.parse(currentSpecialtiesJson);
+          } catch {
+            // Si no es JSON válido, crear array desde serviceTypes
+            currentSpecialties = serviceTypes.map((name: string, index: number) => ({
+              id: `mnt_${fullUser.maintenanceProvider?.id || user.id}_${Date.now()}_${index}`,
+              name,
+              active: true,
+              pricing: { type: 'fixed', amount: hourlyRate || 0, currency: 'CLP' },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }));
+          }
+
+          // Actualizar servicios existentes o crear nuevos
+          const updatedSpecialties = serviceTypes.map((name: string) => {
+            const existing = currentSpecialties.find(
+              (s: any) => (typeof s === 'object' && s !== null && s.name === name) || s === name
+            );
+
+            if (existing) {
+              // Preservar ID y datos existentes
+              if (typeof existing === 'object' && existing !== null && existing.id) {
+                return {
+                  ...existing,
+                  name,
+                  updatedAt: new Date().toISOString(),
+                };
+              }
+              // Si es string, convertirlo a objeto
+              return {
+                id: `mnt_${fullUser.maintenanceProvider?.id || user.id}_${Date.now()}_${name.replace(/\s+/g, '_').toLowerCase()}`,
+                name,
+                active: true,
+                pricing: { type: 'fixed', amount: hourlyRate || 0, currency: 'CLP' },
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+            }
+
+            // Crear nuevo servicio
+            return {
+              id: `mnt_${fullUser.maintenanceProvider?.id || user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+              name,
+              active: true,
+              pricing: { type: 'fixed', amount: hourlyRate || 0, currency: 'CLP' },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+          });
+
+          updateData.specialties = JSON.stringify(updatedSpecialties);
+        }
       }
       if (availability) {
         updateData.availability = JSON.stringify(availability);
