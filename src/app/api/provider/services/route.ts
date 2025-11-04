@@ -40,15 +40,41 @@ export async function GET(request: NextRequest) {
     let services: any[] = [];
 
     if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+      // ✅ CRÍTICO: Recargar el ServiceProvider desde la BD para obtener datos actualizados
+      // Esto evita problemas de caché en Prisma
+      const freshServiceProvider = await db.serviceProvider.findUnique({
+        where: { id: fullUser.serviceProvider.id },
+        select: {
+          serviceTypes: true,
+          serviceType: true,
+          basePrice: true,
+          status: true,
+          description: true,
+          responseTime: true,
+          availability: true,
+          updatedAt: true,
+        },
+      });
+
+      if (!freshServiceProvider) {
+        return NextResponse.json({ error: 'Service Provider no encontrado.' }, { status: 404 });
+      }
+
       // Obtener tipos de servicios ofrecidos desde ServiceProvider
-      const serviceTypesJson = fullUser.serviceProvider.serviceTypes || '[]';
+      const serviceTypesJson = freshServiceProvider.serviceTypes || '[]';
       let serviceTypes: string[] = [];
       try {
         serviceTypes = JSON.parse(serviceTypesJson);
       } catch {
         // Si no es JSON válido, usar serviceType como único servicio
-        serviceTypes = [fullUser.serviceProvider.serviceType].filter(Boolean);
+        serviceTypes = [freshServiceProvider.serviceType].filter(Boolean);
       }
+
+      logger.info('Servicios obtenidos para SERVICE_PROVIDER', {
+        providerId: fullUser.serviceProvider.id,
+        serviceTypesCount: serviceTypes.length,
+        serviceTypes,
+      });
 
       // Obtener estadísticas de trabajos por tipo de servicio
       const serviceJobs = await db.serviceJob.findMany({
@@ -108,45 +134,44 @@ export async function GET(request: NextRequest) {
           // Usar valores por defecto
         }
 
-        const sp = fullUser.serviceProvider;
         return {
           id: `service-${index}`,
           name: serviceType,
-          description: `${serviceType} - ${sp?.description || 'Servicio profesional'}`,
+          description: `${serviceType} - ${freshServiceProvider.description || 'Servicio profesional'}`,
           category: serviceType,
-          price: sp?.basePrice || 0,
-          active: sp?.status === 'ACTIVE',
+          price: freshServiceProvider.basePrice || 0,
+          active: freshServiceProvider.status === 'ACTIVE',
           totalJobs: stats.totalJobs,
           avgRating: stats.avgRating,
-          responseTime: `${sp?.responseTime || 2}-${(sp?.responseTime || 2) + 2} horas`,
+          responseTime: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
           availability,
           requirements: [],
           lastUpdated:
-            sp?.updatedAt.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+            freshServiceProvider.updatedAt.toISOString().split('T')[0] ||
+            new Date().toISOString().split('T')[0],
         };
       });
 
       // Si no hay tipos de servicios definidos, crear uno por defecto
-      if (services.length === 0 && fullUser.serviceProvider?.serviceType) {
-        const sp = fullUser.serviceProvider;
+      if (services.length === 0 && freshServiceProvider.serviceType) {
         services = [
           {
             id: 'service-default',
-            name: sp.serviceType,
-            description: sp.description || 'Servicio profesional',
-            category: sp.serviceType,
-            price: sp.basePrice || 0,
-            active: sp.status === 'ACTIVE',
+            name: freshServiceProvider.serviceType,
+            description: freshServiceProvider.description || 'Servicio profesional',
+            category: freshServiceProvider.serviceType,
+            price: freshServiceProvider.basePrice || 0,
+            active: freshServiceProvider.status === 'ACTIVE',
             totalJobs: 0,
             avgRating: 0,
-            responseTime: `${sp.responseTime || 2}-${(sp.responseTime || 2) + 2} horas`,
+            responseTime: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
             availability: {
               weekdays: true,
               weekends: false,
               emergencies: false,
             },
             requirements: [],
-            lastUpdated: sp.updatedAt.toISOString().split('T')[0],
+            lastUpdated: freshServiceProvider.updatedAt.toISOString().split('T')[0],
           },
         ];
       }

@@ -42,6 +42,20 @@ export default function ProviderServicesPage() {
 
   useEffect(() => {
     loadPageData();
+
+    // Escuchar eventos de actualización de servicios
+    const handleServiceUpdate = () => {
+      console.log('🔄 Evento de actualización de servicios detectado, recargando...');
+      loadPageData();
+    };
+
+    window.addEventListener('r360-service-created', handleServiceUpdate);
+    window.addEventListener('focus', handleServiceUpdate); // Recargar al volver a la pestaña
+
+    return () => {
+      window.removeEventListener('r360-service-created', handleServiceUpdate);
+      window.removeEventListener('focus', handleServiceUpdate);
+    };
   }, []);
 
   const loadPageData = async () => {
@@ -49,9 +63,14 @@ export default function ProviderServicesPage() {
       setLoading(true);
       setError(null);
 
-      // Cargar servicios reales desde la API
-      const response = await fetch('/api/provider/services', {
+      // Cargar servicios reales desde la API - agregar timestamp para evitar caché
+      const response = await fetch(`/api/provider/services?t=${Date.now()}`, {
         credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
       });
 
       if (response.ok) {

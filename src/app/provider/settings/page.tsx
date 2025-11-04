@@ -48,27 +48,22 @@ export default function ProviderSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  // ✅ Estados inicializados vacíos - se cargarán desde la API
   const [profileData, setProfileData] = useState({
-    companyName: 'Servicios Profesionales SpA',
-    contactName: 'María González',
-    email: 'contacto@serviciosprofesionales.cl',
-    phone: '+56 9 8765 4321',
-    address: 'Providencia 1234, Santiago',
-    description:
-      'Empresa especializada en mantenimiento de propiedades residenciales y comerciales.',
-    website: 'www.serviciosprofesionales.cl',
-    taxId: '76.543.210-8',
+    companyName: '',
+    contactName: '',
+    email: '',
+    phone: '',
+    address: '',
+    description: '',
+    website: '',
+    taxId: '',
   });
   const [servicesData, setServicesData] = useState({
-    availableServices: [
-      { id: '1', name: 'Mantenimiento Eléctrico', active: true, price: 25000 },
-      { id: '2', name: 'Reparaciones Plomería', active: true, price: 30000 },
-      { id: '3', name: 'Pintura y Acabados', active: false, price: 45000 },
-      { id: '4', name: 'Jardinería', active: true, price: 35000 },
-    ],
+    availableServices: [] as Array<{ id: string; name: string; active: boolean; price: number }>,
     responseTime: '2-4 horas',
-    emergencyService: true,
-    weekendService: true,
+    emergencyService: false,
+    weekendService: false,
   });
   const [notificationsData, setNotificationsData] = useState({
     newJobs: true,
@@ -86,40 +81,20 @@ export default function ProviderSettingsPage() {
   const [securityData, setSecurityData] = useState({
     twoFactorEnabled: false,
     sessionTimeout: 30,
-    passwordLastChanged: '2024-01-15',
+    passwordLastChanged: '',
     loginAlerts: true,
     deviceTracking: true,
   });
   const [documentsData, setDocumentsData] = useState({
-    documents: [
-      {
-        id: '1',
-        name: 'Certificado de Empresa',
-        type: 'certificate',
-        status: 'approved',
-        uploadDate: '2024-01-15',
-        expiryDate: '2025-01-15',
-        fileUrl: '/api/documents/certificado-empresa.pdf',
-      },
-      {
-        id: '2',
-        name: 'Licencia Municipal',
-        type: 'license',
-        status: 'pending',
-        uploadDate: '2024-01-20',
-        expiryDate: '2025-01-20',
-        fileUrl: '/api/documents/licencia-municipal.pdf',
-      },
-      {
-        id: '3',
-        name: 'Seguro de Responsabilidad Civil',
-        type: 'insurance',
-        status: 'approved',
-        uploadDate: '2024-01-10',
-        expiryDate: '2024-12-10',
-        fileUrl: '/api/documents/seguro-rc.pdf',
-      },
-    ],
+    documents: [] as Array<{
+      id: string;
+      name: string;
+      type: string;
+      status: string;
+      uploadDate: string;
+      expiryDate?: string;
+      fileUrl: string;
+    }>,
   });
 
   // Estados para cambiar contraseña
@@ -181,6 +156,96 @@ export default function ProviderSettingsPage() {
             emergencyService: profile.availability?.emergencies || false,
             weekendService: profile.availability?.weekends || false,
           });
+
+          // ✅ Cargar documentos reales desde el perfil
+          if (profile.documents) {
+            const docs: Array<{
+              id: string;
+              name: string;
+              type: string;
+              status: string;
+              uploadDate: string;
+              expiryDate?: string;
+              fileUrl: string;
+            }> = [];
+            const uploadDate: string = (new Date().toISOString().split('T')[0] ?? '') as string; // Fecha actual como aproximación - siempre string
+
+            const businessCert = profile.documents.businessCertificate;
+            const idFront = profile.documents.idFront;
+            const idBack = profile.documents.idBack;
+            const criminalRec = profile.documents.criminalRecord;
+
+            if (businessCert && typeof businessCert === 'string') {
+              docs.push({
+                id: 'business-certificate',
+                name: 'Certificado de Empresa',
+                type: 'certificate',
+                status: profile.documents.isVerified ? 'approved' : 'pending',
+                uploadDate: uploadDate,
+                fileUrl: businessCert,
+              });
+            }
+            if (idFront && typeof idFront === 'string') {
+              docs.push({
+                id: 'id-front',
+                name: 'Cédula de Identidad (Frente)',
+                type: 'id',
+                status: profile.documents.isVerified ? 'approved' : 'pending',
+                uploadDate: uploadDate,
+                fileUrl: idFront,
+              });
+            }
+            if (idBack && typeof idBack === 'string') {
+              docs.push({
+                id: 'id-back',
+                name: 'Cédula de Identidad (Reverso)',
+                type: 'id',
+                status: profile.documents.isVerified ? 'approved' : 'pending',
+                uploadDate: uploadDate,
+                fileUrl: idBack,
+              });
+            }
+            if (criminalRec && typeof criminalRec === 'string') {
+              docs.push({
+                id: 'criminal-record',
+                name: 'Certificado de Antecedentes',
+                type: 'certificate',
+                status: profile.documents.isVerified ? 'approved' : 'pending',
+                uploadDate: uploadDate,
+                fileUrl: criminalRec,
+              });
+            }
+            setDocumentsData({ documents: docs });
+          }
+
+          // ✅ Cargar datos del usuario para seguridad
+          try {
+            const userResponse = await fetch('/api/auth/me', {
+              credentials: 'include',
+            });
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              if (userData.user) {
+                // Usar updatedAt como aproximación de última modificación de contraseña
+                // En producción, esto debería venir de un campo específico
+                const passwordLastChanged: string = userData.user.passwordUpdatedAt
+                  ? (new Date(userData.user.passwordUpdatedAt).toISOString().split('T')[0] ?? '')
+                  : userData.user.updatedAt
+                    ? (new Date(userData.user.updatedAt).toISOString().split('T')[0] ?? '')
+                    : '';
+
+                setSecurityData({
+                  twoFactorEnabled: false, // Por defecto hasta que se implemente
+                  sessionTimeout: 30,
+                  passwordLastChanged,
+                  loginAlerts: true,
+                  deviceTracking: true,
+                });
+              }
+            }
+          } catch (error) {
+            logger.error('Error cargando datos de seguridad:', { error });
+          }
 
           // Calcular estadísticas
           const statsResponse = await fetch('/api/provider/stats', {
@@ -792,92 +857,178 @@ export default function ProviderSettingsPage() {
                     </Button>
                   </div>
 
-                  <div className="space-y-3">
-                    {documentsData.documents.map(document => (
-                      <div
-                        key={document.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <FileText className="w-5 h-5 text-blue-600" />
+                  {documentsData.documents.length === 0 ? (
+                    <div className="text-center py-8 border rounded-lg">
+                      <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-2">No hay documentos subidos</p>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Sube tus documentos para completar tu perfil de proveedor
+                      </p>
+                      <Button onClick={handleUploadButtonClick} disabled={uploadingDocument}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Subir Primer Documento
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {documentsData.documents.map(document => (
+                        <div
+                          key={document.id}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                              <FileText className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{document.name}</h4>
+                              <p className="text-sm text-gray-600">
+                                Subido: {new Date(document.uploadDate).toLocaleDateString('es-CL')}
+                                {document.expiryDate &&
+                                  ` • Vence: ${new Date(document.expiryDate).toLocaleDateString('es-CL')}`}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-medium">{document.name}</h4>
-                            <p className="text-sm text-gray-600">
-                              Subido: {new Date(document.uploadDate).toLocaleDateString('es-CL')}
-                              {document.expiryDate &&
-                                ` • Vence: ${new Date(document.expiryDate).toLocaleDateString('es-CL')}`}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge
-                            variant={
-                              document.status === 'approved'
-                                ? 'default'
+                          <div className="flex items-center gap-3">
+                            <Badge
+                              variant={
+                                document.status === 'approved'
+                                  ? 'default'
+                                  : document.status === 'pending'
+                                    ? 'secondary'
+                                    : 'destructive'
+                              }
+                            >
+                              {document.status === 'approved'
+                                ? 'Aprobado'
                                 : document.status === 'pending'
-                                  ? 'secondary'
-                                  : 'destructive'
-                            }
-                          >
-                            {document.status === 'approved'
-                              ? 'Aprobado'
-                              : document.status === 'pending'
-                                ? 'Pendiente'
-                                : 'Rechazado'}
-                          </Badge>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="w-4 h-4 mr-2" />
-                              Ver
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Download className="w-4 h-4 mr-2" />
-                              Descargar
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Eliminar
-                            </Button>
+                                  ? 'Pendiente'
+                                  : 'Rechazado'}
+                            </Badge>
+                            <div className="flex gap-2">
+                              {document.fileUrl && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open(document.fileUrl, '_blank')}
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Ver
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const link = window.document.createElement('a');
+                                      link.href = document.fileUrl;
+                                      link.download = document.name;
+                                      link.click();
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Descargar
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Documentos Requeridos</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-medium text-green-600">✓ Certificado de Empresa</h4>
-                      <p className="text-sm text-gray-600">Documento obligatorio para operar</p>
-                    </div>
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-medium text-yellow-600">⚠ Licencia Municipal</h4>
-                      <p className="text-sm text-gray-600">En revisión por el administrador</p>
-                    </div>
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-medium text-green-600">
-                        ✓ Seguro de Responsabilidad Civil
-                      </h4>
-                      <p className="text-sm text-gray-600">Vence en diciembre 2024</p>
-                    </div>
-                    <div className="p-4 border rounded-lg border-dashed">
-                      <h4 className="font-medium text-gray-400">○ Certificado de Antecedentes</h4>
-                      <p className="text-sm text-gray-600">Documento faltante</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-2"
-                        onClick={handleUploadButtonClick}
-                        disabled={uploadingDocument}
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Subir
-                      </Button>
-                    </div>
+                    {/* ✅ Certificado de Empresa - Estado Real */}
+                    {documentsData.documents.find(
+                      d => d.type === 'certificate' && d.name.includes('Certificado de Empresa')
+                    ) ? (
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium text-green-600">✓ Certificado de Empresa</h4>
+                        <p className="text-sm text-gray-600">
+                          {documentsData.documents.find(d => d.name === 'Certificado de Empresa')
+                            ?.status === 'approved'
+                            ? 'Documento aprobado'
+                            : 'En revisión por el administrador'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 border rounded-lg border-dashed">
+                        <h4 className="font-medium text-gray-400">○ Certificado de Empresa</h4>
+                        <p className="text-sm text-gray-600">Documento faltante</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={handleUploadButtonClick}
+                          disabled={uploadingDocument}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Subir
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* ✅ Cédula de Identidad - Estado Real */}
+                    {documentsData.documents.find(d => d.type === 'id') ? (
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium text-green-600">✓ Cédula de Identidad</h4>
+                        <p className="text-sm text-gray-600">
+                          {documentsData.documents.find(d => d.type === 'id')?.status === 'approved'
+                            ? 'Documento aprobado'
+                            : 'En revisión por el administrador'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 border rounded-lg border-dashed">
+                        <h4 className="font-medium text-gray-400">○ Cédula de Identidad</h4>
+                        <p className="text-sm text-gray-600">Documento faltante</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={handleUploadButtonClick}
+                          disabled={uploadingDocument}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Subir
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* ✅ Certificado de Antecedentes - Estado Real */}
+                    {documentsData.documents.find(d => d.name === 'Certificado de Antecedentes') ? (
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium text-green-600">
+                          ✓ Certificado de Antecedentes
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {documentsData.documents.find(
+                            d => d.name === 'Certificado de Antecedentes'
+                          )?.status === 'approved'
+                            ? 'Documento aprobado'
+                            : 'En revisión por el administrador'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 border rounded-lg border-dashed">
+                        <h4 className="font-medium text-gray-400">○ Certificado de Antecedentes</h4>
+                        <p className="text-sm text-gray-600">Documento faltante</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={handleUploadButtonClick}
+                          disabled={uploadingDocument}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Subir
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

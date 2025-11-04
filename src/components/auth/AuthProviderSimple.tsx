@@ -82,7 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // SEGURIDAD: Limpiar cualquier credencial que pueda estar en la URL
         const currentUrl = new URL(window.location.href);
         if (currentUrl.searchParams.has('email') || currentUrl.searchParams.has('password')) {
-          console.warn('🚨 SEGURIDAD: Credenciales detectadas en URL durante auth check - limpiando');
+          console.warn(
+            '🚨 SEGURIDAD: Credenciales detectadas en URL durante auth check - limpiando'
+          );
           currentUrl.searchParams.delete('email');
           currentUrl.searchParams.delete('password');
           window.history.replaceState({}, '', currentUrl.pathname + currentUrl.hash);
@@ -93,11 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ✅ RESTAURADO: Auth check automático con manejo seguro de hidratación
-  useEffect(() => {
-    let retryTimeout: NodeJS.Timeout;
-
-    // PRIMERO: Intentar cargar desde localStorage inmediatamente
+  // Función para cargar usuario desde localStorage
+  const loadUserFromStorage = () => {
     if (typeof window !== 'undefined') {
       try {
         const cachedUser = localStorage.getItem('user');
@@ -124,7 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               };
 
               setUser(completeUser);
-              setLoading(false); // Usuario cargado, no necesitamos loading
+              setLoading(false);
+              return true; // Usuario cargado exitosamente
             }
           } else {
             // localStorage expirado, limpiar
@@ -138,8 +138,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('userLoginTime');
       }
     }
+    return false;
+  };
+
+  // ✅ RESTAURADO: Auth check automático con manejo seguro de hidratación
+  useEffect(() => {
+    // PRIMERO: Intentar cargar desde localStorage inmediatamente
+    loadUserFromStorage();
+
+    // ✅ CRÍTICO: Escuchar cambios en localStorage para actualizar el estado cuando cambia
+    // Esto soluciona el problema del sidebar incorrecto después del registro
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      // Si es un evento de storage desde otra pestaña, o un evento personalizado
+      if (e.type === 'storage' || e.type === 'r360-user-updated') {
+        console.log('🔄 Evento de storage detectado, recargando usuario desde localStorage...');
+        loadUserFromStorage();
+      }
+    };
+
+    // Escuchar eventos de storage (cambios en otras pestañas)
+    window.addEventListener('storage', handleStorageChange);
+
+    // Escuchar eventos personalizados (cambios en la misma pestaña)
+    window.addEventListener('r360-user-updated', handleStorageChange);
 
     // ✅ SIMPLIFICADO: No hacer verificaciones automáticas del servidor para evitar problemas de hidratación
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('r360-user-updated', handleStorageChange);
+    };
   }, []); // Solo ejecutar una vez al montar
 
   const login = async (email: string, password: string) => {
@@ -152,7 +180,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('🔐 Iniciando login con email:', email);
-      console.log('🔐 URL de API:', `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/login`);
+      console.log(
+        '🔐 URL de API:',
+        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/login`
+      );
 
       const response = await fetch(
         `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/login`,
@@ -228,6 +259,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log(
           '💾 Usuario guardado en localStorage ANTES de setUser para evitar timing issues'
         );
+
+        // ✅ CRÍTICO: Disparar evento personalizado para actualizar otros componentes
+        window.dispatchEvent(new Event('r360-user-updated'));
       }
 
       // Ahora sí actualizar el estado - esto puede disparar checkAuth en otros componentes

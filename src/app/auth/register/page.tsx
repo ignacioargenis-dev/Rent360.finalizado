@@ -199,8 +199,19 @@ export default function RegisterPage() {
               localStorage.setItem('user', JSON.stringify(completeUserData));
               localStorage.setItem('userLoginTime', Date.now().toString());
 
-              // Forzar recarga del estado de autenticación
-              window.dispatchEvent(new Event('storage'));
+              // ✅ CRÍTICO: Disparar evento personalizado para que AuthProvider se actualice
+              // El evento 'storage' solo se dispara en otras pestañas, no en la misma
+              // Usamos un evento personalizado para la misma pestaña
+              window.dispatchEvent(new Event('r360-user-updated'));
+
+              // También disparar evento storage para compatibilidad
+              window.dispatchEvent(
+                new StorageEvent('storage', {
+                  key: 'user',
+                  newValue: JSON.stringify(completeUserData),
+                  storageArea: localStorage,
+                })
+              );
             }
 
             // Login exitoso, redirigir al dashboard con rol normalizado

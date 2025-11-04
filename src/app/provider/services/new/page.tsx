@@ -298,6 +298,9 @@ export default function NewServicePage() {
 
       setSuccessMessage('Servicio creado exitosamente');
 
+      // Disparar evento para que la página de servicios se actualice si está abierta
+      window.dispatchEvent(new Event('r360-service-created'));
+
       setTimeout(() => {
         // Redirigir a la página de servicios - forzar recarga completa para mostrar datos actualizados
         window.location.href = '/provider/services';
