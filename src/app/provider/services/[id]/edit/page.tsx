@@ -331,7 +331,28 @@ export default function EditServicePage() {
     }));
   };
 
-  const removeExistingImage = (imageUrl: string) => {
+  const removeExistingImage = async (imageUrl: string) => {
+    // ✅ Eliminar la imagen del servidor también
+    try {
+      const response = await fetch(
+        `/api/provider/services/${serviceId}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        }
+      );
+
+      if (response.ok) {
+        console.log('✅ [PROVIDER SERVICES EDIT] Imagen eliminada del servidor:', imageUrl);
+      } else {
+        console.warn('⚠️ [PROVIDER SERVICES EDIT] Error eliminando imagen del servidor:', imageUrl);
+      }
+    } catch (error) {
+      console.error('❌ [PROVIDER SERVICES EDIT] Error eliminando imagen:', error);
+      // Continuar eliminando del estado local aunque falle en el servidor
+    }
+
+    // Eliminar del estado local
     setServiceData(prev => ({
       ...prev,
       existingImages: prev.existingImages.filter(img => img !== imageUrl),
@@ -368,6 +389,46 @@ export default function EditServicePage() {
     setIsSubmitting(true);
 
     try {
+      // ✅ Primero subir las nuevas imágenes si hay archivos seleccionados
+      let newImageUrls: string[] = [];
+      if (serviceData.images.length > 0) {
+        console.log(
+          `📤 [PROVIDER SERVICES EDIT] Subiendo ${serviceData.images.length} nuevas imágenes...`
+        );
+
+        for (const file of serviceData.images) {
+          const formData = new FormData();
+          formData.append('image', file);
+
+          try {
+            const imageResponse = await fetch(`/api/provider/services/${serviceId}/images`, {
+              method: 'POST',
+              credentials: 'include',
+              body: formData,
+            });
+
+            if (imageResponse.ok) {
+              const imageData = await imageResponse.json();
+              if (imageData.success && imageData.uploadedImages) {
+                newImageUrls.push(...imageData.uploadedImages);
+                console.log(`✅ [PROVIDER SERVICES EDIT] Imagen subida:`, file.name);
+              }
+            } else {
+              console.warn(`⚠️ [PROVIDER SERVICES EDIT] Error subiendo imagen ${file.name}`);
+            }
+          } catch (imageError) {
+            console.error(
+              `❌ [PROVIDER SERVICES EDIT] Error subiendo imagen ${file.name}:`,
+              imageError
+            );
+            // Continuar con otras imágenes
+          }
+        }
+      }
+
+      // ✅ Combinar imágenes existentes (que no fueron eliminadas) con las nuevas
+      const allImages = [...serviceData.existingImages, ...newImageUrls];
+
       // ✅ Llamar a la API real para actualizar el servicio usando ID único
       const response = await fetch(`/api/provider/services/${serviceId}`, {
         method: 'PUT',
@@ -400,7 +461,7 @@ export default function EditServicePage() {
           features: serviceData.features, // ✅ Incluir características
           requirements: serviceData.requirements, // ✅ Incluir requisitos
           tags: serviceData.tags, // ✅ Incluir etiquetas
-          images: serviceData.existingImages, // ✅ Incluir imágenes existentes (las nuevas se subirían por separado)
+          images: allImages, // ✅ Incluir todas las imágenes (existentes + nuevas subidas)
         }),
       });
 
@@ -422,7 +483,8 @@ export default function EditServicePage() {
         features: serviceData.features,
         requirements: serviceData.requirements,
         tags: serviceData.tags,
-        imagesCount: serviceData.existingImages.length,
+        imagesCount: allImages.length,
+        newImagesUploaded: newImageUrls.length,
       });
 
       console.log('✅ [PROVIDER SERVICES EDIT] Servicio actualizado:', {
@@ -431,12 +493,13 @@ export default function EditServicePage() {
         features: serviceData.features,
         requirements: serviceData.requirements,
         tags: serviceData.tags,
-        images: serviceData.existingImages,
+        images: allImages,
+        newImagesUploaded: newImageUrls.length,
         payload: {
           features: serviceData.features,
           requirements: serviceData.requirements,
           tags: serviceData.tags,
-          images: serviceData.existingImages,
+          images: allImages,
         },
       });
 

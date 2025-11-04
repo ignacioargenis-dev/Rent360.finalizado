@@ -245,6 +245,18 @@ export default function NewServicePage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const uploadImages = async (files: File[]): Promise<string[]> => {
+    if (files.length === 0) return [];
+
+    const uploadedUrls: string[] = [];
+
+    // Primero crear el servicio para obtener su ID
+    // Nota: Esto requiere modificar el flujo, pero por ahora subiremos las imágenes después
+    // Por simplicidad, crearemos el servicio primero y luego subiremos las imágenes
+
+    return uploadedUrls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessMessage('');
@@ -258,7 +270,7 @@ export default function NewServicePage() {
     setIsSubmitting(true);
 
     try {
-      // Llamar a la API real para crear el servicio
+      // ✅ Primero crear el servicio para obtener su ID
       const response = await fetch('/api/provider/services', {
         method: 'POST',
         headers: {
@@ -300,20 +312,63 @@ export default function NewServicePage() {
         throw new Error(data.error || 'Error al crear el servicio');
       }
 
+      const serviceId = data.service?.id;
+
+      if (!serviceId) {
+        throw new Error('No se recibió el ID del servicio creado');
+      }
+
+      // ✅ Subir imágenes si hay archivos seleccionados
+      let uploadedImageUrls: string[] = [];
+      if (serviceData.images.length > 0) {
+        console.log(`📤 [PROVIDER SERVICES NEW] Subiendo ${serviceData.images.length} imágenes...`);
+
+        for (const file of serviceData.images) {
+          const formData = new FormData();
+          formData.append('image', file);
+
+          try {
+            const imageResponse = await fetch(`/api/provider/services/${serviceId}/images`, {
+              method: 'POST',
+              credentials: 'include',
+              body: formData,
+            });
+
+            if (imageResponse.ok) {
+              const imageData = await imageResponse.json();
+              if (imageData.success && imageData.uploadedImages) {
+                uploadedImageUrls.push(...imageData.uploadedImages);
+                console.log(`✅ [PROVIDER SERVICES NEW] Imagen subida:`, file.name);
+              }
+            } else {
+              console.warn(`⚠️ [PROVIDER SERVICES NEW] Error subiendo imagen ${file.name}`);
+            }
+          } catch (imageError) {
+            console.error(
+              `❌ [PROVIDER SERVICES NEW] Error subiendo imagen ${file.name}:`,
+              imageError
+            );
+            // Continuar con otras imágenes
+          }
+        }
+      }
+
       logger.info('Servicio creado exitosamente', {
         name: serviceData.name,
         category: serviceData.category,
         pricing: serviceData.pricing,
+        serviceId,
+        imagesUploaded: uploadedImageUrls.length,
       });
 
       console.log('✅ [PROVIDER SERVICES NEW] Servicio creado exitosamente:', {
-        serviceId: data.service?.id,
+        serviceId,
         name: serviceData.name,
         category: serviceData.category,
         features: serviceData.features,
         requirements: serviceData.requirements,
         tags: serviceData.tags,
-        imagesCount: serviceData.images.length,
+        imagesUploaded: uploadedImageUrls.length,
         response: data,
       });
 
