@@ -210,7 +210,7 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
       },
     });
 
-    // Si la visita se completó, evaluar incentivos automáticamente
+    // Si la visita se completó, evaluar incentivos automáticamente y procesar pago
     const wasCompleted =
       status &&
       status.toUpperCase() === 'COMPLETED' &&
@@ -231,9 +231,22 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
           runnerId: user.id,
           visitId: taskId,
         });
+
+        // Procesar pago del propietario en segundo plano
+        const { OwnerPaymentService } = await import('@/lib/owner-payment-service');
+        OwnerPaymentService.chargePayment(taskId).catch(error => {
+          logger.error('Error procesando pago del propietario después de completar visita:', {
+            visitId: taskId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+
+        logger.info('Procesamiento de pago iniciado para visita completada', {
+          visitId: taskId,
+        });
       } catch (error) {
-        // No fallar la actualización si hay error en evaluación de incentivos
-        logger.warn('Error iniciando evaluación de incentivos:', {
+        // No fallar la actualización si hay error en evaluación de incentivos o pago
+        logger.warn('Error iniciando procesos después de completar visita:', {
           runnerId: user.id,
           visitId: taskId,
           error: error instanceof Error ? error.message : String(error),

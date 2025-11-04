@@ -109,6 +109,111 @@ const DEFAULT_INTEGRATIONS = [
       analyticsId: '',
     },
   },
+  {
+    id: 'twilio',
+    name: 'Twilio SMS',
+    description: 'Configuración para envío de SMS con Twilio',
+    category: 'communication',
+    isEnabled: false,
+    isConfigured: false,
+    isTested: false,
+    config: {
+      accountSid: '',
+      authToken: '',
+      phoneNumber: '',
+      apiUrl: 'https://api.twilio.com/2010-04-01',
+    },
+  },
+  {
+    id: 'sendgrid',
+    name: 'SendGrid Email',
+    description: 'Configuración para envío de emails con SendGrid',
+    category: 'communication',
+    isEnabled: false,
+    isConfigured: false,
+    isTested: false,
+    config: {
+      apiKey: '',
+      fromEmail: 'noreply@rent360.cl',
+      fromName: 'Rent360',
+      apiUrl: 'https://api.sendgrid.com/v3',
+    },
+  },
+  {
+    id: 'google-analytics',
+    name: 'Google Analytics',
+    description: 'Configuración para seguimiento de analíticas',
+    category: 'analytics',
+    isEnabled: false,
+    isConfigured: false,
+    isTested: false,
+    config: {
+      trackingId: '',
+      measurementId: '',
+      apiSecret: '',
+    },
+  },
+  {
+    id: 'aws-s3',
+    name: 'AWS S3 Storage',
+    description: 'Configuración para almacenamiento en AWS S3',
+    category: 'storage',
+    isEnabled: false,
+    isConfigured: false,
+    isTested: false,
+    config: {
+      accessKeyId: '',
+      secretAccessKey: '',
+      region: 'us-east-1',
+      bucketName: '',
+    },
+  },
+  {
+    id: 'digitalocean-spaces',
+    name: 'DigitalOcean Spaces',
+    description: 'Configuración para almacenamiento en DigitalOcean Spaces',
+    category: 'storage',
+    isEnabled: false,
+    isConfigured: false,
+    isTested: false,
+    config: {
+      accessKeyId: '',
+      secretAccessKey: '',
+      region: 'nyc3',
+      bucketName: '',
+      endpoint: '',
+    },
+  },
+  {
+    id: 'pusher',
+    name: 'Pusher WebSocket',
+    description:
+      'Configuración para notificaciones en tiempo real con Pusher (recomendado para DigitalOcean)',
+    category: 'communication',
+    isEnabled: false,
+    isConfigured: false,
+    isTested: false,
+    config: {
+      appId: '',
+      key: '',
+      secret: '',
+      cluster: 'us2',
+      encrypted: true,
+    },
+  },
+  {
+    id: 'socket-io',
+    name: 'Socket.io (Propio)',
+    description: 'WebSocket usando Socket.io del servidor propio (sin costo adicional)',
+    category: 'communication',
+    isEnabled: false,
+    isConfigured: false,
+    isTested: false,
+    config: {
+      serverUrl: '',
+      namespace: '/',
+    },
+  },
 ];
 
 export async function GET(request: NextRequest) {
@@ -128,8 +233,8 @@ export async function GET(request: NextRequest) {
 
     // Mapear configuraciones guardadas a las integraciones por defecto
     const integrations = DEFAULT_INTEGRATIONS.map(integration => {
-      const savedConfig = savedConfigs.find(config => 
-        config.key === `integration_${integration.id}`,
+      const savedConfig = savedConfigs.find(
+        config => config.key === `integration_${integration.id}`
       );
 
       if (savedConfig) {
@@ -140,7 +245,10 @@ export async function GET(request: NextRequest) {
             ...parsedConfig,
           };
         } catch (error) {
-          logger.error('Error parsing config for integration:', { integrationId: integration.id, error: error instanceof Error ? error.message : String(error) });
+          logger.error('Error parsing config for integration:', {
+            integrationId: integration.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
           return integration;
         }
       }
@@ -163,22 +271,26 @@ export async function POST(request: NextRequest) {
     requireRole(request, 'admin');
 
     const body = await request.json();
-    const { id, name, description, category, isEnabled, isConfigured, isTested, config, testResult } = body;
+    const {
+      id,
+      name,
+      description,
+      category,
+      isEnabled,
+      isConfigured,
+      isTested,
+      config,
+      testResult,
+    } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'ID de integración requerido' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'ID de integración requerido' }, { status: 400 });
     }
 
     // Validar que la integración existe
     const integrationExists = DEFAULT_INTEGRATIONS.find(i => i.id === id);
     if (!integrationExists) {
-      return NextResponse.json(
-        { error: 'Integración no válida' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Integración no válida' }, { status: 400 });
     }
 
     // Preparar configuración para guardar
@@ -197,7 +309,7 @@ export async function POST(request: NextRequest) {
 
     // Guardar en la base de datos
     const configKey = `integration_${id}`;
-    
+
     await db.systemSetting.upsert({
       where: { key: configKey },
       update: {
@@ -232,47 +344,86 @@ async function updateEnvironmentVariables(integrationId: string, config: any) {
   // Esta función actualizaría las variables de entorno dinámicamente
   // En una implementación real, esto podría requerir reiniciar el servidor
   // o usar un sistema de configuración dinámica
-  
+
   const envMappings: Record<string, Record<string, string>> = {
-    'khipu': {
-      'KHIPU_API_URL': config.apiUrl,
-      'KHIPU_SECRET_KEY': config.secretKey,
-      'KHIPU_RECEIVER_ID': config.receiverId,
-      'KHIPU_ENVIRONMENT': config.environment,
+    khipu: {
+      KHIPU_API_URL: config.apiUrl,
+      KHIPU_SECRET_KEY: config.secretKey,
+      KHIPU_RECEIVER_ID: config.receiverId,
+      KHIPU_ENVIRONMENT: config.environment,
     },
-         'esign': {
-       'ESIGN_API_URL': config.apiUrl,
-       'ESIGN_API_KEY': config.apiKey,
-       'ESIGN_SECRET_KEY': config.secretKey,
-       'ESIGN_ENVIRONMENT': config.environment,
-     },
-     'firmasimple': {
-       'FIRMASIMPLE_API_URL': config.apiUrl,
-       'FIRMASIMPLE_API_KEY': config.apiKey,
-       'FIRMASIMPLE_CLIENT_ID': config.clientId,
-       'FIRMASIMPLE_CALLBACK_URL': config.callbackUrl,
-     },
-     'firmachile': {
-       'FIRMACHILE_API_URL': config.apiUrl,
-       'FIRMACHILE_API_KEY': config.apiKey,
-       'FIRMACHILE_CERTIFICATE_AUTHORITY': config.certificateAuthority,
-     },
-    'smtp': {
-      'SMTP_HOST': config.host,
-      'SMTP_PORT': config.port,
-      'SMTP_USERNAME': config.username,
-      'SMTP_PASSWORD': config.password,
-      'FROM_EMAIL': config.fromEmail,
-      'FROM_NAME': config.fromName,
+    esign: {
+      ESIGN_API_URL: config.apiUrl,
+      ESIGN_API_KEY: config.apiKey,
+      ESIGN_SECRET_KEY: config.secretKey,
+      ESIGN_ENVIRONMENT: config.environment,
     },
-    'sms': {
-      'SMS_API_URL': config.apiUrl,
-      'SMS_API_KEY': config.apiKey,
-      'SMS_SENDER_ID': config.senderId,
+    firmasimple: {
+      FIRMASIMPLE_API_URL: config.apiUrl,
+      FIRMASIMPLE_API_KEY: config.apiKey,
+      FIRMASIMPLE_CLIENT_ID: config.clientId,
+      FIRMASIMPLE_CALLBACK_URL: config.callbackUrl,
+    },
+    firmachile: {
+      FIRMACHILE_API_URL: config.apiUrl,
+      FIRMACHILE_API_KEY: config.apiKey,
+      FIRMACHILE_CERTIFICATE_AUTHORITY: config.certificateAuthority,
+    },
+    smtp: {
+      SMTP_HOST: config.host,
+      SMTP_PORT: config.port,
+      SMTP_USERNAME: config.username,
+      SMTP_PASSWORD: config.password,
+      FROM_EMAIL: config.fromEmail,
+      FROM_NAME: config.fromName,
+    },
+    sms: {
+      SMS_API_URL: config.apiUrl,
+      SMS_API_KEY: config.apiKey,
+      SMS_SENDER_ID: config.senderId,
     },
     'google-maps': {
-      'GOOGLE_MAPS_API_KEY': config.apiKey,
-      'GOOGLE_ANALYTICS_ID': config.analyticsId,
+      GOOGLE_MAPS_API_KEY: config.apiKey,
+      GOOGLE_ANALYTICS_ID: config.analyticsId,
+    },
+    twilio: {
+      TWILIO_ACCOUNT_SID: config.accountSid,
+      TWILIO_AUTH_TOKEN: config.authToken,
+      TWILIO_PHONE_NUMBER: config.phoneNumber,
+    },
+    sendgrid: {
+      SENDGRID_API_KEY: config.apiKey,
+      SENDGRID_FROM_EMAIL: config.fromEmail,
+      SENDGRID_FROM_NAME: config.fromName,
+    },
+    'google-analytics': {
+      GOOGLE_ANALYTICS_TRACKING_ID: config.trackingId,
+      GOOGLE_ANALYTICS_MEASUREMENT_ID: config.measurementId,
+      GOOGLE_ANALYTICS_API_SECRET: config.apiSecret,
+    },
+    'aws-s3': {
+      AWS_ACCESS_KEY_ID: config.accessKeyId,
+      AWS_SECRET_ACCESS_KEY: config.secretAccessKey,
+      AWS_REGION: config.region,
+      AWS_S3_BUCKET_NAME: config.bucketName,
+    },
+    'digitalocean-spaces': {
+      DO_SPACES_ACCESS_KEY: config.accessKeyId,
+      DO_SPACES_SECRET_KEY: config.secretAccessKey,
+      DO_SPACES_REGION: config.region,
+      DO_SPACES_BUCKET: config.bucketName,
+      DO_SPACES_ENDPOINT: config.endpoint,
+    },
+    pusher: {
+      PUSHER_APP_ID: config.appId,
+      PUSHER_KEY: config.key,
+      PUSHER_SECRET: config.secret,
+      PUSHER_CLUSTER: config.cluster,
+      NEXT_PUBLIC_PUSHER_KEY: config.key,
+      NEXT_PUBLIC_PUSHER_CLUSTER: config.cluster,
+    },
+    'socket-io': {
+      NEXT_PUBLIC_WS_URL: config.serverUrl,
     },
   };
 

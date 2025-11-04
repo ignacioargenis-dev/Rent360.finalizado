@@ -121,6 +121,8 @@ export default function OwnerRunnersPage() {
     specialInstructions: '',
     urgency: 'normal',
     propertyId: '', // Agregado para selección de propiedad
+    paymentMethod: '' as 'stripe' | 'paypal' | 'khipu' | 'webpay' | '', // Método de pago
+    paymentMethodId: '', // ID del método de pago guardado (para Stripe)
   });
   const [ownerProperties, setOwnerProperties] = useState<
     Array<{ id: string; title: string; address: string }>
@@ -366,6 +368,9 @@ export default function OwnerRunnersPage() {
           duration: hireData.estimatedHours * 60, // Convertir horas a minutos
           notes: hireData.specialInstructions || undefined,
           estimatedEarnings: selectedRunner.hourlyRate * hireData.estimatedHours,
+          // Información de pago (opcional)
+          paymentMethod: hireData.paymentMethod || undefined,
+          paymentMethodId: hireData.paymentMethodId || undefined,
         }),
       });
 
@@ -376,7 +381,17 @@ export default function OwnerRunnersPage() {
       const data = await response.json();
 
       if (data.success) {
-        const successMessage = `¡Contratación exitosa!\n\nRunner: ${selectedRunner.name}\nFecha preferida: ${hireData.preferredDate || 'Por coordinar'}\nHoras estimadas: ${hireData.estimatedHours}\nCosto estimado: $${(selectedRunner.hourlyRate * hireData.estimatedHours).toLocaleString()}\n\nSe ha enviado la solicitud al runner. Recibirás una confirmación pronto.`;
+        let successMessage = `¡Contratación exitosa!\n\nRunner: ${selectedRunner.name}\nFecha preferida: ${hireData.preferredDate || 'Por coordinar'}\nHoras estimadas: ${hireData.estimatedHours}\nCosto estimado: $${(selectedRunner.hourlyRate * hireData.estimatedHours).toLocaleString()}\n\nSe ha enviado la solicitud al runner. Recibirás una confirmación pronto.`;
+
+        // Agregar información sobre el pago si se autorizó
+        if (data.payment && data.payment.authorized) {
+          successMessage += `\n\n✅ Pago autorizado exitosamente. El cobro se procesará cuando el runner complete el servicio.`;
+        } else if (data.payment && !data.payment.authorized) {
+          successMessage += `\n\n⚠️ No se pudo autorizar el pago. Puedes autorizarlo más tarde desde los detalles de la visita.`;
+        } else if (hireData.paymentMethod) {
+          successMessage += `\n\n💳 Puedes autorizar el pago más tarde desde los detalles de la visita.`;
+        }
+
         alert(successMessage);
 
         setShowHireModal(false);
@@ -388,6 +403,8 @@ export default function OwnerRunnersPage() {
           specialInstructions: '',
           urgency: 'normal',
           propertyId: '',
+          paymentMethod: '',
+          paymentMethodId: '',
         });
       } else {
         throw new Error(data.error || 'Error al procesar la contratación');
@@ -857,6 +874,38 @@ export default function OwnerRunnersPage() {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="paymentMethod">Método de Pago (Opcional)</Label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Puedes autorizar el pago ahora o hacerlo después de que se complete el servicio
+                  </p>
+                  <Select
+                    value={hireData.paymentMethod}
+                    onValueChange={value =>
+                      setHireData({
+                        ...hireData,
+                        paymentMethod: value as 'stripe' | 'paypal' | 'khipu' | 'webpay',
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar método de pago (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No autorizar pago ahora</SelectItem>
+                      <SelectItem value="stripe">Tarjeta de Crédito/Débito (Stripe)</SelectItem>
+                      <SelectItem value="paypal">PayPal</SelectItem>
+                      <SelectItem value="khipu">Khipu</SelectItem>
+                      <SelectItem value="webpay">WebPay</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {hireData.paymentMethod === 'stripe' && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Si tienes métodos de pago guardados, se utilizará el predeterminado
+                    </p>
+                  )}
+                </div>
+
                 <div className="bg-gray-50 p-3 rounded-md">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
@@ -870,6 +919,14 @@ export default function OwnerRunnersPage() {
                       ${(selectedRunner.hourlyRate * hireData.estimatedHours).toLocaleString()}
                     </span>
                   </div>
+                  {hireData.paymentMethod && (
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                      <p className="text-xs text-gray-600">
+                        💳 El pago se autorizará ahora y se procesará cuando el runner complete el
+                        servicio
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -143,6 +143,9 @@ model User {
   clientRelationships      BrokerClient[] @relation("ClientRelationships")
   brokerPropertyManagements BrokerPropertyManagement[] @relation("BrokerPropertyManagements")
   prospectActivities       ProspectActivity[] @relation("BrokerProspectActivities")
+  
+  // Relaciones de pagos de propietarios por servicios de runners
+  ownerPayments            OwnerPayment[] @relation("OwnerPayments")
   clientActivities         ClientActivity[] @relation("BrokerClientActivities")
   brokerPropertyShares     ProspectPropertyShare[] @relation("BrokerPropertyShares")
   
@@ -530,8 +533,54 @@ model Visit {
   runner        User            @relation("VisitRunner", fields: [runnerId], references: [id], onDelete: Cascade)
   tenant        User?           @relation("VisitTenant", fields: [tenantId], references: [id], onDelete: SetNull)
   runnerRatings RunnerRating[]
+  ownerPayment  OwnerPayment?
 
   @@map("visits")
+}
+
+// OwnerPayment model - Pagos del propietario por servicios de runner
+model OwnerPayment {
+  id                String   @id @default(cuid())
+  visitId           String   @unique
+  ownerId           String
+  amount            Float
+  currency          String   @default("CLP")
+  
+  // Información del método de pago
+  paymentMethod     String   // 'stripe', 'paypal', 'khipu', 'webpay'
+  paymentMethodId   String?  // ID del método de pago guardado (ej: payment_method_xxx de Stripe)
+  
+  // Estados del pago
+  status            String   @default("PENDING") // PENDING, AUTHORIZED, COMPLETED, FAILED, REFUNDED
+  authorizationId   String?  // ID de autorización del proveedor
+  transactionId     String?  // ID de transacción final
+  
+  // Fechas
+  authorizedAt      DateTime?
+  chargedAt         DateTime?
+  refundedAt        DateTime?
+  
+  // Información de error/reintentos
+  failureReason     String?
+  retryCount        Int      @default(0)
+  lastRetryAt       DateTime?
+  
+  // Metadata
+  metadata          String?  // JSON con información adicional
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  visit             Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  owner             User     @relation("OwnerPayments", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  @@map("owner_payments")
+  @@index([visitId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // Maintenance model

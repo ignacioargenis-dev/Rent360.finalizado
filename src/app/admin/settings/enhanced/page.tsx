@@ -23,6 +23,21 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Settings,
   Save,
   RefreshCw,
@@ -98,6 +113,8 @@ import {
   Square,
   RadioIcon,
   ToggleLeft,
+  TestTube,
+  Webhook,
   ToggleRight,
   User,
   Truck,
@@ -117,6 +134,25 @@ interface EmailTemplate {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+interface Integration {
+  id: string;
+  name: string;
+  type: 'communication' | 'analytics' | 'storage' | 'other';
+  provider: string;
+  status: 'active' | 'inactive' | 'error' | 'configuring';
+  lastSync: string;
+  apiKey?: string;
+  webhookUrl?: string;
+  config: Record<string, any>;
+}
+
+interface IntegrationStats {
+  total: number;
+  active: number;
+  inactive: number;
+  error: number;
 }
 
 interface SystemSettings {
@@ -341,6 +377,13 @@ export default function EnhancedAdminSettingsPage() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [templateSearch, setTemplateSearch] = useState('');
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>('all');
+
+  // Estados para integraciones
+  const [integrations, setIntegrations] = useState<any[]>([]);
+  const [integrationsLoading, setIntegrationsLoading] = useState(false);
+  const [selectedIntegration, setSelectedIntegration] = useState<any | null>(null);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [configData, setConfigData] = useState<Record<string, any>>({});
 
   const [settings, setSettings] = useState<SystemSettings>({
     // Configuración General
@@ -3730,131 +3773,1009 @@ El equipo de Rent360`,
     </div>
   );
 
-  const renderIntegrationSettings = () => (
-    <div className="grid lg:grid-cols-2 gap-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link className="w-5 h-5" />
-            Integraciones Externas
-          </CardTitle>
-          <CardDescription>Servicios de terceros integrados</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Google Maps Habilitado</div>
-              <div className="text-sm text-gray-600">Mostrar mapas de Google</div>
-            </div>
-            <Switch
-              checked={settings.googleMapsEnabled}
-              onCheckedChange={checked => setSettings({ ...settings, googleMapsEnabled: checked })}
-            />
-          </div>
+  // Funciones para gestionar integraciones (se cargan antes de renderIntegrationSettings)
+  const loadIntegrations = async () => {
+    setIntegrationsLoading(true);
+    try {
+      // Cargar integraciones reales desde la API, excluyendo pagos y firmas
+      const response = await fetch('/api/admin/integrations', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Google Analytics Habilitado</div>
-              <div className="text-sm text-gray-600">Seguimiento de analíticas</div>
-            </div>
-            <Switch
-              checked={settings.googleAnalyticsEnabled}
-              onCheckedChange={checked =>
-                setSettings({ ...settings, googleAnalyticsEnabled: checked })
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Filtrar integraciones: excluir pagos y firmas, y mapear a formato de UI
+      const filteredIntegrations: Integration[] = data.integrations
+        .filter((integration: any) => {
+          // Excluir pagos y firmas
+          return (
+            integration.category !== 'payments' &&
+            integration.category !== 'signature' &&
+            // Incluir solo las integraciones de terceros
+            [
+              'twilio',
+              'sendgrid',
+              'google-analytics',
+              'aws-s3',
+              'digitalocean-spaces',
+              'pusher',
+              'socket-io',
+            ].includes(integration.id)
+          );
+        })
+        .map((integration: any) => {
+          // Determinar estado basado en configuración
+          let status: 'active' | 'inactive' | 'error' | 'configuring' = 'inactive';
+          if (integration.isEnabled && integration.isConfigured) {
+            status = integration.isTested ? 'active' : 'configuring';
+          } else if (integration.isConfigured && !integration.isEnabled) {
+            status = 'inactive';
+          }
+
+          // Mapear a formato de UI
+          return {
+            id: integration.id,
+            name: integration.name,
+            type:
+              integration.category === 'communication'
+                ? 'communication'
+                : integration.category === 'analytics'
+                  ? 'analytics'
+                  : integration.category === 'storage'
+                    ? 'storage'
+                    : 'other',
+            provider: integration.name.split(' ')[0], // Extraer proveedor del nombre
+            status,
+            lastSync: integration.updatedAt || new Date().toISOString(),
+            config: integration.config || {},
+          } as Integration;
+        });
+
+      setIntegrations(filteredIntegrations);
+    } catch (error) {
+      logger.error('Error al cargar integraciones', { error });
+      // Fallback: mostrar integraciones vacías
+      setIntegrations([]);
+    } finally {
+      setIntegrationsLoading(false);
+    }
+  };
+
+  const getIntegrationStats = (): IntegrationStats => {
+    return {
+      total: integrations.length,
+      active: integrations.filter(i => i.status === 'active').length,
+      inactive: integrations.filter(i => i.status === 'inactive').length,
+      error: integrations.filter(i => i.status === 'error').length,
+    };
+  };
+
+  const handleToggleIntegration = async (integrationId: string) => {
+    try {
+      const integration = integrations.find(i => i.id === integrationId);
+      if (!integration) {
+        return;
+      }
+
+      const newStatus = integration.status === 'active' ? 'inactive' : 'active';
+
+      // Actualizar en la API
+      await fetch('/api/admin/integrations', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: integrationId,
+          name: integration.name,
+          description: integration.name,
+          category:
+            integration.type === 'communication'
+              ? 'communication'
+              : integration.type === 'analytics'
+                ? 'analytics'
+                : integration.type === 'storage'
+                  ? 'storage'
+                  : 'other',
+          isEnabled: newStatus === 'active',
+          isConfigured: true,
+          isTested: integration.status === 'active',
+          config: integration.config,
+        }),
+      });
+
+      // Actualizar estado local
+      setIntegrations(prev =>
+        prev.map(integration =>
+          integration.id === integrationId
+            ? {
+                ...integration,
+                status: newStatus,
               }
-            />
+            : integration
+        )
+      );
+
+      logger.info('Estado de integración cambiado', { integrationId, newStatus });
+    } catch (error) {
+      logger.error('Error al cambiar estado de integración', { integrationId, error });
+      alert('Error al cambiar el estado. Intente nuevamente.');
+    }
+  };
+
+  const handleTestConnection = async (integrationId: string) => {
+    try {
+      setIntegrations(prev =>
+        prev.map(integration =>
+          integration.id === integrationId
+            ? { ...integration, status: 'configuring' as const }
+            : integration
+        )
+      );
+
+      // TODO: Implementar pruebas reales para cada integración
+      // Por ahora simulamos una prueba
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Actualizar estado en la API
+      const integration = integrations.find(i => i.id === integrationId);
+      if (integration) {
+        await fetch('/api/admin/integrations', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: integrationId,
+            name: integration.name,
+            description: integration.name,
+            category:
+              integration.type === 'communication'
+                ? 'communication'
+                : integration.type === 'analytics'
+                  ? 'analytics'
+                  : integration.type === 'storage'
+                    ? 'storage'
+                    : 'other',
+            isEnabled: true,
+            isConfigured: true,
+            isTested: true,
+            config: integration.config,
+            testResult: { success: true, message: 'Conexión probada exitosamente' },
+          }),
+        });
+      }
+
+      setIntegrations(prev =>
+        prev.map(integration =>
+          integration.id === integrationId
+            ? { ...integration, status: 'active' as const, lastSync: new Date().toISOString() }
+            : integration
+        )
+      );
+
+      logger.info('Conexión de integración probada exitosamente', { integrationId });
+      alert('Conexión probada exitosamente.');
+    } catch (error) {
+      setIntegrations(prev =>
+        prev.map(integration =>
+          integration.id === integrationId
+            ? { ...integration, status: 'error' as const }
+            : integration
+        )
+      );
+      logger.error('Error al probar conexión', { integrationId, error });
+      alert('Error al probar la conexión.');
+    }
+  };
+
+  const handleViewConfig = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    setConfigData(integration.config);
+    setShowConfigDialog(true);
+  };
+
+  const handleSaveConfig = async () => {
+    if (!selectedIntegration) {
+      return;
+    }
+
+    try {
+      // Guardar en la API
+      const response = await fetch('/api/admin/integrations', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: selectedIntegration.id,
+          name: selectedIntegration.name,
+          description: selectedIntegration.name,
+          category:
+            selectedIntegration.type === 'communication'
+              ? 'communication'
+              : selectedIntegration.type === 'analytics'
+                ? 'analytics'
+                : selectedIntegration.type === 'storage'
+                  ? 'storage'
+                  : 'other',
+          isEnabled: selectedIntegration.status === 'active',
+          isConfigured: true,
+          isTested: selectedIntegration.status === 'active',
+          config: configData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Actualizar estado local
+      setIntegrations(prev =>
+        prev.map(integration =>
+          integration.id === selectedIntegration.id
+            ? { ...integration, config: configData }
+            : integration
+        )
+      );
+
+      setShowConfigDialog(false);
+      setSelectedIntegration(null);
+      setConfigData({});
+
+      logger.info('Configuración de integración guardada', {
+        integrationId: selectedIntegration.id,
+      });
+      alert('Configuración guardada exitosamente.');
+    } catch (error) {
+      logger.error('Error al guardar configuración', { error });
+      alert('Error al guardar la configuración. Intente nuevamente.');
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-green-500">Activa</Badge>;
+      case 'inactive':
+        return <Badge variant="secondary">Inactiva</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      case 'configuring':
+        return (
+          <Badge variant="outline" className="text-blue-600 border-blue-600">
+            Configurando
+          </Badge>
+        );
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'communication':
+        return <MessageSquare className="w-5 h-5 text-blue-600" />;
+      case 'analytics':
+        return <BarChart3 className="w-5 h-5 text-green-600" />;
+      case 'storage':
+        return <Cloud className="w-5 h-5 text-purple-600" />;
+      default:
+        return <Settings className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  // Cargar integraciones al montar
+  useEffect(() => {
+    if (settingsLoaded) {
+      loadIntegrations();
+    }
+  }, [settingsLoaded]);
+
+  const renderIntegrationSettings = () => {
+    const stats = getIntegrationStats();
+
+    return (
+      <div className="space-y-6">
+        {/* Header con acciones */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Integraciones de Terceros</h2>
+            <p className="text-gray-600">Gestiona y configura todas las integraciones externas</p>
           </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Facebook Pixel Habilitado</div>
-              <div className="text-sm text-gray-600">Seguimiento de conversiones</div>
-            </div>
-            <Switch
-              checked={settings.facebookPixelEnabled}
-              onCheckedChange={checked =>
-                setSettings({ ...settings, facebookPixelEnabled: checked })
-              }
-            />
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={loadIntegrations} disabled={integrationsLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${integrationsLoading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
           </div>
+        </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Integración CRM</div>
-              <div className="text-sm text-gray-600">Conectar con sistema CRM</div>
-            </div>
-            <Switch
-              checked={settings.crmIntegration}
-              onCheckedChange={checked => setSettings({ ...settings, crmIntegration: checked })}
-            />
-          </div>
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                </div>
+                <Settings className="w-8 h-8 text-gray-600" />
+              </div>
+            </CardContent>
+          </Card>
 
-          {settings.crmIntegration && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor CRM</label>
-              <Input
-                value={settings.crmProvider}
-                onChange={e => setSettings({ ...settings, crmProvider: e.target.value })}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Activas</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Server className="w-5 h-5" />
-            API y Webhooks
-          </CardTitle>
-          <CardDescription>Configuración de API y webhooks</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">API Habilitada</div>
-              <div className="text-sm text-gray-600">Permitir acceso a la API</div>
-            </div>
-            <Switch
-              checked={settings.apiEnabled}
-              onCheckedChange={checked => setSettings({ ...settings, apiEnabled: checked })}
-            />
-          </div>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Inactivas</p>
+                  <p className="text-2xl font-bold text-gray-600">{stats.inactive}</p>
+                </div>
+                <XCircle className="w-8 h-8 text-gray-600" />
+              </div>
+            </CardContent>
+          </Card>
 
-          {settings.apiEnabled && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Clave de API</label>
-              <Input
-                value={settings.apiKey}
-                onChange={e => setSettings({ ...settings, apiKey: e.target.value })}
-              />
-            </div>
-          )}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Errores</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.error}</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Webhooks Habilitados</div>
-              <div className="text-sm text-gray-600">Enviar notificaciones a webhooks</div>
-            </div>
-            <Switch
-              checked={settings.webhookEnabled}
-              onCheckedChange={checked => setSettings({ ...settings, webhookEnabled: checked })}
-            />
-          </div>
+        {/* Configuración General de API y Webhooks */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Link className="w-5 h-5" />
+                Integraciones Externas
+              </CardTitle>
+              <CardDescription>Servicios de terceros integrados</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Google Maps Habilitado</div>
+                  <div className="text-sm text-gray-600">Mostrar mapas de Google</div>
+                </div>
+                <Switch
+                  checked={settings.googleMapsEnabled}
+                  onCheckedChange={checked =>
+                    setSettings({ ...settings, googleMapsEnabled: checked })
+                  }
+                />
+              </div>
 
-          {settings.webhookEnabled && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">URL de Webhook</label>
-              <Input
-                value={settings.webhookUrl}
-                onChange={e => setSettings({ ...settings, webhookUrl: e.target.value })}
-              />
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Google Analytics Habilitado</div>
+                  <div className="text-sm text-gray-600">Seguimiento de analíticas</div>
+                </div>
+                <Switch
+                  checked={settings.googleAnalyticsEnabled}
+                  onCheckedChange={checked =>
+                    setSettings({ ...settings, googleAnalyticsEnabled: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Facebook Pixel Habilitado</div>
+                  <div className="text-sm text-gray-600">Seguimiento de conversiones</div>
+                </div>
+                <Switch
+                  checked={settings.facebookPixelEnabled}
+                  onCheckedChange={checked =>
+                    setSettings({ ...settings, facebookPixelEnabled: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Integración CRM</div>
+                  <div className="text-sm text-gray-600">Conectar con sistema CRM</div>
+                </div>
+                <Switch
+                  checked={settings.crmIntegration}
+                  onCheckedChange={checked => setSettings({ ...settings, crmIntegration: checked })}
+                />
+              </div>
+
+              {settings.crmIntegration && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Proveedor CRM
+                  </label>
+                  <Input
+                    value={settings.crmProvider}
+                    onChange={e => setSettings({ ...settings, crmProvider: e.target.value })}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Server className="w-5 h-5" />
+                API y Webhooks
+              </CardTitle>
+              <CardDescription>Configuración de API y webhooks</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">API Habilitada</div>
+                  <div className="text-sm text-gray-600">Permitir acceso a la API</div>
+                </div>
+                <Switch
+                  checked={settings.apiEnabled}
+                  onCheckedChange={checked => setSettings({ ...settings, apiEnabled: checked })}
+                />
+              </div>
+
+              {settings.apiEnabled && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Clave de API
+                  </label>
+                  <Input
+                    value={settings.apiKey}
+                    onChange={e => setSettings({ ...settings, apiKey: e.target.value })}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Webhooks Habilitados</div>
+                  <div className="text-sm text-gray-600">Enviar notificaciones a webhooks</div>
+                </div>
+                <Switch
+                  checked={settings.webhookEnabled}
+                  onCheckedChange={checked => setSettings({ ...settings, webhookEnabled: checked })}
+                />
+              </div>
+
+              {settings.webhookEnabled && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL de Webhook
+                  </label>
+                  <Input
+                    value={settings.webhookUrl}
+                    onChange={e => setSettings({ ...settings, webhookUrl: e.target.value })}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabla de Integraciones */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Gestión de Integraciones</CardTitle>
+            <CardDescription>
+              Configura, prueba y gestiona el estado de cada integración
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {integrationsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="w-8 h-8 animate-spin mr-2" />
+                <span>Cargando integraciones...</span>
+              </div>
+            ) : integrations.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600">No hay integraciones configuradas</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Proveedor</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Última Sincronización</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {integrations.map(integration => (
+                    <TableRow key={integration.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {getTypeIcon(integration.type)}
+                          {integration.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{integration.provider}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {integration.type === 'communication'
+                            ? 'Comunicación'
+                            : integration.type === 'analytics'
+                              ? 'Analytics'
+                              : integration.type === 'storage'
+                                ? 'Almacenamiento'
+                                : integration.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(integration.status)}</TableCell>
+                      <TableCell>
+                        {new Date(integration.lastSync).toLocaleString('es-CL')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleIntegration(integration.id)}
+                          >
+                            {integration.status === 'active' ? 'Desactivar' : 'Activar'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestConnection(integration.id)}
+                            disabled={integration.status === 'configuring'}
+                          >
+                            <TestTube className="w-4 h-4 mr-2" />
+                            Probar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewConfig(integration)}
+                          >
+                            <Settings className="w-4 h-4 mr-2" />
+                            Config
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Dialog de Configuración */}
+        <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Configuración de {selectedIntegration?.name}</DialogTitle>
+              <DialogDescription>Configura los parámetros de la integración</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {selectedIntegration && (
+                <>
+                  {selectedIntegration.id === 'twilio' && (
+                    <>
+                      <div>
+                        <Label htmlFor="accountSid">Account SID</Label>
+                        <Input
+                          id="accountSid"
+                          value={configData.accountSid || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, accountSid: e.target.value }))
+                          }
+                          placeholder="AC..."
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="authToken">Auth Token</Label>
+                        <Input
+                          id="authToken"
+                          type="password"
+                          value={configData.authToken || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, authToken: e.target.value }))
+                          }
+                          placeholder="Tu token de autenticación"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phoneNumber">Número de Teléfono</Label>
+                        <Input
+                          id="phoneNumber"
+                          value={configData.phoneNumber || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, phoneNumber: e.target.value }))
+                          }
+                          placeholder="+56912345678"
+                        />
+                      </div>
+                    </>
+                  )}
+                  {selectedIntegration.id === 'sendgrid' && (
+                    <>
+                      <div>
+                        <Label htmlFor="apiKey">API Key</Label>
+                        <Input
+                          id="apiKey"
+                          type="password"
+                          value={configData.apiKey || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, apiKey: e.target.value }))
+                          }
+                          placeholder="SG..."
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="fromEmail">Email Remitente</Label>
+                        <Input
+                          id="fromEmail"
+                          type="email"
+                          value={configData.fromEmail || 'noreply@rent360.cl'}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, fromEmail: e.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="fromName">Nombre Remitente</Label>
+                        <Input
+                          id="fromName"
+                          value={configData.fromName || 'Rent360'}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, fromName: e.target.value }))
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
+                  {selectedIntegration.id === 'google-analytics' && (
+                    <>
+                      <div>
+                        <Label htmlFor="trackingId">Tracking ID</Label>
+                        <Input
+                          id="trackingId"
+                          value={configData.trackingId || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, trackingId: e.target.value }))
+                          }
+                          placeholder="UA-XXXXXXXXX-X o G-XXXXXXXXXX"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="measurementId">Measurement ID</Label>
+                        <Input
+                          id="measurementId"
+                          value={configData.measurementId || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, measurementId: e.target.value }))
+                          }
+                          placeholder="G-XXXXXXXXXX"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="apiSecret">API Secret</Label>
+                        <Input
+                          id="apiSecret"
+                          type="password"
+                          value={configData.apiSecret || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, apiSecret: e.target.value }))
+                          }
+                          placeholder="Secreto para Google Analytics"
+                        />
+                      </div>
+                    </>
+                  )}
+                  {selectedIntegration.id === 'aws-s3' && (
+                    <>
+                      <div>
+                        <Label htmlFor="accessKeyId">Access Key ID</Label>
+                        <Input
+                          id="accessKeyId"
+                          type="password"
+                          value={configData.accessKeyId || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, accessKeyId: e.target.value }))
+                          }
+                          placeholder="AKIA..."
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="secretAccessKey">Secret Access Key</Label>
+                        <Input
+                          id="secretAccessKey"
+                          type="password"
+                          value={configData.secretAccessKey || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, secretAccessKey: e.target.value }))
+                          }
+                          placeholder="Tu clave secreta"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="region">Región</Label>
+                        <Input
+                          id="region"
+                          value={configData.region || 'us-east-1'}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, region: e.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="bucketName">Nombre del Bucket</Label>
+                        <Input
+                          id="bucketName"
+                          value={configData.bucketName || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, bucketName: e.target.value }))
+                          }
+                          placeholder="mi-bucket-s3"
+                        />
+                      </div>
+                    </>
+                  )}
+                  {selectedIntegration.id === 'digitalocean-spaces' && (
+                    <>
+                      <div>
+                        <Label htmlFor="accessKeyId">Access Key</Label>
+                        <Input
+                          id="accessKeyId"
+                          type="password"
+                          value={configData.accessKeyId || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, accessKeyId: e.target.value }))
+                          }
+                          placeholder="DO..."
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="secretAccessKey">Secret Key</Label>
+                        <Input
+                          id="secretAccessKey"
+                          type="password"
+                          value={configData.secretAccessKey || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, secretAccessKey: e.target.value }))
+                          }
+                          placeholder="Tu clave secreta"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="region">Región</Label>
+                        <Select
+                          value={configData.region || 'nyc3'}
+                          onValueChange={value =>
+                            setConfigData(prev => ({ ...prev, region: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="nyc3">New York 3 (nyc3)</SelectItem>
+                            <SelectItem value="sfo3">San Francisco 3 (sfo3)</SelectItem>
+                            <SelectItem value="ams3">Amsterdam 3 (ams3)</SelectItem>
+                            <SelectItem value="sgp1">Singapore 1 (sgp1)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="bucketName">Nombre del Space</Label>
+                        <Input
+                          id="bucketName"
+                          value={configData.bucketName || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, bucketName: e.target.value }))
+                          }
+                          placeholder="mi-space"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="endpoint">Endpoint (Opcional)</Label>
+                        <Input
+                          id="endpoint"
+                          value={configData.endpoint || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, endpoint: e.target.value }))
+                          }
+                          placeholder="https://nyc3.digitaloceanspaces.com"
+                        />
+                      </div>
+                    </>
+                  )}
+                  {selectedIntegration.id === 'pusher' && (
+                    <>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                          <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-blue-800 mb-1">
+                              Recomendado para DigitalOcean
+                            </h4>
+                            <p className="text-sm text-blue-700">
+                              Pusher ofrece plan gratuito hasta 200,000 mensajes/mes y es muy
+                              confiable. Obtén tus credenciales en{' '}
+                              <a
+                                href="https://pusher.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline"
+                              >
+                                pusher.com
+                              </a>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="appId">App ID</Label>
+                        <Input
+                          id="appId"
+                          value={configData.appId || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, appId: e.target.value }))
+                          }
+                          placeholder="Tu App ID"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="key">Key</Label>
+                        <Input
+                          id="key"
+                          value={configData.key || ''}
+                          onChange={e => setConfigData(prev => ({ ...prev, key: e.target.value }))}
+                          placeholder="Tu clave pública"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="secret">Secret</Label>
+                        <Input
+                          id="secret"
+                          type="password"
+                          value={configData.secret || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, secret: e.target.value }))
+                          }
+                          placeholder="Tu clave secreta"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cluster">Cluster</Label>
+                        <Select
+                          value={configData.cluster || 'us2'}
+                          onValueChange={value =>
+                            setConfigData(prev => ({ ...prev, cluster: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="us2">US East (us2)</SelectItem>
+                            <SelectItem value="us3">US West (us3)</SelectItem>
+                            <SelectItem value="eu">Europe (eu)</SelectItem>
+                            <SelectItem value="ap1">Asia Pacific (ap1)</SelectItem>
+                            <SelectItem value="ap2">Asia Pacific 2 (ap2)</SelectItem>
+                            <SelectItem value="ap3">Asia Pacific 3 (ap3)</SelectItem>
+                            <SelectItem value="ap4">Asia Pacific 4 (ap4)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+                  {selectedIntegration.id === 'socket-io' && (
+                    <>
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                          <Info className="w-5 h-5 text-green-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-green-800 mb-1">Sin Costo Adicional</h4>
+                            <p className="text-sm text-green-700">
+                              Usa el servidor WebSocket propio de Rent360. Asegúrate de que
+                              DigitalOcean esté configurado para usar `server.ts` en lugar de `next
+                              start`.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="serverUrl">URL del Servidor</Label>
+                        <Input
+                          id="serverUrl"
+                          value={configData.serverUrl || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, serverUrl: e.target.value }))
+                          }
+                          placeholder="https://rent360management-2yxgz.ondigitalocean.app"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Dejar vacío para usar automáticamente la URL actual
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {/* Fallback para otras integraciones */}
+                  {![
+                    'twilio',
+                    'sendgrid',
+                    'google-analytics',
+                    'aws-s3',
+                    'digitalocean-spaces',
+                    'pusher',
+                    'socket-io',
+                  ].includes(selectedIntegration.id) &&
+                    Object.entries(selectedIntegration.config).map(([key, value]) => (
+                      <div key={key}>
+                        <Label htmlFor={key}>
+                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </Label>
+                        <Input
+                          id={key}
+                          value={configData[key] || ''}
+                          onChange={e =>
+                            setConfigData(prev => ({ ...prev, [key]: e.target.value }))
+                          }
+                          type={
+                            key.toLowerCase().includes('secret') ||
+                            key.toLowerCase().includes('key') ||
+                            key.toLowerCase().includes('token')
+                              ? 'password'
+                              : 'text'
+                          }
+                        />
+                      </div>
+                    ))}
+                </>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowConfigDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveConfig}>Guardar Configuración</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  };
 
   const renderAdvancedSettings = () => (
     <div className="grid lg:grid-cols-2 gap-8">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { OwnerPaymentService } from '@/lib/owner-payment-service';
 import { z } from 'zod';
 
 const assignRunnerSchema = z.object({
@@ -10,6 +11,9 @@ const assignRunnerSchema = z.object({
   duration: z.number().min(15).max(240).default(60), // 15min to 4hours
   notes: z.string().optional(),
   estimatedEarnings: z.number().min(0).default(20000), // CLP
+  // Información de pago
+  paymentMethod: z.enum(['stripe', 'paypal', 'khipu', 'webpay']).optional(),
+  paymentMethodId: z.string().optional(), // ID del método de pago guardado (para Stripe)
 });
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
@@ -83,6 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             id: true,
             title: true,
             address: true,
+            ownerId: true,
           },
         },
         runner: {
@@ -95,6 +100,54 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         },
       },
     });
+
+    // Autorizar pago si se proporcionó método de pago
+    let paymentAuthorization = null;
+    if (validatedData.paymentMethod) {
+      try {
+        const paymentData: {
+          visitId: string;
+          ownerId: string;
+          amount: number;
+          paymentMethod: 'stripe' | 'paypal' | 'khipu' | 'webpay';
+          paymentMethodId?: string;
+        } = {
+          visitId: visit.id,
+          ownerId: user.id,
+          amount: validatedData.estimatedEarnings,
+          paymentMethod: validatedData.paymentMethod,
+        };
+
+        if (validatedData.paymentMethodId) {
+          paymentData.paymentMethodId = validatedData.paymentMethodId;
+        }
+
+        paymentAuthorization = await OwnerPaymentService.authorizePayment(paymentData);
+
+        if (!paymentAuthorization.success) {
+          logger.warn('Error autorizando pago, pero visita creada', {
+            visitId: visit.id,
+            error: paymentAuthorization.error,
+          });
+
+          // La visita se crea igual, pero el pago queda pendiente
+          // El propietario puede autorizar el pago más tarde
+        } else {
+          logger.info('Pago autorizado exitosamente al crear visita', {
+            visitId: visit.id,
+            paymentId: paymentAuthorization.paymentId,
+            authorizationId: paymentAuthorization.authorizationId,
+          });
+        }
+      } catch (error) {
+        logger.error('Error en autorización de pago (no crítico)', {
+          visitId: visit.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // No fallar la creación de la visita si hay error en el pago
+        // El pago se puede autorizar después
+      }
+    }
 
     // TODO: Enviar notificación al corredor sobre la nueva asignación
 
@@ -111,6 +164,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         earnings: visit.earnings,
         notes: visit.notes,
       },
+      payment: paymentAuthorization
+        ? {
+            authorized: paymentAuthorization.success,
+            paymentId: paymentAuthorization.paymentId,
+            clientSecret: paymentAuthorization.clientSecret, // Para Stripe frontend
+            error: paymentAuthorization.error,
+          }
+        : null,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

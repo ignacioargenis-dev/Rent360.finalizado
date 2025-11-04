@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { SkipLinks } from '@/components/ui/skip-links';
 import { NotificationProvider } from '@/components/ui/notification-provider';
 import { NotificationToast } from '@/components/ui/notification-toast';
+import { WebSocketProvider } from '@/components/providers/WebSocketProvider';
 // import { DataSyncProvider } from '@/components/providers/DataSyncProvider';
 import dynamic from 'next/dynamic';
 
@@ -112,8 +113,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
               <AuthProvider>
                 {/* Componentes que necesitan autenticación */}
-                <Chatbot position="bottom-right" initialOpen={false} />
-                {children}
+                <WebSocketProvider>
+                  <Chatbot position="bottom-right" initialOpen={false} />
+                  {children}
+                </WebSocketProvider>
               </AuthProvider>
             </NotificationProvider>
           </ThemeProvider>
