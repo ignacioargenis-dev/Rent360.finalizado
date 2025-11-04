@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'MAINTENANCE_PROVIDER' && user.role !== 'SERVICE_PROVIDER') {
+    if (!isAnyProvider(user.role)) {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo para proveedores.' },
         { status: 403 }
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     // Obtener transacciones reales del proveedor
     let transactions: any[] = [];
 
-    if (user.role === 'MAINTENANCE_PROVIDER') {
+    if (isMaintenanceProvider(user.role)) {
       if (!fullUser.maintenanceProvider?.id) {
         return NextResponse.json({
           success: true,
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
           },
         ],
       }));
-    } else if (user.role === 'SERVICE_PROVIDER') {
+    } else if (isServiceProvider(user.role)) {
       if (!fullUser.serviceProvider?.id) {
         return NextResponse.json({
           success: true,

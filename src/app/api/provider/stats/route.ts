@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'MAINTENANCE_PROVIDER' && user.role !== 'SERVICE_PROVIDER') {
+    // ✅ Aceptar todos los roles de proveedor (normalizados)
+    if (!isAnyProvider(user.role)) {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo para proveedores.' },
         { status: 403 }
@@ -46,11 +47,11 @@ export async function GET(request: NextRequest) {
       averageRating: 0,
       totalRatings: 0,
       activeJobs: 0,
-      gracePeriodDays: user.role === 'MAINTENANCE_PROVIDER' ? 15 : 7,
-      commissionPercentage: user.role === 'MAINTENANCE_PROVIDER' ? 10 : 8,
+      gracePeriodDays: isMaintenanceProvider(user.role) ? 15 : 7,
+      commissionPercentage: isMaintenanceProvider(user.role) ? 10 : 8,
     };
 
-    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       const serviceProviderId = fullUser.serviceProvider.id;
 
       // Obtener trabajos completados
@@ -137,7 +138,7 @@ export async function GET(request: NextRequest) {
         gracePeriodDays: 7,
         commissionPercentage: 8,
       };
-    } else if (user.role === 'MAINTENANCE_PROVIDER' && fullUser.maintenanceProvider) {
+    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       const maintenanceProviderId = fullUser.maintenanceProvider.id;
 
       // Similar lógica para maintenance provider

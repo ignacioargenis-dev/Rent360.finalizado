@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     let services: any[] = [];
 
-    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       // ✅ CRÍTICO: Recargar el ServiceProvider desde la BD para obtener datos actualizados
       // Esto evita problemas de caché en Prisma
       const freshServiceProvider = await db.serviceProvider.findUnique({
@@ -186,10 +186,7 @@ export async function GET(request: NextRequest) {
           },
         ];
       }
-    } else if (
-      (user.role === 'MAINTENANCE_PROVIDER' || user.role === 'MAINTENANCE') &&
-      fullUser.maintenanceProvider
-    ) {
+    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       // Para maintenance providers, usar la especialidad
       const mp = fullUser.maintenanceProvider;
       const specialty = mp?.specialty || 'Mantenimiento General';
@@ -306,10 +303,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
     }
 
-    if (
-      (user.role === 'SERVICE_PROVIDER' || user.role === 'PROVIDER') &&
-      fullUser.serviceProvider
-    ) {
+    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       // Obtener servicios actuales
       const serviceTypesJson = fullUser.serviceProvider.serviceTypes || '[]';
       let serviceTypes: string[] = [];
@@ -364,10 +358,7 @@ export async function POST(request: NextRequest) {
           description,
         },
       });
-    } else if (
-      (user.role === 'MAINTENANCE_PROVIDER' || user.role === 'MAINTENANCE') &&
-      fullUser.maintenanceProvider
-    ) {
+    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       // Para maintenance providers, usar specialties
       const specialtiesJson = fullUser.maintenanceProvider.specialties || '[]';
       let specialties: string[] = [];

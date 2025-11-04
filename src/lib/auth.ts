@@ -105,7 +105,7 @@ export async function requireAuth(request: NextRequest): Promise<DecodedToken> {
     cookieNames: request.cookies.getAll().map(c => c.name),
     url: request.url,
   });
-  
+
   const decoded = verifyToken(request);
 
   if (!decoded) {
@@ -260,12 +260,59 @@ export function clearAuthCookies(response: any) {
 
 // Función para normalizar roles (asegura mayúsculas)
 export function normalizeRole(role: string): string {
-  if (!role) return role;
+  if (!role) {
+    return role;
+  }
   return role.toUpperCase();
 }
 
 // Función para verificar rol específico (normalizada)
 export function hasSpecificRole(user: any, expectedRole: string): boolean {
-  if (!user || !user.role) return false;
+  if (!user || !user.role) {
+    return false;
+  }
   return normalizeRole(user.role) === normalizeRole(expectedRole);
+}
+
+/**
+ * Normaliza roles de proveedor para manejar duplicados
+ * PROVIDER -> SERVICE_PROVIDER
+ * MAINTENANCE -> MAINTENANCE_PROVIDER
+ */
+export function normalizeProviderRole(role: string): string {
+  const normalized = normalizeRole(role);
+
+  // Mapear roles genéricos a específicos
+  if (normalized === 'PROVIDER') {
+    return 'SERVICE_PROVIDER';
+  }
+  if (normalized === 'MAINTENANCE') {
+    return 'MAINTENANCE_PROVIDER';
+  }
+
+  return normalized;
+}
+
+/**
+ * Verifica si un usuario es un proveedor de servicios (acepta ambos formatos)
+ */
+export function isServiceProvider(role: string): boolean {
+  const normalized = normalizeProviderRole(role);
+  return normalized === 'SERVICE_PROVIDER';
+}
+
+/**
+ * Verifica si un usuario es un proveedor de mantenimiento (acepta ambos formatos)
+ */
+export function isMaintenanceProvider(role: string): boolean {
+  const normalized = normalizeProviderRole(role);
+  return normalized === 'MAINTENANCE_PROVIDER';
+}
+
+/**
+ * Verifica si un usuario es cualquier tipo de proveedor
+ */
+export function isAnyProvider(role: string): boolean {
+  const normalized = normalizeProviderRole(role);
+  return normalized === 'SERVICE_PROVIDER' || normalized === 'MAINTENANCE_PROVIDER';
 }

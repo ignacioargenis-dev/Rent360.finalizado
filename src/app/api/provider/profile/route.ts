@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'SERVICE_PROVIDER' && user.role !== 'MAINTENANCE_PROVIDER') {
+    if (!isAnyProvider(user.role)) {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo para proveedores.' },
         { status: 403 }
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     let profile: any = null;
 
-    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       const sp = fullUser.serviceProvider;
       let serviceTypes: string[] = [];
       try {
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
             }
           : null,
       };
-    } else if (user.role === 'MAINTENANCE_PROVIDER' && fullUser.maintenanceProvider) {
+    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       const mp = fullUser.maintenanceProvider;
       let specialties: string[] = [];
       try {
@@ -170,7 +170,7 @@ export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'SERVICE_PROVIDER' && user.role !== 'MAINTENANCE_PROVIDER') {
+    if (!isAnyProvider(user.role)) {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo para proveedores.' },
         { status: 403 }
@@ -220,7 +220,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Actualizar ServiceProvider
-    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       const updateData: any = {};
 
       if (companyName) {
@@ -262,7 +262,7 @@ export async function PUT(request: NextRequest) {
         where: { id: fullUser.serviceProvider.id },
         data: updateData,
       });
-    } else if (user.role === 'MAINTENANCE_PROVIDER' && fullUser.maintenanceProvider) {
+    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       const updateData: any = {};
 
       if (companyName) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -8,12 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (
-      user.role !== 'SERVICE_PROVIDER' &&
-      user.role !== 'MAINTENANCE_PROVIDER' &&
-      user.role !== 'PROVIDER' &&
-      user.role !== 'MAINTENANCE'
-    ) {
+    if (!isAnyProvider(user.role)) {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
         { status: 403 }
@@ -41,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     let requests: any[] = [];
 
-    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       // Solicitudes asignadas al proveedor
       const whereClause: any = {
         serviceProviderId: fullUser.serviceProvider.id,
@@ -100,10 +95,7 @@ export async function GET(request: NextRequest) {
         images: req.images ? JSON.parse(req.images) : [],
         notes: req.notes || '',
       }));
-    } else if (
-      (user.role === 'MAINTENANCE_PROVIDER' || user.role === 'MAINTENANCE') &&
-      fullUser.maintenanceProvider
-    ) {
+    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       // Para maintenance providers, usar el modelo Maintenance
       const whereClause: any = {
         maintenanceProviderId: fullUser.maintenanceProvider.id,

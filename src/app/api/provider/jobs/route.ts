@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'SERVICE_PROVIDER' && user.role !== 'MAINTENANCE_PROVIDER') {
+    // ✅ Aceptar todos los roles de proveedor (normalizados)
+    if (!isAnyProvider(user.role)) {
       return NextResponse.json(
         { error: 'Acceso no autorizado. Solo para proveedores.' },
         { status: 403 }
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     let jobs: any[] = [];
 
-    if (user.role === 'SERVICE_PROVIDER' && fullUser.serviceProvider) {
+    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       const serviceJobs = await db.serviceJob.findMany({
         where: {
           serviceProviderId: fullUser.serviceProvider.id,
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
         rating: job.rating || undefined,
         feedback: job.feedback || undefined,
       }));
-    } else if (user.role === 'MAINTENANCE_PROVIDER' && fullUser.maintenanceProvider) {
+    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       const maintenanceJobs = await db.maintenance.findMany({
         where: {
           maintenanceProviderId: fullUser.maintenanceProvider.id,
