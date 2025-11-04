@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAnyProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 
@@ -19,9 +19,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Construir filtros
+    // ✅ Buscar usuarios con cualquier rol de proveedor (normalizado)
     const whereClause: any = {
-      role: 'PROVIDER',
+      role: {
+        in: ['PROVIDER', 'MAINTENANCE', 'SERVICE_PROVIDER', 'MAINTENANCE_PROVIDER'],
+      },
     };
     if (status !== 'all') {
       whereClause.isActive = status === 'active';
@@ -52,11 +54,12 @@ export async function GET(request: NextRequest) {
       skip: offset,
     });
 
-    // Obtener estadísticas de proveedores
+    // ✅ Obtener estadísticas de proveedores (todos los tipos)
+    const providerRoles = ['PROVIDER', 'MAINTENANCE', 'SERVICE_PROVIDER', 'MAINTENANCE_PROVIDER'];
     const [totalProviders, activeProviders, pendingProviders] = await Promise.all([
-      db.user.count({ where: { role: 'PROVIDER' } }),
-      db.user.count({ where: { role: 'PROVIDER', isActive: true } }),
-      db.user.count({ where: { role: 'PROVIDER', isActive: false } }),
+      db.user.count({ where: { role: { in: providerRoles } } }),
+      db.user.count({ where: { role: { in: providerRoles }, isActive: true } }),
+      db.user.count({ where: { role: { in: providerRoles }, isActive: false } }),
     ]);
 
     // Transformar datos al formato esperado por el frontend

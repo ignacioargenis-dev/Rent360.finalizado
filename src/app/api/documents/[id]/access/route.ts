@@ -149,8 +149,15 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
       }
     }
 
-    // Prestadores de servicios de mantenimiento pueden acceder a documentos relacionados
-    if (user.role === 'provider') {
+    // ✅ Prestadores de servicios de mantenimiento pueden acceder a documentos relacionados
+    // Aceptar ambos formatos de roles de proveedor
+    const isProvider =
+      user.role === 'PROVIDER' ||
+      user.role === 'MAINTENANCE' ||
+      user.role === 'SERVICE_PROVIDER' ||
+      user.role === 'MAINTENANCE_PROVIDER';
+
+    if (isProvider) {
       const relatedMaintenance = await db.maintenance.findFirst({
         where: {
           propertyId: document.propertyId,
