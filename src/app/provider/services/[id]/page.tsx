@@ -124,8 +124,9 @@ export default function ServiceDetailPage() {
 
   const loadService = async () => {
     try {
+      setIsLoading(true);
       // Cargar datos reales desde la API
-      const response = await fetch(`/api/provider/services/${serviceId}`, {
+      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceId)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -135,15 +136,20 @@ export default function ServiceDetailPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
 
+      if (!data.success) {
+        throw new Error(data.error || 'Error al cargar el servicio');
+      }
+
       // Transform API data to match our interface
       const transformedService: Service = {
-        id: data.id,
-        name: data.title || data.name || 'Servicio no identificado',
+        id: data.id || `service-${serviceId}`,
+        name: data.name || 'Servicio no identificado',
         category: data.category || 'General',
         description: data.description || 'Sin descripción',
         shortDescription:
@@ -157,24 +163,27 @@ export default function ServiceDetailPage() {
           minimumCharge: data.pricing?.minimumCharge || 0,
         },
         duration: {
-          estimated: data.duration?.estimated || '2-4 horas',
+          estimated: data.duration?.estimated || '2-4',
           unit: data.duration?.unit || 'hours',
         },
-        features: data.features || ['Servicio profesional', 'Garantía incluida'],
+        features: data.features || [],
         requirements: data.requirements || [],
         availability: {
-          active: data.availability?.active || false,
-          regions: data.location?.region ? [data.location.region] : ['Santiago'],
+          active:
+            data.availability?.active !== undefined
+              ? data.availability.active
+              : (data.stats?.requests || 0) > 0,
+          regions: data.availability?.regions || [],
           emergency: data.availability?.emergency || false,
         },
-        images: data.images || ['/placeholder-service.jpg'],
+        images: data.images || [],
         tags: data.tags || [data.category || 'General'],
         stats: {
-          views: data.views || 0,
-          requests: data.requests || 0,
-          conversionRate: data.conversionRate || 0,
-          averageRating: data.rating || 0,
-          totalReviews: data.reviewCount || 0,
+          views: data.stats?.views || 0,
+          requests: data.stats?.requests || 0,
+          conversionRate: data.stats?.conversionRate || 0,
+          averageRating: data.stats?.averageRating || 0,
+          totalReviews: data.stats?.totalReviews || 0,
         },
         createdAt: data.createdAt || new Date().toISOString(),
         updatedAt: data.updatedAt || new Date().toISOString(),

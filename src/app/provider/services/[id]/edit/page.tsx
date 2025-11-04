@@ -145,46 +145,82 @@ export default function EditServicePage() {
 
   const loadService = async () => {
     try {
-      // Simular carga de servicio existente
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsLoading(true);
 
-      // Mock data - en producción vendría de la API
-      const mockService: ServiceData = {
-        name: 'Reparación de Grifería Completa',
-        category: 'Fontanería',
-        description:
-          'Servicio profesional completo de reparación e instalación de griferías en baños y cocinas. Incluye diagnóstico, reparación de fugas, cambio de piezas defectuosas y limpieza final.',
-        shortDescription: 'Reparación profesional de griferías con garantía incluida',
-        pricing: {
-          type: 'fixed',
-          amount: 25000,
-          currency: 'CLP',
-          minimumCharge: 15000,
+      // ✅ Cargar datos reales desde la API
+      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceId)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
-        duration: {
-          estimated: '1-2',
-          unit: 'hours',
-        },
-        features: [
-          'Diagnóstico completo del problema',
-          'Reparación de fugas y goteos',
-          'Cambio de piezas defectuosas',
-          'Limpieza y prueba final',
-        ],
-        requirements: ['Acceso al baño o cocina', 'Corte de agua disponible si es necesario'],
-        availability: {
-          active: true,
-          regions: ['Metropolitana', 'Valparaíso'],
-          emergency: false,
-        },
-        images: [],
-        existingImages: ['/api/placeholder/400/300', '/api/placeholder/400/300'],
-        tags: ['grifería', 'baño', 'cocina', 'reparación'],
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Error al cargar el servicio');
+      }
+
+      // Parsear disponibilidad
+      let availability = {
+        active: data.availability?.active !== undefined ? data.availability.active : true,
+        regions: data.availability?.regions || [],
+        emergency: data.availability?.emergency || false,
       };
 
-      setServiceData(mockService);
+      // Parsear duración
+      let durationEstimated = data.duration?.estimated || '2-4';
+      let durationUnit = data.duration?.unit || 'hours';
+
+      // Si la duración viene como "2-4 horas", extraer solo el número
+      if (typeof durationEstimated === 'string' && durationEstimated.includes('-')) {
+        durationEstimated = durationEstimated.split('-')[0];
+      }
+
+      // Transformar datos de la API al formato del formulario
+      const serviceDataFromAPI: ServiceData = {
+        name: data.name || '',
+        category: data.category || '',
+        description: data.description || '',
+        shortDescription: data.shortDescription || data.description?.substring(0, 100) || '',
+        pricing: {
+          type: data.pricing?.type || 'fixed',
+          amount: data.pricing?.amount || 0,
+          currency: data.pricing?.currency || 'CLP',
+          minimumCharge: data.pricing?.minimumCharge || 0,
+        },
+        duration: {
+          estimated: durationEstimated,
+          unit: durationUnit as 'minutes' | 'hours' | 'days',
+        },
+        features: data.features || [],
+        requirements: data.requirements || [],
+        availability,
+        images: [],
+        existingImages: data.images || [],
+        tags: data.tags || [],
+      };
+
+      setServiceData(serviceDataFromAPI);
+
+      logger.info('Servicio cargado para edición', {
+        serviceId,
+        name: serviceDataFromAPI.name,
+        category: serviceDataFromAPI.category,
+      });
     } catch (error) {
-      logger.error('Error al cargar servicio', { error, serviceId });
+      logger.error('Error al cargar servicio', {
+        error: error instanceof Error ? error.message : String(error),
+        serviceId,
+      });
+      setErrorMessage('Error al cargar el servicio. Por favor, inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -332,8 +368,48 @@ export default function EditServicePage() {
     setIsSubmitting(true);
 
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // ✅ Llamar a la API real para actualizar el servicio
+      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceId)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: serviceData.name,
+          category: serviceData.category,
+          description: serviceData.description,
+          pricing: {
+            type: serviceData.pricing.type,
+            amount: serviceData.pricing.amount,
+            currency: serviceData.pricing.currency,
+            minimumCharge: serviceData.pricing.minimumCharge,
+          },
+          duration: {
+            estimated: serviceData.duration.estimated,
+            unit: serviceData.duration.unit,
+          },
+          availability: {
+            active: serviceData.availability.active,
+            regions: serviceData.availability.regions,
+            emergency: serviceData.availability.emergency,
+          },
+          features: serviceData.features,
+          requirements: serviceData.requirements,
+          tags: serviceData.tags,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al actualizar el servicio');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al actualizar el servicio');
+      }
 
       logger.info('Servicio actualizado exitosamente', {
         serviceId,
@@ -344,18 +420,25 @@ export default function EditServicePage() {
       setSuccessMessage('Servicio actualizado exitosamente');
 
       setTimeout(() => {
-        router.push(`/provider/services/${serviceId}`);
+        router.push(`/provider/services/${encodeURIComponent(serviceId)}`);
       }, 2000);
     } catch (error) {
-      logger.error('Error al actualizar servicio', { error, serviceId });
-      setErrorMessage('Error al actualizar el servicio. Por favor intente nuevamente.');
+      logger.error('Error al actualizar servicio', {
+        error: error instanceof Error ? error.message : String(error),
+        serviceId,
+      });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al actualizar el servicio. Por favor intente nuevamente.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    router.push(`/provider/services/${serviceId}`);
+    router.push(`/provider/services/${encodeURIComponent(serviceId)}`);
   };
 
   const formatCurrency = (amount: number) => {

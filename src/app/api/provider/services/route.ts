@@ -154,6 +154,7 @@ export async function GET(request: NextRequest) {
           active: freshServiceProvider.status === 'ACTIVE',
           totalJobs: stats.totalJobs,
           avgRating: stats.avgRating,
+          duration: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
           responseTime: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
           availability,
           requirements: [],
@@ -175,6 +176,7 @@ export async function GET(request: NextRequest) {
             active: freshServiceProvider.status === 'ACTIVE',
             totalJobs: 0,
             avgRating: 0,
+            duration: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
             responseTime: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
             availability: {
               weekdays: true,

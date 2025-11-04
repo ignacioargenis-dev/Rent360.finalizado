@@ -170,12 +170,64 @@ export default function ProviderServicesPage() {
     }
   };
 
-  const handleToggleService = (serviceId: string) => {
-    setServices(prev =>
-      prev.map(service =>
-        service.id === serviceId ? { ...service, active: !service.active } : service
-      )
-    );
+  const handleToggleService = async (
+    serviceId: string,
+    serviceName: string,
+    currentActive: boolean
+  ) => {
+    try {
+      console.log('🔄 [PROVIDER SERVICES] Activando/desactivando servicio:', {
+        serviceId,
+        serviceName,
+        currentActive,
+        newActive: !currentActive,
+      });
+
+      // Actualizar estado local inmediatamente para feedback visual
+      setServices(prev =>
+        prev.map(service =>
+          service.id === serviceId ? { ...service, active: !service.active } : service
+        )
+      );
+
+      // Llamar a la API para actualizar en el backend
+      const response = await fetch(`/api/provider/services/${encodeURIComponent(serviceName)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          active: !currentActive,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al actualizar el servicio');
+      }
+
+      // Recargar datos para asegurar sincronización
+      await loadPageData();
+
+      console.log('✅ [PROVIDER SERVICES] Servicio actualizado exitosamente');
+    } catch (error) {
+      console.error('❌ [PROVIDER SERVICES] Error al actualizar servicio:', error);
+
+      // Revertir cambio local en caso de error
+      setServices(prev =>
+        prev.map(service =>
+          service.id === serviceId ? { ...service, active: currentActive } : service
+        )
+      );
+
+      // Mostrar error al usuario
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Error al actualizar el estado del servicio. Por favor intente nuevamente.'
+      );
+    }
   };
 
   const handleUpdatePrice = (serviceId: string, newPrice: number) => {
@@ -379,7 +431,9 @@ export default function ProviderServicesPage() {
                       </div>
                       <Switch
                         checked={service.active}
-                        onCheckedChange={() => handleToggleService(service.id)}
+                        onCheckedChange={() =>
+                          handleToggleService(service.id, service.name, service.active)
+                        }
                       />
                     </div>
 
@@ -396,7 +450,7 @@ export default function ProviderServicesPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-500" />
-                        <span>{service.responseTime}</span>
+                        <span>{service.duration || service.responseTime || 'No especificado'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <TrendingUp className="w-4 h-4 text-purple-500" />
@@ -413,7 +467,9 @@ export default function ProviderServicesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => router.push(`/provider/services/${service.id}`)}
+                          onClick={() =>
+                            router.push(`/provider/services/${encodeURIComponent(service.name)}`)
+                          }
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
@@ -421,7 +477,11 @@ export default function ProviderServicesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => router.push(`/provider/services/${service.id}/edit`)}
+                          onClick={() =>
+                            router.push(
+                              `/provider/services/${encodeURIComponent(service.name)}/edit`
+                            )
+                          }
                         >
                           <Edit className="w-4 h-4 mr-2" />
                           Editar
