@@ -42,10 +42,11 @@
     "test:full-suite": "node scripts/run-full-testing-suite.js",
     "generate-tests": "node scripts/generate-test-suites.js",
     "setup-hooks": "bash scripts/setup-git-hooks.sh",
+    "setup-husky": "node setup-husky.js",
     "ci": "npm run type-check && npm run lint:full && npm run format:check && npm run test:ci",
     "quality": "npm run type-check && npm run lint:full && npm run format:check && npm run test:coverage",
     "postinstall": "prisma generate",
-    "prepare": "husky"
+    "prepare": "husky || echo 'Husky not available, skipping git hooks setup'"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
