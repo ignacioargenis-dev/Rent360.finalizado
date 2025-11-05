@@ -70,10 +70,16 @@ export async function GET(request: NextRequest) {
     const currentRoleLevel = roleHierarchy[currentUserRole as keyof typeof roleHierarchy] || 0;
 
     // Restringir búsqueda según el rol del usuario actual
-    if (currentUserRole === 'OWNER' || currentUserRole === 'TENANT') {
-      // Propietarios e inquilinos solo pueden buscar corredores, proveedores y soporte
+    if (currentUserRole === 'OWNER') {
+      // Propietarios pueden buscar corredores, proveedores, soporte, mantenimiento, runners e inquilinos (para comunicación)
       where.role = {
-        in: ['BROKER', 'PROVIDER', 'SUPPORT', 'MAINTENANCE', 'RUNNER'],
+        in: ['BROKER', 'PROVIDER', 'SUPPORT', 'MAINTENANCE', 'RUNNER', 'TENANT'],
+      };
+    } else if (currentUserRole === 'TENANT') {
+      // ✅ CORRECCIÓN: Inquilinos ahora pueden buscar otros inquilinos, corredores, proveedores y soporte
+      // Esto permite la comunicación entre inquilinos para temas relacionados con alquileres
+      where.role = {
+        in: ['BROKER', 'PROVIDER', 'SUPPORT', 'MAINTENANCE', 'RUNNER', 'TENANT'],
       };
     } else if (currentUserRole === 'BROKER') {
       // Corredores pueden buscar propietarios, inquilinos y proveedores
