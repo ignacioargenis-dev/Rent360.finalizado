@@ -10,6 +10,11 @@ import { getUserFromRequest } from '@/lib/auth-token-validator';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// CRÍTICO: Asegurar que la ruta se ejecute en el servidor Node.js, no en Edge Runtime
+// Esto es necesario para que las APIs de Prisma funcionen correctamente
+export const runtime = 'nodejs';
+export const preferredRegion = 'auto';
+
 const messageSchema = z.object({
   receiverId: z.string(),
   subject: z.string().min(1).optional(),

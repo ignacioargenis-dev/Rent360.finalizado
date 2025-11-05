@@ -7,6 +7,10 @@ import { getUserFromRequest } from '@/lib/auth-token-validator';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// CRÍTICO: Asegurar que la ruta se ejecute en el servidor Node.js, no en Edge Runtime
+export const runtime = 'nodejs';
+export const preferredRegion = 'auto';
+
 /**
  * GET /api/messages/unread-count
  * Obtener el contador de mensajes no leídos del usuario actual
