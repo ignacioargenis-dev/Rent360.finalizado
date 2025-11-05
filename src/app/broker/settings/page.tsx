@@ -295,7 +295,27 @@ export default function BrokerSettings() {
         throw new Error(errorData.error || 'Error al guardar la configuración');
       }
 
-      const data = await response.json();
+      // Guardar datos bancarios si están configurados
+      if (settings.payment.bankName && settings.payment.bankAccount && settings.payment.taxId) {
+        const bankResponse = await fetch('/api/broker/bank-account', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            bankName: settings.payment.bankName,
+            accountType: settings.payment.accountType,
+            accountNumber: settings.payment.bankAccount,
+            accountHolderName: `${settings.profile.firstName} ${settings.profile.lastName}`,
+            rut: settings.payment.taxId,
+          }),
+        });
+
+        if (!bankResponse.ok) {
+          logger.warn('Error al guardar datos bancarios, pero otras configuraciones se guardaron');
+        }
+      }
 
       // Show success message
       setSuccessMessage('Configuración guardada exitosamente');
@@ -1201,13 +1221,46 @@ export default function BrokerSettings() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Banco
                         </label>
-                        <Input
-                          type="text"
+                        <Select
                           value={settings.payment.bankName}
-                          onChange={e => updatePayment('bankName', e.target.value)}
-                          placeholder="Nombre del banco"
-                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                        />
+                          onValueChange={value => updatePayment('bankName', value)}
+                        >
+                          <SelectTrigger className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <SelectValue placeholder="Seleccionar banco" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[300px] overflow-y-auto">
+                            <SelectItem value="Banco de Chile">Banco de Chile</SelectItem>
+                            <SelectItem value="Banco Estado">Banco Estado</SelectItem>
+                            <SelectItem value="Banco Santander">Banco Santander</SelectItem>
+                            <SelectItem value="Banco de Crédito e Inversiones">
+                              Banco de Crédito e Inversiones
+                            </SelectItem>
+                            <SelectItem value="Banco Itaú">Banco Itaú</SelectItem>
+                            <SelectItem value="Scotiabank">Scotiabank</SelectItem>
+                            <SelectItem value="Banco Security">Banco Security</SelectItem>
+                            <SelectItem value="Banco Falabella">Banco Falabella</SelectItem>
+                            <SelectItem value="Banco Ripley">Banco Ripley</SelectItem>
+                            <SelectItem value="Banco Consorcio">Banco Consorcio</SelectItem>
+                            <SelectItem value="Banco BICE">Banco BICE</SelectItem>
+                            <SelectItem value="Banco BTG Pactual">Banco BTG Pactual</SelectItem>
+                            <SelectItem value="Banco Internacional">Banco Internacional</SelectItem>
+                            <SelectItem value="Banco del Desarrollo">
+                              Banco del Desarrollo
+                            </SelectItem>
+                            <SelectItem value="Banco Coopeuch">Banco Coopeuch</SelectItem>
+                            <SelectItem value="Banco Condell">Banco Condell</SelectItem>
+                            <SelectItem value="Banco Edwards">Banco Edwards</SelectItem>
+                            <SelectItem value="Banco de la Nación">Banco de la Nación</SelectItem>
+                            <SelectItem value="Banco París">Banco París</SelectItem>
+                            <SelectItem value="Banco BBVA">Banco BBVA</SelectItem>
+                            <SelectItem value="Banco HSBC">Banco HSBC</SelectItem>
+                            <SelectItem value="Banco CorpBanca">Banco CorpBanca</SelectItem>
+                            <SelectItem value="Banco CrediChile">Banco CrediChile</SelectItem>
+                            <SelectItem value="Banco del Sur">Banco del Sur</SelectItem>
+                            <SelectItem value="Banco Hipotecario">Banco Hipotecario</SelectItem>
+                            <SelectItem value="Banco Unión">Banco Unión</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">

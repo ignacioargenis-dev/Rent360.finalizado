@@ -182,6 +182,33 @@ export default function RunnerSettingsPage() {
 
   useEffect(() => {
     const loadUserData = async () => {
+      // Cargar datos bancarios
+      try {
+        const bankAccountResponse = await fetch('/api/runner/bank-account', {
+          credentials: 'include',
+        });
+
+        if (bankAccountResponse.ok) {
+          const bankAccountData = await bankAccountResponse.json();
+          if (bankAccountData.success && bankAccountData.data) {
+            setSettings(prevSettings => ({
+              ...prevSettings,
+              payment: {
+                ...prevSettings.payment,
+                bankName: bankAccountData.data.bankName || '',
+                accountType: bankAccountData.data.accountType || 'checking',
+                bankAccount: bankAccountData.data.accountNumber || '',
+                taxId: bankAccountData.data.rut || '',
+              },
+            }));
+          }
+        }
+      } catch (error) {
+        logger.warn('Error cargando datos bancarios', { error });
+      }
+    };
+
+    const loadUserDataFull = async () => {
       try {
         setLoading(true);
         // ✅ CORREGIDO: Obtener datos reales desde las APIs

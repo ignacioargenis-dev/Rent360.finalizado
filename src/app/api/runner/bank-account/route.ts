@@ -14,23 +14,58 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (user.role !== 'RUNNER') {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo para runners.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Acceso denegado. Solo para runners.' }, { status: 403 });
     }
 
-    const accounts = await BankAccountService.getUserBankAccounts(user.id);
-    const primaryAccount = accounts.find(account => account.isPrimary) || accounts[0];
+    // Buscar cuenta bancaria directamente desde la BD
+    const bankAccount = await db.bankAccount.findFirst({
+      where: {
+        userId: user.id,
+        isPrimary: true,
+      },
+    });
+
+    if (!bankAccount) {
+      // Si no hay cuenta primaria, buscar cualquier cuenta
+      const anyAccount = await db.bankAccount.findFirst({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (!anyAccount) {
+        return NextResponse.json({
+          success: true,
+          data: null,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: anyAccount.id,
+          bankName: anyAccount.bank,
+          bank: anyAccount.bank,
+          accountType: anyAccount.accountType === 'CHECKING' ? 'checking' : 'savings',
+          accountNumber: anyAccount.accountNumber,
+          holderName: anyAccount.holderName || '',
+          rut: anyAccount.rut || '',
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      data: primaryAccount ? {
-        ...primaryAccount,
-        accountNumber: primaryAccount.accountNumber // Ya viene enmascarado
-      } : null
+      data: {
+        id: bankAccount.id,
+        bankName: bankAccount.bank,
+        bank: bankAccount.bank,
+        accountType: bankAccount.accountType === 'CHECKING' ? 'checking' : 'savings',
+        accountNumber: bankAccount.accountNumber,
+        holderName: bankAccount.holderName || '',
+        rut: bankAccount.rut || '',
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo cuenta bancaria del runner:', { error });
     const errorResponse = handleApiError(error);
@@ -47,10 +82,7 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (user.role !== 'RUNNER') {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo para runners.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Acceso denegado. Solo para runners.' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -61,7 +93,7 @@ export async function POST(request: NextRequest) {
       accountHolder,
       rut,
       branchCode,
-      isPrimary = true
+      isPrimary = true,
     } = body;
 
     // Validar campos requeridos
@@ -69,7 +101,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Campos requeridos: bankCode, accountType, accountNumber, accountHolder, rut',
-          missingFields: []
+          missingFields: [],
         },
         { status: 400 }
       );
@@ -77,19 +109,13 @@ export async function POST(request: NextRequest) {
 
     // Verificar formato de RUT chileno
     if (!BankAccountService.validateRut(rut)) {
-      return NextResponse.json(
-        { error: 'Formato de RUT inválido' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Formato de RUT inválido' }, { status: 400 });
     }
 
     // Obtener nombre del banco
     const bankName = BankAccountService.getBankNameByCode(bankCode);
     if (!bankName) {
-      return NextResponse.json(
-        { error: 'Código de banco inválido' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Código de banco inválido' }, { status: 400 });
     }
 
     // Registrar cuenta bancaria
@@ -100,25 +126,24 @@ export async function POST(request: NextRequest) {
       accountHolder,
       rut,
       branchCode,
-      isPrimary
+      isPrimary,
     });
 
     logger.info('Cuenta bancaria del runner actualizada', {
       userId: user.id,
       bankCode,
       accountType,
-      isPrimary
+      isPrimary,
     });
 
     return NextResponse.json({
       success: true,
       data: {
         ...bankAccount,
-        accountNumber: bankAccount.accountNumber // Ya enmascarado
+        accountNumber: bankAccount.accountNumber, // Ya enmascarado
       },
-      message: 'Cuenta bancaria registrada exitosamente. Se iniciará el proceso de verificación.'
+      message: 'Cuenta bancaria registrada exitosamente. Se iniciará el proceso de verificación.',
     });
-
   } catch (error) {
     logger.error('Error registrando cuenta bancaria del runner:', { error });
     const errorResponse = handleApiError(error);
@@ -135,47 +160,113 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (user.role !== 'RUNNER') {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo para runners.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Acceso denegado. Solo para runners.' }, { status: 403 });
     }
 
     const body = await request.json();
-    const updates = body;
+    const { bank, accountType, accountNumber, holderName, rut } = body;
 
-    // Obtener cuenta bancaria actual
-    const accounts = await BankAccountService.getUserBankAccounts(user.id);
-    const primaryAccount = accounts.find(account => account.isPrimary) || accounts[0];
-
-    if (!primaryAccount) {
+    // Validación básica
+    if (!bank || !accountNumber) {
       return NextResponse.json(
-        { error: 'No se encontró cuenta bancaria para actualizar' },
-        { status: 404 }
+        { error: 'Faltan campos requeridos: banco y número de cuenta' },
+        { status: 400 }
       );
     }
 
-    // Actualizar cuenta bancaria
-    const updatedAccount = await db.bankAccount.update({
-      where: { id: primaryAccount.id },
-      data: updates
-    });
+    // Mapear accountType a formato del schema
+    let mappedAccountType = 'CHECKING';
+    if (accountType === 'savings' || accountType === 'SAVINGS' || accountType === 'Cuenta Ahorro') {
+      mappedAccountType = 'SAVINGS';
+    }
 
-    logger.info('Cuenta bancaria del runner actualizada', {
-      userId: user.id,
-      accountId: primaryAccount.id,
-      updates: Object.keys(updates)
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        ...updatedAccount,
-        accountNumber: updatedAccount.accountNumber // Ya enmascarado
+    // Buscar cuenta bancaria existente
+    const existingAccount = await db.bankAccount.findFirst({
+      where: {
+        userId: user.id,
       },
-      message: 'Cuenta bancaria actualizada exitosamente'
     });
 
+    if (existingAccount) {
+      // Verificar si hay otras cuentas primarias
+      const otherPrimaryAccounts = await db.bankAccount.count({
+        where: {
+          userId: user.id,
+          isPrimary: true,
+          id: { not: existingAccount.id },
+        },
+      });
+
+      // Actualizar cuenta existente
+      const updatedAccount = await db.bankAccount.update({
+        where: { id: existingAccount.id },
+        data: {
+          bank: bank,
+          accountType: mappedAccountType,
+          accountNumber: accountNumber,
+          ...(holderName && { holderName }),
+          ...(rut && { rut }),
+          // Si no hay otras cuentas primarias, marcar esta como primaria
+          isPrimary: otherPrimaryAccounts === 0 ? true : existingAccount.isPrimary,
+          // Mantener isVerified (no se cambia automáticamente, requiere verificación manual)
+        },
+      });
+
+      logger.info('Cuenta bancaria del runner actualizada', {
+        userId: user.id,
+        accountId: updatedAccount.id,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: updatedAccount.id,
+          bankName: updatedAccount.bank,
+          accountType: updatedAccount.accountType === 'CHECKING' ? 'checking' : 'savings',
+          accountNumber: updatedAccount.accountNumber,
+          holderName: updatedAccount.holderName || '',
+          rut: updatedAccount.rut || '',
+        },
+        message: 'Cuenta bancaria actualizada exitosamente',
+      });
+    } else {
+      // Verificar si el usuario ya tiene otras cuentas bancarias
+      const existingAccountsCount = await db.bankAccount.count({
+        where: { userId: user.id },
+      });
+
+      // Crear nueva cuenta bancaria
+      const newAccount = await db.bankAccount.create({
+        data: {
+          userId: user.id,
+          bank: bank,
+          accountType: mappedAccountType,
+          accountNumber: accountNumber,
+          holderName: holderName || user.name || 'Sin titular',
+          rut: rut || '',
+          isPrimary: existingAccountsCount === 0, // Primera cuenta = primaria
+          isVerified: false, // Requiere verificación manual por admin
+        },
+      });
+
+      logger.info('Cuenta bancaria del runner creada', {
+        userId: user.id,
+        accountId: newAccount.id,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: newAccount.id,
+          bankName: newAccount.bank,
+          accountType: newAccount.accountType === 'CHECKING' ? 'checking' : 'savings',
+          accountNumber: newAccount.accountNumber,
+          holderName: newAccount.holderName || '',
+          rut: newAccount.rut || '',
+        },
+        message: 'Cuenta bancaria creada exitosamente',
+      });
+    }
   } catch (error) {
     logger.error('Error actualizando cuenta bancaria del runner:', { error });
     const errorResponse = handleApiError(error);
