@@ -206,12 +206,13 @@ const DEFAULT_INTEGRATIONS = [
     name: 'Socket.io (Propio)',
     description: 'WebSocket usando Socket.io del servidor propio (sin costo adicional)',
     category: 'communication',
-    isEnabled: false,
-    isConfigured: false,
+    isEnabled: true, // ✅ Habilitado por defecto
+    isConfigured: true, // ✅ Pre-configurado
     isTested: false,
     config: {
-      serverUrl: '',
+      serverUrl: 'https://rent360management-2yxgz.ondigitalocean.app',
       namespace: '/',
+      allowedOrigins: 'https://rent360management-2yxgz.ondigitalocean.app',
     },
   },
 ];
@@ -424,6 +425,9 @@ async function updateEnvironmentVariables(integrationId: string, config: any) {
     },
     'socket-io': {
       NEXT_PUBLIC_WS_URL: config.serverUrl,
+      JWT_SECRET: process.env.JWT_SECRET, // Necesario para WebSocket auth
+      ALLOWED_ORIGINS:
+        config.allowedOrigins || 'https://rent360management-2yxgz.ondigitalocean.app',
     },
   };
 

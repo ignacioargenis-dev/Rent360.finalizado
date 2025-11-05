@@ -30,13 +30,18 @@ class WebSocketServer {
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
   initialize(httpServer: HTTPServer): void {
+    // Configurar CORS para WebSocket
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'https://localhost:3000',
+      'https://rent360management-2yxgz.ondigitalocean.app',
+    ];
+
+    logger.info('WebSocket CORS configured for origins:', allowedOrigins);
+
     this.io = new SocketIOServer(httpServer, {
       cors: {
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || [
-          'http://localhost:3000',
-          'https://localhost:3000',
-          'https://rent360management-2yxgz.ondigitalocean.app',
-        ],
+        origin: allowedOrigins,
         credentials: true,
       },
       transports: ['websocket', 'polling'],
@@ -68,11 +73,14 @@ class WebSocketServer {
           return next(new Error('Authentication token required'));
         }
 
-        // Verificar token JWT
-        const decoded = jwt.verify(
-          token as string,
-          process.env.JWT_SECRET || 'default-secret'
-        ) as any;
+        // Verificar token JWT - usar variable de entorno obligatoria
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+          logger.error('JWT_SECRET no está configurado para WebSocket');
+          return next(new Error('Server configuration error'));
+        }
+
+        const decoded = jwt.verify(token as string, jwtSecret) as any;
 
         // Adjuntar información del usuario al socket
         socket.userId = decoded.userId;

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
 import { logger } from '@/lib/logger-edge-runtime';
+import { websocketClient } from '@/lib/websocket/socket-client';
 
 // AuthProvider simplificado que no cause crashes
 interface AuthContextType {
@@ -50,6 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
 
           setUser(completeUser);
+
+          // ✅ INICIALIZAR WEBSOCKET al autenticar usuario
+          if (typeof window !== 'undefined') {
+            logger.info('Inicializando WebSocket para usuario autenticado', {
+              userId: completeUser.id,
+            });
+            websocketClient.connect();
+          }
 
           // Guardar en localStorage de forma segura
           if (typeof window !== 'undefined') {
@@ -286,6 +295,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       );
       setUser(null);
+
+      // ✅ DESCONECTAR WEBSOCKET al hacer logout
+      if (typeof window !== 'undefined') {
+        logger.info('Desconectando WebSocket al hacer logout');
+        websocketClient.disconnect();
+      }
 
       // Limpiar localStorage
       if (typeof window !== 'undefined') {

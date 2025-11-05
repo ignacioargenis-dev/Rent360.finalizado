@@ -31,7 +31,7 @@ class WebSocketClient {
       process.env.NEXT_PUBLIC_WS_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
-    // Obtener token de cookies en lugar de localStorage
+    // Obtener token de cookies - método unificado
     const getTokenFromCookies = (): string | null => {
       if (typeof document === 'undefined') {
         return null;
@@ -40,7 +40,7 @@ class WebSocketClient {
       const cookies = document.cookie.split(';');
       for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
-        if (name === 'auth-token' || name === 'next-auth.session-token') {
+        if (name === 'auth-token' || name === 'next-auth.session-token' || name === 'token') {
           return value ? decodeURIComponent(value) : null;
         }
       }
@@ -92,7 +92,7 @@ class WebSocketClient {
       this.attemptReconnect();
     });
 
-    // Manejadores de eventos de negocio
+    // Manejadores de eventos de negocio - SINCRONIZADOS con servidor
     this.socket.on('notification', data => {
       logger.info('Notification received', { data });
       this.emitEvent('notification', data);
@@ -108,6 +108,7 @@ class WebSocketClient {
       this.emitEvent('payment-update', data);
     });
 
+    // CORREGIDO: Servidor envía 'new-message', cliente ahora escucha correctamente
     this.socket.on('new-message', data => {
       logger.info('New message received', { data });
       this.emitEvent('new-message', data);
