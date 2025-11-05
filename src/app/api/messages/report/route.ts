@@ -4,6 +4,10 @@ import { logger } from '@/lib/logger-minimal';
 import { getUserFromRequest } from '@/lib/auth-token-validator';
 import { z } from 'zod';
 
+// Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const reportSchema = z.object({
   reportedUserId: z.string(),
   reason: z.enum(['spam', 'harassment', 'inappropriate_content', 'scam', 'fake_profile', 'other']),

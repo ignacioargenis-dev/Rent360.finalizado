@@ -5,6 +5,10 @@ import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 import { getUserFromRequest } from '@/lib/auth-token-validator';
 
+// Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/messages/conversations
  * Obtener conversaciones agrupadas por usuario/contacto
@@ -54,10 +58,11 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // Obtener todos los participantes únicos con los que el usuario ha conversado
+    // ✅ CORRECCIÓN: Remover filtro de status 'DELETED' ya que el modelo Message no tiene ese valor
+    // Los mensajes solo tienen status 'SENT' por defecto, no 'DELETED'
     const sentMessages = await db.message.findMany({
       where: {
         senderId: user.id,
-        status: { not: 'DELETED' },
       },
       select: {
         receiverId: true,
@@ -78,7 +83,6 @@ export async function GET(request: NextRequest) {
     const receivedMessages = await db.message.findMany({
       where: {
         receiverId: user.id,
-        status: { not: 'DELETED' },
       },
       select: {
         senderId: true,
@@ -124,7 +128,6 @@ export async function GET(request: NextRequest) {
             { senderId: user.id, receiverId: participantId },
             { senderId: participantId, receiverId: user.id },
           ],
-          status: { not: 'DELETED' },
         },
         orderBy: { createdAt: 'desc' },
         select: {
@@ -144,7 +147,6 @@ export async function GET(request: NextRequest) {
             senderId: participantId,
             receiverId: user.id,
             isRead: false,
-            status: { not: 'DELETED' },
           },
         });
 
@@ -155,7 +157,6 @@ export async function GET(request: NextRequest) {
               { senderId: user.id, receiverId: participantId },
               { senderId: participantId, receiverId: user.id },
             ],
-            status: { not: 'DELETED' },
           },
         });
 

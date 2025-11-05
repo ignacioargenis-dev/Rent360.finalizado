@@ -4,6 +4,10 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 
+// Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * DELETE /api/messages/[id]
  * Eliminar un mensaje (marcarlo como eliminado)

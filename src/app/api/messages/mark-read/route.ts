@@ -6,6 +6,10 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/auth-token-validator';
 
+// Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const markReadSchema = z.union([
   z.object({
     messageIds: z.array(z.string()).min(1, 'Debe proporcionar al menos un ID de mensaje'),

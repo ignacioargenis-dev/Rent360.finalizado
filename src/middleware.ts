@@ -9,7 +9,9 @@ export async function middleware(request: NextRequest) {
   const hasSensitiveData = sensitiveParams.some(param => searchParams.has(param));
 
   if (hasSensitiveData && pathname.includes('/auth/login')) {
-    console.warn('🚨 SEGURIDAD: Datos sensibles detectados en URL de login - redirigiendo a login limpio');
+    console.warn(
+      '🚨 SEGURIDAD: Datos sensibles detectados en URL de login - redirigiendo a login limpio'
+    );
     // Redirigir a login limpio sin parámetros
     const cleanUrl = new URL(pathname, request.url);
     return NextResponse.redirect(cleanUrl);
@@ -93,6 +95,9 @@ export async function middleware(request: NextRequest) {
   // Rutas que manejan su propia autenticación (excluir del middleware)
   const selfAuthenticatingRoutes = [
     '/api/auth/me', // ✅ Esta ruta valida tokens internamente
+    '/api/messages', // ✅ La API de mensajes valida tokens internamente con getUserFromRequest
+    '/api/messages/conversations', // ✅ La API de conversaciones valida tokens internamente
+    '/api/messages/unread-count', // ✅ La API de unread-count valida tokens internamente
   ];
 
   // Verificar si es una ruta que maneja su propia autenticación

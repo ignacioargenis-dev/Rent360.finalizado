@@ -201,6 +201,20 @@ export default function UnifiedMessagingSystem({
       });
 
       if (!conversationsResponse.ok) {
+        const errorText = await conversationsResponse.text().catch(() => 'Error desconocido');
+        logger.error('Error cargando conversaciones:', {
+          status: conversationsResponse.status,
+          statusText: conversationsResponse.statusText,
+          error: errorText,
+        });
+
+        // Si es 404, puede ser que la API no esté disponible, pero no lanzar error fatal
+        if (conversationsResponse.status === 404) {
+          logger.warn('API de conversaciones retornó 404, pero continuando con lista vacía');
+          setConversations([]);
+          return;
+        }
+
         throw new Error(
           `Error ${conversationsResponse.status}: ${conversationsResponse.statusText}`
         );
@@ -437,6 +451,21 @@ export default function UnifiedMessagingSystem({
       });
 
       if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Error desconocido');
+        logger.error('Error cargando mensajes de conversación:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          conversationId,
+        });
+
+        // Si es 404, puede ser que no haya mensajes aún, pero no lanzar error fatal
+        if (response.status === 404) {
+          logger.warn('API de mensajes retornó 404, pero continuando con lista vacía');
+          setMessages([]);
+          return;
+        }
+
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
@@ -489,8 +518,19 @@ export default function UnifiedMessagingSystem({
       });
 
       if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Error desconocido');
+        logger.error('Error enviando mensaje:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+
+        // Mostrar error al usuario
+        setError(`Error al enviar mensaje: ${response.statusText || 'Error desconocido'}`);
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
+
+      const responseData = await response.json().catch(() => null);
 
       setNewMessage('');
 

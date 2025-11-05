@@ -3,6 +3,10 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { getUserFromRequest } from '@/lib/auth-token-validator';
 
+// Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/messages/unread-count
  * Obtener el contador de mensajes no leídos del usuario actual
@@ -28,11 +32,12 @@ export async function GET(request: NextRequest) {
     };
 
     // Contar mensajes no leídos
+    // ✅ CORRECCIÓN: Remover filtro de status 'DELETED' ya que el modelo Message no tiene ese valor
+    // Los mensajes solo tienen status 'SENT' por defecto, no 'DELETED'
     const unreadCount = await db.message.count({
       where: {
         receiverId: user.id,
         isRead: false,
-        status: { not: 'DELETED' },
       },
     });
 

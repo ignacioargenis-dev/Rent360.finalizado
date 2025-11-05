@@ -3,6 +3,10 @@ import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 
+// Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
