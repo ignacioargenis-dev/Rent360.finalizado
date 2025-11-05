@@ -51,7 +51,22 @@ export async function GET(request: NextRequest) {
 
     // Filtrar por rol si se especifica
     if (role) {
-      where.role = role.toUpperCase();
+      const searchRole = role.toUpperCase();
+
+      // ✅ COMPATIBILIDAD: Mapear roles unificados a los esperados por el sistema
+      const roleMapping: { [key: string]: string[] } = {
+        PROVIDER: ['PROVIDER', 'SERVICEPROVIDER'], // Aceptar ambos
+        MAINTENANCE: ['MAINTENANCE', 'MAINTENANCEPROVIDER'], // Aceptar ambos
+        SERVICEPROVIDER: ['PROVIDER', 'SERVICEPROVIDER'], // Alias para PROVIDER
+        MAINTENANCEPROVIDER: ['MAINTENANCE', 'MAINTENANCEPROVIDER'], // Alias para MAINTENANCE
+      };
+
+      // Si hay un mapeo, usar OR con los roles equivalentes
+      if (roleMapping[searchRole]) {
+        where.role = { in: roleMapping[searchRole] };
+      } else {
+        where.role = searchRole;
+      }
     }
 
     // Los usuarios no pueden buscar usuarios con rol superior o igual
@@ -61,7 +76,9 @@ export async function GET(request: NextRequest) {
       TENANT: 1,
       BROKER: 2,
       PROVIDER: 1,
+      SERVICEPROVIDER: 1, // Alias de PROVIDER
       MAINTENANCE: 1,
+      MAINTENANCEPROVIDER: 1, // Alias de MAINTENANCE
       RUNNER: 1,
       ADMIN: 3,
       SUPPORT: 2,
@@ -73,25 +90,54 @@ export async function GET(request: NextRequest) {
     if (currentUserRole === 'OWNER') {
       // Propietarios pueden buscar corredores, proveedores, soporte, mantenimiento, runners e inquilinos (para comunicación)
       where.role = {
-        in: ['BROKER', 'PROVIDER', 'SUPPORT', 'MAINTENANCE', 'RUNNER', 'TENANT'],
+        in: [
+          'BROKER',
+          'PROVIDER',
+          'SERVICEPROVIDER',
+          'SUPPORT',
+          'MAINTENANCE',
+          'MAINTENANCEPROVIDER',
+          'RUNNER',
+          'TENANT',
+        ],
       };
     } else if (currentUserRole === 'TENANT') {
       // ✅ CORRECCIÓN: Inquilinos ahora pueden buscar otros inquilinos, corredores, proveedores y soporte
       // Esto permite la comunicación entre inquilinos para temas relacionados con alquileres
       where.role = {
-        in: ['BROKER', 'PROVIDER', 'SUPPORT', 'MAINTENANCE', 'RUNNER', 'TENANT'],
+        in: [
+          'BROKER',
+          'PROVIDER',
+          'SERVICEPROVIDER',
+          'SUPPORT',
+          'MAINTENANCE',
+          'MAINTENANCEPROVIDER',
+          'RUNNER',
+          'TENANT',
+        ],
       };
     } else if (currentUserRole === 'BROKER') {
       // Corredores pueden buscar propietarios, inquilinos y proveedores
       where.role = {
-        in: ['OWNER', 'TENANT', 'PROVIDER', 'SUPPORT', 'MAINTENANCE', 'RUNNER'],
+        in: [
+          'OWNER',
+          'TENANT',
+          'PROVIDER',
+          'SERVICEPROVIDER',
+          'SUPPORT',
+          'MAINTENANCE',
+          'MAINTENANCEPROVIDER',
+          'RUNNER',
+        ],
       };
     } else if (
       currentUserRole === 'PROVIDER' ||
+      currentUserRole === 'SERVICEPROVIDER' ||
       currentUserRole === 'MAINTENANCE' ||
+      currentUserRole === 'MAINTENANCEPROVIDER' ||
       currentUserRole === 'RUNNER'
     ) {
-      // Proveedores solo pueden buscar propietarios, inquilinos y corredores
+      // Proveedores y mantenimiento solo pueden buscar propietarios, inquilinos y corredores
       where.role = {
         in: ['OWNER', 'TENANT', 'BROKER', 'SUPPORT'],
       };

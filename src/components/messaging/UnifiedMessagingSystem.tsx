@@ -1394,7 +1394,9 @@ export default function UnifiedMessagingSystem({
                 <option value="owner">Propietario</option>
                 <option value="tenant">Inquilino</option>
                 <option value="provider">Proveedor</option>
+                <option value="serviceprovider">Proveedor de Servicios</option>
                 <option value="maintenance">Mantenimiento</option>
+                <option value="maintenanceprovider">Proveedor de Mantenimiento</option>
                 <option value="runner">Runner</option>
                 <option value="support">Soporte</option>
               </select>
