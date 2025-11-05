@@ -31,6 +31,8 @@ import {
   Search,
   Filter,
   Eye,
+  CreditCard,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { useRouter } from 'next/navigation';

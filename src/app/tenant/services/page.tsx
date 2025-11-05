@@ -119,25 +119,52 @@ export default function TenantServicesPage() {
         const data = await response.json();
         if (data.success) {
           // Transformar datos de la API al formato esperado por el componente
-          const transformedProviders = data.providers.map((provider: any) => ({
-            id: provider.id,
-            name: provider.businessName,
-            serviceType: provider.serviceType,
-            specialty: provider.serviceTypes
-              ? JSON.parse(provider.serviceTypes)[0]
-              : provider.serviceType,
-            rating: provider.rating || 0,
-            reviewCount: provider.totalRatings || 0,
-            hourlyRate: provider.basePrice || 0,
-            location: `${provider.city || ''} ${provider.region || ''}`.trim(),
-            description: provider.description || '',
-            availability: 'available', // TODO: calcular basado en disponibilidad real
-            verified: provider.isVerified,
-            responseTime: provider.responseTime ? `< ${provider.responseTime}h` : '< 24h',
-            completedJobs: provider.completedJobs || 0,
-            phone: provider.user?.phone || '',
-            email: provider.user?.email || '',
-          }));
+          const transformedProviders = data.providers.map((provider: any) => {
+            // Manejar serviceTypes que puede ser un array de strings o un array de objetos
+            let specialty = provider.serviceType || 'Servicio';
+            if (provider.serviceTypes) {
+              try {
+                const serviceTypes = JSON.parse(provider.serviceTypes);
+                if (Array.isArray(serviceTypes) && serviceTypes.length > 0) {
+                  // Si es un array de objetos, tomar el nombre del primer servicio
+                  if (typeof serviceTypes[0] === 'object' && serviceTypes[0] !== null) {
+                    specialty =
+                      serviceTypes[0].name ||
+                      serviceTypes[0].category ||
+                      serviceTypes[0].id ||
+                      'Servicio';
+                  } else {
+                    // Si es un array de strings, tomar el primero
+                    specialty = serviceTypes[0];
+                  }
+                }
+              } catch (e) {
+                // Si falla el parse, usar el valor por defecto
+                logger.warn('Error parsing serviceTypes', {
+                  error: e,
+                  serviceTypes: provider.serviceTypes,
+                });
+              }
+            }
+
+            return {
+              id: provider.id,
+              name: provider.businessName,
+              serviceType: provider.serviceType,
+              specialty: specialty,
+              rating: provider.rating || 0,
+              reviewCount: provider.totalRatings || 0,
+              hourlyRate: provider.basePrice || 0,
+              location: `${provider.city || ''} ${provider.region || ''}`.trim(),
+              description: provider.description || '',
+              availability: 'available', // TODO: calcular basado en disponibilidad real
+              verified: provider.isVerified,
+              responseTime: provider.responseTime ? `< ${provider.responseTime}h` : '< 24h',
+              completedJobs: provider.completedJobs || 0,
+              phone: provider.user?.phone || '',
+              email: provider.user?.email || '',
+            };
+          });
           setServiceProviders(transformedProviders);
           setProviders(transformedProviders); // Para mantener compatibilidad con filterAndSortProviders
           logger.debug('Proveedores de servicios cargados desde API');
