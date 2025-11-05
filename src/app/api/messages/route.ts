@@ -6,6 +6,10 @@ import { z } from 'zod';
 import { NotificationService, NotificationType } from '@/lib/notification-service';
 import { getUserFromRequest } from '@/lib/auth-token-validator';
 
+// Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const messageSchema = z.object({
   receiverId: z.string(),
   subject: z.string().min(1).optional(),
