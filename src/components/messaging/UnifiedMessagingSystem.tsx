@@ -28,6 +28,7 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  AlertTriangle,
   Plus,
   Flag,
   Upload,
@@ -144,13 +145,22 @@ export default function UnifiedMessagingSystem({
   useEffect(() => {
     // Carga inicial (con spinner)
     loadPageData(false);
+  }, []);
 
-    // Check if we need to create a new conversation
+  // Manejar nuevas conversaciones por separado
+  useEffect(() => {
     const isNewConversation = searchParams?.get('new') === 'true';
-    if (isNewConversation) {
-      handleNewConversation();
+    if (isNewConversation && !isInitialLoad) {
+      console.log(
+        '🔄 [NEW CONVERSATION] Detected new conversation request, isInitialLoad:',
+        isInitialLoad
+      );
+      // Pequeño delay para asegurar que todo esté listo
+      setTimeout(() => {
+        handleNewConversation();
+      }, 100);
     }
-  }, [searchParams]);
+  }, [searchParams, isInitialLoad]);
 
   // Polling inteligente: Solo actualiza cuando hay actividad reciente
   useEffect(() => {
@@ -301,6 +311,14 @@ export default function UnifiedMessagingSystem({
       }
 
       const recipientData = JSON.parse(recipientDataStr);
+      console.log('🔍 [NEW CONVERSATION] Recipient data from sessionStorage:', recipientData);
+
+      // Validar que tenemos los datos necesarios
+      if (!recipientData.id || !recipientData.name) {
+        console.error('❌ [NEW CONVERSATION] Invalid recipient data:', recipientData);
+        setError('Error: Datos del destinatario incompletos. Por favor intenta nuevamente.');
+        return;
+      }
 
       // Create a new conversation object
       const newConversation: Conversation = {
@@ -321,9 +339,11 @@ export default function UnifiedMessagingSystem({
 
       // Add to conversations list
       setConversations(prev => [newConversation, ...prev]);
+      console.log('✅ [NEW CONVERSATION] Added to conversations list:', newConversation);
 
       // Select the new conversation
       setSelectedConversation(newConversation);
+      console.log('✅ [NEW CONVERSATION] Selected conversation:', newConversation);
 
       // Clear sessionStorage
       sessionStorage.removeItem('newMessageRecipient');
@@ -332,6 +352,8 @@ export default function UnifiedMessagingSystem({
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('new');
       window.history.replaceState({}, '', newUrl.toString());
+
+      console.log('✅ [NEW CONVERSATION] Process completed successfully');
     } catch (error) {
       logger.error('Error handling new conversation:', { error });
     }
@@ -858,6 +880,29 @@ export default function UnifiedMessagingSystem({
           </Button>
         )}
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <Card className="border-red-200 bg-red-50 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-800">Error</h3>
+                <p className="text-red-700 mt-1">{error}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setError(null)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
