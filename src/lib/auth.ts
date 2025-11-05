@@ -282,14 +282,8 @@ export function hasSpecificRole(user: any, expectedRole: string): boolean {
 export function normalizeProviderRole(role: string): string {
   const normalized = normalizeRole(role);
 
-  // Mapear roles genéricos a específicos
-  if (normalized === 'PROVIDER') {
-    return 'SERVICE_PROVIDER';
-  }
-  if (normalized === 'MAINTENANCE') {
-    return 'MAINTENANCE_PROVIDER';
-  }
-
+  // Los roles en la BD son PROVIDER y MAINTENANCE
+  // Mantener consistencia con el esquema de Prisma
   return normalized;
 }
 
@@ -298,7 +292,7 @@ export function normalizeProviderRole(role: string): string {
  */
 export function isServiceProvider(role: string): boolean {
   const normalized = normalizeProviderRole(role);
-  return normalized === 'SERVICE_PROVIDER';
+  return normalized === 'PROVIDER';
 }
 
 /**
@@ -306,7 +300,7 @@ export function isServiceProvider(role: string): boolean {
  */
 export function isMaintenanceProvider(role: string): boolean {
   const normalized = normalizeProviderRole(role);
-  return normalized === 'MAINTENANCE_PROVIDER';
+  return normalized === 'MAINTENANCE';
 }
 
 /**
@@ -314,5 +308,5 @@ export function isMaintenanceProvider(role: string): boolean {
  */
 export function isAnyProvider(role: string): boolean {
   const normalized = normalizeProviderRole(role);
-  return normalized === 'SERVICE_PROVIDER' || normalized === 'MAINTENANCE_PROVIDER';
+  return normalized === 'PROVIDER' || normalized === 'MAINTENANCE';
 }

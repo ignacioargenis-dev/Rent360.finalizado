@@ -162,36 +162,62 @@ export default function UnifiedMessagingSystem({
     }
   }, [searchParams, isInitialLoad]);
 
-  // Polling inteligente: Solo actualiza cuando hay actividad reciente
+  // Polling inteligente: Actualiza conversaciones y mensajes activos
   useEffect(() => {
-    if (!selectedConversation) {
-      return;
-    }
-
-    // Determinar si la conversación está activa (mensajes recientes en los últimos 2 minutos)
+    // Determinar si hay actividad reciente en alguna conversación
     const timeSinceLastMessage = Date.now() - lastMessageTime;
-    const isActive = timeSinceLastMessage < 120000; // 2 minutos
-    setIsConversationActive(isActive);
+    const hasRecentActivity = timeSinceLastMessage < 120000; // 2 minutos
+    setIsConversationActive(hasRecentActivity);
 
     // Intervalo de polling basado en actividad:
-    // - Si hay actividad reciente: cada 3 segundos (conversación fluida)
-    // - Si no hay actividad: cada 30 segundos (mantener sincronizado pero sin saturar)
-    const pollInterval = isActive ? 3000 : 30000;
+    // - Si hay actividad reciente: cada 5 segundos (conversaciones fluidas)
+    // - Si no hay actividad: cada 30 segundos (mantener sincronizado)
+    const pollInterval = hasRecentActivity ? 5000 : 30000;
+
+    console.log('🔄 [POLLING] Starting polling with interval:', pollInterval / 1000, 'seconds');
 
     const intervalId = setInterval(() => {
-      // Refresh silencioso (sin spinner, sin interrumpir la experiencia)
+      // Refresh silencioso de conversaciones (siempre activo para actualizar contadores)
       loadPageData(true);
+
+      // Si hay conversación seleccionada, actualizar mensajes
       if (selectedConversation) {
         loadConversationMessages(selectedConversation.participantId);
       }
     }, pollInterval);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      console.log('🔄 [POLLING] Clearing polling interval');
+      clearInterval(intervalId);
+    };
   }, [selectedConversation, lastMessageTime]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // WebSocket listener para actualizaciones en tiempo real
+  useEffect(() => {
+    const handleNewMessage = (messageData: any) => {
+      console.log('📨 [WEBSOCKET] New message received:', messageData);
+
+      // Si el mensaje es para el usuario actual, actualizar conversaciones
+      if (messageData.receiverId === user?.id || messageData.senderId === user?.id) {
+        console.log('🔄 [WEBSOCKET] Updating conversations due to new message');
+        loadPageData(true); // Refresh silencioso de conversaciones
+      }
+    };
+
+    // Registrar listener de WebSocket
+    websocketClient.on('new-message', handleNewMessage);
+    websocketClient.on('message', handleNewMessage);
+
+    return () => {
+      // Limpiar listeners
+      websocketClient.off('new-message', handleNewMessage);
+      websocketClient.off('message', handleNewMessage);
+    };
+  }, [user?.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -808,22 +834,46 @@ export default function UnifiedMessagingSystem({
   const formatTimeAgo = (timestamp: string) => {
     const now = new Date();
     const messageTime = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - messageTime.getTime()) / (1000 * 60));
 
-    if (diffInMinutes < 1) {
-      return 'Ahora';
-    }
-    if (diffInMinutes < 60) {
-      return `Hace ${diffInMinutes}m`;
+    // Asegurar que la fecha sea válida
+    if (isNaN(messageTime.getTime())) {
+      return 'Fecha inválida';
     }
 
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) {
-      return `Hace ${diffInHours}h`;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const messageDate = new Date(
+      messageTime.getFullYear(),
+      messageTime.getMonth(),
+      messageTime.getDate()
+    );
+
+    const diffInDays = Math.floor(
+      (today.getTime() - messageDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Si es hoy: mostrar hora (HH:MM)
+    if (diffInDays === 0) {
+      const hours = messageTime.getHours().toString().padStart(2, '0');
+      const minutes = messageTime.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
     }
 
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `Hace ${diffInDays}d`;
+    // Si es ayer: mostrar "Ayer"
+    if (diffInDays === 1) {
+      return 'Ayer';
+    }
+
+    // Si es esta semana (últimos 7 días): mostrar día de la semana
+    if (diffInDays > 1 && diffInDays <= 7) {
+      const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      return daysOfWeek[messageTime.getDay()];
+    }
+
+    // Si es más antiguo: mostrar fecha completa (DD/MM/YYYY)
+    const day = messageTime.getDate().toString().padStart(2, '0');
+    const month = (messageTime.getMonth() + 1).toString().padStart(2, '0');
+    const year = messageTime.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const formatFileSize = (bytes: number) => {
