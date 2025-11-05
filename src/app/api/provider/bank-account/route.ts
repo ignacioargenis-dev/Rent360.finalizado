@@ -126,6 +126,15 @@ export async function PUT(request: NextRequest) {
     });
 
     if (existingAccount) {
+      // Verificar si hay otras cuentas primarias
+      const otherPrimaryAccounts = await db.bankAccount.count({
+        where: {
+          userId: user.id,
+          isPrimary: true,
+          id: { not: existingAccount.id },
+        },
+      });
+
       // Actualizar cuenta existente
       const updatedAccount = await db.bankAccount.update({
         where: { id: existingAccount.id },
@@ -135,6 +144,9 @@ export async function PUT(request: NextRequest) {
           accountNumber: accountNumber,
           holderName: accountHolderName,
           rut: rut,
+          // Si no hay otras cuentas primarias, marcar esta como primaria
+          isPrimary: otherPrimaryAccounts === 0 ? true : existingAccount.isPrimary,
+          // Mantener isVerified (no se cambia automáticamente, requiere verificación manual)
         },
       });
 
@@ -168,7 +180,13 @@ export async function PUT(request: NextRequest) {
         },
       });
     } else {
+      // Verificar si el usuario ya tiene otras cuentas bancarias
+      const existingAccountsCount = await db.bankAccount.count({
+        where: { userId: user.id },
+      });
+
       // Crear nueva cuenta bancaria
+      // Si es la primera cuenta, marcarla como primaria
       const newAccount = await db.bankAccount.create({
         data: {
           userId: user.id,
@@ -177,6 +195,8 @@ export async function PUT(request: NextRequest) {
           accountNumber: accountNumber,
           holderName: accountHolderName,
           rut: rut,
+          isPrimary: existingAccountsCount === 0, // Primera cuenta = primaria
+          isVerified: false, // Requiere verificación manual por admin
         },
       });
 
