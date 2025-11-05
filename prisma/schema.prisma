@@ -433,6 +433,12 @@ model Message {
   updatedAt   DateTime      @updatedAt
   readAt      DateTime?
 
+  // Campos para adjuntos de archivos
+  attachmentUrl   String?   // URL del archivo adjunto en DigitalOcean Spaces
+  attachmentName  String?   // Nombre original del archivo
+  attachmentSize  Int?      // Tamaño del archivo en bytes
+  attachmentType  String?   // Tipo MIME del archivo ('image', 'document', 'pdf', etc.)
+
   // Relations
   sender      User          @relation("MessageSent", fields: [senderId], references: [id], onDelete: Cascade)
   receiver    User          @relation("MessageReceived", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -443,6 +449,7 @@ model Message {
   @@index([propertyId])
   @@index([contractId])
   @@index([type])
+  @@index([attachmentType])
 }
 
 // UserReport model - Reportes de usuarios

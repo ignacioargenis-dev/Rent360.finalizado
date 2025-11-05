@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
+import { getUserFromRequest } from '@/lib/auth-token-validator';
 
 // Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,30 @@ export const revalidate = 0;
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
+    // Validar token directamente - NO depender del middleware
+    const decoded = await getUserFromRequest(request);
+
+    if (!decoded) {
+      logger.error('/api/messages/[id]/read: Token inválido o no presente');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No autorizado',
+          message: 'Token de autenticación inválido o no presente',
+        },
+        { status: 401 }
+      );
+    }
+
+    // Crear objeto user compatible
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    };
+
+    console.log('✅ Messages API: Usuario autenticado (READ):', user.email, 'ID:', user.id);
+
     const messageId = params.id;
 
     // Verificar que el mensaje existe y el usuario es el receptor

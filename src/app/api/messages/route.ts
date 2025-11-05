@@ -124,7 +124,22 @@ export async function GET(request: NextRequest) {
     const [messages, total] = await Promise.all([
       db.message.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          senderId: true,
+          receiverId: true,
+          subject: true,
+          content: true,
+          type: true,
+          status: true,
+          isRead: true,
+          createdAt: true,
+          updatedAt: true,
+          readAt: true,
+          attachmentUrl: true,
+          attachmentName: true,
+          attachmentSize: true,
+          attachmentType: true,
           sender: {
             select: {
               id: true,
@@ -300,7 +315,22 @@ export async function POST(request: NextRequest) {
         contractId: contractId || null,
         isRead: false,
       },
-      include: {
+      select: {
+        id: true,
+        senderId: true,
+        receiverId: true,
+        subject: true,
+        content: true,
+        type: true,
+        status: true,
+        isRead: true,
+        createdAt: true,
+        updatedAt: true,
+        readAt: true,
+        attachmentUrl: true,
+        attachmentName: true,
+        attachmentSize: true,
+        attachmentType: true,
         sender: {
           select: {
             id: true,

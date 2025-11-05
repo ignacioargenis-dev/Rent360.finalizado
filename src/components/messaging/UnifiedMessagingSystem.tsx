@@ -46,6 +46,10 @@ interface Message {
   timestamp: string;
   isRead: boolean;
   type: 'text' | 'image' | 'file';
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentSize?: number;
+  attachmentType?: string;
 }
 
 interface Conversation {
@@ -481,6 +485,10 @@ export default function UnifiedMessagingSystem({
           timestamp: message.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
           isRead: message.isRead || false,
           type: 'text',
+          attachmentUrl: message.attachmentUrl,
+          attachmentName: message.attachmentName,
+          attachmentSize: message.attachmentSize,
+          attachmentType: message.attachmentType,
         }));
 
         // Si hay mensajes nuevos, actualizar el timestamp de última actividad
@@ -498,7 +506,7 @@ export default function UnifiedMessagingSystem({
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || sendingMessage) {
+    if ((!newMessage.trim() && !selectedFile) || !selectedConversation || sendingMessage) {
       return;
     }
 
@@ -512,7 +520,7 @@ export default function UnifiedMessagingSystem({
         },
         credentials: 'include',
         body: JSON.stringify({
-          content: newMessage,
+          content: newMessage.trim() || 'Archivo adjunto',
           receiverId: selectedConversation.participantId,
         }),
       });
@@ -532,7 +540,24 @@ export default function UnifiedMessagingSystem({
 
       const responseData = await response.json().catch(() => null);
 
+      if (responseData?.data?.id && selectedFile) {
+        // Si hay un archivo adjunto, subirlo
+        try {
+          await uploadFileAttachment(selectedFile, responseData.data.id);
+          logger.info('Mensaje con archivo adjunto enviado exitosamente');
+        } catch (uploadError) {
+          logger.error('Error subiendo archivo adjunto:', uploadError);
+          alert(
+            'Mensaje enviado pero error al subir el archivo adjunto. Por favor intenta nuevamente.'
+          );
+        }
+      }
+
       setNewMessage('');
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
 
       // Marcar actividad reciente para activar polling rápido
       setLastMessageTime(Date.now());
@@ -607,13 +632,71 @@ export default function UnifiedMessagingSystem({
         return;
       }
 
-      setSelectedFile(file);
-      // TODO: Implementar upload de archivo
-      alert(`Archivo seleccionado: ${file.name}\n(Funcionalidad de upload en desarrollo)`);
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      // Verificar tipo de archivo
+      const allowedTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        alert(
+          'Tipo de archivo no permitido. Solo se permiten imágenes, PDFs y documentos de texto.'
+        );
+        return;
       }
+
+      setSelectedFile(file);
+    }
+  };
+
+  // Función para subir archivo adjunto
+  const uploadFileAttachment = async (file: File, messageId: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('messageId', messageId);
+
+      const response = await fetch('/api/messages/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al subir el archivo');
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        logger.info('Archivo adjunto subido exitosamente', {
+          messageId,
+          fileName: file.name,
+          url: result.data.attachment.url,
+        });
+
+        // Recargar mensajes para mostrar el archivo adjunto
+        if (selectedConversation) {
+          await loadConversationMessages(selectedConversation.participantId);
+        }
+
+        return result.data.attachment;
+      } else {
+        throw new Error(result.error || 'Error desconocido');
+      }
+    } catch (error) {
+      logger.error('Error subiendo archivo adjunto:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
     }
   };
 
@@ -710,6 +793,29 @@ export default function UnifiedMessagingSystem({
 
     const diffInDays = Math.floor(diffInHours / 24);
     return `Hace ${diffInDays}d`;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) {
+      return '0 Bytes';
+    }
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'image':
+        return 'Imagen';
+      case 'pdf':
+        return 'PDF';
+      case 'document':
+        return 'Documento';
+      default:
+        return 'Archivo';
+    }
   };
 
   const filteredConversations = conversations.filter(
@@ -1002,6 +1108,46 @@ export default function UnifiedMessagingSystem({
                             </span>
                           </div>
                           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+
+                          {/* Mostrar archivo adjunto si existe */}
+                          {message.attachmentUrl && (
+                            <div className="mt-2 p-2 border rounded-md bg-opacity-50">
+                              {message.attachmentType === 'image' ? (
+                                <div className="space-y-2">
+                                  <img
+                                    src={message.attachmentUrl}
+                                    alt={message.attachmentName || 'Imagen adjunta'}
+                                    className="max-w-full h-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => window.open(message.attachmentUrl, '_blank')}
+                                    style={{ maxHeight: '200px' }}
+                                  />
+                                  <p className="text-xs opacity-75">
+                                    📎 {message.attachmentName} (
+                                    {formatFileSize(message.attachmentSize || 0)})
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <Paperclip className="h-4 w-4" />
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium">{message.attachmentName}</p>
+                                    <p className="text-xs opacity-75">
+                                      {formatFileSize(message.attachmentSize || 0)} •{' '}
+                                      {getFileTypeLabel(message.attachmentType)}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => window.open(message.attachmentUrl, '_blank')}
+                                    className="text-xs"
+                                  >
+                                    Ver
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
@@ -1012,19 +1158,46 @@ export default function UnifiedMessagingSystem({
 
               {/* Message Input */}
               <div className="p-4 border-t">
+                {/* Indicador de archivo seleccionado */}
+                {selectedFile && (
+                  <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Paperclip className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">{selectedFile.name}</p>
+                        <p className="text-xs text-blue-600">{formatFileSize(selectedFile.size)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2">
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileSelect}
                     className="hidden"
-                    accept="image/*,.pdf,.doc,.docx"
+                    accept="image/*,.pdf,.doc,.docx,.txt"
                   />
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
                     title="Adjuntar archivo"
+                    disabled={sendingMessage}
                   >
                     <Paperclip className="h-4 w-4" />
                   </Button>
@@ -1039,10 +1212,11 @@ export default function UnifiedMessagingSystem({
                       }
                     }}
                     className="flex-1"
+                    disabled={sendingMessage}
                   />
                   <Button
                     onClick={handleSendMessage}
-                    disabled={!newMessage.trim() || sendingMessage}
+                    disabled={(!newMessage.trim() && !selectedFile) || sendingMessage}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     {sendingMessage ? (

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { getUserFromRequest } from '@/lib/auth-token-validator';
 
 // Forzar renderizado dinámico para evitar caché y asegurar que la ruta funcione correctamente
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,31 @@ export const revalidate = 0;
  */
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
+    // Validar token directamente - NO depender del middleware
+    const decoded = await getUserFromRequest(request);
+
+    if (!decoded) {
+      logger.error('/api/messages/[id] (DELETE): Token inválido o no presente');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No autorizado',
+          message: 'Token de autenticación inválido o no presente',
+        },
+        { status: 401 }
+      );
+    }
+
+    // Crear objeto user compatible
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+    };
+
+    console.log('✅ Messages API: Usuario autenticado (DELETE):', user.email, 'ID:', user.id);
+
     const messageId = params.id;
 
     // Verificar que el mensaje existe y pertenece al usuario
@@ -79,7 +103,31 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
  */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
+    // Validar token directamente - NO depender del middleware
+    const decoded = await getUserFromRequest(request);
+
+    if (!decoded) {
+      logger.error('/api/messages/[id] (GET): Token inválido o no presente');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No autorizado',
+          message: 'Token de autenticación inválido o no presente',
+        },
+        { status: 401 }
+      );
+    }
+
+    // Crear objeto user compatible
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+    };
+
+    console.log('✅ Messages API: Usuario autenticado (GET):', user.email, 'ID:', user.id);
+
     const messageId = params.id;
 
     // Obtener mensaje con todos los detalles

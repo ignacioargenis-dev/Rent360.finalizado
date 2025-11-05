@@ -95,18 +95,18 @@ export async function middleware(request: NextRequest) {
   // Rutas que manejan su propia autenticación (excluir del middleware)
   const selfAuthenticatingRoutes = [
     '/api/auth/me', // ✅ Esta ruta valida tokens internamente
-    '/api/messages', // ✅ La API de mensajes valida tokens internamente con getUserFromRequest
-    '/api/messages/conversations', // ✅ La API de conversaciones valida tokens internamente
-    '/api/messages/unread-count', // ✅ La API de unread-count valida tokens internamente
+    '/api/messages', // ✅ TODAS las rutas de mensajes validan tokens internamente
   ];
 
   // Verificar si es una ruta que maneja su propia autenticación
-  const isSelfAuthenticatingRoute = selfAuthenticatingRoutes.some(route =>
-    pathname.startsWith(route)
+  // Usar verificación más amplia para cubrir todas las sub-rutas de mensajes
+  const isSelfAuthenticatingRoute = selfAuthenticatingRoutes.some(
+    route => pathname === route || pathname.startsWith(route + '/')
   );
 
   if (isSelfAuthenticatingRoute) {
     console.log('🔧 Middleware: Ruta auto-autenticada, saltando middleware completamente');
+    console.log('🔧 Middleware: Ruta excluida:', pathname);
     return NextResponse.next();
   }
 
