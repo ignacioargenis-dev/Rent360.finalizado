@@ -74,6 +74,7 @@ export default function ProviderClientsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [serviceFilter, setServiceFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [clients, setClients] = useState<ProviderClient[]>([]);
   const [stats, setStats] = useState<ClientStats>({
     totalClients: 0,
@@ -84,8 +85,8 @@ export default function ProviderClientsPage() {
     repeatClients: 0,
   });
 
-  // Mock data for provider clients
-  const mockClients: ProviderClient[] = [
+  // Mock data for provider clients - DEPRECATED: Ahora se usan datos reales de la API
+  /* const mockClients: ProviderClient[] = [
     {
       id: '1',
       name: 'María González',
@@ -165,7 +166,7 @@ export default function ProviderClientsPage() {
       preferredContact: 'whatsapp',
       notes: 'Cliente VIP, recomienda nuestros servicios.',
     },
-  ];
+  ]; */
 
   useEffect(() => {
     loadClients();
@@ -174,33 +175,57 @@ export default function ProviderClientsPage() {
   const loadClients = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // ✅ Llamar a la API real para obtener clientes
+      const response = await fetch('/api/provider/clients', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-      setClients(mockClients);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+      }
 
-      // Calculate stats
-      const totalClients = mockClients.length;
-      const activeClients = mockClients.filter(c => c.status === 'active').length;
-      const totalRevenue = mockClients.reduce((sum, c) => sum + c.totalSpent, 0);
-      const averageRating = mockClients.reduce((sum, c) => sum + c.rating, 0) / mockClients.length;
-      const newClientsThisMonth = mockClients.filter(
-        c =>
-          new Date(c.lastServiceDate) >=
-          new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      ).length;
-      const repeatClients = mockClients.filter(c => c.totalServices > 1).length;
+      const data = await response.json();
 
-      setStats({
-        totalClients,
-        activeClients,
-        totalRevenue,
-        averageRating: Math.round(averageRating * 10) / 10,
-        newClientsThisMonth,
-        repeatClients,
+      if (!data.success) {
+        throw new Error(data.error || 'Error al cargar los clientes');
+      }
+
+      // Transformar datos de la API al formato del componente
+      const transformedClients: ProviderClient[] = data.clients.map((client: any) => ({
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone || '',
+        avatar: client.avatar || undefined,
+        location: client.location,
+        serviceType: client.serviceTypes?.join(', ') || 'Sin especificar',
+        lastServiceDate: client.lastServiceDate || '',
+        totalServices: client.totalServices,
+        totalSpent: client.totalSpent,
+        rating: Math.round(client.averageRating * 10) / 10,
+        status: client.status,
+        preferredContact: client.preferredContact,
+        notes: undefined,
+      }));
+
+      setClients(transformedClients);
+      setStats(data.stats);
+
+      logger.info('Clientes cargados exitosamente', {
+        totalClients: transformedClients.length,
+        stats: data.stats,
       });
     } catch (error) {
-      logger.error('Error al cargar clientes', { error });
+      logger.error('Error al cargar clientes', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      const errorMsg = 'Error al cargar los clientes. Por favor, inténtalo de nuevo.';
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

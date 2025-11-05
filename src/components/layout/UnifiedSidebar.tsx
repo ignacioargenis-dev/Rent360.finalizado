@@ -558,6 +558,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: Ticket,
     },
     {
+      title: 'Clientes',
+      url: '/provider/clients',
+      icon: Users,
+    },
+    {
       title: 'Calificaciones',
       url: '/provider/ratings',
       icon: Star,
@@ -568,9 +573,14 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: DollarSign,
     },
     {
+      title: 'Mensajes',
+      url: '/provider/messages',
+      icon: MessageSquare,
+    },
+    {
       title: 'Mis Tickets',
       url: '/provider/tickets',
-      icon: MessageSquare,
+      icon: Ticket,
     },
     {
       title: 'Configuración',
@@ -701,18 +711,18 @@ export default function UnifiedSidebar({
   }
 
   // Debug: Log para verificar rol detectado (solo en desarrollo)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[UNIFIED SIDEBAR] Usuario:', {
-      id: user?.id,
-      role: user?.role,
-      roleType: typeof user?.role,
-      finalUserRole,
-      pathname,
-      menuItemsAvailable: Object.keys(menuItems),
-      hasItems: !!menuItems[finalUserRole],
-      itemsCount: menuItems[finalUserRole]?.length || 0,
-    });
-  }
+  // if (process.env.NODE_ENV === 'development') {
+  //   console.log('[UNIFIED SIDEBAR] Usuario:', {
+  //     id: user?.id,
+  //     role: user?.role,
+  //     roleType: typeof user?.role,
+  //     finalUserRole,
+  //     pathname,
+  //     menuItemsAvailable: Object.keys(menuItems),
+  //     hasItems: !!menuItems[finalUserRole],
+  //     itemsCount: menuItems[finalUserRole]?.length || 0,
+  //   });
+  // }
 
   // ✅ CORREGIDO: Fallback más inteligente - intentar con el rol original si no se encuentra
   let items = menuItems[finalUserRole];
@@ -729,11 +739,11 @@ export default function UnifiedSidebar({
       items = menuItems.tenant || menuItems.guest || [];
       finalUserRole = items.length > 0 ? 'tenant' : 'guest';
 
-      console.warn('[UNIFIED SIDEBAR] Rol no encontrado, usando fallback:', {
-        originalRole: user?.role,
-        normalizedRole: uppercaseRole,
-        finalUserRole,
-      });
+      // console.warn('[UNIFIED SIDEBAR] Rol no encontrado, usando fallback:', {
+      //   originalRole: user?.role,
+      //   normalizedRole: uppercaseRole,
+      //   finalUserRole,
+      // });
     }
   }
 

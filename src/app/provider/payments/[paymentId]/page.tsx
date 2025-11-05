@@ -17,9 +17,24 @@ import {
   Download,
   Clock,
   User,
+  Building,
+  CreditCard,
+  Save,
+  Edit,
+  Shield,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface PaymentDetail {
   id: string;
@@ -29,8 +44,8 @@ interface PaymentDetail {
   amount: number;
   status: 'paid' | 'pending' | 'overdue';
   paymentDate?: string;
-  jobDate: string;
-  dueDate: string;
+  jobDate?: string;
+  dueDate?: string;
   rating?: number;
   description?: string;
   jobType: string;
@@ -46,12 +61,86 @@ export default function ProviderPaymentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showBankConfig, setShowBankConfig] = useState(false);
+  const [isEditingBank, setIsEditingBank] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
+  const [bankAccount, setBankAccount] = useState({
+    bankName: '',
+    accountType: 'checking', // 'checking' | 'savings'
+    accountNumber: '',
+    routingNumber: '',
+    accountHolderName: '',
+    rut: '',
+    email: '',
+    phone: '',
+  });
 
   useEffect(() => {
     if (paymentId) {
       loadPaymentDetail(paymentId as string);
+      loadBankAccount();
     }
   }, [paymentId]);
+
+  const loadBankAccount = async () => {
+    try {
+      const response = await fetch('/api/provider/bank-account', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.bankAccount) {
+          setBankAccount({
+            bankName: data.bankAccount.bankName || '',
+            accountType: data.bankAccount.accountType || 'checking',
+            accountNumber: data.bankAccount.accountNumber || '',
+            routingNumber: data.bankAccount.routingNumber || '',
+            accountHolderName: data.bankAccount.accountHolderName || '',
+            rut: data.bankAccount.rut || '',
+            email: data.bankAccount.email || '',
+            phone: data.bankAccount.phone || '',
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading bank account:', { error });
+    }
+  };
+
+  const handleSaveBankAccount = async () => {
+    setIsSavingBank(true);
+    try {
+      const response = await fetch('/api/provider/bank-account', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(bankAccount),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSuccessMessage('Configuración bancaria guardada exitosamente');
+          setIsEditingBank(false);
+          setTimeout(() => setSuccessMessage(''), 3000);
+        }
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la configuración bancaria');
+      }
+    } catch (error) {
+      logger.error('Error saving bank account:', { error });
+      setError(
+        error instanceof Error ? error.message : 'Error al guardar la configuración bancaria'
+      );
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setIsSavingBank(false);
+    }
+  };
 
   const loadPaymentDetail = async (id: string) => {
     try {
@@ -83,8 +172,8 @@ export default function ProviderPaymentDetailPage() {
         amount: data.amount || 0,
         status: data.status?.toLowerCase() || 'pending',
         paymentDate: data.paymentDate,
-        jobDate: data.jobDate || new Date().toISOString(),
-        dueDate: data.dueDate || new Date().toISOString(),
+        jobDate: data.jobDate,
+        dueDate: data.dueDate,
         rating: data.rating || 0,
         description: data.description || 'Sin descripción',
         jobType: data.jobType || 'Servicio',
@@ -119,7 +208,10 @@ export default function ProviderPaymentDetailPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) {
+      return 'No especificada';
+    }
     return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'long',
@@ -281,12 +373,16 @@ Rent360 - Sistema de Gestión de Servicios
 
               <div>
                 <label className="text-sm font-medium text-gray-500">Fecha del Trabajo</label>
-                <div className="text-lg text-gray-900 mt-1">{formatDate(payment.jobDate)}</div>
+                <div className="text-lg text-gray-900 mt-1">
+                  {payment.jobDate ? formatDate(payment.jobDate) : 'No especificada'}
+                </div>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-gray-500">Fecha de Vencimiento</label>
-                <div className="text-lg text-gray-900 mt-1">{formatDate(payment.dueDate)}</div>
+                <div className="text-lg text-gray-900 mt-1">
+                  {payment.dueDate ? formatDate(payment.dueDate) : 'No especificada'}
+                </div>
               </div>
 
               {payment.paymentDate && (
@@ -356,6 +452,206 @@ Rent360 - Sistema de Gestión de Servicios
           </Card>
         )}
 
+        {/* Bank Account Configuration */}
+        <Card className="border-blue-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Configuración de Cuenta Bancaria
+              </CardTitle>
+              {!isEditingBank && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditingBank(true);
+                    setShowBankConfig(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  {bankAccount.accountNumber ? 'Editar' : 'Configurar'}
+                </Button>
+              )}
+            </div>
+            <CardDescription>
+              Configura tu cuenta bancaria para recibir pagos directamente
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isEditingBank ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="bankName">Banco *</Label>
+                    <Input
+                      id="bankName"
+                      value={bankAccount.bankName}
+                      onChange={e => setBankAccount({ ...bankAccount, bankName: e.target.value })}
+                      placeholder="Ej: Banco de Chile"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="accountType">Tipo de Cuenta *</Label>
+                    <Select
+                      value={bankAccount.accountType}
+                      onValueChange={value =>
+                        setBankAccount({
+                          ...bankAccount,
+                          accountType: value as 'checking' | 'savings',
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="checking">Cuenta Corriente</SelectItem>
+                        <SelectItem value="savings">Cuenta de Ahorro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="accountNumber">Número de Cuenta *</Label>
+                    <Input
+                      id="accountNumber"
+                      value={bankAccount.accountNumber}
+                      onChange={e =>
+                        setBankAccount({ ...bankAccount, accountNumber: e.target.value })
+                      }
+                      placeholder="Ej: 1234567890"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="routingNumber">RUT Titular *</Label>
+                    <Input
+                      id="routingNumber"
+                      value={bankAccount.rut}
+                      onChange={e => setBankAccount({ ...bankAccount, rut: e.target.value })}
+                      placeholder="Ej: 12.345.678-9"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="accountHolderName">Nombre del Titular *</Label>
+                  <Input
+                    id="accountHolderName"
+                    value={bankAccount.accountHolderName}
+                    onChange={e =>
+                      setBankAccount({ ...bankAccount, accountHolderName: e.target.value })
+                    }
+                    placeholder="Ej: Juan Pérez"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="email">Email de Contacto</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={bankAccount.email}
+                      onChange={e => setBankAccount({ ...bankAccount, email: e.target.value })}
+                      placeholder="email@ejemplo.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Teléfono de Contacto</Label>
+                    <Input
+                      id="phone"
+                      value={bankAccount.phone}
+                      onChange={e => setBankAccount({ ...bankAccount, phone: e.target.value })}
+                      placeholder="+56912345678"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 p-4 bg-blue-50 rounded-lg">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  <p className="text-sm text-blue-800">
+                    Tu información bancaria está protegida y encriptada. Solo se usa para procesar
+                    tus pagos.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveBankAccount} disabled={isSavingBank}>
+                    {isSavingBank ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Guardar Configuración
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditingBank(false);
+                      loadBankAccount(); // Recargar datos originales
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {bankAccount.accountNumber ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm text-gray-500">Banco</Label>
+                      <div className="text-lg font-medium">
+                        {bankAccount.bankName || 'No configurado'}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Tipo de Cuenta</Label>
+                      <div className="text-lg font-medium">
+                        {bankAccount.accountType === 'checking'
+                          ? 'Cuenta Corriente'
+                          : 'Cuenta de Ahorro'}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Número de Cuenta</Label>
+                      <div className="text-lg font-mono">
+                        {bankAccount.accountNumber.slice(0, 4)}****
+                        {bankAccount.accountNumber.slice(-4)}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-500">Titular</Label>
+                      <div className="text-lg font-medium">
+                        {bankAccount.accountHolderName || 'No configurado'}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">
+                      No has configurado una cuenta bancaria para recibir pagos
+                    </p>
+                    <Button onClick={() => setIsEditingBank(true)}>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Configurar Cuenta Bancaria
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Payment Timeline */}
         <Card>
           <CardHeader>
@@ -371,18 +667,33 @@ Rent360 - Sistema de Gestión de Servicios
                 <div>
                   <div className="font-medium text-gray-900">Trabajo Solicitado</div>
                   <div className="text-sm text-gray-600">Tipo: {payment.jobType}</div>
+                  {payment.jobDate &&
+                    (() => {
+                      const jobDateValue = payment.jobDate!;
+                      return (
+                        <div className="text-sm text-gray-600">
+                          Fecha: {formatDate(jobDateValue)}
+                        </div>
+                      );
+                    })()}
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
-                <div>
-                  <div className="font-medium text-gray-900">Trabajo Programado</div>
-                  <div className="text-sm text-gray-600">
-                    Fecha programada: {formatDate(payment.jobDate)}
-                  </div>
-                </div>
-              </div>
+              {payment.jobDate &&
+                (() => {
+                  const jobDateValue = payment.jobDate!;
+                  return (
+                    <div className="flex items-start gap-4">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
+                      <div>
+                        <div className="font-medium text-gray-900">Trabajo Programado</div>
+                        <div className="text-sm text-gray-600">
+                          Fecha programada: {formatDate(jobDateValue)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
               <div className="flex items-start gap-4">
                 <div className="w-3 h-3 bg-green-500 rounded-full mt-2"></div>
@@ -423,7 +734,7 @@ Rent360 - Sistema de Gestión de Servicios
                   <div>
                     <div className="font-medium text-gray-900">Pago Pendiente</div>
                     <div className="text-sm text-gray-600">
-                      Vence el: {formatDate(payment.dueDate)}
+                      Vence el: {payment.dueDate ? formatDate(payment.dueDate) : 'No especificada'}
                     </div>
                   </div>
                 </div>

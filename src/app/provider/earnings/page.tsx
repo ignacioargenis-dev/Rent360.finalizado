@@ -33,6 +33,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,7 @@ interface EarningsStats {
 }
 
 export default function ProviderEarningsPage() {
+  const router = useRouter();
   const { user, loading: userLoading } = useAuth();
   const [earnings, setEarnings] = useState<EarningsData>({
     totalEarnings: 0,
@@ -257,7 +259,7 @@ export default function ProviderEarningsPage() {
 
   const handleViewPayment = (paymentId: string) => {
     // Navigate to payment detail view
-    window.open(`/provider/payments/${paymentId}`, '_blank');
+    router.push(`/provider/payments/${paymentId}`);
   };
 
   const handleDownloadInvoice = (paymentId: string) => {
