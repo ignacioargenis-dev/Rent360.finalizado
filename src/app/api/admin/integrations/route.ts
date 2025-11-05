@@ -425,7 +425,7 @@ async function updateEnvironmentVariables(integrationId: string, config: any) {
     },
     'socket-io': {
       NEXT_PUBLIC_WS_URL: config.serverUrl,
-      JWT_SECRET: process.env.JWT_SECRET, // Necesario para WebSocket auth
+      JWT_SECRET: process.env.JWT_SECRET || 'default-jwt-secret', // Necesario para WebSocket auth
       ALLOWED_ORIGINS:
         config.allowedOrigins || 'https://rent360management-2yxgz.ondigitalocean.app',
     },

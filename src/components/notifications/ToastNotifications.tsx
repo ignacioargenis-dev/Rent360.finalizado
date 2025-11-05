@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, 
-  Check, 
-  AlertTriangle, 
-  Info, 
+import {
+  X,
+  Check,
+  AlertTriangle,
+  Info,
   XCircle,
   CheckCircle,
   Bell,
@@ -17,18 +18,34 @@ import { X,
   Calendar,
   Wrench,
   MapPin,
-  User, Building, FileText } from 'lucide-react';
-import useSocket from '@/hooks/useSocket';
+  User,
+  Building,
+  FileText,
+} from 'lucide-react';
+import { websocketClient } from '@/lib/websocket/socket-client';
 
 interface ToastNotification {
-  id: string
-  type: 'success' | 'error' | 'warning' | 'info' | 'message' | 'system' | 'rating' | 'payment' | 'visit' | 'maintenance' | 'property' | 'contract' | 'user'
-  title: string
-  message: string
-  data?: any
-  timestamp: string
-  autoClose?: boolean
-  duration?: number
+  id: string;
+  type:
+    | 'success'
+    | 'error'
+    | 'warning'
+    | 'info'
+    | 'message'
+    | 'system'
+    | 'rating'
+    | 'payment'
+    | 'visit'
+    | 'maintenance'
+    | 'property'
+    | 'contract'
+    | 'user';
+  title: string;
+  message: string;
+  data?: any;
+  timestamp: string;
+  autoClose?: boolean;
+  duration?: number;
 }
 
 const getToastIcon = (type: string) => {
@@ -90,24 +107,21 @@ const getToastColor = (type: string) => {
 };
 
 interface ToastNotificationsProps {
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
-  maxToasts?: number
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  maxToasts?: number;
 }
 
-export default function ToastNotifications({ 
-  position = 'top-right', 
-  maxToasts = 5, 
+export default function ToastNotifications({
+  position = 'top-right',
+  maxToasts = 5,
 }: ToastNotificationsProps) {
-
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
-  
-  const { notifications } = useSocket({ enableNotifications: true });
 
   useEffect(() => {
-    // Convertir notificaciones del socket a toasts
-    const newToasts = notifications.slice(0, maxToasts).map(notification => {
+    // Escuchar notificaciones del WebSocket
+    const handleNotification = (notification: any) => {
       let toastType: ToastNotification['type'] = 'info';
-      
+
       // Determinar el tipo de toast basado en el tipo de notificación
       if (notification.type.includes('success') || notification.type.includes('completed')) {
         toastType = 'success';
@@ -133,20 +147,29 @@ export default function ToastNotifications({
         toastType = 'user';
       }
 
-      return {
-        id: notification.id,
+      const toast: ToastNotification = {
+        id: `toast_${Date.now()}_${Math.random()}`,
         type: toastType,
         title: getNotificationTitle(notification.type),
         message: notification.message,
         data: notification.data,
-        timestamp: notification.timestamp,
+        timestamp: notification.timestamp || new Date().toISOString(),
         autoClose: true,
         duration: 5000,
       };
-    });
 
-    setToasts(newToasts);
-  }, [notifications, maxToasts]);
+      // Agregar el toast manteniendo el límite máximo
+      setToasts(prev => [toast, ...prev.slice(0, maxToasts - 1)]);
+    };
+
+    // Registrar listener
+    websocketClient.on('notification', handleNotification);
+
+    return () => {
+      // Limpiar listener
+      websocketClient.off('notification', handleNotification);
+    };
+  }, [maxToasts]);
 
   const getNotificationTitle = (type: string): string => {
     switch (type) {
@@ -207,29 +230,24 @@ export default function ToastNotifications({
   };
 
   if (toasts.length === 0) {
-return null;
-}
+    return null;
+  }
 
   return (
     <div className={`fixed z-50 ${getPositionClasses()} space-y-2`}>
-      {toasts.map((toast) => (
-        <ToastItem
-          key={toast.id}
-          toast={toast}
-          onRemove={() => removeToast(toast.id)}
-        />
+      {toasts.map(toast => (
+        <ToastItem key={toast.id} toast={toast} onRemove={() => removeToast(toast.id)} />
       ))}
     </div>
   );
 }
 
 interface ToastItemProps {
-  toast: ToastNotification
-  onRemove: () => void
+  toast: ToastNotification;
+  onRemove: () => void;
 }
 
 function ToastItem({ toast, onRemove }: ToastItemProps) {
-
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -251,25 +269,19 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
   };
 
   return (
-    <Card 
+    <Card
       className={`w-96 transition-all duration-300 transform ${
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       } ${getToastColor(toast.type)} border shadow-lg`}
     >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-0.5">
-            {getToastIcon(toast.type)}
-          </div>
+          <div className="flex-shrink-0 mt-0.5">{getToastIcon(toast.type)}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h4 className="font-medium text-gray-900 mb-1">
-                  {toast.title}
-                </h4>
-                <p className="text-sm text-gray-600">
-                  {toast.message}
-                </p>
+                <h4 className="font-medium text-gray-900 mb-1">{toast.title}</h4>
+                <p className="text-sm text-gray-600">{toast.message}</p>
                 {toast.data?.actionUrl && (
                   <Button
                     variant="link"

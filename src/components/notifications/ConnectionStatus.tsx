@@ -1,72 +1,80 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Wifi, 
-  WifiOff, 
-  RefreshCw, 
-  AlertCircle,
-  CheckCircle,
-  Clock,
-} from 'lucide-react';
-import useSocket from '@/hooks/useSocket';
+import { Wifi, WifiOff, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { websocketClient } from '@/lib/websocket/socket-client';
 
 interface ConnectionStatusProps {
-  showDetails?: boolean
-  className?: string
+  showDetails?: boolean;
+  className?: string;
 }
 
-export default function ConnectionStatus({ 
-  showDetails = false, 
-  className = '', 
+export default function ConnectionStatus({
+  showDetails = false,
+  className = '',
 }: ConnectionStatusProps) {
-
   const [isReconnecting, setIsReconnecting] = useState(false);
-  
-  const { isConnected, socket } = useSocket({ enableNotifications: false });
+  const [isConnected, setIsConnected] = useState(websocketClient.isConnected);
+
+  // Escuchar cambios en el estado de conexión
+  useEffect(() => {
+    const handleConnect = () => setIsConnected(true);
+    const handleDisconnect = () => setIsConnected(false);
+
+    websocketClient.on('connect', handleConnect);
+    websocketClient.on('disconnect', handleDisconnect);
+
+    // Verificar estado inicial
+    setIsConnected(websocketClient.isConnected);
+
+    return () => {
+      websocketClient.off('connect', handleConnect);
+      websocketClient.off('disconnect', handleDisconnect);
+    };
+  }, []);
 
   const handleReconnect = () => {
     setIsReconnecting(true);
-    if (socket) {
-      socket.disconnect();
-      socket.connect();
-    }
-    
-    // Simular tiempo de reconexión
+
+    // Desconectar y reconectar
+    websocketClient.disconnect();
+
+    // Intentar reconectar después de un breve delay
     setTimeout(() => {
+      websocketClient.connect();
       setIsReconnecting(false);
-    }, 2000);
+    }, 1000);
   };
 
   const getStatusText = () => {
     if (isReconnecting) {
-return 'Reconectando...';
-}
+      return 'Reconectando...';
+    }
     if (isConnected) {
-return 'Conectado';
-}
+      return 'Conectado';
+    }
     return 'Desconectado';
   };
 
   const getStatusIcon = () => {
     if (isReconnecting) {
-return <RefreshCw className="w-4 h-4 animate-spin" />;
-}
+      return <RefreshCw className="w-4 h-4 animate-spin" />;
+    }
     if (isConnected) {
-return <CheckCircle className="w-4 h-4" />;
-}
+      return <CheckCircle className="w-4 h-4" />;
+    }
     return <WifiOff className="w-4 h-4" />;
   };
 
   const getStatusColor = () => {
     if (isReconnecting) {
-return 'bg-yellow-500';
-}
+      return 'bg-yellow-500';
+    }
     if (isConnected) {
-return 'bg-green-500';
-}
+      return 'bg-green-500';
+    }
     return 'bg-red-500';
   };
 
@@ -86,9 +94,7 @@ return 'bg-green-500';
           {getStatusIcon()}
           <h3 className="font-medium">Estado de Conexión</h3>
         </div>
-        <Badge className={getStatusColor()}>
-          {getStatusText()}
-        </Badge>
+        <Badge className={getStatusColor()}>{getStatusText()}</Badge>
       </div>
 
       <div className="space-y-2 text-sm">
@@ -132,20 +138,15 @@ return 'bg-green-500';
             <div className="text-sm text-yellow-800">
               <p className="font-medium mb-1">Conexión perdida</p>
               <p className="text-xs">
-                Las actualizaciones en tiempo real no están disponibles. 
-                Intenta reconectar para restaurar la funcionalidad completa.
+                Las actualizaciones en tiempo real no están disponibles. Intenta reconectar para
+                restaurar la funcionalidad completa.
               </p>
             </div>
           </div>
         )}
 
         {!isConnected && (
-          <Button 
-            onClick={handleReconnect} 
-            disabled={isReconnecting}
-            className="w-full"
-            size="sm"
-          >
+          <Button onClick={handleReconnect} disabled={isReconnecting} className="w-full" size="sm">
             {isReconnecting ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
