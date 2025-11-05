@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -57,6 +58,26 @@ interface ServiceProvider {
   phone: string;
   email: string;
   image?: string;
+  services?: Array<{
+    id: string;
+    name: string;
+    category: string;
+    description: string;
+    images: string[];
+    pricing?: any;
+    duration?: any;
+    features?: string[];
+    requirements?: string[];
+    tags?: string[];
+  }>;
+  images?: string[];
+  reviews?: Array<{
+    id: string;
+    rating: number;
+    comment: string;
+    clientName: string;
+    date: string;
+  }>;
 }
 
 interface ServiceRequest {
@@ -95,6 +116,7 @@ export default function TenantServicesPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Estado para proveedores de servicios
   const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
@@ -256,30 +278,116 @@ export default function TenantServicesPage() {
     setShowRequestModal(true);
   };
 
-  const handleViewProviderDetails = (provider: ServiceProvider) => {
-    setSelectedProviderDetails(provider);
+  const handleViewProviderDetails = async (provider: ServiceProvider) => {
+    try {
+      // Cargar detalles completos del proveedor desde la API
+      const response = await fetch(`/api/service-providers/${provider.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          // Actualizar con datos reales
+          setSelectedProviderDetails({
+            ...provider,
+            ...data.data,
+          });
+        } else {
+          // Fallback a datos del provider
+          setSelectedProviderDetails(provider);
+        }
+      } else {
+        // Fallback a datos del provider
+        setSelectedProviderDetails(provider);
+      }
+    } catch (error) {
+      logger.error('Error cargando detalles del proveedor:', { error });
+      // Fallback a datos del provider
+      setSelectedProviderDetails(provider);
+    }
+
     setShowDetailsModal(true);
   };
 
-  const handleSubmitServiceRequest = () => {
+  const handleSubmitServiceRequest = async () => {
     if (!serviceRequest.description.trim()) {
       setErrorMessage('Por favor describe el servicio que necesitas');
       setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
 
-    // Simulate service request submission
-    setSuccessMessage(`Solicitud enviada a ${selectedProvider?.name}. Te contactarán pronto.`);
-    setTimeout(() => setSuccessMessage(''), 5000);
+    if (!selectedProvider) {
+      setErrorMessage('Proveedor no seleccionado');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
 
-    setShowRequestModal(false);
-    setServiceRequest({
-      serviceType: '',
-      description: '',
-      urgency: 'medium',
-      budget: undefined,
-    });
-    setSelectedProvider(null);
+    setIsSubmitting(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    try {
+      // Mapear urgencia a formato de la API
+      const urgencyMap: Record<string, string> = {
+        low: 'LOW',
+        medium: 'NORMAL',
+        high: 'HIGH',
+        urgent: 'URGENT',
+      };
+
+      // Crear solicitud de servicio
+      const response = await fetch('/api/services/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          serviceType: serviceRequest.serviceType,
+          description: serviceRequest.description,
+          urgency: urgencyMap[serviceRequest.urgency] || 'NORMAL',
+          preferredDate: serviceRequest.preferredDate,
+          budget: serviceRequest.budget,
+          serviceProviderId: selectedProvider.id, // ✅ Pasar el ID del proveedor
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || `Error ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setSuccessMessage(
+        data.message || `Solicitud enviada a ${selectedProvider.name}. Te contactarán pronto.`
+      );
+      setTimeout(() => setSuccessMessage(''), 5000);
+
+      setShowRequestModal(false);
+      setServiceRequest({
+        serviceType: '',
+        description: '',
+        urgency: 'medium',
+        budget: undefined,
+      });
+      setSelectedProvider(null);
+    } catch (error) {
+      logger.error('Error enviando solicitud de servicio:', { error });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al enviar la solicitud. Por favor intente nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -577,8 +685,8 @@ export default function TenantServicesPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Descripción del Servicio *</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                <Textarea
+                  className="w-full bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   rows={4}
                   placeholder="Describe detalladamente el servicio que necesitas..."
                   value={serviceRequest.description}
@@ -630,7 +738,9 @@ export default function TenantServicesPage() {
               <Button variant="outline" onClick={() => setShowRequestModal(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSubmitServiceRequest}>Enviar Solicitud</Button>
+              <Button onClick={handleSubmitServiceRequest} disabled={isSubmitting}>
+                {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -702,11 +812,35 @@ export default function TenantServicesPage() {
                   </div>
                 </div>
 
+                {/* Images */}
+                {selectedProviderDetails.images && selectedProviderDetails.images.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Imágenes del Servicio</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {selectedProviderDetails.images.map((imageUrl, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-square rounded-lg overflow-hidden border"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`Imagen ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={e => {
+                              (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Description */}
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Descripción del Servicio</h3>
                   <p className="text-gray-700 leading-relaxed">
-                    {selectedProviderDetails.description}
+                    {selectedProviderDetails.description || 'Sin descripción disponible'}
                   </p>
                 </div>
 
@@ -716,11 +850,11 @@ export default function TenantServicesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-gray-400" />
-                      <span>{selectedProviderDetails.phone}</span>
+                      <span>{selectedProviderDetails.phone || 'No disponible'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-gray-400" />
-                      <span>{selectedProviderDetails.email}</span>
+                      <span>{selectedProviderDetails.email || 'No disponible'}</span>
                     </div>
                   </div>
                 </div>
@@ -728,35 +862,35 @@ export default function TenantServicesPage() {
                 {/* Reviews Preview */}
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Últimas Reseñas</h3>
-                  <div className="space-y-3">
-                    {/* Mock reviews */}
-                    <div className="border rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <Star key={star} className="w-3 h-3 text-yellow-400 fill-current" />
-                          ))}
+                  {selectedProviderDetails.reviews && selectedProviderDetails.reviews.length > 0 ? (
+                    <div className="space-y-3">
+                      {selectedProviderDetails.reviews.map(review => (
+                        <div key={review.id} className="border rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex">
+                              {[1, 2, 3, 4, 5].map(star => (
+                                <Star
+                                  key={star}
+                                  className={`w-3 h-3 ${
+                                    star <= review.rating
+                                      ? 'text-yellow-400 fill-current'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm font-medium">{review.clientName}</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(review.date).toLocaleDateString('es-CL')}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">"{review.comment}"</p>
                         </div>
-                        <span className="text-sm font-medium">Excelente servicio</span>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        "Muy profesional y puntual. El trabajo quedó perfecto."
-                      </p>
+                      ))}
                     </div>
-                    <div className="border rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <Star key={star} className="w-3 h-3 text-yellow-400 fill-current" />
-                          ))}
-                        </div>
-                        <span className="text-sm font-medium">Recomendado</span>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        "Buena atención y precios competitivos."
-                      </p>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">Aún no hay reseñas para este proveedor</p>
+                  )}
                 </div>
 
                 {/* Action Buttons */}

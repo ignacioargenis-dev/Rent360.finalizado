@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
-    const { serviceType, description, urgency, preferredDate, budget } = body;
+    const { serviceType, description, urgency, preferredDate, budget, serviceProviderId } = body;
 
     // Validación básica
     if (!serviceType || !description) {
@@ -96,12 +96,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ✅ Validar que el serviceProviderId existe y corresponde a un ServiceProvider
+    let providerId: string | null = null;
+    if (serviceProviderId) {
+      const provider = await db.serviceProvider.findUnique({
+        where: { id: serviceProviderId },
+        select: { id: true },
+      });
+
+      if (!provider) {
+        return NextResponse.json(
+          { error: 'Proveedor de servicios no encontrado' },
+          { status: 404 }
+        );
+      }
+
+      providerId = provider.id;
+    }
+
+    // Si no se proporcionó un proveedor, crear solicitud sin asignar (para que aparezca en el marketplace)
+    // Por ahora, requerimos que se proporcione un proveedor
+    if (!providerId) {
+      return NextResponse.json(
+        { error: 'Debe especificar un proveedor de servicios' },
+        { status: 400 }
+      );
+    }
+
     // Crear la solicitud de servicio en la base de datos
-    // Nota: Temporalmente asignamos el ID del requester como serviceProviderId
-    // hasta que se implemente la lógica de asignación de proveedores
     const serviceRequest = await db.serviceJob.create({
       data: {
-        serviceProviderId: user.id, // Temporal - cambiar cuando se asigne proveedor real
+        serviceProviderId: providerId, // ✅ Usar el ID del proveedor seleccionado
         requesterId: user.id,
         title: `${serviceType} - Solicitud de ${user.name || 'Usuario'}`,
         description,
@@ -128,6 +153,7 @@ export async function POST(request: NextRequest) {
 
     logger.info('Nueva solicitud de servicio doméstico creada:', {
       requesterId: user.id,
+      serviceProviderId: providerId,
       serviceType,
       requestId: serviceRequest.id,
     });
@@ -138,6 +164,7 @@ export async function POST(request: NextRequest) {
         id: serviceRequest.id,
         requesterId: serviceRequest.requesterId,
         requesterName: serviceRequest.requester.name,
+        serviceProviderId: serviceRequest.serviceProviderId,
         serviceProviderName: serviceRequest.serviceProvider.businessName,
         serviceType: serviceRequest.serviceType,
         description: serviceRequest.description,
@@ -146,8 +173,7 @@ export async function POST(request: NextRequest) {
         budget: serviceRequest.basePrice,
         createdAt: serviceRequest.createdAt,
       },
-      message:
-        'Solicitud de servicio enviada exitosamente. Los proveedores disponibles recibirán tu solicitud.',
+      message: 'Solicitud de servicio enviada exitosamente. El proveedor recibirá tu solicitud.',
     });
   } catch (error) {
     logger.error('Error creando solicitud de servicio:', {
