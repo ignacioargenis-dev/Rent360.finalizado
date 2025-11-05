@@ -264,6 +264,13 @@ export async function POST(request: NextRequest) {
 
     const { receiverId, subject, content, type, propertyId, contractId } = validatedData;
 
+    console.log('📨 [API MESSAGES] Procesando envío:', {
+      senderId: user.id,
+      senderRole: user.role,
+      receiverId,
+      content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+    });
+
     // Generar subject automático si no se proporciona
     const messageSubject = subject || `Mensaje de ${user.name || user.email}`;
 
@@ -273,11 +280,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!receiver) {
+      console.error('❌ [API MESSAGES] Receptor no encontrado:', receiverId);
       return NextResponse.json({ error: 'Receptor no encontrado' }, { status: 404 });
     }
 
+    console.log('✅ [API MESSAGES] Receptor encontrado:', {
+      receiverId,
+      receiverRole: receiver.role,
+      receiverName: receiver.name,
+    });
+
     // Verificar que no se envíe mensaje a sí mismo
     if (receiverId === user.id) {
+      console.warn('⚠️ [API MESSAGES] Intento de auto-mensaje:', user.id);
       return NextResponse.json({ error: 'No puedes enviar mensajes a ti mismo' }, { status: 400 });
     }
 
@@ -304,6 +319,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear mensaje
+    console.log('💾 [API MESSAGES] Creando mensaje en BD...');
     const message = await db.message.create({
       data: {
         senderId: user.id,
@@ -369,6 +385,14 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    console.log('✅ [API MESSAGES] Mensaje creado exitosamente:', {
+      messageId: message.id,
+      senderId: message.senderId,
+      receiverId: message.receiverId,
+      receiverRole: message.receiver?.role,
+      contentLength: message.content.length,
     });
 
     // Enviar notificación al receptor

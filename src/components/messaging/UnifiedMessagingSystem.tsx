@@ -512,6 +512,15 @@ export default function UnifiedMessagingSystem({
 
     try {
       setSendingMessage(true);
+
+      // Debug: Log información del envío
+      console.log('🔍 [MESSAGING] Enviando mensaje:', {
+        receiverId: selectedConversation.participantId,
+        receiverRole: selectedConversation.participantRole,
+        content: newMessage.trim() || 'Archivo adjunto',
+        hasFile: !!selectedFile,
+      });
+
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
