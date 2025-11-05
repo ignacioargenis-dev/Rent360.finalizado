@@ -57,6 +57,7 @@ interface ServiceProvider {
   completedJobs: number;
   phone: string;
   email: string;
+  userId?: string; // ✅ ID del usuario real para mensajería
   image?: string;
   services?: Array<{
     id: string;
@@ -185,6 +186,7 @@ export default function TenantServicesPage() {
               completedJobs: provider.completedJobs || 0,
               phone: provider.user?.phone || '',
               email: provider.user?.email || '',
+              userId: provider.user?.id, // ✅ ID del usuario real para mensajería
             };
           });
           setServiceProviders(transformedProviders);
@@ -253,14 +255,16 @@ export default function TenantServicesPage() {
     if (method === 'phone') {
       window.open(`tel:${provider.phone}`);
     } else {
-      // Use messaging system
+      // Use messaging system - usar userId si está disponible, sino fallback a provider.id
+      const recipientId = provider.userId || provider.id;
       const recipientData = {
-        id: `provider_${provider.id}`,
+        id: recipientId, // ✅ Usar ID del usuario real, no del serviceProvider
         name: provider.name,
         email: provider.email,
         phone: provider.phone,
         type: 'provider' as const,
-        providerId: provider.id,
+        providerId: provider.id, // Mantener para referencia del serviceProvider
+        userId: provider.userId, // ✅ ID del usuario real
         serviceType: provider.serviceType,
         specialty: provider.specialty,
       };

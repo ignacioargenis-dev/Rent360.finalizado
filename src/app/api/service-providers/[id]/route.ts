@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       include: {
         user: {
           select: {
-            id: true,
+            id: true, // ✅ Ya incluido, pero asegurar consistencia
             name: true,
             email: true,
             phone: true,

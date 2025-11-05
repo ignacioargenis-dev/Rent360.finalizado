@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       include: {
         user: {
           select: {
+            id: true, // ✅ Incluir ID del usuario para mensajería
             name: true,
             email: true,
             phone: true,
