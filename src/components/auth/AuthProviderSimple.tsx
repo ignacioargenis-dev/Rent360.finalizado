@@ -54,8 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // ✅ INICIALIZAR WEBSOCKET al autenticar usuario
           if (typeof window !== 'undefined') {
-            logger.info('Inicializando WebSocket para usuario autenticado', {
+            logger.info('🔌 [WEBSOCKET] Inicializando WebSocket para usuario autenticado', {
               userId: completeUser.id,
+              userRole: completeUser.role,
+              hasToken:
+                !!document.cookie.includes('auth-token') || !!document.cookie.includes('token'),
             });
             websocketClient.connect();
           }

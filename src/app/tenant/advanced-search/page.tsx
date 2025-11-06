@@ -222,12 +222,23 @@ export default function BúsquedaAvanzadaPage() {
           ownerName:
             prop.owner?.name || prop.owner?.firstName + ' ' + prop.owner?.lastName || 'Propietario',
           ownerEmail: prop.owner?.email || '',
+          status: prop.status,
+          brokerId: prop.brokerId,
+          brokerName:
+            prop.broker?.name || prop.broker?.firstName + ' ' + prop.broker?.lastName || 'Broker',
+          brokerEmail: prop.broker?.email || '',
         })) || [];
 
       logger.info('Propiedades transformadas', {
         totalProperties: transformedProperties.length,
         propertiesWithOwner: transformedProperties.filter(p => p.ownerId).length,
         propertiesWithOwnerEmail: transformedProperties.filter(p => p.ownerEmail).length,
+        propertiesWithBroker: transformedProperties.filter(p => p.brokerId).length,
+        propertiesWithBrokerEmail: transformedProperties.filter(p => p.brokerEmail).length,
+        managedProperties: transformedProperties.filter(p => p.status === 'MANAGED').length,
+        managedPropertiesWithBroker: transformedProperties.filter(
+          p => p.status === 'MANAGED' && p.brokerId
+        ).length,
       });
 
       setProperties(transformedProperties);
@@ -409,11 +420,20 @@ export default function BúsquedaAvanzadaPage() {
 
         // Determinar si contactar al propietario o al broker
         const isManagedProperty = property.status === 'MANAGED' && property.brokerId;
-        logger.info('Evaluando tipo de contacto', {
+        logger.info('🔍 [CONTACT] Evaluando tipo de contacto para propiedad', {
           propertyId: property.id,
+          propertyTitle: property.title,
+          fullProperty: property, // Ver todos los campos disponibles
           status: property.status,
-          hasBrokerId: !!property.brokerId,
+          brokerId: property.brokerId,
+          brokerName: property.brokerName,
+          brokerEmail: property.brokerEmail,
+          ownerId: property.ownerId,
+          ownerName: property.ownerName,
+          ownerEmail: property.ownerEmail,
           isManagedProperty,
+          hasOwnerInfo: !!(property.ownerId || property.ownerName),
+          hasBrokerInfo: !!(property.brokerId || property.brokerName),
         });
 
         // Si es una propiedad managed y tenemos info del broker, contactar directamente al broker

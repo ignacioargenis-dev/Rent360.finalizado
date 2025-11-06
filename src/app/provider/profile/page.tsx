@@ -291,6 +291,13 @@ export default function ProviderProfilePage() {
       console.log('✅ [PROFILE] Transformed profile:', realProfile);
       console.log('✅ [PROFILE] Services section:', realProfile.services);
 
+      console.log('🎯 [PROFILE] Perfil listo para renderizar:', {
+        hasServices: !!realProfile.services,
+        servicesKeys: realProfile.services ? Object.keys(realProfile.services) : [],
+        categoriesCount: realProfile.services?.categories?.length || 0,
+        specialtiesCount: realProfile.services?.specialties?.length || 0,
+      });
+
       setProfile(realProfile);
       setSuccessMessage('Perfil cargado exitosamente');
     } catch (error) {
