@@ -393,14 +393,41 @@ export default function ProviderProfilePage() {
     setErrorMessage('');
 
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Guardar perfil real en la API
+      const saveResponse = await fetch('/api/provider/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          basicInfo: profile.basicInfo,
+          business: profile.business,
+          address: profile.address,
+          services: profile.services,
+          operational: profile.operational,
+        }),
+      });
 
-      logger.info('Perfil del proveedor actualizado', {
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json();
+        throw new Error(errorData.error || 'Error al guardar el perfil');
+      }
+
+      const result = await saveResponse.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Error desconocido al guardar');
+      }
+
+      logger.info('Perfil del proveedor actualizado exitosamente', {
         companyName: profile.basicInfo.companyName,
       });
+
       setSuccessMessage('Perfil actualizado exitosamente');
       setIsEditing(false);
+
+      // Recargar el perfil para asegurar que los datos estén actualizados
+      await loadProfile();
     } catch (error) {
       logger.error('Error al guardar perfil', { error });
       setErrorMessage('Error al guardar el perfil. Por favor intente nuevamente.');

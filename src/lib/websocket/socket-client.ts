@@ -433,10 +433,12 @@ export function useWebSocket() {
     const handleDisconnect = () => setIsConnected(false);
 
     const handleNotification = (data: any) => {
+      console.log('📨 [WEBSOCKET CLIENT] Notification received:', data);
       setNotifications(prev => [data, ...prev]);
 
       // Incrementar contador de mensajes no leídos si es una notificación de mensaje nuevo
       if (data.type === 'NEW_MESSAGE' || data.type === 'new-message') {
+        console.log('📨 [WEBSOCKET CLIENT] Incrementing unread messages count');
         setUnreadMessagesCount(prev => prev + 1);
       }
     };

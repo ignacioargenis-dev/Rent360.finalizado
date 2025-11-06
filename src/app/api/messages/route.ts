@@ -414,6 +414,8 @@ export async function POST(request: NextRequest) {
         notificationData.contractId = contractId;
       }
 
+      console.log('📨 [MESSAGES API] Enviando notificación a:', notificationData.recipientId);
+
       await NotificationService.create({
         userId: notificationData.recipientId,
         type: NotificationType.NEW_MESSAGE,
@@ -431,6 +433,8 @@ export async function POST(request: NextRequest) {
           contractId: notificationData.contractId,
         },
       });
+
+      console.log('✅ [MESSAGES API] Notificación enviada exitosamente');
     } catch (notificationError) {
       // No fallar la respuesta si hay error en notificaciones
       logger.warn('Error sending message notification', { error: notificationError });

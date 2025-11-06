@@ -8,6 +8,155 @@ import { handleApiError } from '@/lib/api-error-handler';
  * GET /api/provider/profile
  * Obtiene el perfil completo del proveedor
  */
+export async function PUT(request: NextRequest) {
+  try {
+    // Validar token
+    const decoded = await getUserFromRequest(request);
+    if (!decoded) {
+      console.error('🔍 [API PUT] Token inválido o no presente');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No autorizado',
+          message: 'Token de autenticación inválido o no presente',
+        },
+        { status: 401 }
+      );
+    }
+
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+    };
+
+    console.log('✅ [API PUT] Usuario autenticado:', user.email, 'ID:', user.id);
+
+    // Obtener datos del perfil a actualizar
+    const profileData = await request.json();
+    console.log('📥 [API PUT] Datos recibidos:', profileData);
+
+    // Verificar que el usuario sea un provider
+    if (!isAnyProvider(user.role)) {
+      return NextResponse.json(
+        { success: false, error: 'Acceso denegado. Solo para proveedores.' },
+        { status: 403 }
+      );
+    }
+
+    // Actualizar datos según el tipo de provider
+    if (isServiceProvider(user.role)) {
+      // Buscar y actualizar ServiceProvider
+      const sp = await db.serviceProvider.findFirst({
+        where: { userId: user.id },
+      });
+
+      if (!sp) {
+        return NextResponse.json(
+          { success: false, error: 'Proveedor de servicios no encontrado.' },
+          { status: 404 }
+        );
+      }
+
+      // Convertir arrays a JSON strings para guardar en BD
+      const serviceTypes = Array.isArray(profileData.services?.categories)
+        ? JSON.stringify(profileData.services.categories)
+        : '[]';
+
+      const availability =
+        typeof profileData.operational?.availability === 'object'
+          ? JSON.stringify(profileData.operational.availability)
+          : JSON.stringify({ weekdays: true, weekends: false, emergencies: false });
+
+      await db.serviceProvider.update({
+        where: { id: sp.id },
+        data: {
+          businessName: profileData.basicInfo?.companyName || sp.businessName,
+          address: profileData.address?.street || sp.address,
+          city: profileData.address?.city || sp.city,
+          region: profileData.address?.region || sp.region,
+          description: profileData.basicInfo?.description || sp.description,
+          serviceTypes,
+          basePrice: profileData.services?.basePrice || sp.basePrice,
+          responseTime: profileData.operational?.responseTime || sp.responseTime,
+          availability,
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log('✅ [API PUT] ServiceProvider actualizado');
+    } else if (isMaintenanceProvider(user.role)) {
+      // Buscar y actualizar MaintenanceProvider
+      const mp = await db.maintenanceProvider.findFirst({
+        where: { userId: user.id },
+      });
+
+      if (!mp) {
+        return NextResponse.json(
+          { success: false, error: 'Proveedor de mantenimiento no encontrado.' },
+          { status: 404 }
+        );
+      }
+
+      // Convertir arrays a JSON strings para guardar en BD
+      const specialties = Array.isArray(profileData.services?.specialties)
+        ? JSON.stringify(profileData.services.specialties)
+        : '[]';
+
+      const availability =
+        typeof profileData.operational?.availability === 'object'
+          ? JSON.stringify(profileData.operational.availability)
+          : JSON.stringify({ weekdays: true, weekends: false, emergencies: true });
+
+      await db.maintenanceProvider.update({
+        where: { id: mp.id },
+        data: {
+          businessName: profileData.basicInfo?.companyName || mp.businessName,
+          address: profileData.address?.street || mp.address,
+          city: profileData.address?.city || mp.city,
+          region: profileData.address?.region || mp.region,
+          description: profileData.basicInfo?.description || mp.description,
+          specialties,
+          hourlyRate: profileData.services?.hourlyRate || mp.hourlyRate,
+          responseTime: profileData.operational?.responseTime || mp.responseTime,
+          availability,
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log('✅ [API PUT] MaintenanceProvider actualizado');
+    } else {
+      return NextResponse.json(
+        { success: false, error: 'Tipo de proveedor no válido.' },
+        { status: 400 }
+      );
+    }
+
+    logger.info('Perfil de proveedor actualizado', {
+      providerId: user.id,
+      role: user.role,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Perfil actualizado exitosamente',
+    });
+  } catch (error) {
+    console.error('❌ [API PUT] Error actualizando perfil:', error);
+    logger.error('Error actualizando perfil del proveedor:', { error });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Error interno del servidor',
+        message: error instanceof Error ? error.message : 'Error desconocido',
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);

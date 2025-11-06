@@ -76,6 +76,12 @@ export class NotificationService {
       });
 
       // Enviar notificación en tiempo real vía WebSocket
+      console.log('🔌 [NOTIFICATION SERVICE] Enviando WebSocket notification:', {
+        userId: params.userId,
+        type: params.type,
+        notificationId: notification.id,
+      });
+
       try {
         sendNotification(params.userId, params.type, {
           id: notification.id,
@@ -85,7 +91,15 @@ export class NotificationService {
           priority: params.priority,
           timestamp: notification.createdAt,
         });
+
+        console.log('✅ [NOTIFICATION SERVICE] WebSocket notification sent successfully');
       } catch (wsError) {
+        console.error('❌ [NOTIFICATION SERVICE] Failed to send WebSocket notification:', {
+          error: wsError instanceof Error ? wsError.message : String(wsError),
+          userId: params.userId,
+          type: params.type,
+          notificationId: notification.id,
+        });
         logger.warn('Failed to send WebSocket notification', {
           error: wsError instanceof Error ? wsError.message : String(wsError),
           userId: params.userId,
