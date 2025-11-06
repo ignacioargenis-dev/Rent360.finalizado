@@ -4,7 +4,15 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { websocketServer } from './src/lib/websocket/socket-server';
 
 const dev = process.env.NODE_ENV !== 'production';
+
+// DEBUGGING: Verificar variables de entorno
+console.log('🔍 [SERVER] Environment variables:');
+console.log('🔍 [SERVER] NODE_ENV:', process.env.NODE_ENV);
+console.log('🔍 [SERVER] PORT:', process.env.PORT);
+console.log('🔍 [SERVER] HOST:', process.env.HOST);
+
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+console.log('🔍 [SERVER] Final port value:', port);
 
 const app = next({ dev });
 const handle = app.getRequestHandler();
