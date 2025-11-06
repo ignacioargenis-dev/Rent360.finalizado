@@ -42,8 +42,8 @@ export default function ConnectionStatus({
     websocketClient.disconnect();
 
     // Intentar reconectar después de un breve delay
-    setTimeout(() => {
-      websocketClient.connect();
+    setTimeout(async () => {
+      await websocketClient.connect();
       setIsReconnecting(false);
     }, 1000);
   };

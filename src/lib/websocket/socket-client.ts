@@ -62,7 +62,7 @@ class WebSocketClient {
     );
   }
 
-  connect(token?: string): void {
+  async connect(token?: string): Promise<void> {
     // Si ya está conectado, no hacer nada
     if (this._isConnected) {
       return;
@@ -422,7 +422,10 @@ export function useWebSocket() {
 
   useEffect(() => {
     // Conectar al WebSocket
-    websocketClient.connect();
+    const connectWebSocket = async () => {
+      await websocketClient.connect();
+    };
+    connectWebSocket();
 
     // Configurar event listeners
     const handleConnect = () => setIsConnected(true);
@@ -463,6 +466,6 @@ export function useWebSocket() {
 }
 
 // Funciones de conveniencia
-export const connectWebSocket = (token?: string) => websocketClient.connect(token);
+export const connectWebSocket = async (token?: string) => await websocketClient.connect(token);
 export const disconnectWebSocket = () => websocketClient.disconnect();
 export const isWebSocketConnected = () => websocketClient.isConnected;

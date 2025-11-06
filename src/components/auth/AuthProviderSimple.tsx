@@ -60,7 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               hasToken:
                 !!document.cookie.includes('auth-token') || !!document.cookie.includes('token'),
             });
-            websocketClient.connect();
+            // Conectar WebSocket de forma async
+            (async () => {
+              await websocketClient.connect();
+            })();
           }
 
           // Guardar en localStorage de forma segura
