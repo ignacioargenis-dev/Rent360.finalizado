@@ -44,10 +44,48 @@ export async function GET(request: NextRequest) {
 
     if (isServiceProvider(user.role) && fullUser.serviceProvider) {
       const sp = fullUser.serviceProvider;
+      console.log('🔍 [API] ServiceProvider data:', {
+        serviceTypes: sp.serviceTypes,
+        serviceType: sp.serviceType,
+        serviceTypesType: typeof sp.serviceTypes,
+        hasServiceTypes: !!sp.serviceTypes,
+      });
+
       let serviceTypes: string[] = [];
       try {
-        serviceTypes = JSON.parse(sp.serviceTypes || '[]');
-      } catch {
+        if (sp.serviceTypes) {
+          const parsed = JSON.parse(sp.serviceTypes);
+          console.log(
+            '🔍 [API] Parsed serviceTypes:',
+            parsed,
+            'Type:',
+            typeof parsed,
+            'IsArray:',
+            Array.isArray(parsed)
+          );
+
+          if (Array.isArray(parsed)) {
+            // Verificar si contiene objetos o strings
+            if (parsed.length > 0) {
+              console.log('🔍 [API] First serviceType item:', parsed[0], 'Type:', typeof parsed[0]);
+              if (typeof parsed[0] === 'object') {
+                console.error('❌ [API] serviceTypes contains objects instead of strings!');
+                serviceTypes = []; // Fallback vacío
+              } else {
+                serviceTypes = parsed;
+              }
+            } else {
+              serviceTypes = parsed;
+            }
+          } else {
+            console.warn('⚠️ [API] serviceTypes parsed but not an array');
+            serviceTypes = [];
+          }
+        } else if (sp.serviceType) {
+          serviceTypes = [sp.serviceType].filter(Boolean);
+        }
+      } catch (error) {
+        console.error('❌ [API] Error parsing serviceTypes:', error);
         serviceTypes = [sp.serviceType].filter(Boolean);
       }
 
@@ -93,10 +131,48 @@ export async function GET(request: NextRequest) {
       };
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       const mp = fullUser.maintenanceProvider;
+      console.log('🔍 [API] MaintenanceProvider data:', {
+        specialties: mp.specialties,
+        specialty: mp.specialty,
+        specialtiesType: typeof mp.specialties,
+        hasSpecialties: !!mp.specialties,
+      });
+
       let specialties: string[] = [];
       try {
-        specialties = JSON.parse(mp.specialties || '[]');
-      } catch {
+        if (mp.specialties) {
+          const parsed = JSON.parse(mp.specialties);
+          console.log(
+            '🔍 [API] Parsed specialties:',
+            parsed,
+            'Type:',
+            typeof parsed,
+            'IsArray:',
+            Array.isArray(parsed)
+          );
+
+          if (Array.isArray(parsed)) {
+            // Verificar si contiene objetos o strings
+            if (parsed.length > 0) {
+              console.log('🔍 [API] First specialty item:', parsed[0], 'Type:', typeof parsed[0]);
+              if (typeof parsed[0] === 'object') {
+                console.error('❌ [API] specialties contains objects instead of strings!');
+                specialties = []; // Fallback vacío
+              } else {
+                specialties = parsed;
+              }
+            } else {
+              specialties = parsed;
+            }
+          } else {
+            console.warn('⚠️ [API] specialties parsed but not an array');
+            specialties = [];
+          }
+        } else if (mp.specialty) {
+          specialties = [mp.specialty].filter(Boolean);
+        }
+      } catch (error) {
+        console.error('❌ [API] Error parsing specialties:', error);
         specialties = [mp.specialty].filter(Boolean);
       }
 
@@ -145,6 +221,17 @@ export async function GET(request: NextRequest) {
     if (!profile) {
       return NextResponse.json({ error: 'Perfil no encontrado.' }, { status: 404 });
     }
+
+    console.log('🎯 [API] Profile to be returned:', {
+      hasProfile: !!profile,
+      profileKeys: profile ? Object.keys(profile) : [],
+      serviceTypes: profile?.serviceTypes,
+      specialties: profile?.specialties,
+      serviceTypesType: typeof profile?.serviceTypes,
+      specialtiesType: typeof profile?.specialties,
+      isServiceTypesArray: Array.isArray(profile?.serviceTypes),
+      isSpecialtiesArray: Array.isArray(profile?.specialties),
+    });
 
     logger.info('Perfil de proveedor obtenido', {
       providerId: user.id,
