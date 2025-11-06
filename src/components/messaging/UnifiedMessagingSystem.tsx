@@ -37,6 +37,7 @@ import {
   User,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
+import { websocketClient } from '@/lib/websocket/socket-client';
 
 interface Message {
   id: string;
@@ -210,12 +211,10 @@ export default function UnifiedMessagingSystem({
 
     // Registrar listener de WebSocket
     websocketClient.on('new-message', handleNewMessage);
-    websocketClient.on('message', handleNewMessage);
 
     return () => {
       // Limpiar listeners
       websocketClient.off('new-message', handleNewMessage);
-      websocketClient.off('message', handleNewMessage);
     };
   }, [user?.id]);
 
