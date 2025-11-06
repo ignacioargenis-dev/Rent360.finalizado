@@ -13,6 +13,12 @@ console.log('🔍 [SERVER] HOST:', process.env.HOST);
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 console.log('🔍 [SERVER] Final port value:', port);
+console.log('🔍 [SERVER] PORT type:', typeof process.env.PORT);
+console.log('🔍 [SERVER] PORT truthy check:', !!process.env.PORT);
+console.log(
+  '🔍 [SERVER] All env vars starting with PORT:',
+  Object.keys(process.env).filter(key => key.includes('PORT'))
+);
 
 const app = next({ dev });
 const handle = app.getRequestHandler();
