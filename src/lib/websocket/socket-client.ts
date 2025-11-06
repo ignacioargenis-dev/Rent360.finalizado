@@ -67,6 +67,8 @@ class WebSocketClient {
       hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
       hasPusherCluster: !!process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
       shouldUsePusher: this.shouldUsePusher(),
+      currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server',
+      wsUrl: process.env.NEXT_PUBLIC_WS_URL,
     });
 
     if (this.shouldUsePusher()) {
@@ -135,12 +137,19 @@ class WebSocketClient {
     }
 
     const cookies = document.cookie.split(';');
+    const cookieNames = cookies.map(c => c.trim().split('=')[0]);
+
+    console.log('🍪 [WS AUTH] Available cookies:', cookieNames);
+
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
       if (name === 'auth-token' || name === 'next-auth.session-token' || name === 'token') {
+        console.log('✅ [WS AUTH] Found token cookie:', name, 'Length:', value?.length || 0);
         return value ? decodeURIComponent(value) : null;
       }
     }
+
+    console.log('❌ [WS AUTH] No token cookie found');
     return null;
   }
 
