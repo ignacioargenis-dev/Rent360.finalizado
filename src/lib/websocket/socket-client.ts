@@ -49,14 +49,12 @@ class WebSocketClient {
 
   // Determinar si usar Pusher o Socket.io
   private shouldUsePusher(): boolean {
-    // For now, always use Socket.io. To enable Pusher:
-    // 1. Install: npm install pusher pusher-js
-    // 2. Load pusher-js globally (e.g., via CDN)
-    // 3. Set NEXT_PUBLIC_PUSHER_KEY and NEXT_PUBLIC_PUSHER_CLUSTER env vars
-    // 4. Uncomment and modify this check:
-    // return !!(process.env.NEXT_PUBLIC_PUSHER_KEY && process.env.NEXT_PUBLIC_PUSHER_CLUSTER && (globalThis as any).Pusher);
-
-    return false; // Always use Socket.io for now
+    // Check if Pusher is available and configured
+    return !!(
+      process.env.NEXT_PUBLIC_PUSHER_KEY &&
+      process.env.NEXT_PUBLIC_PUSHER_CLUSTER &&
+      (globalThis as any).Pusher
+    );
   }
 
   connect(token?: string): void {
