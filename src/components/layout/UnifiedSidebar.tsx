@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
+import { useWebSocket } from '@/lib/websocket/socket-client';
 // import { useSidebarStats } from '@/hooks/useSidebarStats';
 import {
   Home,
@@ -642,7 +643,6 @@ interface UnifiedSidebarProps {
   user?: UserType | null;
   showNotifications?: boolean;
   notificationCount?: number;
-  unreadMessagesCount?: number;
 }
 
 export default function UnifiedSidebar({
@@ -650,12 +650,12 @@ export default function UnifiedSidebar({
   user,
   showNotifications = true,
   notificationCount = 0,
-  unreadMessagesCount = 0,
 }: UnifiedSidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<{ [key: string]: boolean }>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { unreadMessagesCount: wsUnreadCount } = useWebSocket();
 
   // Generar menú estático sin estadísticas dinámicas
   const menuItems = getMenuItems();
@@ -757,8 +757,8 @@ export default function UnifiedSidebar({
     const isActive = isActiveRoute(item.url);
 
     // Agregar badge dinámico para Mensajes
-    const showUnreadBadge = item.title === 'Mensajes' && unreadMessagesCount > 0;
-    const badgeText = showUnreadBadge ? String(unreadMessagesCount) : item.badge;
+    const showUnreadBadge = item.title === 'Mensajes' && wsUnreadCount > 0;
+    const badgeText = showUnreadBadge ? String(wsUnreadCount) : item.badge;
 
     return (
       <div key={item.title}>

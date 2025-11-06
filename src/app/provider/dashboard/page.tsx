@@ -352,7 +352,6 @@ export default function ProviderDashboard() {
       user={user}
       title="Dashboard Proveedor"
       subtitle="Gestiona tus servicios y clientes"
-      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="space-y-6">
         {/* Success Message */}

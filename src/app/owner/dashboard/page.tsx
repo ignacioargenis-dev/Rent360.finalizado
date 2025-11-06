@@ -83,7 +83,6 @@ export default function OwnerDashboard() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -447,7 +446,6 @@ export default function OwnerDashboard() {
         user={user}
         title="Panel de Control de Propietario"
         subtitle="Gestiona tus propiedades e ingresos"
-        unreadMessagesCount={unreadMessagesCount}
       >
         <div className="bg-gray-50 flex items-center justify-center min-h-[400px]">
           <div className="text-center max-w-md">

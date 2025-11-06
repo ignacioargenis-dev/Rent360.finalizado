@@ -123,7 +123,6 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   const [user, setUser] = useState<User | null>(null);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const router = useRouter();
 
@@ -355,7 +354,6 @@ export default function AdminDashboard() {
       title="Panel de Administración"
       subtitle="Gestiona todo el sistema Rent360"
       notificationCount={stats.pendingTickets}
-      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Connection Status & Refresh */}

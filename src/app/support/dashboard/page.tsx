@@ -507,7 +507,6 @@ export default function SupportDashboard() {
       user={user}
       title="Panel de Control de Soporte"
       subtitle="Gestiona tickets y métricas de soporte"
-      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Success Message */}

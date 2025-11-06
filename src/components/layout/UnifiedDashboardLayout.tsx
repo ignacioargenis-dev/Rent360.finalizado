@@ -21,7 +21,6 @@ export interface UnifiedDashboardLayoutProps {
   subtitle?: string;
   showNotifications?: boolean;
   notificationCount?: number;
-  unreadMessagesCount?: number;
 }
 
 export default function UnifiedDashboardLayout({
@@ -31,7 +30,6 @@ export default function UnifiedDashboardLayout({
   subtitle,
   showNotifications = true,
   notificationCount = 0,
-  unreadMessagesCount = 0,
 }: UnifiedDashboardLayoutProps) {
   // Usar AuthProvider como fuente única de verdad
   const { user: authUser, loading } = useAuth();

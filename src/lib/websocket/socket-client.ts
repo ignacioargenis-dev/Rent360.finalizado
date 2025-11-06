@@ -419,6 +419,7 @@ export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(websocketClient.isConnected);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   useEffect(() => {
     // Conectar al WebSocket
@@ -433,6 +434,11 @@ export function useWebSocket() {
 
     const handleNotification = (data: any) => {
       setNotifications(prev => [data, ...prev]);
+
+      // Incrementar contador de mensajes no leídos si es una notificación de mensaje nuevo
+      if (data.type === 'NEW_MESSAGE' || data.type === 'new-message') {
+        setUnreadMessagesCount(prev => prev + 1);
+      }
     };
 
     const handleNewMessage = (data: any) => {
@@ -457,6 +463,7 @@ export function useWebSocket() {
     isConnected,
     notifications,
     messages,
+    unreadMessagesCount,
     sendMessage: websocketClient.sendMessage.bind(websocketClient),
     joinRoom: websocketClient.joinRoom.bind(websocketClient),
     leaveRoom: websocketClient.leaveRoom.bind(websocketClient),

@@ -356,7 +356,6 @@ export default function TenantDashboardPage() {
       user={user}
       title="Panel de Control de Inquilino"
       subtitle="Gestiona tus contratos y pagos de arriendo"
-      unreadMessagesCount={stats.unreadMessages}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Header with actions */}

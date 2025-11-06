@@ -40,7 +40,7 @@ export default function RealTimeNotifications() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { isConnected, notifications: wsNotifications } = useWebSocket();
+  const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
   const { success } = useToast();
 
   // Cargar notificaciones desde localStorage al iniciar
@@ -207,12 +207,12 @@ export default function RealTimeNotifications() {
         onClick={() => setShowPanel(!showPanel)}
       >
         <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
+        {unreadMessagesCount > 0 && (
           <Badge
             variant="destructive"
             className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
           >
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
           </Badge>
         )}
       </Button>
@@ -236,7 +236,7 @@ export default function RealTimeNotifications() {
                 Notificaciones
               </CardTitle>
               <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
+                {unreadMessagesCount > 0 && (
                   <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs">
                     Marcar todas como leídas
                   </Button>
@@ -254,9 +254,9 @@ export default function RealTimeNotifications() {
               <span className="text-sm text-gray-600">
                 {isConnected ? 'Conectado' : 'Desconectado'}
               </span>
-              {notifications.length > 0 && (
+              {unreadMessagesCount > 0 && (
                 <Badge variant="outline" className="ml-auto">
-                  {notifications.length}
+                  {unreadMessagesCount}
                 </Badge>
               )}
             </div>

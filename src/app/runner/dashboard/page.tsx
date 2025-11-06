@@ -352,7 +352,6 @@ export default function RunnerDashboard() {
       user={user}
       title="Panel de Control de Runner"
       subtitle="Gestiona tus visitas y ganancias"
-      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}

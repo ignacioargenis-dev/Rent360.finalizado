@@ -138,7 +138,7 @@ export default function BrokerDashboardPage() {
         // ✅ CORREGIDO: Cargar datos reales del dashboard del corredor SIEMPRE
         // No verificar si es usuario nuevo - siempre mostrar los datos reales
         console.log('🔍 [DASHBOARD] Iniciando carga de datos del dashboard...');
-        
+
         const response = await fetch('/api/broker/dashboard', {
           method: 'GET',
           credentials: 'include', // ✅ CRÍTICO: Incluir cookies para autenticación
@@ -147,13 +147,13 @@ export default function BrokerDashboardPage() {
             'Cache-Control': 'no-cache',
           },
         });
-        
-        console.log('📡 [DASHBOARD] Respuesta recibida:', { 
-          ok: response.ok, 
+
+        console.log('📡 [DASHBOARD] Respuesta recibida:', {
+          ok: response.ok,
           status: response.status,
-          statusText: response.statusText 
+          statusText: response.statusText,
         });
-        
+
         if (response.ok) {
           const result = await response.json();
           console.log('📊 [DASHBOARD] Datos recibidos:', {
@@ -163,8 +163,12 @@ export default function BrokerDashboardPage() {
             propertiesCount: result.data?.recentProperties?.length,
             contractsCount: result.data?.recentContracts?.length,
           });
-          
-          logger.info('Dashboard response received', { result, hasData: !!result.data, hasStats: !!result.data?.stats });
+
+          logger.info('Dashboard response received', {
+            result,
+            hasData: !!result.data,
+            hasStats: !!result.data?.stats,
+          });
           const data = result.data;
 
           // Transformar datos para el formato esperado por el componente
@@ -223,7 +227,7 @@ export default function BrokerDashboardPage() {
             averageCommission: data.stats?.averageCommission ?? 0,
             portfolioValue: data.stats?.portfolioValue ?? 0,
           };
-          
+
           console.log('✅ [DASHBOARD] Estableciendo estadísticas:', newStats);
           logger.info('Setting dashboard stats', { stats: data.stats });
           setStats(newStats);
@@ -248,7 +252,7 @@ export default function BrokerDashboardPage() {
           console.error('❌ [DASHBOARD] API dashboard falló:', {
             status: response.status,
             statusText: response.statusText,
-            error: errorText
+            error: errorText,
           });
           logger.warn('API dashboard failed, showing empty data');
           setProperties([]);
@@ -368,7 +372,6 @@ export default function BrokerDashboardPage() {
     <UnifiedDashboardLayout
       title="Panel del Corredor"
       subtitle="Gestiona tus propiedades, clientes y comisiones"
-      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Welcome Section */}
