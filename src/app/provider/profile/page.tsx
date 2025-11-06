@@ -682,11 +682,15 @@ export default function ProviderProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {profile.services.categories.map(category => (
-                    <Badge key={category} variant="outline" className="text-sm">
-                      {category}
-                    </Badge>
-                  ))}
+                  {Array.isArray(profile.services?.categories) ? (
+                    profile.services.categories.map(category => (
+                      <Badge key={category} variant="outline" className="text-sm">
+                        {category}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No hay categorías definidas</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1102,11 +1106,15 @@ export default function ProviderProfilePage() {
                   <div>
                     <Label>Regiones Atendidas</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {profile.operational.serviceAreas.map(region => (
-                        <Badge key={region} variant="outline">
-                          {region}
-                        </Badge>
-                      ))}
+                      {Array.isArray(profile.operational?.serviceAreas) ? (
+                        profile.operational.serviceAreas.map(region => (
+                          <Badge key={region} variant="outline">
+                            {region}
+                          </Badge>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No hay áreas de servicio definidas</p>
+                      )}
                     </div>
                   </div>
 
