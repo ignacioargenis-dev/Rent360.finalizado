@@ -116,11 +116,65 @@ export default function ServiceRequestDetailPage() {
 
   const loadRequest = async () => {
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setRequest(mockRequest);
+      const response = await fetch(`/api/provider/requests/${requestId}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener solicitud de servicio');
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.request) {
+        // Transformar datos de la API al formato esperado por el componente
+        const transformedRequest = {
+          id: data.request.id,
+          propertyAddress: data.request.propertyAddress || 'Dirección no especificada',
+          tenantName: data.request.clientName,
+          tenantEmail: data.request.clientEmail,
+          tenantPhone: data.request.clientPhone,
+          serviceType: data.request.serviceType,
+          priority: data.request.urgency || 'medium',
+          title: data.request.title,
+          description: data.request.description,
+          preferredDate: data.request.preferredDate || '',
+          preferredTimeSlot: 'flexible',
+          estimatedDuration: data.request.estimatedPrice ? '2-4 horas' : 'Por definir',
+          budgetRange: {
+            min: data.request.estimatedPrice || 0,
+            max: data.request.estimatedPrice ? data.request.estimatedPrice * 1.5 : 0,
+          },
+          specialRequirements: data.request.notes ? [data.request.notes] : [],
+          attachments: data.request.images || [],
+          status: data.request.status,
+          createdAt: data.request.createdAt,
+          updatedAt: data.request.createdAt,
+          contactInfo: {
+            name: data.request.clientName,
+            email: data.request.clientEmail,
+            phone: data.request.clientPhone,
+          },
+          propertyInfo: {
+            address: data.request.propertyAddress || 'Dirección no especificada',
+            type: 'Residencial',
+            size: 'N/A',
+          },
+          serviceDetails: {
+            category: data.request.serviceType,
+            subcategory: data.request.serviceType,
+            description: data.request.description,
+            urgency: data.request.urgency || 'medium',
+          },
+        };
+
+        setRequest(transformedRequest);
+      } else {
+        throw new Error('Solicitud no encontrada');
+      }
     } catch (error) {
       logger.error('Error al cargar solicitud de servicio', { error, requestId });
+      setErrorMessage('Error al cargar la solicitud. Por favor, inténtalo nuevamente.');
     } finally {
       setIsLoading(false);
     }

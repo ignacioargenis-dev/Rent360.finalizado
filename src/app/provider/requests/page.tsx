@@ -41,6 +41,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -48,7 +50,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 
 export default function ProviderRequestsPage() {
   const router = useRouter();
@@ -67,6 +68,19 @@ export default function ProviderRequestsPage() {
   });
 
   const [requests, setRequests] = useState<any[]>([]);
+
+  // Estados para el modal de cotización
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [quoteData, setQuoteData] = useState({
+    price: '',
+    estimatedTime: '',
+    availabilityDate: '',
+    notes: '',
+    materials: '',
+    laborCost: '',
+    materialsCost: '',
+  });
 
   useEffect(() => {
     loadPageData();
@@ -173,25 +187,74 @@ export default function ProviderRequestsPage() {
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const handleSendQuote = (requestId: string) => {
-    const request = requests.find(r => r.id === requestId);
-    if (request) {
-      setRequests(prev =>
-        prev.map(r =>
-          r.id === requestId
-            ? { ...r, status: 'quoted', quotedPrice: request.estimatedPrice * 1.2 }
-            : r
-        )
-      );
-      setSuccessMessage(`Cotización enviada por ${formatCurrency(request.estimatedPrice * 1.2)}`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+  const handleSendQuote = (request: any) => {
+    setSelectedRequest(request);
+    setQuoteData({
+      price: request.estimatedPrice ? (request.estimatedPrice * 1.2).toString() : '',
+      estimatedTime: '2-4 horas',
+      availabilityDate:
+        new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '',
+      notes: '',
+      materials: '',
+      laborCost: request.estimatedPrice ? (request.estimatedPrice * 0.7).toString() : '',
+      materialsCost: request.estimatedPrice ? (request.estimatedPrice * 0.5).toString() : '',
+    });
+    setShowQuoteModal(true);
+  };
+
+  const handleSubmitQuote = async () => {
+    if (!selectedRequest) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/services/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestId: selectedRequest.id,
+          price: parseFloat(quoteData.price),
+          estimatedTime: quoteData.estimatedTime,
+          availabilityDate: quoteData.availabilityDate,
+          notes: quoteData.notes,
+          materials: quoteData.materials,
+          laborCost: parseFloat(quoteData.laborCost) || 0,
+          materialsCost: parseFloat(quoteData.materialsCost) || 0,
+        }),
+      });
+
+      if (response.ok) {
+        setSuccessMessage('Cotización enviada exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
+        setShowQuoteModal(false);
+        setSelectedRequest(null);
+        loadPageData(); // Recargar datos
+      } else {
+        setErrorMessage('Error al enviar cotización');
+        setTimeout(() => setErrorMessage(''), 5000);
+      }
+    } catch (error) {
+      logger.error('Error enviando cotización:', { error });
+      setErrorMessage('Error al enviar cotización. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
   const handleContactClient = (request: any) => {
-    const message = `Hola ${request.clientName}, me contacté por tu solicitud "${request.title}". ¿Podemos coordinar una visita?`;
-    const whatsappUrl = `https://wa.me/${request.clientPhone.replace(/\s+/g, '').replace('+', '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    // Crear conversación con el cliente usando el sistema de mensajería interno
+    const recipientData = {
+      id: request.requesterId || request.clientId,
+      name: request.clientName,
+      email: request.clientEmail,
+      type: 'client',
+      serviceRequestId: request.id,
+      serviceType: request.serviceType,
+    };
+
+    sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+    router.push('/provider/messages?new=true');
   };
 
   const handleExportRequests = () => {
@@ -710,6 +773,129 @@ export default function ProviderRequestsPage() {
               <Button onClick={handleConfirmExport}>
                 <Download className="w-4 h-4 mr-2" />
                 Exportar Trabajos
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Cotización */}
+        <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Enviar Cotización</DialogTitle>
+              <DialogDescription>
+                Crea una cotización detallada para la solicitud de {selectedRequest?.clientName}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="quote-price">Precio Total (CLP)</Label>
+                  <Input
+                    id="quote-price"
+                    type="number"
+                    value={quoteData.price}
+                    onChange={e => setQuoteData(prev => ({ ...prev, price: e.target.value }))}
+                    placeholder="Ej: 150000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="quote-time">Tiempo Estimado</Label>
+                  <Select
+                    value={quoteData.estimatedTime}
+                    onValueChange={value =>
+                      setQuoteData(prev => ({ ...prev, estimatedTime: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar tiempo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1-2 horas">1-2 horas</SelectItem>
+                      <SelectItem value="2-4 horas">2-4 horas</SelectItem>
+                      <SelectItem value="4-6 horas">4-6 horas</SelectItem>
+                      <SelectItem value="1 día">1 día</SelectItem>
+                      <SelectItem value="2-3 días">2-3 días</SelectItem>
+                      <SelectItem value="1 semana">1 semana</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="quote-labor">Costo de Mano de Obra</Label>
+                  <Input
+                    id="quote-labor"
+                    type="number"
+                    value={quoteData.laborCost}
+                    onChange={e => setQuoteData(prev => ({ ...prev, laborCost: e.target.value }))}
+                    placeholder="Ej: 100000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="quote-materials-cost">Costo de Materiales</Label>
+                  <Input
+                    id="quote-materials-cost"
+                    type="number"
+                    value={quoteData.materialsCost}
+                    onChange={e =>
+                      setQuoteData(prev => ({ ...prev, materialsCost: e.target.value }))
+                    }
+                    placeholder="Ej: 50000"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="quote-materials">Materiales Requeridos</Label>
+                <Textarea
+                  id="quote-materials"
+                  value={quoteData.materials}
+                  onChange={e => setQuoteData(prev => ({ ...prev, materials: e.target.value }))}
+                  placeholder="Describe los materiales necesarios para el trabajo..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quote-date">Fecha Disponible</Label>
+                <Input
+                  id="quote-date"
+                  type="date"
+                  value={quoteData.availabilityDate}
+                  onChange={e =>
+                    setQuoteData(prev => ({ ...prev, availabilityDate: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quote-notes">Notas Adicionales</Label>
+                <Textarea
+                  id="quote-notes"
+                  value={quoteData.notes}
+                  onChange={e => setQuoteData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Comentarios adicionales sobre la cotización..."
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowQuoteModal(false);
+                  setSelectedRequest(null);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmitQuote}>
+                <Send className="w-4 h-4 mr-2" />
+                Enviar Cotización
               </Button>
             </div>
           </DialogContent>

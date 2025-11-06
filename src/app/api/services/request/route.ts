@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { NotificationService, NotificationType } from '@/lib/notification-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -157,6 +158,44 @@ export async function POST(request: NextRequest) {
       serviceType,
       requestId: serviceRequest.id,
     });
+
+    // ✅ ENVIAR NOTIFICACIÓN AL PROVEEDOR
+    try {
+      // Obtener el usuario del proveedor para enviar la notificación
+      const providerUser = await db.user.findFirst({
+        where: {
+          serviceProvider: {
+            id: providerId,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (providerUser) {
+        await NotificationService.create({
+          userId: providerUser.id,
+          type: NotificationType.SERVICE_REQUEST_RECEIVED,
+          title: `Nueva solicitud de servicio: ${serviceType}`,
+          message: `${user.name || 'Un usuario'} ha solicitado tus servicios de ${serviceType}`,
+          link: `/provider/requests/${serviceRequest.id}`,
+          metadata: {
+            serviceRequestId: serviceRequest.id,
+            requesterId: user.id,
+            requesterName: user.name || 'Usuario',
+            serviceType,
+            description,
+          },
+        });
+
+        logger.info('✅ Notificación enviada al proveedor por nueva solicitud de servicio:', {
+          providerUserId: providerUser.id,
+          serviceRequestId: serviceRequest.id,
+        });
+      }
+    } catch (notificationError) {
+      logger.warn('Error enviando notificación de solicitud de servicio:', notificationError);
+      // No fallar la creación de la solicitud si falla la notificación
+    }
 
     return NextResponse.json({
       success: true,
