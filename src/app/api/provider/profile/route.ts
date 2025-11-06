@@ -1,36 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger-minimal';
+import { logger } from '@/lib/logger';
 import { handleApiError } from '@/lib/api-error-handler';
 
 /**
- * GET /api/provider/profile
- * Obtiene el perfil completo del proveedor
+ * PUT /api/provider/profile
+ * Actualiza el perfil del proveedor
  */
 export async function PUT(request: NextRequest) {
   try {
     // Validar token
-    const decoded = await getUserFromRequest(request);
-    if (!decoded) {
-      console.error('🔍 [API PUT] Token inválido o no presente');
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'No autorizado',
-          message: 'Token de autenticación inválido o no presente',
-        },
-        { status: 401 }
-      );
-    }
-
-    const user = {
-      id: decoded.id,
-      email: decoded.email,
-      role: decoded.role,
-      name: decoded.name,
-    };
-
+    const user = await requireAuth(request);
     console.log('✅ [API PUT] Usuario autenticado:', user.email, 'ID:', user.id);
 
     // Obtener datos del perfil a actualizar
@@ -157,6 +138,10 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+/**
+ * GET /api/provider/profile
+ * Obtiene el perfil completo del proveedor
+ */
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
@@ -393,299 +378,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error obteniendo perfil del proveedor:', { error });
-    const errorResponse = handleApiError(error);
-    return errorResponse;
-  }
-}
-
-/**
- * PUT /api/provider/profile
- * Actualiza el perfil del proveedor
- */
-export async function PUT(request: NextRequest) {
-  try {
-    const user = await requireAuth(request);
-
-    if (!isAnyProvider(user.role)) {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo para proveedores.' },
-        { status: 403 }
-      );
-    }
-
-    const body = await request.json();
-    const {
-      companyName,
-      contactName,
-      phone,
-      address,
-      city,
-      region,
-      description,
-      website,
-      taxId,
-      serviceTypes,
-      basePrice,
-      hourlyRate,
-      responseTime,
-      availability,
-    } = body;
-
-    // Obtener datos completos del usuario
-    const fullUser = await db.user.findUnique({
-      where: { id: user.id },
-      include: {
-        serviceProvider: true,
-        maintenanceProvider: true,
-      },
-    });
-
-    if (!fullUser) {
-      return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
-    }
-
-    // Actualizar datos del usuario
-    if (contactName || phone) {
-      await db.user.update({
-        where: { id: user.id },
-        data: {
-          ...(contactName && { name: contactName }),
-          ...(phone && { phone }),
-        },
-      });
-    }
-
-    // Actualizar ServiceProvider
-    if (isServiceProvider(user.role) && fullUser.serviceProvider) {
-      const updateData: any = {};
-
-      if (companyName) {
-        updateData.businessName = companyName;
-      }
-      if (taxId) {
-        updateData.rut = taxId;
-      }
-      if (address) {
-        updateData.address = address;
-      }
-      if (city) {
-        updateData.city = city;
-      }
-      if (region) {
-        updateData.region = region;
-      }
-      if (description) {
-        updateData.description = description;
-      }
-      if (basePrice !== undefined) {
-        updateData.basePrice = basePrice;
-      }
-      // ✅ Manejar servicios: puede venir como array de nombres o como array de objetos con IDs
-      if (serviceTypes && Array.isArray(serviceTypes)) {
-        // Si viene con objetos completos (services), usar esos
-        const services = (body as any).services;
-        if (
-          services &&
-          Array.isArray(services) &&
-          services.length > 0 &&
-          typeof services[0] === 'object'
-        ) {
-          // Preservar estructura completa con IDs únicos
-          updateData.serviceTypes = JSON.stringify(services);
-        } else {
-          // Si viene solo como array de nombres, obtener servicios actuales y actualizar
-          const currentServiceTypesJson = fullUser.serviceProvider.serviceTypes || '[]';
-          let currentServices: Array<any> = [];
-          try {
-            currentServices = JSON.parse(currentServiceTypesJson);
-          } catch {
-            // Si no es JSON válido, crear array desde serviceTypes
-            currentServices = serviceTypes.map((name: string, index: number) => ({
-              id: `svc_${user.id}_${Date.now()}_${index}`,
-              name,
-              active: true,
-              pricing: { type: 'fixed', amount: basePrice || 0, currency: 'CLP' },
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }));
-          }
-
-          // Actualizar servicios existentes o crear nuevos
-          const updatedServices = serviceTypes.map((name: string) => {
-            const existing = currentServices.find(
-              (s: any) => (typeof s === 'object' && s !== null && s.name === name) || s === name
-            );
-
-            if (existing) {
-              // Preservar ID y datos existentes
-              if (typeof existing === 'object' && existing !== null && existing.id) {
-                return {
-                  ...existing,
-                  name,
-                  updatedAt: new Date().toISOString(),
-                };
-              }
-              // Si es string, convertirlo a objeto
-              return {
-                id: `svc_${user.id}_${Date.now()}_${name.replace(/\s+/g, '_').toLowerCase()}`,
-                name,
-                active: true,
-                pricing: { type: 'fixed', amount: basePrice || 0, currency: 'CLP' },
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              };
-            }
-
-            // Crear nuevo servicio
-            return {
-              id: `svc_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-              name,
-              active: true,
-              pricing: { type: 'fixed', amount: basePrice || 0, currency: 'CLP' },
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-          });
-
-          updateData.serviceTypes = JSON.stringify(updatedServices);
-        }
-      }
-      if (availability) {
-        updateData.availability = JSON.stringify(availability);
-      }
-      if (responseTime) {
-        // Parsear responseTime (ej: "2-4 horas" -> 2)
-        const timeMatch = responseTime.match(/(\d+)/);
-        if (timeMatch) {
-          updateData.responseTime = parseFloat(timeMatch[1]);
-        }
-      }
-
-      await db.serviceProvider.update({
-        where: { id: fullUser.serviceProvider.id },
-        data: updateData,
-      });
-    } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
-      const updateData: any = {};
-
-      if (companyName) {
-        updateData.businessName = companyName;
-      }
-      if (taxId) {
-        updateData.rut = taxId;
-      }
-      if (address) {
-        updateData.address = address;
-      }
-      if (city) {
-        updateData.city = city;
-      }
-      if (region) {
-        updateData.region = region;
-      }
-      if (description) {
-        updateData.description = description;
-      }
-      if (hourlyRate !== undefined) {
-        updateData.hourlyRate = hourlyRate;
-      }
-      // ✅ Manejar especialidades: puede venir como array de nombres o como array de objetos con IDs
-      if (serviceTypes && Array.isArray(serviceTypes)) {
-        // Si viene con objetos completos (services), usar esos
-        const services = (body as any).services;
-        if (
-          services &&
-          Array.isArray(services) &&
-          services.length > 0 &&
-          typeof services[0] === 'object'
-        ) {
-          // Preservar estructura completa con IDs únicos
-          updateData.specialties = JSON.stringify(services);
-        } else {
-          // Si viene solo como array de nombres, obtener servicios actuales y actualizar
-          const currentSpecialtiesJson = fullUser.maintenanceProvider?.specialties || '[]';
-          let currentSpecialties: Array<any> = [];
-          try {
-            currentSpecialties = JSON.parse(currentSpecialtiesJson);
-          } catch {
-            // Si no es JSON válido, crear array desde serviceTypes
-            currentSpecialties = serviceTypes.map((name: string, index: number) => ({
-              id: `mnt_${fullUser.maintenanceProvider?.id || user.id}_${Date.now()}_${index}`,
-              name,
-              active: true,
-              pricing: { type: 'fixed', amount: hourlyRate || 0, currency: 'CLP' },
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }));
-          }
-
-          // Actualizar servicios existentes o crear nuevos
-          const updatedSpecialties = serviceTypes.map((name: string) => {
-            const existing = currentSpecialties.find(
-              (s: any) => (typeof s === 'object' && s !== null && s.name === name) || s === name
-            );
-
-            if (existing) {
-              // Preservar ID y datos existentes
-              if (typeof existing === 'object' && existing !== null && existing.id) {
-                return {
-                  ...existing,
-                  name,
-                  updatedAt: new Date().toISOString(),
-                };
-              }
-              // Si es string, convertirlo a objeto
-              return {
-                id: `mnt_${fullUser.maintenanceProvider?.id || user.id}_${Date.now()}_${name.replace(/\s+/g, '_').toLowerCase()}`,
-                name,
-                active: true,
-                pricing: { type: 'fixed', amount: hourlyRate || 0, currency: 'CLP' },
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              };
-            }
-
-            // Crear nuevo servicio
-            return {
-              id: `mnt_${fullUser.maintenanceProvider?.id || user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-              name,
-              active: true,
-              pricing: { type: 'fixed', amount: hourlyRate || 0, currency: 'CLP' },
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-          });
-
-          updateData.specialties = JSON.stringify(updatedSpecialties);
-        }
-      }
-      if (availability) {
-        updateData.availability = JSON.stringify(availability);
-      }
-      if (responseTime) {
-        const timeMatch = responseTime.match(/(\d+)/);
-        if (timeMatch) {
-          updateData.responseTime = parseFloat(timeMatch[1]);
-        }
-      }
-
-      await db.maintenanceProvider.update({
-        where: { id: fullUser.maintenanceProvider.id },
-        data: updateData,
-      });
-    }
-
-    logger.info('Perfil de proveedor actualizado', {
-      providerId: user.id,
-      role: user.role,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Perfil actualizado exitosamente',
-    });
-  } catch (error) {
-    logger.error('Error actualizando perfil del proveedor:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
