@@ -208,10 +208,20 @@ export default function ProviderProfilePage() {
         }
       }
 
-      // Parsear servicios
+      // Parsear servicios - asegurar que sean arrays de strings
       const serviceTypes = apiProfile.serviceTypes || apiProfile.specialties || [];
-      const categories = Array.isArray(serviceTypes) ? serviceTypes : [];
-      const specialties = Array.isArray(serviceTypes) ? serviceTypes : [];
+      console.log('🔍 [SERVICES] Raw serviceTypes:', serviceTypes, 'Type:', typeof serviceTypes);
+
+      const categories =
+        Array.isArray(serviceTypes) && serviceTypes.every(item => typeof item === 'string')
+          ? serviceTypes
+          : [];
+      const specialties =
+        Array.isArray(serviceTypes) && serviceTypes.every(item => typeof item === 'string')
+          ? serviceTypes
+          : [];
+
+      console.log('🔍 [SERVICES] Processed categories:', categories, 'specialties:', specialties);
 
       // Parsear disponibilidad
       let availability = {
@@ -298,7 +308,68 @@ export default function ProviderProfilePage() {
         specialtiesCount: realProfile.services?.specialties?.length || 0,
       });
 
-      setProfile(realProfile);
+      // Validación final: asegurar que el perfil tenga la estructura correcta
+      try {
+        if (!realProfile.services) {
+          console.error('❌ [VALIDATION] Profile missing services object');
+          throw new Error('Invalid profile structure: missing services');
+        }
+
+        if (!Array.isArray(realProfile.services.categories)) {
+          console.error(
+            '❌ [VALIDATION] Services categories is not an array:',
+            realProfile.services.categories
+          );
+          realProfile.services.categories = [];
+        }
+
+        if (!Array.isArray(realProfile.services.specialties)) {
+          console.error(
+            '❌ [VALIDATION] Services specialties is not an array:',
+            realProfile.services.specialties
+          );
+          realProfile.services.specialties = [];
+        }
+
+        if (!Array.isArray(realProfile.services.certifications)) {
+          console.error(
+            '❌ [VALIDATION] Services certifications is not an array:',
+            realProfile.services.certifications
+          );
+          realProfile.services.certifications = [];
+        }
+
+        if (!realProfile.operational?.workingHours) {
+          console.error('❌ [VALIDATION] Profile missing operational workingHours');
+          realProfile.operational = realProfile.operational || {};
+          realProfile.operational.workingHours = {
+            monday: { open: '08:00', close: '18:00', closed: false },
+            tuesday: { open: '08:00', close: '18:00', closed: false },
+            wednesday: { open: '08:00', close: '18:00', closed: false },
+            thursday: { open: '08:00', close: '18:00', closed: false },
+            friday: { open: '08:00', close: '17:00', closed: false },
+            saturday: { open: '09:00', close: '14:00', closed: true },
+            sunday: { open: '00:00', close: '00:00', closed: true },
+          };
+        }
+
+        if (!Array.isArray(realProfile.operational?.serviceAreas)) {
+          console.error(
+            '❌ [VALIDATION] Operational serviceAreas is not an array:',
+            realProfile.operational?.serviceAreas
+          );
+          realProfile.operational = realProfile.operational || {};
+          realProfile.operational.serviceAreas = [];
+        }
+
+        console.log('✅ [VALIDATION] Profile validation passed');
+        setProfile(realProfile);
+      } catch (validationError) {
+        console.error('❌ [VALIDATION] Profile validation failed:', validationError);
+        setErrorMessage('Error en la estructura de datos del perfil. Contacte al soporte.');
+        setIsLoading(false);
+        return;
+      }
       setSuccessMessage('Perfil cargado exitosamente');
     } catch (error) {
       logger.error('Error al cargar perfil del proveedor', { error });
@@ -426,6 +497,20 @@ export default function ProviderProfilePage() {
         </div>
       </UnifiedDashboardLayout>
     );
+  }
+
+  // Debug logging before render
+  console.log('🎯 [PROFILE] About to render profile:', {
+    hasProfile: !!profile,
+    profileKeys: profile ? Object.keys(profile) : [],
+    servicesKeys: profile?.services ? Object.keys(profile.services) : [],
+    operationalKeys: profile?.operational ? Object.keys(profile.operational) : [],
+    isLoading,
+    errorMessage,
+  });
+
+  if (profile?.services) {
+    console.log('🔧 [SERVICES] Services object:', profile.services);
   }
 
   return (
