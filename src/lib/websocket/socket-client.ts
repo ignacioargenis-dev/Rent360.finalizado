@@ -2,6 +2,30 @@ import { io, Socket } from 'socket.io-client';
 import { useState, useEffect } from 'react';
 import { logger } from '../logger';
 
+// Pusher client - loaded dynamically
+let PusherClient: any = null;
+let pusherClientLoaded = false;
+
+const loadPusherClient = async () => {
+  if (pusherClientLoaded) {
+    return PusherClient;
+  }
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const { PusherWebSocketClient } = await import('./pusher-client');
+    PusherClient = PusherWebSocketClient;
+    pusherClientLoaded = true;
+    logger.info('✅ [PUSHER] Pusher client loaded successfully');
+    return PusherClient;
+  } catch (error) {
+    logger.warn('⚠️ [PUSHER] Pusher client not available', { error });
+    return null;
+  }
+};
+
 interface SocketEvents {
   connect: () => void;
   disconnect: () => void;
@@ -15,41 +39,128 @@ interface SocketEvents {
 
 class WebSocketClient {
   private socket: Socket | null = null;
+  private pusherChannel: any = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private eventListeners: Map<string, Function[]> = new Map();
   private _isConnected = false;
+  private _usingPusher = false;
+
+  // Determinar si usar Pusher o Socket.io
+  private shouldUsePusher(): boolean {
+    // For now, always use Socket.io. To enable Pusher:
+    // 1. Install: npm install pusher pusher-js
+    // 2. Load pusher-js globally (e.g., via CDN)
+    // 3. Set NEXT_PUBLIC_PUSHER_KEY and NEXT_PUBLIC_PUSHER_CLUSTER env vars
+    // 4. Uncomment and modify this check:
+    // return !!(process.env.NEXT_PUBLIC_PUSHER_KEY && process.env.NEXT_PUBLIC_PUSHER_CLUSTER && (globalThis as any).Pusher);
+
+    return false; // Always use Socket.io for now
+  }
 
   connect(token?: string): void {
+    // Si ya está conectado, no hacer nada
+    if (this._isConnected) {
+      return;
+    }
+
+    logger.info('🔌 [WEBSOCKET] Attempting connection', {
+      hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
+      hasPusherCluster: !!process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+      shouldUsePusher: this.shouldUsePusher(),
+    });
+
+    if (this.shouldUsePusher()) {
+      this.connectWithPusher(token).catch(error => {
+        logger.error('❌ [PUSHER] Failed to connect with Pusher, falling back to Socket.io', {
+          error,
+        });
+        this.connectWithSocketIO(token);
+      });
+    } else {
+      this.connectWithSocketIO(token);
+    }
+  }
+
+  private async connectWithPusher(token?: string): Promise<void> {
+    try {
+      logger.info('🚀 [PUSHER] Connecting with Pusher');
+
+      // Load Pusher client dynamically
+      const PusherWebSocketClient = await loadPusherClient();
+      if (!PusherWebSocketClient) {
+        throw new Error('Pusher client not available');
+      }
+
+      // Create and connect Pusher client
+      const pusherInstance = new PusherWebSocketClient();
+      const connected = await pusherInstance.connect(token);
+
+      if (!connected) {
+        throw new Error('Pusher connection failed');
+      }
+
+      // Store reference and setup event forwarding
+      this.pusherChannel = pusherInstance;
+
+      // Forward events to our event system
+      pusherInstance.on('connect', () => {
+        this._isConnected = true;
+        this._usingPusher = true;
+        this.emitEvent('connect');
+      });
+
+      pusherInstance.on('disconnect', () => {
+        this._isConnected = false;
+        this.emitEvent('disconnect');
+      });
+
+      pusherInstance.on('new-message', (data: any) => {
+        this.emitEvent('new-message', data);
+      });
+
+      pusherInstance.on('notification', (data: any) => {
+        this.emitEvent('notification', data);
+      });
+
+      logger.info('✅ [PUSHER] Connected successfully');
+    } catch (error) {
+      logger.error('❌ [PUSHER] Connection failed', { error });
+      throw error; // Dejar que el catch en connect maneje el fallback
+    }
+  }
+
+  private getTokenFromCookies(): string | null {
+    if (typeof document === 'undefined') {
+      return null;
+    }
+
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth-token' || name === 'next-auth.session-token' || name === 'token') {
+        return value ? decodeURIComponent(value) : null;
+      }
+    }
+    return null;
+  }
+
+  private connectWithSocketIO(token?: string): void {
     if (this.socket?.connected) {
       return;
     }
+
+    logger.info('🔌 [SOCKET.IO] Connecting with Socket.io');
 
     // Usar la URL actual del navegador en lugar de localhost hardcodeado
     const serverUrl =
       process.env.NEXT_PUBLIC_WS_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
-    // Obtener token de cookies - método unificado
-    const getTokenFromCookies = (): string | null => {
-      if (typeof document === 'undefined') {
-        return null;
-      }
-
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'auth-token' || name === 'next-auth.session-token' || name === 'token') {
-          return value ? decodeURIComponent(value) : null;
-        }
-      }
-      return null;
-    };
-
     this.socket = io(serverUrl, {
       auth: {
-        token: token || getTokenFromCookies(),
+        token: token || this.getTokenFromCookies(),
       },
       transports: ['websocket', 'polling'],
       timeout: 20000,
@@ -150,6 +261,15 @@ class WebSocketClient {
       this.eventListeners.set(event, []);
     }
     this.eventListeners.get(event)!.push(callback);
+
+    // Si ya está conectado, intentar bind inmediato para Pusher
+    if (this._usingPusher && this.pusherChannel && this._isConnected) {
+      try {
+        this.pusherChannel.bind(event, callback);
+      } catch (error) {
+        logger.warn('Could not bind Pusher event immediately', { event, error });
+      }
+    }
   }
 
   off<T extends keyof SocketEvents>(event: T, callback?: SocketEvents[T]): void {
@@ -165,6 +285,20 @@ class WebSocketClient {
       }
     } else {
       listeners.length = 0;
+    }
+
+    // Unbind de Pusher si está conectado
+    if (this._usingPusher && this.pusherChannel) {
+      try {
+        if (callback) {
+          this.pusherChannel.unbind(event, callback);
+        } else {
+          // Para remover todos los listeners, necesitamos unbind específico
+          // Pusher no tiene un método directo para remover todos
+        }
+      } catch (error) {
+        logger.warn('Could not unbind Pusher event', { event, error });
+      }
     }
   }
 
@@ -222,6 +356,9 @@ class WebSocketClient {
 
   // Estado de conexión
   get isConnected(): boolean {
+    if (this._usingPusher) {
+      return this._isConnected && !!this.pusherChannel;
+    }
     return this._isConnected && this.socket?.connected === true;
   }
 
@@ -229,15 +366,26 @@ class WebSocketClient {
     return this.socket?.id;
   }
 
+  get isUsingPusher(): boolean {
+    return this._usingPusher;
+  }
+
   // Cerrar conexión
   disconnect(): void {
-    if (this.socket) {
+    if (this._usingPusher && this.pusherChannel) {
+      logger.info('🚪 [PUSHER] Disconnecting from Pusher');
+      this.pusherChannel.disconnect();
+      this.pusherChannel = null;
+    } else if (this.socket) {
+      logger.info('🚪 [SOCKET.IO] Disconnecting from Socket.io');
       this.socket.disconnect();
       this.socket = null;
-      this._isConnected = false;
-      this.eventListeners.clear();
-      logger.info('WebSocket client disconnected');
     }
+
+    this._isConnected = false;
+    this._usingPusher = false;
+    this.eventListeners.clear();
+    logger.info('WebSocket client disconnected');
   }
 }
 
