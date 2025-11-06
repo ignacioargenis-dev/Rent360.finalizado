@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+
+// Log básico para verificar que el componente se carga
+console.log('🚀 [MESSAGING] UnifiedMessagingSystem component loaded');
 import { useRouter, useSearchParams } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,6 +101,9 @@ export default function UnifiedMessagingSystem({
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Log de inicialización del componente
+  console.log('📱 [MESSAGING] Component initialized, user:', user?.id, 'role:', user?.role);
 
   // Estados principales
   const [loading, setLoading] = useState(true); // Solo para carga inicial
@@ -586,9 +592,30 @@ export default function UnifiedMessagingSystem({
   };
 
   const handleSendMessage = async () => {
+    // LOG MUY VISIBLE - SI VES ESTO, LA FUNCIÓN SE EJECUTA
+    console.log(
+      '🚨🚨🚨 [SEND MESSAGE] FUNCTION CALLED - USER:',
+      user?.id,
+      'ROLE:',
+      user?.role,
+      '🚨🚨🚨'
+    );
+
     if ((!newMessage.trim() && !selectedFile) || !selectedConversation || sendingMessage) {
+      console.log(
+        '🚫 [SEND MESSAGE] Validation failed - message:',
+        newMessage.trim(),
+        'file:',
+        !!selectedFile,
+        'conversation:',
+        !!selectedConversation,
+        'sending:',
+        sendingMessage
+      );
       return;
     }
+
+    console.log('✅ [SEND MESSAGE] Validation passed, proceeding to send');
 
     try {
       setSendingMessage(true);

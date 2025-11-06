@@ -1,6 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+// Log básico para verificar que el componente se carga
+console.log('🔐 [AUTH PROVIDER] AuthProviderSimple component loaded');
 import { User } from '@/types';
 import { logger } from '@/lib/logger-edge-runtime';
 import { websocketClient } from '@/lib/websocket/socket-client';

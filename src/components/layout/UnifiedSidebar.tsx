@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Log básico para verificar que el componente se carga
+console.log('🏠 [SIDEBAR] UnifiedSidebar component loaded');
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
