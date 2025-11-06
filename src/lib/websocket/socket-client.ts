@@ -88,14 +88,14 @@ class WebSocketClient {
     });
 
     if (this.shouldUsePusher()) {
-      this.connectWithPusher(token).catch(error => {
+      this.connectWithPusher(token).catch(async error => {
         logger.error('❌ [PUSHER] Failed to connect with Pusher, falling back to Socket.io', {
           error,
         });
-        this.connectWithSocketIO(token);
+        await this.connectWithSocketIO(token);
       });
     } else {
-      this.connectWithSocketIO(token);
+      await this.connectWithSocketIO(token);
     }
   }
 
@@ -147,34 +147,34 @@ class WebSocketClient {
     }
   }
 
-  private getTokenFromCookies(): string | null {
-    if (typeof document === 'undefined') {
+  private async getTokenFromAPI(): Promise<string | null> {
+    try {
+      console.log('🔑 [WS AUTH] Fetching token from API endpoint');
+
+      const response = await fetch('/api/ws-token', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        console.log('❌ [WS AUTH] Failed to fetch token from API:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      if (data.success && data.token) {
+        console.log('✅ [WS AUTH] Token obtained from API, length:', data.token.length);
+        return data.token;
+      }
+
+      console.log('❌ [WS AUTH] API returned success but no token');
+      return null;
+    } catch (error) {
+      console.log('❌ [WS AUTH] Error fetching token from API:', error);
       return null;
     }
-
-    const cookies = document.cookie.split(';');
-    const cookieNames = cookies.map(c => c.trim().split('=')[0]);
-    const cookieDetails = cookies.map(c => {
-      const [name, value] = c.trim().split('=');
-      return { name, length: value?.length || 0 };
-    });
-
-    console.log('🍪 [WS AUTH] Available cookies:', cookieNames);
-    console.log('🍪 [WS AUTH] Cookie details:', cookieDetails);
-
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'auth-token' || name === 'next-auth.session-token' || name === 'token') {
-        console.log('✅ [WS AUTH] Found token cookie:', name, 'Length:', value?.length || 0);
-        return value ? decodeURIComponent(value) : null;
-      }
-    }
-
-    console.log('❌ [WS AUTH] No token cookie found');
-    return null;
   }
 
-  private connectWithSocketIO(token?: string): void {
+  private async connectWithSocketIO(token?: string): Promise<void> {
     if (this.socket?.connected) {
       return;
     }
@@ -186,9 +186,12 @@ class WebSocketClient {
       process.env.NEXT_PUBLIC_WS_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
+    // Obtener token para autenticación WebSocket
+    const authToken = token || (await this.getTokenFromAPI());
+
     this.socket = io(serverUrl, {
       auth: {
-        token: token || this.getTokenFromCookies(),
+        token: authToken,
       },
       transports: ['websocket', 'polling'],
       timeout: 20000,
