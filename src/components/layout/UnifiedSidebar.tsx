@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
-// Log básico para verificar que el componente se carga
-console.log('🏠 [SIDEBAR] UnifiedSidebar component loaded');
+// LOGS MUY VISIBLES PARA DEBUGGING
+console.log('🚨🚨🚨 [SIDEBAR] UNIFIED SIDEBAR COMPONENT LOADED 🚨🚨🚨');
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
@@ -660,9 +660,20 @@ export default function UnifiedSidebar({
   const pathname = usePathname();
   const { unreadMessagesCount: wsUnreadCount } = useWebSocket();
 
-  // Log cambios en contador de mensajes
+  // LOG MUY VISIBLE PARA COMPONENTE INICIALIZADO
+  console.log('🏠 [SIDEBAR] UnifiedSidebar initialized, user:', user?.id, 'role:', user?.role);
+
+  // LOG MUY VISIBLE PARA CONTADOR DE MENSAJES
   useEffect(() => {
-    console.log('📊 [SIDEBAR] Unread messages count updated:', wsUnreadCount);
+    console.log('🚨🚨🚨 [SIDEBAR] UNREAD MESSAGES COUNT UPDATED:', wsUnreadCount, '🚨🚨🚨');
+    console.log(
+      '📊 [SIDEBAR] Unread messages count updated:',
+      wsUnreadCount,
+      'user:',
+      user?.id,
+      'role:',
+      user?.role
+    );
   }, [wsUnreadCount]);
 
   // Generar menú estático sin estadísticas dinámicas
@@ -768,13 +779,16 @@ export default function UnifiedSidebar({
     const showUnreadBadge = item.title === 'Mensajes' && wsUnreadCount > 0;
     const badgeText = showUnreadBadge ? String(wsUnreadCount) : item.badge;
 
-    // Log cuando se renderiza badge de mensajes
+    // LOG MUY VISIBLE CUANDO SE RENDERIZA EL MENÚ DE MENSAJES
     if (item.title === 'Mensajes') {
+      console.log('🚨🚨🚨 [SIDEBAR] RENDERING MESSAGES MENU ITEM 🚨🚨🚨');
       console.log('🔔 [SIDEBAR] Rendering messages badge:', {
         wsUnreadCount,
         showUnreadBadge,
         badgeText,
         itemTitle: item.title,
+        userId: user?.id,
+        userRole: user?.role,
       });
     }
 

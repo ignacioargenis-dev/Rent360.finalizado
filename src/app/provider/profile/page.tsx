@@ -413,6 +413,22 @@ export default function ProviderProfilePage() {
         const avatarData = await avatarResponse.json();
         console.log('✅ [PROFILE] Logo subido exitosamente:', avatarData);
 
+        // Actualizar el logo en el estado local con la nueva URL
+        if (avatarData.avatar?.url) {
+          setProfile(prev =>
+            prev
+              ? {
+                  ...prev,
+                  basicInfo: {
+                    ...prev.basicInfo,
+                    logo: avatarData.avatar.url,
+                  },
+                }
+              : null
+          );
+          console.log('✅ [PROFILE] Logo actualizado en estado local:', avatarData.avatar.url);
+        }
+
         // Limpiar el archivo seleccionado
         setSelectedLogoFile(null);
       }

@@ -421,15 +421,22 @@ export const websocketClient = new WebSocketClient();
 
 // Hook de React para usar WebSocket
 export function useWebSocket() {
+  // LOG MUY VISIBLE PARA EL HOOK
+  console.log('🚨🚨🚨 [USE WEBSOCKET] HOOK INITIALIZED 🚨🚨🚨');
+
   const [isConnected, setIsConnected] = useState(websocketClient.isConnected);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   useEffect(() => {
+    console.log('🔌 [USE WEBSOCKET] Setting up WebSocket connection...');
+
     // Conectar al WebSocket
     const connectWebSocket = async () => {
+      console.log('🔌 [USE WEBSOCKET] Calling websocketClient.connect()...');
       await websocketClient.connect();
+      console.log('✅ [USE WEBSOCKET] WebSocket connection attempt completed');
     };
     connectWebSocket();
 
