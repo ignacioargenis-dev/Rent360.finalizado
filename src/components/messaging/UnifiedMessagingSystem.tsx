@@ -199,20 +199,36 @@ export default function UnifiedMessagingSystem({
 
   // WebSocket listener para actualizaciones en tiempo real
   useEffect(() => {
+    console.log(
+      '🔌 [WEBSOCKET] Setting up WebSocket listener for user:',
+      user?.id,
+      'role:',
+      user?.role
+    );
+
     const handleNewMessage = (messageData: any) => {
-      console.log('📨 [WEBSOCKET] New message received:', messageData);
+      console.log('📨 [WEBSOCKET] New message received:', messageData, 'for user:', user?.id);
 
       // Si el mensaje es para el usuario actual, actualizar conversaciones
       if (messageData.receiverId === user?.id || messageData.senderId === user?.id) {
-        console.log('🔄 [WEBSOCKET] Updating conversations due to new message');
+        console.log('🔄 [WEBSOCKET] Updating conversations due to new message for user:', user?.id);
         loadPageData(true); // Refresh silencioso de conversaciones
+      } else {
+        console.log(
+          '🚫 [WEBSOCKET] Message not for current user:',
+          messageData.receiverId,
+          'vs',
+          user?.id
+        );
       }
     };
 
     // Registrar listener de WebSocket
     websocketClient.on('new-message', handleNewMessage);
+    console.log('✅ [WEBSOCKET] WebSocket listener registered for user:', user?.id);
 
     return () => {
+      console.log('🧹 [WEBSOCKET] Cleaning up WebSocket listener for user:', user?.id);
       // Limpiar listeners
       websocketClient.off('new-message', handleNewMessage);
     };
@@ -529,7 +545,7 @@ export default function UnifiedMessagingSystem({
           senderId: message.senderId || 'unknown',
           senderName: message.sender?.name || 'Usuario desconocido',
           senderRole: message.sender?.role || 'USER',
-          timestamp: message.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          timestamp: message.createdAt || new Date().toISOString(),
           isRead: message.isRead || false,
           type: 'text',
           attachmentUrl: message.attachmentUrl,

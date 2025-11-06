@@ -170,6 +170,7 @@ export default function ProviderProfilePage() {
       }
 
       const apiProfile = profileData.profile;
+      console.log('🔍 [PROFILE] API Profile received:', apiProfile);
 
       // ✅ Cargar estadísticas reales
       const statsResponse = await fetch('/api/provider/stats', {
@@ -286,6 +287,9 @@ export default function ProviderProfilePage() {
         },
         stats,
       };
+
+      console.log('✅ [PROFILE] Transformed profile:', realProfile);
+      console.log('✅ [PROFILE] Services section:', realProfile.services);
 
       setProfile(realProfile);
       setSuccessMessage('Perfil cargado exitosamente');

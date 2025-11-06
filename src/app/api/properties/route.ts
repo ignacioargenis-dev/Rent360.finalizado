@@ -257,8 +257,9 @@ export async function POST(request: NextRequest) {
 
     const autoApprovalSetting = autoApprovalSetting1 || autoApprovalSetting2;
     // Verificar si está habilitado (value es string, puede ser 'true' o '1')
-    const isAutoApprovalEnabled = autoApprovalSetting?.value === 'true' || autoApprovalSetting?.value === '1';
-    
+    const isAutoApprovalEnabled =
+      autoApprovalSetting?.value === 'true' || autoApprovalSetting?.value === '1';
+
     console.log('✅ [PROPERTIES] Configuración de aprobación automática:', {
       found: !!autoApprovalSetting,
       key: autoApprovalSetting?.key,
@@ -480,6 +481,7 @@ export async function GET(request: NextRequest) {
     const bathrooms = searchParams.get('bathrooms');
     const minArea = searchParams.get('minArea');
     const maxArea = searchParams.get('maxArea');
+    const includeManaged = searchParams.get('includeManaged') === 'true';
 
     // Construir filtros para la base de datos
     const where: any = {};
@@ -496,7 +498,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      where.status = status;
+      if (includeManaged && status === 'AVAILABLE') {
+        // Si includeManaged=true y status=AVAILABLE, incluir tanto AVAILABLE como MANAGED
+        where.status = { in: ['AVAILABLE', 'MANAGED'] };
+      } else {
+        where.status = status;
+      }
     }
 
     if (type) {

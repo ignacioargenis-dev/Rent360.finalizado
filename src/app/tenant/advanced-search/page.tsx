@@ -158,18 +158,21 @@ export default function BúsquedaAvanzadaPage() {
       setError(null);
 
       logger.info('Iniciando carga de propiedades', {
-        endpoint: '/api/properties?limit=50&status=AVAILABLE',
+        endpoint: '/api/properties?limit=50&status=AVAILABLE&includeManaged=true',
       });
 
       // Cargar propiedades reales desde la API
-      const response = await fetch('/api/properties?limit=50&status=AVAILABLE', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-      });
+      const response = await fetch(
+        '/api/properties?limit=50&status=AVAILABLE&includeManaged=true',
+        {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        }
+      );
 
       logger.info('Respuesta de API de propiedades recibida', {
         status: response.status,
