@@ -561,6 +561,14 @@ export async function GET(request: NextRequest) {
               avatar: true,
             },
           },
+          broker: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
+          },
           contracts: {
             where: { status: 'ACTIVE' },
             include: {
@@ -617,7 +625,14 @@ export async function GET(request: NextRequest) {
         : [],
       views: property.views,
       inquiries: property.inquiries,
+      ownerId: property.owner?.id || null,
+      ownerName: property.owner?.name || null,
+      ownerEmail: property.owner?.email || null,
+      brokerId: property.broker?.id || null,
+      brokerName: property.broker?.name || null,
+      brokerEmail: property.broker?.email || null,
       owner: property.owner,
+      broker: property.broker,
       currentTenant: property.contracts[0]?.tenant || null,
       averageRating:
         property.reviews.length > 0
