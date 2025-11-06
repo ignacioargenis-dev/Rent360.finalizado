@@ -50,6 +50,16 @@ export async function PUT(request: NextRequest) {
           ? JSON.stringify(profileData.operational.availability)
           : JSON.stringify({ weekdays: true, weekends: false, emergencies: false });
 
+      // Convertir responseTime de string a número si es necesario
+      let responseTimeValue: number;
+      if (typeof profileData.operational?.responseTime === 'string') {
+        // Extraer el primer número del formato "X-Y horas"
+        const timeMatch = profileData.operational.responseTime.match(/(\d+)/);
+        responseTimeValue = timeMatch ? parseFloat(timeMatch[1]) : sp.responseTime || 2;
+      } else {
+        responseTimeValue = profileData.operational?.responseTime || sp.responseTime || 2;
+      }
+
       await db.serviceProvider.update({
         where: { id: sp.id },
         data: {
@@ -60,7 +70,7 @@ export async function PUT(request: NextRequest) {
           description: profileData.basicInfo?.description || sp.description,
           serviceTypes,
           basePrice: profileData.services?.basePrice || sp.basePrice,
-          responseTime: profileData.operational?.responseTime || sp.responseTime,
+          responseTime: responseTimeValue,
           availability,
           updatedAt: new Date(),
         },
@@ -90,6 +100,16 @@ export async function PUT(request: NextRequest) {
           ? JSON.stringify(profileData.operational.availability)
           : JSON.stringify({ weekdays: true, weekends: false, emergencies: true });
 
+      // Convertir responseTime de string a número si es necesario
+      let responseTimeValue: number;
+      if (typeof profileData.operational?.responseTime === 'string') {
+        // Extraer el primer número del formato "X-Y horas"
+        const timeMatch = profileData.operational.responseTime.match(/(\d+)/);
+        responseTimeValue = timeMatch ? parseFloat(timeMatch[1]) : mp.responseTime || 2;
+      } else {
+        responseTimeValue = profileData.operational?.responseTime || mp.responseTime || 2;
+      }
+
       await db.maintenanceProvider.update({
         where: { id: mp.id },
         data: {
@@ -100,7 +120,7 @@ export async function PUT(request: NextRequest) {
           description: profileData.basicInfo?.description || mp.description,
           specialties,
           hourlyRate: profileData.services?.hourlyRate || mp.hourlyRate,
-          responseTime: profileData.operational?.responseTime || mp.responseTime,
+          responseTime: responseTimeValue,
           availability,
           updatedAt: new Date(),
         },

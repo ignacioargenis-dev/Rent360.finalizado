@@ -436,7 +436,7 @@ export default function ProviderProfilePage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean | number) => {
+  const handleInputChange = (field: string, value: string | boolean | number | string[]) => {
     if (!profile) {
       return;
     }
@@ -1007,53 +1007,103 @@ export default function ProviderProfilePage() {
                 {profile.services && (
                   <div className="space-y-6">
                     <div>
-                      <Label>Categorías de Servicio</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {Array.isArray(profile.services?.categories) ? (
-                          profile.services.categories.map(category => (
-                            <Badge key={category} variant="outline">
-                              {category}
-                            </Badge>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500">No hay categorías definidas</p>
-                        )}
-                      </div>
+                      <Label htmlFor="categories">Categorías de Servicio</Label>
+                      {isEditing ? (
+                        <Input
+                          id="categories"
+                          placeholder="Ej: Plomería, Electricidad, Jardinería (separadas por comas)"
+                          value={profile.services?.categories?.join(', ') || ''}
+                          onChange={e => {
+                            const categories = e.target.value
+                              .split(',')
+                              .map(cat => cat.trim())
+                              .filter(Boolean);
+                            handleInputChange('services.categories', categories);
+                          }}
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {Array.isArray(profile.services?.categories) &&
+                          profile.services.categories.length > 0 ? (
+                            profile.services.categories.map(category => (
+                              <Badge key={category} variant="outline">
+                                {category}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-gray-500">No hay categorías definidas</p>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div>
-                      <Label>Especialidades</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {Array.isArray(profile.services?.specialties) ? (
-                          profile.services.specialties.map(specialty => (
-                            <Badge key={specialty} variant="secondary">
-                              {specialty}
-                            </Badge>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500">No hay especialidades definidas</p>
-                        )}
-                      </div>
+                      <Label htmlFor="specialties">Especialidades</Label>
+                      {isEditing ? (
+                        <Input
+                          id="specialties"
+                          placeholder="Ej: Instalación de tuberías, Reparación de fugas (separadas por comas)"
+                          value={profile.services?.specialties?.join(', ') || ''}
+                          onChange={e => {
+                            const specialties = e.target.value
+                              .split(',')
+                              .map(spec => spec.trim())
+                              .filter(Boolean);
+                            handleInputChange('services.specialties', specialties);
+                          }}
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {Array.isArray(profile.services?.specialties) &&
+                          profile.services.specialties.length > 0 ? (
+                            profile.services.specialties.map(specialty => (
+                              <Badge key={specialty} variant="secondary">
+                                {specialty}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-gray-500">No hay especialidades definidas</p>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div>
-                      <Label>Certificaciones</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {Array.isArray(profile.services?.certifications) ? (
-                          profile.services.certifications.map(certification => (
-                            <Badge
-                              key={certification}
-                              variant="outline"
-                              className="flex items-center gap-1"
-                            >
-                              <Award className="w-3 h-3" />
-                              {certification}
-                            </Badge>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500">No hay certificaciones definidas</p>
-                        )}
-                      </div>
+                      <Label htmlFor="certifications">Certificaciones</Label>
+                      {isEditing ? (
+                        <Input
+                          id="certifications"
+                          placeholder="Ej: Certificación OSHA, Licencia Profesional (separadas por comas)"
+                          value={profile.services?.certifications?.join(', ') || ''}
+                          onChange={e => {
+                            const certifications = e.target.value
+                              .split(',')
+                              .map(cert => cert.trim())
+                              .filter(Boolean);
+                            handleInputChange('services.certifications', certifications);
+                          }}
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {Array.isArray(profile.services?.certifications) &&
+                          profile.services.certifications.length > 0 ? (
+                            profile.services.certifications.map(certification => (
+                              <Badge
+                                key={certification}
+                                variant="outline"
+                                className="flex items-center gap-1"
+                              >
+                                <Award className="w-3 h-3" />
+                                {certification}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No hay certificaciones definidas
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
