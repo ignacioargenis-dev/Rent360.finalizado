@@ -68,18 +68,9 @@ class WebSocketClient {
       return;
     }
 
-    // FORZAR LOGS PARA DEBUGGING - SIEMPRE APARECEN
-    console.log('🚨 [DEBUG] WebSocket connect called with token:', !!token);
-    console.log('🚨 [DEBUG] Environment check:', {
-      hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
-      hasPusherCluster: !!process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
-      shouldUsePusher: this.shouldUsePusher(),
-      currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server',
-      wsUrl: process.env.NEXT_PUBLIC_WS_URL,
-      nodeEnv: process.env.NODE_ENV,
-    });
-
+    // Logging para debugging
     logger.info('🔌 [WEBSOCKET] Attempting connection', {
+      hasToken: !!token,
       hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
       hasPusherCluster: !!process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
       shouldUsePusher: this.shouldUsePusher(),
