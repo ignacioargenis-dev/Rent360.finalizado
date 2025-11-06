@@ -271,6 +271,17 @@ export async function POST(request: NextRequest) {
       content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
     });
 
+    // LOG ESPECÍFICO PARA PROVIDER
+    if (user.role === 'PROVIDER') {
+      console.log('🚨🚨🚨 [PROVIDER MESSAGE] PROVIDER ENVIANDO MENSAJE:', {
+        providerId: user.id,
+        providerEmail: user.email,
+        receiverId,
+        messageLength: content.length,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     // Generar subject automático si no se proporciona
     const messageSubject = subject || `Mensaje de ${user.name || user.email}`;
 
@@ -416,6 +427,16 @@ export async function POST(request: NextRequest) {
 
       console.log('📨 [MESSAGES API] Enviando notificación a:', notificationData.recipientId);
 
+      // LOG ESPECÍFICO PARA PROVIDER - envío de notificación
+      if (user.role === 'PROVIDER') {
+        console.log('🚨🚨🚨 [PROVIDER NOTIFICATION] PROVIDER enviando notificación:', {
+          providerId: user.id,
+          recipientId: notificationData.recipientId,
+          messageId: message.id,
+          notificationType: NotificationType.NEW_MESSAGE,
+        });
+      }
+
       await NotificationService.create({
         userId: notificationData.recipientId,
         type: NotificationType.NEW_MESSAGE,
@@ -435,6 +456,13 @@ export async function POST(request: NextRequest) {
       });
 
       console.log('✅ [MESSAGES API] Notificación enviada exitosamente');
+
+      // LOG ESPECÍFICO PARA PROVIDER - notificación enviada
+      if (user.role === 'PROVIDER') {
+        console.log(
+          '✅✅✅ [PROVIDER NOTIFICATION] Notificación enviada exitosamente desde PROVIDER'
+        );
+      }
     } catch (notificationError) {
       // No fallar la respuesta si hay error en notificaciones
       logger.warn('Error sending message notification', { error: notificationError });

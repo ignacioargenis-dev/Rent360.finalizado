@@ -82,15 +82,6 @@ export async function PUT(request: NextRequest) {
         },
       });
 
-      // Actualizar avatar del usuario si se proporcionó
-      if (profileData.logo) {
-        await db.user.update({
-          where: { id: user.id },
-          data: { avatar: profileData.logo },
-        });
-        console.log('✅ [API PUT] Avatar actualizado para ServiceProvider');
-      }
-
       console.log('✅ [API PUT] ServiceProvider actualizado');
     } else if (isMaintenanceProvider(user.role)) {
       // Buscar y actualizar MaintenanceProvider
@@ -146,15 +137,6 @@ export async function PUT(request: NextRequest) {
           updatedAt: new Date(),
         },
       });
-
-      // Actualizar avatar del usuario si se proporcionó
-      if (profileData.logo) {
-        await db.user.update({
-          where: { id: user.id },
-          data: { avatar: profileData.logo },
-        });
-        console.log('✅ [API PUT] Avatar actualizado para MaintenanceProvider');
-      }
 
       console.log('✅ [API PUT] MaintenanceProvider actualizado');
     } else {

@@ -82,6 +82,15 @@ export class NotificationService {
         notificationId: notification.id,
       });
 
+      // LOG ESPECÍFICO PARA MENSAJES NUEVOS
+      if (params.type === NotificationType.NEW_MESSAGE) {
+        console.log('📨 [NOTIFICATION SERVICE] Enviando notificación de MENSAJE NUEVO:', {
+          recipientId: params.userId,
+          notificationId: notification.id,
+          title: params.title,
+        });
+      }
+
       try {
         sendNotification(params.userId, params.type, {
           id: notification.id,
@@ -93,6 +102,13 @@ export class NotificationService {
         });
 
         console.log('✅ [NOTIFICATION SERVICE] WebSocket notification sent successfully');
+
+        // LOG ESPECÍFICO PARA MENSAJES NUEVOS
+        if (params.type === NotificationType.NEW_MESSAGE) {
+          console.log(
+            '✅ [NOTIFICATION SERVICE] Notificación de MENSAJE NUEVO enviada exitosamente'
+          );
+        }
       } catch (wsError) {
         console.error('❌ [NOTIFICATION SERVICE] Failed to send WebSocket notification:', {
           error: wsError instanceof Error ? wsError.message : String(wsError),
@@ -100,6 +116,16 @@ export class NotificationService {
           type: params.type,
           notificationId: notification.id,
         });
+
+        // LOG ESPECÍFICO PARA ERRORES EN MENSAJES
+        if (params.type === NotificationType.NEW_MESSAGE) {
+          console.error('❌ [NOTIFICATION SERVICE] Error enviando notificación de MENSAJE NUEVO:', {
+            recipientId: params.userId,
+            notificationId: notification.id,
+            error: wsError instanceof Error ? wsError.message : String(wsError),
+          });
+        }
+
         logger.warn('Failed to send WebSocket notification', {
           error: wsError instanceof Error ? wsError.message : String(wsError),
           userId: params.userId,

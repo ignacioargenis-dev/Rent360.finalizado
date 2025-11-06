@@ -105,6 +105,7 @@ interface ProviderProfile {
 export default function ProviderProfilePage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
@@ -393,7 +394,30 @@ export default function ProviderProfilePage() {
     setErrorMessage('');
 
     try {
-      // Guardar perfil real en la API
+      // Si hay un archivo de logo seleccionado, subirlo primero
+      if (selectedLogoFile) {
+        console.log('🚀 [PROFILE] Subiendo archivo de logo...');
+        const formData = new FormData();
+        formData.append('avatar', selectedLogoFile);
+
+        const avatarResponse = await fetch('/api/user/avatar', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!avatarResponse.ok) {
+          const errorData = await avatarResponse.json();
+          throw new Error(errorData.error || 'Error al subir el logo');
+        }
+
+        const avatarData = await avatarResponse.json();
+        console.log('✅ [PROFILE] Logo subido exitosamente:', avatarData);
+
+        // Limpiar el archivo seleccionado
+        setSelectedLogoFile(null);
+      }
+
+      // Guardar perfil real en la API (sin el logo, ya que se guarda por separado)
       const saveResponse = await fetch('/api/provider/profile', {
         method: 'PUT',
         headers: {
@@ -401,12 +425,14 @@ export default function ProviderProfilePage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          basicInfo: profile.basicInfo,
+          basicInfo: {
+            ...profile.basicInfo,
+            logo: undefined, // No enviar logo en el perfil, se guarda por separado
+          },
           business: profile.business,
           address: profile.address,
           services: profile.services,
           operational: profile.operational,
-          logo: profile.basicInfo.logo, // ✅ Agregar logo/avatar
         }),
       });
 
@@ -658,6 +684,8 @@ export default function ProviderProfilePage() {
                               onChange={e => {
                                 const file = e.target.files?.[0];
                                 if (file) {
+                                  setSelectedLogoFile(file);
+                                  // Mostrar preview temporal
                                   const reader = new FileReader();
                                   reader.onload = e => {
                                     handleInputChange('logo', e.target?.result as string);
