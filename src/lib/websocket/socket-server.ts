@@ -83,7 +83,7 @@ class WebSocketServer {
         const decoded = jwt.verify(token as string, jwtSecret) as any;
 
         // Adjuntar información del usuario al socket
-        socket.userId = decoded.userId;
+        socket.userId = decoded.id; // ✅ CAMBIADO: usar 'id' en lugar de 'userId'
         socket.userRole = decoded.role;
 
         next();

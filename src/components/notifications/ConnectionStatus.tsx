@@ -43,7 +43,7 @@ export default function ConnectionStatus({
 
     // Intentar reconectar después de un breve delay
     setTimeout(async () => {
-      await websocketClient.connect();
+      await websocketClient.connect(); // Sin userId para reconexión
       setIsReconnecting(false);
     }, 1000);
   };

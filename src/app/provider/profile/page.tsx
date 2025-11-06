@@ -406,6 +406,7 @@ export default function ProviderProfilePage() {
           address: profile.address,
           services: profile.services,
           operational: profile.operational,
+          logo: profile.basicInfo.logo, // ✅ Agregar logo/avatar
         }),
       });
 

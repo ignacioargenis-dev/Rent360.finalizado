@@ -51,6 +51,7 @@ class WebSocketClient {
   private eventListeners: Map<string, Function[]> = new Map();
   private _isConnected = false;
   private _usingPusher = false;
+  private _userId: string | undefined;
 
   // Determinar si usar Pusher o Socket.io
   private shouldUsePusher(): boolean {
@@ -62,7 +63,10 @@ class WebSocketClient {
     );
   }
 
-  async connect(token?: string): Promise<void> {
+  async connect(userId?: string, token?: string): Promise<void> {
+    // Almacenar userId para uso posterior
+    this._userId = userId;
+
     // Si ya está conectado, no hacer nada
     if (this._isConnected) {
       return;
@@ -70,6 +74,7 @@ class WebSocketClient {
 
     // Logging para debugging
     logger.info('🔌 [WEBSOCKET] Attempting connection', {
+      userId: this._userId,
       hasToken: !!token,
       hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
       hasPusherCluster: !!process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
@@ -475,6 +480,7 @@ export function useWebSocket() {
 }
 
 // Funciones de conveniencia
-export const connectWebSocket = async (token?: string) => await websocketClient.connect(token);
+export const connectWebSocket = async (userId?: string, token?: string) =>
+  await websocketClient.connect(userId, token);
 export const disconnectWebSocket = () => websocketClient.disconnect();
 export const isWebSocketConnected = () => websocketClient.isConnected;

@@ -41,9 +41,15 @@ export async function PUT(request: NextRequest) {
       }
 
       // Convertir arrays a JSON strings para guardar en BD
-      const serviceTypes = Array.isArray(profileData.services?.categories)
-        ? JSON.stringify(profileData.services.categories)
-        : '[]';
+      // Asegurar que solo contenga strings, no objetos
+      let serviceTypes: string[] = [];
+      if (Array.isArray(profileData.services?.categories)) {
+        serviceTypes = profileData.services.categories
+          .filter((cat: any) => typeof cat === 'string' && cat.trim().length > 0)
+          .map((cat: any) => cat.trim());
+      }
+
+      const serviceTypesJson = JSON.stringify(serviceTypes);
 
       const availability =
         typeof profileData.operational?.availability === 'object'
@@ -68,13 +74,22 @@ export async function PUT(request: NextRequest) {
           city: profileData.address?.city || sp.city,
           region: profileData.address?.region || sp.region,
           description: profileData.basicInfo?.description || sp.description,
-          serviceTypes,
+          serviceTypes: serviceTypesJson, // ✅ Usar serviceTypesJson limpio
           basePrice: profileData.services?.basePrice || sp.basePrice,
           responseTime: responseTimeValue,
           availability,
           updatedAt: new Date(),
         },
       });
+
+      // Actualizar avatar del usuario si se proporcionó
+      if (profileData.logo) {
+        await db.user.update({
+          where: { id: user.id },
+          data: { avatar: profileData.logo },
+        });
+        console.log('✅ [API PUT] Avatar actualizado para ServiceProvider');
+      }
 
       console.log('✅ [API PUT] ServiceProvider actualizado');
     } else if (isMaintenanceProvider(user.role)) {
@@ -91,9 +106,15 @@ export async function PUT(request: NextRequest) {
       }
 
       // Convertir arrays a JSON strings para guardar en BD
-      const specialties = Array.isArray(profileData.services?.specialties)
-        ? JSON.stringify(profileData.services.specialties)
-        : '[]';
+      // Asegurar que solo contenga strings, no objetos
+      let specialties: string[] = [];
+      if (Array.isArray(profileData.services?.specialties)) {
+        specialties = profileData.services.specialties
+          .filter((spec: any) => typeof spec === 'string' && spec.trim().length > 0)
+          .map((spec: any) => spec.trim());
+      }
+
+      const specialtiesJson = JSON.stringify(specialties);
 
       const availability =
         typeof profileData.operational?.availability === 'object'
@@ -118,13 +139,22 @@ export async function PUT(request: NextRequest) {
           city: profileData.address?.city || mp.city,
           region: profileData.address?.region || mp.region,
           description: profileData.basicInfo?.description || mp.description,
-          specialties,
+          specialties: specialtiesJson, // ✅ Usar specialtiesJson limpio
           hourlyRate: profileData.services?.hourlyRate || mp.hourlyRate,
           responseTime: responseTimeValue,
           availability,
           updatedAt: new Date(),
         },
       });
+
+      // Actualizar avatar del usuario si se proporcionó
+      if (profileData.logo) {
+        await db.user.update({
+          where: { id: user.id },
+          data: { avatar: profileData.logo },
+        });
+        console.log('✅ [API PUT] Avatar actualizado para MaintenanceProvider');
+      }
 
       console.log('✅ [API PUT] MaintenanceProvider actualizado');
     } else {
