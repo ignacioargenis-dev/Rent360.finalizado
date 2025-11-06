@@ -6,6 +6,11 @@ import { logger } from '../logger';
 let PusherClient: any = null;
 let pusherClientLoaded = false;
 
+// FORZAR LOG PARA CONFIRMAR QUE EL ARCHIVO SE CARGA
+if (typeof window !== 'undefined') {
+  console.log('🚨 [DEBUG] WebSocket client file loaded successfully');
+}
+
 const loadPusherClient = async () => {
   if (pusherClientLoaded) {
     return PusherClient;
@@ -62,6 +67,17 @@ class WebSocketClient {
     if (this._isConnected) {
       return;
     }
+
+    // FORZAR LOGS PARA DEBUGGING - SIEMPRE APARECEN
+    console.log('🚨 [DEBUG] WebSocket connect called with token:', !!token);
+    console.log('🚨 [DEBUG] Environment check:', {
+      hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
+      hasPusherCluster: !!process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+      shouldUsePusher: this.shouldUsePusher(),
+      currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server',
+      wsUrl: process.env.NEXT_PUBLIC_WS_URL,
+      nodeEnv: process.env.NODE_ENV,
+    });
 
     logger.info('🔌 [WEBSOCKET] Attempting connection', {
       hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
