@@ -24,7 +24,9 @@ app.prepare().then(() => {
     if (err) {
       throw err;
     }
-    console.log(`> Ready on http://localhost:${port}`);
+    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+    console.log(`> Ready on http://${host}:${port}`);
+    console.log(`> Environment: ${process.env.NODE_ENV}`);
     console.log(`> WebSocket server initialized`);
   });
 });
