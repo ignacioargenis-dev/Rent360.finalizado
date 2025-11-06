@@ -657,6 +657,11 @@ export default function UnifiedSidebar({
   const pathname = usePathname();
   const { unreadMessagesCount: wsUnreadCount } = useWebSocket();
 
+  // Log cambios en contador de mensajes
+  useEffect(() => {
+    console.log('📊 [SIDEBAR] Unread messages count updated:', wsUnreadCount);
+  }, [wsUnreadCount]);
+
   // Generar menú estático sin estadísticas dinámicas
   const menuItems = getMenuItems();
 
@@ -759,6 +764,16 @@ export default function UnifiedSidebar({
     // Agregar badge dinámico para Mensajes
     const showUnreadBadge = item.title === 'Mensajes' && wsUnreadCount > 0;
     const badgeText = showUnreadBadge ? String(wsUnreadCount) : item.badge;
+
+    // Log cuando se renderiza badge de mensajes
+    if (item.title === 'Mensajes') {
+      console.log('🔔 [SIDEBAR] Rendering messages badge:', {
+        wsUnreadCount,
+        showUnreadBadge,
+        badgeText,
+        itemTitle: item.title,
+      });
+    }
 
     return (
       <div key={item.title}>

@@ -61,8 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 !!document.cookie.includes('auth-token') || !!document.cookie.includes('token'),
             });
             // Conectar WebSocket de forma async
+            console.log('🔌 [AUTH PROVIDER] Iniciando conexión WebSocket para usuario autenticado');
             (async () => {
-              await websocketClient.connect();
+              try {
+                console.log('🔌 [AUTH PROVIDER] Conectando WebSocket...');
+                await websocketClient.connect();
+                console.log('✅ [AUTH PROVIDER] WebSocket conectado exitosamente');
+              } catch (wsError) {
+                console.error('❌ [AUTH PROVIDER] Error conectando WebSocket:', wsError);
+              }
             })();
           }
 

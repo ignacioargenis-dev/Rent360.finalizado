@@ -247,6 +247,15 @@ export default function UnifiedMessagingSystem({
   };
 
   const loadPageData = async (silent = false) => {
+    console.log(
+      '📨 [MESSAGING COMPONENT] loadPageData called, silent:',
+      silent,
+      'user:',
+      user?.id,
+      'role:',
+      user?.role
+    );
+
     try {
       // Solo mostrar loading en carga inicial, no en refreshes silenciosos
       if (!silent) {
@@ -619,6 +628,12 @@ export default function UnifiedMessagingSystem({
       }
 
       const responseData = await response.json().catch(() => null);
+
+      // Debug: Log respuesta exitosa
+      console.log('✅ [MESSAGING] Mensaje enviado exitosamente:', {
+        messageId: responseData?.data?.id,
+        responseData: responseData,
+      });
 
       if (responseData?.data?.id && selectedFile) {
         // Si hay un archivo adjunto, subirlo
