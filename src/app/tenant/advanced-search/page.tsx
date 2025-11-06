@@ -61,7 +61,7 @@ import {
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
-interface Property {
+interface AdvancedSearchProperty {
   id: string;
   title: string;
   address: string;
@@ -79,6 +79,10 @@ interface Property {
   ownerId?: string;
   ownerName?: string;
   ownerEmail?: string;
+  status?: string;
+  brokerId?: string;
+  brokerName?: string;
+  brokerEmail?: string;
 }
 
 interface SavedSearch {
@@ -112,8 +116,8 @@ export default function BúsquedaAvanzadaPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<AdvancedSearchProperty[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<AdvancedSearchProperty[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -198,7 +202,7 @@ export default function BúsquedaAvanzadaPage() {
       });
 
       // Transformar datos de la API al formato esperado
-      const transformedProperties: Property[] =
+      const transformedProperties: AdvancedSearchProperty[] =
         data.properties?.map((prop: any) => ({
           id: prop.id,
           title: prop.title,
@@ -395,7 +399,7 @@ export default function BúsquedaAvanzadaPage() {
   );
 
   const handleContactOwner = useCallback(
-    async (property: Property) => {
+    async (property: AdvancedSearchProperty) => {
       try {
         logger.info('Iniciando contacto con propietario', {
           propertyId: property.id,
