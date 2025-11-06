@@ -403,8 +403,40 @@ export default function BúsquedaAvanzadaPage() {
           hasOwnerEmail: !!property.ownerEmail,
         });
 
-        // Si no tenemos la información del propietario, obtenerla de la API
-        if (!property.ownerId || !property.ownerEmail) {
+        // Determinar si contactar al propietario o al broker
+        const isManagedProperty = property.status === 'MANAGED' && property.brokerId;
+        logger.info('Evaluando tipo de contacto', {
+          propertyId: property.id,
+          status: property.status,
+          hasBrokerId: !!property.brokerId,
+          isManagedProperty,
+        });
+
+        // Si es una propiedad managed y tenemos info del broker, contactar directamente al broker
+        if (isManagedProperty && property.brokerId && property.brokerName) {
+          logger.info('Contactando al broker directamente (info disponible)', {
+            propertyId: property.id,
+            brokerId: property.brokerId,
+            brokerName: property.brokerName,
+          });
+
+          const recipientData = {
+            id: property.brokerId,
+            name: property.brokerName,
+            email: property.brokerEmail || '',
+            type: 'broker' as const,
+            propertyId: property.id,
+            propertyTitle: property.title,
+            propertyAddress: property.address,
+          };
+
+          sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+          router.push('/tenant/messages?new=true');
+          return;
+        }
+
+        // Si no tenemos la información necesaria, obtenerla de la API
+        if ((!property.ownerId || !property.ownerEmail) && !isManagedProperty) {
           logger.info('Obteniendo información del propietario desde API', {
             propertyId: property.id,
           });
@@ -429,8 +461,32 @@ export default function BúsquedaAvanzadaPage() {
               propertyId: property.id,
               hasOwner: !!propertyData.owner,
               hasPropertyOwner: !!propertyData.property?.owner,
+              hasBroker: !!propertyData.broker,
               propertyDataKeys: Object.keys(propertyData),
             });
+
+            // Para propiedades managed, contactar al broker
+            if (isManagedProperty && propertyData.broker) {
+              logger.info('Contactando al broker para propiedad managed', {
+                propertyId: property.id,
+                brokerId: propertyData.broker.id,
+                brokerName: propertyData.broker.name,
+              });
+
+              const recipientData = {
+                id: propertyData.broker.id,
+                name: propertyData.broker.name || 'Broker',
+                email: propertyData.broker.email || '',
+                type: 'broker' as const,
+                propertyId: property.id,
+                propertyTitle: property.title,
+                propertyAddress: property.address,
+              };
+
+              sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+              router.push('/tenant/messages?new=true');
+              return;
+            }
 
             const ownerInfo = propertyData.owner || propertyData.property?.owner;
 

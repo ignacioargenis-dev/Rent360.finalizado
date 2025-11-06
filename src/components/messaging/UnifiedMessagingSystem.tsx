@@ -200,6 +200,14 @@ export default function UnifiedMessagingSystem({
   // WebSocket listener para actualizaciones en tiempo real
   useEffect(() => {
     console.log(
+      '🔌 [WEBSOCKET] Component mounted - user:',
+      user,
+      'user.id:',
+      user?.id,
+      'user.role:',
+      user?.role
+    );
+    console.log(
       '🔌 [WEBSOCKET] Setting up WebSocket listener for user:',
       user?.id,
       'role:',

@@ -45,6 +45,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             avatar: true,
           },
         },
+        broker: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
         contracts: {
           where: { status: 'ACTIVE' },
           include: {
@@ -70,7 +78,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       logger.warn('Property not found', { propertyId });
       return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
-    
+
     console.log('✅ [GET_PROPERTY] Propiedad encontrada', {
       propertyId,
       title: property.title,
@@ -114,14 +122,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Si hay BrokerPropertyManagement activo, NO es propia (está gestionada)
     // Si NO hay BrokerPropertyManagement Y ownerId === brokerId, es propia
     const isOwned = !managedProperty && property.ownerId === property.brokerId;
-    
+
     // ✅ CORREGIDO: Determinar si el broker actual está gestionando esta propiedad
     // Un broker puede editar si:
     // 1. Es propiedad propia (isOwned === true)
     // 2. Está gestionando activamente la propiedad (managedProperty.brokerId === currentUser.id)
-    const isManagedByCurrentUser = currentUser && 
-      managedProperty && 
-      managedProperty.brokerId === currentUser.id;
+    const isManagedByCurrentUser =
+      currentUser && managedProperty && managedProperty.brokerId === currentUser.id;
     const canEdit = currentUser?.role === 'BROKER' && (isOwned || isManagedByCurrentUser);
 
     // Formatear la respuesta
@@ -205,7 +212,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       brokerId: property.brokerId,
       price: property.price,
     });
-    
+
     logger.info('Property details fetched successfully', {
       propertyId,
       hasImages: transformedImages.length > 0,
