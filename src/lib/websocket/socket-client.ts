@@ -154,8 +154,13 @@ class WebSocketClient {
 
     const cookies = document.cookie.split(';');
     const cookieNames = cookies.map(c => c.trim().split('=')[0]);
+    const cookieDetails = cookies.map(c => {
+      const [name, value] = c.trim().split('=');
+      return { name, length: value?.length || 0 };
+    });
 
     console.log('🍪 [WS AUTH] Available cookies:', cookieNames);
+    console.log('🍪 [WS AUTH] Cookie details:', cookieDetails);
 
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
