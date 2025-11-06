@@ -11,14 +11,8 @@ console.log('🔍 [SERVER] NODE_ENV:', process.env.NODE_ENV);
 console.log('🔍 [SERVER] PORT:', process.env.PORT);
 console.log('🔍 [SERVER] HOST:', process.env.HOST);
 
-// En producción (Digital Ocean), usar puerto 8080 directamente
-// En desarrollo, usar PORT de entorno o 3000 por defecto
-const port =
-  process.env.NODE_ENV === 'production'
-    ? 8080
-    : process.env.PORT
-      ? parseInt(process.env.PORT)
-      : 3000;
+// Usar el puerto que Digital Ocean configura automáticamente
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 console.log('🔍 [SERVER] Final port value:', port);
 console.log('🔍 [SERVER] PORT type:', typeof process.env.PORT);
 console.log('🔍 [SERVER] PORT truthy check:', !!process.env.PORT);
