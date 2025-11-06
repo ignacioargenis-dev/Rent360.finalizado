@@ -883,43 +883,64 @@ export default function ProviderProfilePage() {
                 <CardTitle>Servicios y Certificaciones</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div>
-                  <Label>Categorías de Servicio</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {profile.services.categories.map(category => (
-                      <Badge key={category} variant="outline">
-                        {category}
-                      </Badge>
-                    ))}
+                {!profile.services && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Cargando información de servicios...</p>
                   </div>
-                </div>
+                )}
+                {profile.services && (
+                  <div className="space-y-6">
+                    <div>
+                      <Label>Categorías de Servicio</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {Array.isArray(profile.services?.categories) ? (
+                          profile.services.categories.map(category => (
+                            <Badge key={category} variant="outline">
+                              {category}
+                            </Badge>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No hay categorías definidas</p>
+                        )}
+                      </div>
+                    </div>
 
-                <div>
-                  <Label>Especialidades</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {profile.services.specialties.map(specialty => (
-                      <Badge key={specialty} variant="secondary">
-                        {specialty}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+                    <div>
+                      <Label>Especialidades</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {Array.isArray(profile.services?.specialties) ? (
+                          profile.services.specialties.map(specialty => (
+                            <Badge key={specialty} variant="secondary">
+                              {specialty}
+                            </Badge>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No hay especialidades definidas</p>
+                        )}
+                      </div>
+                    </div>
 
-                <div>
-                  <Label>Certificaciones</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {profile.services.certifications.map(certification => (
-                      <Badge
-                        key={certification}
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        <Award className="w-3 h-3" />
-                        {certification}
-                      </Badge>
-                    ))}
+                    <div>
+                      <Label>Certificaciones</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {Array.isArray(profile.services?.certifications) ? (
+                          profile.services.certifications.map(certification => (
+                            <Badge
+                              key={certification}
+                              variant="outline"
+                              className="flex items-center gap-1"
+                            >
+                              <Award className="w-3 h-3" />
+                              {certification}
+                            </Badge>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No hay certificaciones definidas</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -936,25 +957,31 @@ export default function ProviderProfilePage() {
                         <span className="text-sm font-medium">Estado</span>
                         <Badge
                           className={
-                            profile.services.insurance.hasInsurance ? 'bg-green-500' : 'bg-red-500'
+                            profile.services?.insurance?.hasInsurance
+                              ? 'bg-green-500'
+                              : 'bg-red-500'
                           }
                         >
-                          {profile.services.insurance.hasInsurance ? 'Activo' : 'Inactivo'}
+                          {profile.services?.insurance?.hasInsurance ? 'Activo' : 'Inactivo'}
                         </Badge>
                       </div>
-                      {profile.services.insurance.hasInsurance && (
+                      {profile.services?.insurance?.hasInsurance && (
                         <div className="space-y-1 text-sm text-gray-600">
                           <p>
-                            <strong>Proveedor:</strong> {profile.services.insurance.provider}
+                            <strong>Proveedor:</strong>{' '}
+                            {profile.services?.insurance?.provider || 'No especificado'}
                           </p>
                           <p>
-                            <strong>Cobertura:</strong> {profile.services.insurance.coverage}
+                            <strong>Cobertura:</strong>{' '}
+                            {profile.services?.insurance?.coverage || 'No especificada'}
                           </p>
                           <p>
                             <strong>Vence:</strong>{' '}
-                            {new Date(profile.services.insurance.expiryDate).toLocaleDateString(
-                              'es-CL'
-                            )}
+                            {profile.services?.insurance?.expiryDate
+                              ? new Date(profile.services.insurance.expiryDate).toLocaleDateString(
+                                  'es-CL'
+                                )
+                              : 'No especificada'}
                           </p>
                         </div>
                       )}
@@ -966,16 +993,20 @@ export default function ProviderProfilePage() {
                     <div className="mt-2 p-4 bg-gray-50 rounded-lg">
                       <div className="space-y-1 text-sm">
                         <p>
-                          <strong>Número:</strong> {profile.services.licensing.licenseNumber}
+                          <strong>Número:</strong>{' '}
+                          {profile.services?.licensing?.licenseNumber || 'No especificado'}
                         </p>
                         <p>
-                          <strong>Autoridad:</strong> {profile.services.licensing.issuingAuthority}
+                          <strong>Autoridad:</strong>{' '}
+                          {profile.services?.licensing?.issuingAuthority || 'No especificada'}
                         </p>
                         <p>
                           <strong>Vence:</strong>{' '}
-                          {new Date(profile.services.licensing.expiryDate).toLocaleDateString(
-                            'es-CL'
-                          )}
+                          {profile.services?.licensing?.expiryDate
+                            ? new Date(profile.services.licensing.expiryDate).toLocaleDateString(
+                                'es-CL'
+                              )
+                            : 'No especificada'}
                         </p>
                       </div>
                     </div>
@@ -992,56 +1023,61 @@ export default function ProviderProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {Object.entries(profile.operational.workingHours).map(([day, hours]) => (
-                    <div key={day} className="p-4 border border-gray-200 rounded-lg space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium capitalize">{day}</span>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`${day}-closed`}
-                            checked={hours.closed}
-                            onChange={e =>
-                              handleWorkingHoursChange(day, 'closed', e.target.checked)
-                            }
-                            className="rounded"
-                          />
-                          <label htmlFor={`${day}-closed`} className="text-sm text-gray-600">
-                            Cerrado
-                          </label>
+                  {profile.operational?.workingHours &&
+                    Object.entries(profile.operational.workingHours).map(([day, hours]) => (
+                      <div key={day} className="p-4 border border-gray-200 rounded-lg space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium capitalize">{day}</span>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`${day}-closed`}
+                              checked={hours.closed}
+                              onChange={e =>
+                                handleWorkingHoursChange(day, 'closed', e.target.checked)
+                              }
+                              className="rounded"
+                            />
+                            <label htmlFor={`${day}-closed`} className="text-sm text-gray-600">
+                              Cerrado
+                            </label>
+                          </div>
                         </div>
-                      </div>
 
-                      {!hours.closed && (
-                        <div className="flex items-center space-x-2">
-                          <div className="flex-1">
-                            <Label htmlFor={`${day}-open`} className="text-xs text-gray-500">
-                              Apertura
-                            </Label>
-                            <Input
-                              id={`${day}-open`}
-                              type="time"
-                              value={hours.open}
-                              onChange={e => handleWorkingHoursChange(day, 'open', e.target.value)}
-                              className="h-8"
-                            />
+                        {!hours.closed && (
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-1">
+                              <Label htmlFor={`${day}-open`} className="text-xs text-gray-500">
+                                Apertura
+                              </Label>
+                              <Input
+                                id={`${day}-open`}
+                                type="time"
+                                value={hours.open}
+                                onChange={e =>
+                                  handleWorkingHoursChange(day, 'open', e.target.value)
+                                }
+                                className="h-8"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Label htmlFor={`${day}-close`} className="text-xs text-gray-500">
+                                Cierre
+                              </Label>
+                              <Input
+                                id={`${day}-close`}
+                                type="time"
+                                value={hours.close}
+                                onChange={e =>
+                                  handleWorkingHoursChange(day, 'close', e.target.value)
+                                }
+                                className="h-8"
+                              />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <Label htmlFor={`${day}-close`} className="text-xs text-gray-500">
-                              Cierre
-                            </Label>
-                            <Input
-                              id={`${day}-close`}
-                              type="time"
-                              value={hours.close}
-                              onChange={e => handleWorkingHoursChange(day, 'close', e.target.value)}
-                              className="h-8"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        )}
+                      </div>
+                    ))}
                 </div>
               </CardContent>
             </Card>
