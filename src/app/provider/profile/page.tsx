@@ -209,20 +209,9 @@ export default function ProviderProfilePage() {
       }
 
       // Parsear servicios
-      console.log('🔍 [SERVICES] apiProfile.serviceTypes:', apiProfile.serviceTypes);
-      console.log('🔍 [SERVICES] apiProfile.specialties:', apiProfile.specialties);
-      console.log('🔍 [SERVICES] apiProfile keys:', Object.keys(apiProfile));
-
       const serviceTypes = apiProfile.serviceTypes || apiProfile.specialties || [];
-      console.log('🔍 [SERVICES] serviceTypes raw:', serviceTypes);
-      console.log('🔍 [SERVICES] serviceTypes type:', typeof serviceTypes);
-      console.log('🔍 [SERVICES] isArray:', Array.isArray(serviceTypes));
-
       const categories = Array.isArray(serviceTypes) ? serviceTypes : [];
       const specialties = Array.isArray(serviceTypes) ? serviceTypes : [];
-
-      console.log('🔍 [SERVICES] categories final:', categories);
-      console.log('🔍 [SERVICES] specialties final:', specialties);
 
       // Parsear disponibilidad
       let availability = {
