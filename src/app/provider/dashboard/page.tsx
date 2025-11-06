@@ -67,7 +67,6 @@ export default function ProviderDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -199,22 +198,6 @@ export default function ProviderDashboard() {
       setSuccessMessage('Cotización enviada exitosamente');
     } catch (error) {
       setErrorMessage('Error al enviar la cotización. Intente nuevamente.');
-    }
-  };
-
-  const loadUnreadMessagesCount = async () => {
-    try {
-      const response = await fetch('/api/messages/unread-count');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUnreadMessagesCount(data.unreadCount);
-        }
-      }
-    } catch (error) {
-      logger.error('Error loading unread messages count:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
     }
   };
 

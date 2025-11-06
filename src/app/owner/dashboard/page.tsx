@@ -314,36 +314,11 @@ export default function OwnerDashboard() {
     }
   }, []); // Removido 'user' de las dependencias para evitar loops infinitos
 
-  // Función para cargar contador de mensajes no leídos
-  const loadUnreadMessagesCount = useCallback(async () => {
-    try {
-      const response = await fetch('/api/messages/unread-count');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUnreadMessagesCount(data.unreadCount);
-        }
-      }
-    } catch (error) {
-      logger.error('Error loading unread messages count:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }, []);
-
   useEffect(() => {
     // Solo cargar datos UNA VEZ cuando el usuario esté disponible
     if (user && !hasLoadedData.current) {
       hasLoadedData.current = true; // Marcar como cargado ANTES de la llamada
       loadDashboardData();
-      loadUnreadMessagesCount();
-
-      // Actualizar contador cada 30 segundos
-      const interval = setInterval(() => {
-        loadUnreadMessagesCount();
-      }, 30000);
-
-      return () => clearInterval(interval);
     } else if (!user && !userLoading && !hasLoadedData.current) {
       // Usuario no autenticado, mostrar datos vacíos
       setLoading(false);
@@ -476,7 +451,6 @@ export default function OwnerDashboard() {
       user={user}
       title="Panel de Control de Propietario"
       subtitle="Gestiona tus propiedades e ingresos"
-      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="bg-gray-50">
         <div className="container mx-auto px-4 py-8">

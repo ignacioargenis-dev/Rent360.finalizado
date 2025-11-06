@@ -159,22 +159,6 @@ export default function AdminDashboard() {
     refreshDashboard();
   };
 
-  const loadUnreadMessagesCount = async () => {
-    try {
-      const response = await fetch('/api/messages/unread-count');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUnreadMessagesCount(data.unreadCount);
-        }
-      }
-    } catch (error) {
-      logger.error('Error loading unread messages count:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  };
-
   useEffect(() => {
     // Load user data from API
     const loadUserData = async () => {
@@ -192,14 +176,6 @@ export default function AdminDashboard() {
     };
 
     loadUserData();
-    loadUnreadMessagesCount();
-
-    // Actualizar contador cada 30 segundos
-    const interval = setInterval(() => {
-      loadUnreadMessagesCount();
-    }, 30000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const getRoleDisplayName = (role: string) => {

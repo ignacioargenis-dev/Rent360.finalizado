@@ -54,7 +54,6 @@ export default function UnifiedDashboardLayout({
         user={user}
         showNotifications={showNotifications}
         notificationCount={notificationCount}
-        unreadMessagesCount={unreadMessagesCount}
       >
         <div className="p-6">
           {(title || subtitle) && (
