@@ -41,27 +41,50 @@ export class PusherWebSocketClient {
         },
       });
 
-      // Subscribe to private user channel
-      this.channel = this.pusher.subscribe('private-user');
-
+      // ✅ ESPERAR A QUE PUSHER SE CONECTE PRIMERO ANTES DE SUSCRIBIRSE
       return new Promise(resolve => {
-        this.channel.bind('pusher:subscription_succeeded', () => {
-          logger.info('✅ [PUSHER] Connected successfully');
-          this._isConnected = true;
-          this.emit('connect');
-          resolve(true);
+        // Escuchar evento de conexión exitosa
+        this.pusher.connection.bind('connected', () => {
+          logger.info(
+            '✅ [PUSHER] Connection established, socket_id:',
+            this.pusher.connection.socket_id
+          );
+
+          // AHORA suscribirse al canal privado (después de tener socket_id)
+          this.channel = this.pusher.subscribe('private-user');
+
+          this.channel.bind('pusher:subscription_succeeded', () => {
+            logger.info('✅ [PUSHER] Subscription successful');
+            this._isConnected = true;
+            this.emit('connect');
+            resolve(true);
+          });
+
+          this.channel.bind('pusher:subscription_error', (error: any) => {
+            logger.error('❌ [PUSHER] Subscription error:', error);
+            this._isConnected = false;
+            this.emit('disconnect');
+            resolve(false);
+          });
+
+          // Bind standard events
+          this.channel.bind('new-message', (data: any) => this.emit('new-message', data));
+          this.channel.bind('notification', (data: any) => this.emit('notification', data));
         });
 
-        this.channel.bind('pusher:subscription_error', (error: any) => {
-          logger.error('❌ [PUSHER] Subscription error:', error);
-          this._isConnected = false;
-          this.emit('disconnect');
+        // Manejar errores de conexión
+        this.pusher.connection.bind('error', (error: any) => {
+          logger.error('❌ [PUSHER] Connection error:', error);
           resolve(false);
         });
 
-        // Bind standard events
-        this.channel.bind('new-message', (data: any) => this.emit('new-message', data));
-        this.channel.bind('notification', (data: any) => this.emit('notification', data));
+        // Timeout de seguridad (10 segundos)
+        setTimeout(() => {
+          if (!this._isConnected) {
+            logger.error('❌ [PUSHER] Connection timeout');
+            resolve(false);
+          }
+        }, 10000);
       });
     } catch (error) {
       logger.error('❌ [PUSHER] Failed to initialize', {
