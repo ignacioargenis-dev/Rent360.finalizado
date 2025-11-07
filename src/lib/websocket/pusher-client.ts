@@ -10,12 +10,23 @@ export class PusherWebSocketClient {
 
   constructor() {
     // ✅ Log en constructor para confirmar que la clase se instancia
+    if (typeof window !== 'undefined') {
+      window.console.log('🚨🚨🚨🚨🚨 [PUSHER] PusherWebSocketClient CONSTRUCTOR CALLED 🚨🚨🚨🚨🚨');
+    }
     console.log('🚨🚨🚨🚨🚨 [PUSHER CLASS] PusherWebSocketClient instance created 🚨🚨🚨🚨🚨');
     console.log('🚨🚨🚨 [PUSHER] File loaded and class instantiated successfully');
   }
 
   async connect(token?: string): Promise<boolean> {
     this._connectionAttempts++;
+
+    // Usar window.console para asegurar que se muestre en producción
+    if (typeof window !== 'undefined') {
+      window.console.log(
+        '🚨🚨🚨🚨🚨 [PUSHER] connect() METHOD CALLED! Attempt #' + this._connectionAttempts
+      );
+    }
+
     console.log(
       '🚨🚨🚨🚨🚨 [PUSHER DEBUG] connect() CALLED, attempt #' +
         this._connectionAttempts +
@@ -125,6 +136,10 @@ export class PusherWebSocketClient {
 
         // Escuchar evento de conexión exitosa
         this.pusher.connection.bind('connected', () => {
+          if (typeof window !== 'undefined') {
+            window.console.log('🔥🔥🔥🔥🔥 [PUSHER] CONNECTED EVENT FIRED! 🔥🔥🔥🔥🔥');
+            window.console.log('🔥 [PUSHER] Socket ID:', this.pusher.connection.socket_id);
+          }
           console.log(
             '🔥 [PUSHER DEBUG] Pusher connected! Socket ID:',
             this.pusher.connection.socket_id
@@ -135,15 +150,29 @@ export class PusherWebSocketClient {
           );
 
           // AHORA suscribirse al canal privado (después de tener socket_id)
+          if (typeof window !== 'undefined') {
+            window.console.log('🔥🔥🔥 [PUSHER] About to subscribe to private-user channel');
+          }
           console.log('🔥 [PUSHER DEBUG] Subscribing to private-user channel...');
           this.channel = this.pusher.subscribe('private-user');
 
+          if (typeof window !== 'undefined') {
+            window.console.log('🔥 [PUSHER] Channel subscribed, registering callbacks...');
+            window.console.log('🔥 [PUSHER] Channel object:', this.channel);
+          }
+
           // ✅ Escuchar suscripción exitosa
           this.channel.bind('pusher:subscription_succeeded', () => {
+            if (typeof window !== 'undefined') {
+              window.console.log('🔥🔥🔥🔥🔥 [PUSHER] SUBSCRIPTION SUCCEEDED! 🔥🔥🔥🔥🔥');
+              window.console.log('🔥 [PUSHER] Marking as connected and emitting connect event');
+            }
             console.log('🔥🔥🔥 [PUSHER DEBUG] Subscription SUCCEEDED! Marking as connected');
             logger.info('✅ [PUSHER] Subscription successful');
             this._isConnected = true;
+            console.log('🔥 [PUSHER] _isConnected set to:', this._isConnected);
             this.emit('connect');
+            console.log('🔥 [PUSHER] connect event emitted');
             resolve(true);
           });
 
