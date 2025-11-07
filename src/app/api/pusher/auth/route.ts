@@ -91,93 +91,68 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener datos del request - pueden venir como JSON, form data o query params
-    let socket_id: string;
-    let channel_name: string;
+    let socket_id: string | null = null;
+    let channel_name: string | null = null;
 
-    // 🔥 CAPTURAR BODY RAW PRIMERO antes de parsearlo
-    let rawBody = '';
-    try {
-      const clonedRequest = request.clone();
-      rawBody = await clonedRequest.text();
-      logger.info('🔥 [PUSHER DEBUG] Raw request body:', {
-        rawBody,
-        bodyLength: rawBody.length,
-        bodyPreview: rawBody.substring(0, 200),
-      });
-    } catch (bodyError) {
-      logger.error('🔥 [PUSHER DEBUG] Could not read raw body:', bodyError);
-    }
+    const contentType = request.headers.get('content-type') || '';
 
-    logger.info('🔍 [PUSHER] Request details:', {
+    logger.info('🔥🔥🔥 [PUSHER AUTH] Request received:', {
       method: request.method,
-      contentType: request.headers.get('content-type'),
+      contentType: contentType,
       url: request.url,
       hasBody: !!request.body,
-      allHeaders: Object.fromEntries(request.headers.entries()),
     });
 
-    // Log the complete URL with all parameters
-    const fullUrl = request.url;
-    logger.info('🔍 [PUSHER] Full URL:', { fullUrl });
+    logger.info('🔥 [PUSHER AUTH] All headers:', Object.fromEntries(request.headers.entries()));
 
-    // Log all query parameters
-    const urlObj = new URL(request.url);
-    const queryParams: Record<string, string> = {};
-    urlObj.searchParams.forEach((value, key) => {
-      queryParams[key] = value;
-    });
-    logger.info('🔍 [PUSHER] Query params:', queryParams);
-
+    // 🔥 ESTRATEGIA: Leer el body raw primero y parsearlo según el tipo
     try {
-      // Intentar primero como JSON (caso normal)
-      const jsonData = await request.json();
-      socket_id = jsonData.socket_id;
-      channel_name = jsonData.channel_name;
-      logger.info('📨 Auth data received as JSON:', {
-        socket_id,
-        channel_name,
-        fullJsonData: jsonData,
-        hasSocketId: !!socket_id,
-        hasChannelName: !!channel_name,
-        socketIdType: typeof socket_id,
-        channelNameType: typeof channel_name,
-      });
-    } catch (jsonError) {
-      logger.info('📨 JSON parsing failed, trying other methods', {
-        error: jsonError instanceof Error ? jsonError.message : String(jsonError),
+      const bodyText = await request.text();
+      logger.info('🔥 [PUSHER AUTH] Raw body text:', {
+        bodyText,
+        bodyLength: bodyText.length,
+        isEmpty: bodyText.length === 0,
       });
 
-      // Intentar como form data
-      try {
-        const formData = await request.formData();
-        socket_id = formData.get('socket_id') as string;
-        channel_name = formData.get('channel_name') as string;
-        if (socket_id && channel_name) {
-          logger.info('📨 Auth data received as Form Data:', { socket_id, channel_name });
+      if (bodyText.length > 0) {
+        // Intentar parsear según el Content-Type
+        if (contentType.includes('application/json')) {
+          // JSON
+          try {
+            const jsonData = JSON.parse(bodyText);
+            socket_id = jsonData.socket_id;
+            channel_name = jsonData.channel_name;
+            logger.info('✅ Parsed as JSON:', { socket_id, channel_name, fullData: jsonData });
+          } catch (jsonError) {
+            logger.error('❌ JSON parse error:', jsonError);
+          }
         } else {
-          logger.info('📨 Form Data parsed but missing fields:', {
-            socket_id: formData.get('socket_id'),
-            channel_name: formData.get('channel_name'),
-            allKeys: Array.from(formData.keys()),
-          });
+          // Asumir form-urlencoded (lo que Pusher envía por defecto)
+          try {
+            const params = new URLSearchParams(bodyText);
+            socket_id = params.get('socket_id');
+            channel_name = params.get('channel_name');
+            logger.info('✅ Parsed as form-urlencoded:', {
+              socket_id,
+              channel_name,
+              allParams: Object.fromEntries(params.entries()),
+            });
+          } catch (parseError) {
+            logger.error('❌ URLSearchParams parse error:', parseError);
+          }
         }
-      } catch (formError) {
-        // Finalmente, intentar como query parameters
-        logger.info('📨 Form data parsing failed, trying query params', {
-          error: formError instanceof Error ? formError.message : String(formError),
-        });
-        socket_id = url.searchParams.get('socket_id')!;
-        channel_name = url.searchParams.get('channel_name')!;
-        if (socket_id && channel_name) {
-          logger.info('📨 Auth data received as Query Params:', { socket_id, channel_name });
-        } else {
-          logger.info('📨 Query params parsed but missing fields:', {
-            socket_id: url.searchParams.get('socket_id'),
-            channel_name: url.searchParams.get('channel_name'),
-            allParams: queryParams,
-          });
-        }
+      } else {
+        logger.warn('⚠️ Body is empty, checking query params...');
+        const urlObj = new URL(request.url);
+        socket_id = urlObj.searchParams.get('socket_id');
+        channel_name = urlObj.searchParams.get('channel_name');
+        logger.info('📨 Got from query params:', { socket_id, channel_name });
       }
+    } catch (readError) {
+      logger.error('❌ Error reading request body:', {
+        error: readError instanceof Error ? readError.message : String(readError),
+        stack: readError instanceof Error ? readError.stack : undefined,
+      });
     }
 
     if (!socket_id || !channel_name) {
