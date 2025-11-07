@@ -121,10 +121,14 @@ export class PusherWebSocketClient {
                     console.log('🔥 [PUSHER DEBUG] Auth successful, marking as connected');
                     // ✅ MARCAR COMO CONECTADO CUANDO AUTH TENGA ÉXITO
                     this._isConnected = true;
+                    console.log('🔥 [PUSHER DEBUG] About to emit connect event');
                     this.emit('connect');
+                    console.log('🔥 [PUSHER DEBUG] Connect event emitted successfully');
 
                     // Asignar el canal autorizado
                     this.channel = channel;
+                    // También asignar para compatibilidad con socket-client.ts
+                    (this as any).pusherChannel = channel;
 
                     // Configurar event listeners para mensajes
                     console.log('🔥 [PUSHER DEBUG] Setting up message listeners');

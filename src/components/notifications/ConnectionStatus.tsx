@@ -20,13 +20,23 @@ export default function ConnectionStatus({
 
   // Escuchar cambios en el estado de conexión
   useEffect(() => {
-    const handleConnect = () => setIsConnected(true);
-    const handleDisconnect = () => setIsConnected(false);
+    const handleConnect = () => {
+      console.log('🔥 [CONNECTION STATUS] Connect event received, setting connected to true');
+      setIsConnected(true);
+    };
+    const handleDisconnect = () => {
+      console.log('🔥 [CONNECTION STATUS] Disconnect event received, setting connected to false');
+      setIsConnected(false);
+    };
 
     websocketClient.on('connect', handleConnect);
     websocketClient.on('disconnect', handleDisconnect);
 
     // Verificar estado inicial
+    console.log(
+      '🔥 [CONNECTION STATUS] Initial state - websocketClient.isConnected:',
+      websocketClient.isConnected
+    );
     setIsConnected(websocketClient.isConnected);
 
     return () => {
