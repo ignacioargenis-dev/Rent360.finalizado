@@ -55,12 +55,27 @@ class WebSocketClient {
 
   // Determinar si usar Pusher o Socket.io
   private shouldUsePusher(): boolean {
-    // Check if Pusher is available and configured
-    return !!(
-      process.env.NEXT_PUBLIC_PUSHER_KEY &&
-      process.env.NEXT_PUBLIC_PUSHER_CLUSTER &&
-      (globalThis as any).Pusher
-    );
+    try {
+      // Check if Pusher is available and configured
+      // In Next.js, NEXT_PUBLIC_* vars are injected at build time
+      // They should be available directly in the code
+      const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+      const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+      // For Pusher, we just need the config vars - we'll import the library dynamically
+      const canUsePusher = !!(pusherKey && pusherCluster);
+
+      logger.info('🔍 [PUSHER CHECK]', {
+        pusherKey: pusherKey ? pusherKey.substring(0, 8) + '...' : 'NOT SET',
+        pusherCluster: pusherCluster || 'NOT SET',
+        canUsePusher,
+        isBrowser: typeof window !== 'undefined',
+      });
+
+      return canUsePusher;
+    } catch (error) {
+      logger.warn('Error checking Pusher availability:', { error });
+      return false;
+    }
   }
 
   async connect(userId?: string, token?: string): Promise<void> {
@@ -77,6 +92,7 @@ class WebSocketClient {
       userId: this._userId,
       hasToken: !!token,
       hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
+      pusherKeyValue: process.env.NEXT_PUBLIC_PUSHER_KEY?.substring(0, 8) + '...',
       hasPusherCluster: !!process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
       shouldUsePusher: this.shouldUsePusher(),
       currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server',

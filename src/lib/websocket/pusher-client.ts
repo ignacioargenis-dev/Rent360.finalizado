@@ -9,11 +9,17 @@ export class PusherWebSocketClient {
 
   async connect(token?: string): Promise<boolean> {
     try {
-      // Try to get Pusher from global scope (must be loaded externally)
-      const Pusher: any = (globalThis as any).Pusher;
+      // Import Pusher dynamically
+      let Pusher: any;
+      try {
+        Pusher = (await import('pusher-js')).default;
+      } catch (importError) {
+        logger.warn('⚠️ [PUSHER] Failed to import pusher-js:', { error: importError });
+        return false;
+      }
 
       if (!Pusher) {
-        logger.warn('⚠️ [PUSHER] Pusher not available. Make sure pusher-js is loaded externally');
+        logger.warn('⚠️ [PUSHER] Pusher not available after import');
         return false;
       }
 
