@@ -6,25 +6,33 @@ export class PusherWebSocketClient {
   private channel: any = null;
   private eventListeners: Map<string, Function[]> = new Map();
   private _isConnected = false;
+  private _connectionAttempts = 0;
 
   async connect(token?: string): Promise<boolean> {
+    this._connectionAttempts++;
+    console.log('🔥🔥🔥 [PUSHER DEBUG] connect() called, attempt #' + this._connectionAttempts);
+    console.trace('🔥🔥🔥 [PUSHER DEBUG] Call stack:');
     try {
       // Import Pusher dynamically
       let Pusher: any;
       try {
         Pusher = (await import('pusher-js')).default;
+        console.log('🔥 [PUSHER DEBUG] pusher-js imported successfully');
       } catch (importError) {
+        console.error('🔥 [PUSHER DEBUG] Failed to import pusher-js:', importError);
         logger.warn('⚠️ [PUSHER] Failed to import pusher-js:', { error: importError });
         return false;
       }
 
       if (!Pusher) {
+        console.error('🔥 [PUSHER DEBUG] Pusher is null after import');
         logger.warn('⚠️ [PUSHER] Pusher not available after import');
         return false;
       }
 
-      // Habilitar logs de Pusher para debugging (solo en desarrollo)
-      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      // ✅ ACTIVAR LOGS DE PUSHER SIEMPRE (para debugging en producción)
+      if (typeof window !== 'undefined') {
+        console.log('🔥 [PUSHER DEBUG] Activating Pusher console logs');
         (Pusher as any).logToConsole = true;
       }
 
@@ -32,7 +40,16 @@ export class PusherWebSocketClient {
       const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
       const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
 
+      console.log('🔥 [PUSHER DEBUG] Configuration check:', {
+        hasKey: !!pusherKey,
+        keyPrefix: pusherKey?.substring(0, 8),
+        cluster: pusherCluster,
+        hasToken: !!token,
+        nodeEnv: process.env.NODE_ENV,
+      });
+
       if (!pusherKey || !pusherCluster) {
+        console.error('🔥 [PUSHER DEBUG] Missing Pusher configuration');
         logger.error('❌ [PUSHER] Missing Pusher configuration', {
           hasKey: !!pusherKey,
           hasCluster: !!pusherCluster,
@@ -48,24 +65,36 @@ export class PusherWebSocketClient {
         nodeEnv: process.env.NODE_ENV,
       });
 
+      console.log('🔥 [PUSHER DEBUG] Creating Pusher instance with config:', {
+        key: pusherKey.substring(0, 8) + '...',
+        cluster: pusherCluster,
+        forceTLS: true,
+        authEndpoint: '/api/pusher/auth',
+      });
+
       this.pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
         cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-        forceTLS: true, // ✅ Cambio: usar forceTLS en lugar de encrypted (deprecado)
+        forceTLS: true, // ✅ Usar forceTLS en lugar de encrypted (deprecado)
         authEndpoint: '/api/pusher/auth',
         auth: {
           headers: {
             Authorization: `Bearer ${token || this.getTokenFromCookies() || ''}`,
           },
-          // ✅ Cambio: REMOVER params - Pusher envía socket_id y channel_name automáticamente
+          // ✅ SIN params - Pusher envía socket_id y channel_name automáticamente
         },
       });
 
+      console.log('🔥 [PUSHER DEBUG] Pusher instance created');
+      console.log('🔥 [PUSHER DEBUG] Connection state:', this.pusher.connection.state);
       logger.info('🔧 [PUSHER] Pusher instance created, waiting for connection...');
 
       // ✅ ESPERAR A QUE PUSHER SE CONECTE PRIMERO ANTES DE SUSCRIBIRSE
       return new Promise(resolve => {
+        console.log('🔥 [PUSHER DEBUG] Setting up event listeners');
+
         // Escuchar cambios de estado de conexión para debugging
         this.pusher.connection.bind('state_change', (states: any) => {
+          console.log('🔥 [PUSHER DEBUG] State change:', states);
           logger.info('🔄 [PUSHER] State change:', {
             previous: states.previous,
             current: states.current,
@@ -74,20 +103,27 @@ export class PusherWebSocketClient {
 
         // Escuchar cuando Pusher comienza a conectar (para detectar peticiones prematuras)
         this.pusher.connection.bind('connecting', () => {
+          console.log('🔥 [PUSHER DEBUG] Pusher is connecting to server...');
           logger.info('🔌 [PUSHER] Pusher is connecting to server...');
         });
 
         // Escuchar evento de conexión exitosa
         this.pusher.connection.bind('connected', () => {
+          console.log(
+            '🔥 [PUSHER DEBUG] Connection established! socket_id:',
+            this.pusher.connection.socket_id
+          );
           logger.info(
             '✅ [PUSHER] Connection established, socket_id:',
             this.pusher.connection.socket_id
           );
 
           // AHORA suscribirse al canal privado (después de tener socket_id)
+          console.log('🔥 [PUSHER DEBUG] Subscribing to private-user channel...');
           this.channel = this.pusher.subscribe('private-user');
 
           this.channel.bind('pusher:subscription_succeeded', () => {
+            console.log('🔥 [PUSHER DEBUG] Subscription successful!');
             logger.info('✅ [PUSHER] Subscription successful');
             this._isConnected = true;
             this.emit('connect');
@@ -95,6 +131,7 @@ export class PusherWebSocketClient {
           });
 
           this.channel.bind('pusher:subscription_error', (error: any) => {
+            console.error('🔥 [PUSHER DEBUG] Subscription error:', error);
             logger.error('❌ [PUSHER] Subscription error:', error);
             this._isConnected = false;
             this.emit('disconnect');
@@ -108,21 +145,39 @@ export class PusherWebSocketClient {
 
         // Manejar errores de conexión
         this.pusher.connection.bind('error', (error: any) => {
+          console.error('🔥 [PUSHER DEBUG] Connection error:', error);
           logger.error('❌ [PUSHER] Connection error:', error);
+          resolve(false);
+        });
+
+        // Manejar otros eventos importantes
+        this.pusher.connection.bind('failed', () => {
+          console.error('🔥 [PUSHER DEBUG] Connection failed permanently');
+          resolve(false);
+        });
+
+        this.pusher.connection.bind('unavailable', () => {
+          console.error('🔥 [PUSHER DEBUG] Connection unavailable');
           resolve(false);
         });
 
         // Timeout de seguridad (10 segundos)
         setTimeout(() => {
           if (!this._isConnected) {
+            console.error('🔥 [PUSHER DEBUG] Connection timeout after 10 seconds');
+            console.log('🔥 [PUSHER DEBUG] Final connection state:', this.pusher.connection.state);
             logger.error('❌ [PUSHER] Connection timeout');
             resolve(false);
           }
         }, 10000);
-      });
 
-      logger.info('🎯 [PUSHER] Event listeners bound, waiting for connection events...');
+        console.log(
+          '🔥 [PUSHER DEBUG] Event listeners bound, current state:',
+          this.pusher.connection.state
+        );
+      });
     } catch (error) {
+      console.error('🔥 [PUSHER DEBUG] Exception in connect:', error);
       logger.error('❌ [PUSHER] Failed to initialize', {
         error: error instanceof Error ? error.message : String(error),
       });

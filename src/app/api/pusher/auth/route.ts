@@ -87,11 +87,26 @@ export async function POST(request: NextRequest) {
     let socket_id: string;
     let channel_name: string;
 
+    // 🔥 CAPTURAR BODY RAW PRIMERO antes de parsearlo
+    let rawBody = '';
+    try {
+      const clonedRequest = request.clone();
+      rawBody = await clonedRequest.text();
+      logger.info('🔥 [PUSHER DEBUG] Raw request body:', {
+        rawBody,
+        bodyLength: rawBody.length,
+        bodyPreview: rawBody.substring(0, 200),
+      });
+    } catch (bodyError) {
+      logger.error('🔥 [PUSHER DEBUG] Could not read raw body:', bodyError);
+    }
+
     logger.info('🔍 [PUSHER] Request details:', {
       method: request.method,
       contentType: request.headers.get('content-type'),
       url: request.url,
       hasBody: !!request.body,
+      allHeaders: Object.fromEntries(request.headers.entries()),
     });
 
     // Log the complete URL with all parameters
@@ -111,9 +126,19 @@ export async function POST(request: NextRequest) {
       const jsonData = await request.json();
       socket_id = jsonData.socket_id;
       channel_name = jsonData.channel_name;
-      logger.info('📨 Auth data received as JSON:', { socket_id, channel_name, jsonData });
+      logger.info('📨 Auth data received as JSON:', {
+        socket_id,
+        channel_name,
+        fullJsonData: jsonData,
+        hasSocketId: !!socket_id,
+        hasChannelName: !!channel_name,
+        socketIdType: typeof socket_id,
+        channelNameType: typeof channel_name,
+      });
     } catch (jsonError) {
-      logger.info('📨 JSON parsing failed, trying other methods');
+      logger.info('📨 JSON parsing failed, trying other methods', {
+        error: jsonError instanceof Error ? jsonError.message : String(jsonError),
+      });
 
       // Intentar como form data
       try {
@@ -131,7 +156,9 @@ export async function POST(request: NextRequest) {
         }
       } catch (formError) {
         // Finalmente, intentar como query parameters
-        logger.info('📨 Form data parsing failed, trying query params');
+        logger.info('📨 Form data parsing failed, trying query params', {
+          error: formError instanceof Error ? formError.message : String(formError),
+        });
         socket_id = url.searchParams.get('socket_id')!;
         channel_name = url.searchParams.get('channel_name')!;
         if (socket_id && channel_name) {
@@ -144,19 +171,6 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-    }
-
-    // Try to read the body as text to see what Pusher is actually sending (after parsing attempts)
-    try {
-      // Create a clone to read the body
-      const clonedRequest = request.clone();
-      const bodyText = await clonedRequest.text();
-      logger.info('🔍 [PUSHER] Raw body text (after parsing):', {
-        bodyText,
-        bodyLength: bodyText.length,
-      });
-    } catch (bodyError) {
-      logger.info('🔍 [PUSHER] Could not read body as text (after parsing):', bodyError);
     }
 
     if (!socket_id || !channel_name) {
