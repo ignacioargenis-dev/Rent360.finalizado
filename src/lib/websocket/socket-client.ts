@@ -141,23 +141,16 @@ class WebSocketClient {
       // Create and connect Pusher client
       console.log('🚨 [PUSHER] Creating new PusherWebSocketClient instance...');
       const pusherInstance = new PusherWebSocketClient();
-      console.log('🚨 [PUSHER] Instance created, calling connect() method...');
-      const connected = await pusherInstance.connect(token);
-      console.log('🚨 [PUSHER] connect() returned:', connected);
+      console.log('🚨 [PUSHER] Instance created');
 
-      if (!connected) {
-        console.error('🚨 [PUSHER] Connection failed (returned false)');
-        throw new Error('Pusher connection failed');
-      }
-      console.log('🚨 [PUSHER] Connection successful!');
-
-      // Store reference and setup event forwarding
+      // Store reference immediately
       this.pusherChannel = pusherInstance;
 
-      // Forward events to our event system
-      console.log('🚨 [SOCKET-CLIENT] Setting up event forwarding from pusherInstance...');
+      // ✅ CRÍTICO: Registrar event listeners ANTES de llamar connect()
+      // para no perder el evento 'connect' que se emite dentro del Promise
+      console.log('🚨 [SOCKET-CLIENT] Setting up event forwarding BEFORE connect()...');
       pusherInstance.on('connect', () => {
-        console.log('🚨🚨🚨 [SOCKET-CLIENT] Received CONNECT event from pusherInstance!');
+        console.log('🚨🚨🚨🚨🚨 [SOCKET-CLIENT] ✅ RECEIVED CONNECT EVENT! 🚨🚨🚨🚨🚨');
         this._isConnected = true;
         this._usingPusher = true;
         console.log('🚨 [SOCKET-CLIENT] Emitting connect event to listeners...');
@@ -172,14 +165,26 @@ class WebSocketClient {
       });
 
       pusherInstance.on('new-message', (data: any) => {
+        console.log('🚨 [SOCKET-CLIENT] Received new-message event');
         this.emitEvent('new-message', data);
       });
 
       pusherInstance.on('notification', (data: any) => {
+        console.log('🚨 [SOCKET-CLIENT] Received notification event');
         this.emitEvent('notification', data);
       });
 
-      console.log('🚨 [SOCKET-CLIENT] Event forwarding setup complete');
+      console.log('🚨 [SOCKET-CLIENT] Event forwarding setup complete, NOW calling connect()...');
+
+      // Ahora sí, llamar a connect()
+      const connected = await pusherInstance.connect(token);
+      console.log('🚨 [PUSHER] connect() returned:', connected);
+
+      if (!connected) {
+        console.error('🚨 [PUSHER] Connection failed (returned false)');
+        throw new Error('Pusher connection failed');
+      }
+      console.log('🚨🚨🚨 [PUSHER] Connection successful! 🚨🚨🚨');
       logger.info('✅ [PUSHER] Connected successfully');
     } catch (error) {
       logger.error('❌ [PUSHER] Connection failed', { error });
