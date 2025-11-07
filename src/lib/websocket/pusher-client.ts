@@ -23,26 +23,39 @@ export class PusherWebSocketClient {
         return false;
       }
 
-      logger.info('🚀 [PUSHER] Initializing Pusher client');
+      // Habilitar logs de Pusher para debugging (solo en desarrollo)
+      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        (Pusher as any).logToConsole = true;
+      }
+
+      logger.info('🚀 [PUSHER] Initializing Pusher client', {
+        key: process.env.NEXT_PUBLIC_PUSHER_KEY?.substring(0, 8) + '...',
+        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+        hasToken: !!token,
+      });
 
       this.pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
         cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-        encrypted: true,
+        forceTLS: true, // ✅ Cambio: usar forceTLS en lugar de encrypted (deprecado)
         authEndpoint: '/api/pusher/auth',
         auth: {
           headers: {
-            Authorization: token || this.getTokenFromCookies() || '',
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token || this.getTokenFromCookies() || ''}`,
           },
-          params: {
-            // Pusher puede enviar datos como query params, asegurémonos de que el token esté disponible
-            token: token || this.getTokenFromCookies() || '',
-          },
+          // ✅ Cambio: REMOVER params - Pusher envía socket_id y channel_name automáticamente
         },
       });
 
       // ✅ ESPERAR A QUE PUSHER SE CONECTE PRIMERO ANTES DE SUSCRIBIRSE
       return new Promise(resolve => {
+        // Escuchar cambios de estado de conexión para debugging
+        this.pusher.connection.bind('state_change', (states: any) => {
+          logger.info('🔄 [PUSHER] State change:', {
+            previous: states.previous,
+            current: states.current,
+          });
+        });
+
         // Escuchar evento de conexión exitosa
         this.pusher.connection.bind('connected', () => {
           logger.info(
