@@ -86,7 +86,9 @@ interface ServiceRequest {
   description: string;
   urgency: 'low' | 'medium' | 'high' | 'urgent';
   preferredDate?: string;
-  budget: number | undefined;
+  preferredTimeSlot?: string;
+  budgetMin?: number | undefined;
+  budgetMax?: number | undefined;
 }
 
 export default function TenantServicesPage() {
@@ -112,7 +114,10 @@ export default function TenantServicesPage() {
     serviceType: '',
     description: '',
     urgency: 'medium',
-    budget: undefined,
+    preferredDate: '',
+    preferredTimeSlot: 'morning',
+    budgetMin: undefined,
+    budgetMax: undefined,
   });
 
   const [successMessage, setSuccessMessage] = useState('');
@@ -356,7 +361,9 @@ export default function TenantServicesPage() {
           description: serviceRequest.description,
           urgency: urgencyMap[serviceRequest.urgency] || 'NORMAL',
           preferredDate: serviceRequest.preferredDate,
-          budget: serviceRequest.budget,
+          preferredTimeSlot: serviceRequest.preferredTimeSlot,
+          budgetMin: serviceRequest.budgetMin,
+          budgetMax: serviceRequest.budgetMax,
           serviceProviderId: selectedProvider.id, // ✅ Pasar el ID del proveedor
         }),
       });
@@ -378,7 +385,10 @@ export default function TenantServicesPage() {
         serviceType: '',
         description: '',
         urgency: 'medium',
-        budget: undefined,
+        preferredDate: '',
+        preferredTimeSlot: 'morning',
+        budgetMin: undefined,
+        budgetMax: undefined,
       });
       setSelectedProvider(null);
     } catch (error) {
@@ -683,8 +693,24 @@ export default function TenantServicesPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Tipo de Servicio</label>
-                <Input value={getServiceTypeLabel(serviceRequest.serviceType)} disabled />
+                <label className="block text-sm font-medium mb-2">Tipo de Servicio *</label>
+                <Select
+                  value={serviceRequest.serviceType}
+                  onValueChange={value =>
+                    setServiceRequest(prev => ({ ...prev, serviceType: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el tipo de servicio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="maintenance">Mantenimiento</SelectItem>
+                    <SelectItem value="cleaning">Limpieza</SelectItem>
+                    <SelectItem value="moving">Mudanzas</SelectItem>
+                    <SelectItem value="security">Seguridad</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -698,6 +724,39 @@ export default function TenantServicesPage() {
                     setServiceRequest(prev => ({ ...prev, description: e.target.value }))
                   }
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Fecha preferida</label>
+                  <Input
+                    type="date"
+                    value={serviceRequest.preferredDate || ''}
+                    onChange={e =>
+                      setServiceRequest(prev => ({ ...prev, preferredDate: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Horario preferido</label>
+                  <Select
+                    value={serviceRequest.preferredTimeSlot || ''}
+                    onValueChange={value =>
+                      setServiceRequest(prev => ({ ...prev, preferredTimeSlot: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="morning">Mañana (9:00 - 12:00)</SelectItem>
+                      <SelectItem value="afternoon">Tarde (14:00 - 18:00)</SelectItem>
+                      <SelectItem value="evening">Noche (18:00 - 21:00)</SelectItem>
+                      <SelectItem value="flexible">Flexible</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -722,18 +781,31 @@ export default function TenantServicesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Presupuesto aproximado</label>
-                  <Input
-                    type="number"
-                    placeholder="Opcional"
-                    value={serviceRequest.budget || ''}
-                    onChange={e =>
-                      setServiceRequest(prev => ({
-                        ...prev,
-                        budget: parseInt(e.target.value) || undefined,
-                      }))
-                    }
-                  />
+                  <label className="block text-sm font-medium mb-2">Rango de presupuesto</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Mínimo"
+                      value={serviceRequest.budgetMin || ''}
+                      onChange={e =>
+                        setServiceRequest(prev => ({
+                          ...prev,
+                          budgetMin: parseInt(e.target.value) || undefined,
+                        }))
+                      }
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Máximo"
+                      value={serviceRequest.budgetMax || ''}
+                      onChange={e =>
+                        setServiceRequest(prev => ({
+                          ...prev,
+                          budgetMax: parseInt(e.target.value) || undefined,
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       if (status !== 'all') {
         const statusMap: Record<string, string> = {
           pending: 'PENDING',
-          quoted: 'PENDING', // Las cotizadas pueden estar en PENDING
+          quoted: 'QUOTED',
           accepted: 'ACCEPTED',
           completed: 'COMPLETED',
         };

@@ -79,7 +79,16 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
-    const { serviceType, description, urgency, preferredDate, budget, serviceProviderId } = body;
+    const {
+      serviceType,
+      description,
+      urgency,
+      preferredDate,
+      preferredTimeSlot,
+      budgetMin,
+      budgetMax,
+      serviceProviderId,
+    } = body;
 
     // Validación básica
     if (!serviceType || !description) {
@@ -87,6 +96,12 @@ export async function POST(request: NextRequest) {
         { error: 'El tipo de servicio y descripción son obligatorios' },
         { status: 400 }
       );
+    }
+
+    // Validar tipo de servicio
+    const validServiceTypes = ['maintenance', 'cleaning', 'moving', 'security', 'other'];
+    if (!validServiceTypes.includes(serviceType)) {
+      return NextResponse.json({ error: 'Tipo de servicio no válido' }, { status: 400 });
     }
 
     // Solo propietarios, inquilinos y corredores pueden solicitar servicios
@@ -134,7 +149,13 @@ export async function POST(request: NextRequest) {
         serviceType,
         status: 'PENDING',
         scheduledDate: preferredDate ? new Date(preferredDate) : null,
-        basePrice: budget ? parseFloat(budget) : 0,
+        basePrice: budgetMin ? parseFloat(budgetMin.toString()) : 0,
+        finalPrice: null,
+        images: null,
+        notes: preferredTimeSlot ? `Horario preferido: ${preferredTimeSlot}` : null,
+        rating: null,
+        feedback: null,
+        completedDate: null,
       },
       include: {
         requester: {
@@ -176,7 +197,7 @@ export async function POST(request: NextRequest) {
           userId: providerUser.id,
           type: NotificationType.SERVICE_REQUEST_RECEIVED,
           title: `Nueva solicitud de servicio: ${serviceType}`,
-          message: `${user.name || 'Un usuario'} ha solicitado tus servicios de ${serviceType}`,
+          message: `${user.name || 'Un usuario'} ha solicitado tus servicios de ${serviceType}. ${preferredDate ? `Fecha preferida: ${preferredDate}` : ''}`,
           link: `/provider/requests/${serviceRequest.id}`,
           metadata: {
             serviceRequestId: serviceRequest.id,
@@ -184,6 +205,10 @@ export async function POST(request: NextRequest) {
             requesterName: user.name || 'Usuario',
             serviceType,
             description,
+            preferredDate,
+            preferredTimeSlot,
+            budgetMin,
+            budgetMax,
           },
         });
 
@@ -209,7 +234,9 @@ export async function POST(request: NextRequest) {
         description: serviceRequest.description,
         status: serviceRequest.status,
         scheduledDate: serviceRequest.scheduledDate,
-        budget: serviceRequest.basePrice,
+        preferredTimeSlot: preferredTimeSlot,
+        budgetMin: budgetMin,
+        budgetMax: budgetMax,
         createdAt: serviceRequest.createdAt,
       },
       message: 'Solicitud de servicio enviada exitosamente. El proveedor recibirá tu solicitud.',
