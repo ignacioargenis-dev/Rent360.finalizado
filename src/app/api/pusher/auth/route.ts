@@ -30,6 +30,7 @@ const loadPusherServer = () => {
  */
 export async function POST(request: NextRequest) {
   try {
+    logger.info('🔐 [PUSHER AUTH] ===== NEW AUTH REQUEST =====');
     logger.info('🔐 [PUSHER AUTH] Starting auth request');
 
     // Verificar que Pusher esté disponible
@@ -212,6 +213,7 @@ export async function POST(request: NextRequest) {
         authResponseKeys: Object.keys(authResponse),
       });
 
+      logger.info('🔐 [PUSHER AUTH] ===== AUTH REQUEST COMPLETED SUCCESSFULLY =====');
       return NextResponse.json(authResponse);
     } catch (pusherError) {
       logger.error('❌ Pusher authentication error', {

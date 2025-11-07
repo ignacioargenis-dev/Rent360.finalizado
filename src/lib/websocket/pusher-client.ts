@@ -28,10 +28,24 @@ export class PusherWebSocketClient {
         (Pusher as any).logToConsole = true;
       }
 
+      // Verificar configuración de Pusher
+      const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+      const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+      if (!pusherKey || !pusherCluster) {
+        logger.error('❌ [PUSHER] Missing Pusher configuration', {
+          hasKey: !!pusherKey,
+          hasCluster: !!pusherCluster,
+          keyPrefix: pusherKey?.substring(0, 8),
+        });
+        return false;
+      }
+
       logger.info('🚀 [PUSHER] Initializing Pusher client', {
-        key: process.env.NEXT_PUBLIC_PUSHER_KEY?.substring(0, 8) + '...',
-        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+        key: pusherKey.substring(0, 8) + '...',
+        cluster: pusherCluster,
         hasToken: !!token,
+        nodeEnv: process.env.NODE_ENV,
       });
 
       this.pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
@@ -46,6 +60,8 @@ export class PusherWebSocketClient {
         },
       });
 
+      logger.info('🔧 [PUSHER] Pusher instance created, waiting for connection...');
+
       // ✅ ESPERAR A QUE PUSHER SE CONECTE PRIMERO ANTES DE SUSCRIBIRSE
       return new Promise(resolve => {
         // Escuchar cambios de estado de conexión para debugging
@@ -54,6 +70,11 @@ export class PusherWebSocketClient {
             previous: states.previous,
             current: states.current,
           });
+        });
+
+        // Escuchar cuando Pusher comienza a conectar (para detectar peticiones prematuras)
+        this.pusher.connection.bind('connecting', () => {
+          logger.info('🔌 [PUSHER] Pusher is connecting to server...');
         });
 
         // Escuchar evento de conexión exitosa
@@ -99,6 +120,8 @@ export class PusherWebSocketClient {
           }
         }, 10000);
       });
+
+      logger.info('🎯 [PUSHER] Event listeners bound, waiting for connection events...');
     } catch (error) {
       logger.error('❌ [PUSHER] Failed to initialize', {
         error: error instanceof Error ? error.message : String(error),
