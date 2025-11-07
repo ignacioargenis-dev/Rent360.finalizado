@@ -1,17 +1,18 @@
 // Pusher WebSocket client - separate file to avoid build issues
 import { logger } from '../logger';
 
-// 🚨🚨🚨 VERIFICACIÓN DE CARGA DEL ARCHIVO 🚨🚨🚨
-if (typeof window !== 'undefined') {
-  console.log('🚨🚨🚨🚨🚨 [PUSHER FILE] pusher-client.ts LOADED SUCCESSFULLY 🚨🚨🚨🚨🚨');
-}
-
 export class PusherWebSocketClient {
   private pusher: any = null;
   private channel: any = null;
   private eventListeners: Map<string, Function[]> = new Map();
   private _isConnected = false;
   private _connectionAttempts = 0;
+
+  constructor() {
+    // ✅ Log en constructor para confirmar que la clase se instancia
+    console.log('🚨🚨🚨🚨🚨 [PUSHER CLASS] PusherWebSocketClient instance created 🚨🚨🚨🚨🚨');
+    console.log('🚨🚨🚨 [PUSHER] File loaded and class instantiated successfully');
+  }
 
   async connect(token?: string): Promise<boolean> {
     this._connectionAttempts++;
@@ -20,6 +21,11 @@ export class PusherWebSocketClient {
         this._connectionAttempts +
         ' 🚨🚨🚨🚨🚨'
     );
+    console.log('🚨 [PUSHER] Browser info:', {
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
+      online: typeof navigator !== 'undefined' ? navigator.onLine : 'N/A',
+      cookieEnabled: typeof navigator !== 'undefined' ? navigator.cookieEnabled : 'N/A',
+    });
     console.trace('🚨🚨🚨🚨🚨 [PUSHER DEBUG] Call stack: 🚨🚨🚨🚨🚨');
     try {
       // Import Pusher dynamically

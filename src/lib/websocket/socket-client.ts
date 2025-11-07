@@ -6,9 +6,12 @@ import { logger } from '../logger';
 let PusherClient: any = null;
 let pusherClientLoaded = false;
 
-// FORZAR LOG PARA CONFIRMAR QUE EL ARCHIVO SE CARGA
+// 🚨 FORZAR LOG PARA CONFIRMAR QUE EL ARCHIVO SE CARGA
+console.log('🚨🚨🚨🚨🚨 [SOCKET-CLIENT MODULE] socket-client.ts LOADED 🚨🚨🚨🚨🚨');
+console.log('🚨 [SOCKET-CLIENT] Module loaded at:', new Date().toISOString());
+console.log('🚨 [SOCKET-CLIENT] Running in:', typeof window !== 'undefined' ? 'BROWSER' : 'SERVER');
 if (typeof window !== 'undefined') {
-  console.log('🚨 [DEBUG] WebSocket client file loaded successfully');
+  console.log('🚨 [SOCKET-CLIENT] Window location:', window.location.href);
 }
 
 const loadPusherClient = async () => {
@@ -79,16 +82,20 @@ class WebSocketClient {
   }
 
   async connect(userId?: string, token?: string): Promise<void> {
+    console.log('🚨🚨🚨🚨🚨 [WEBSOCKET CLIENT] connect() METHOD CALLED 🚨🚨🚨🚨🚨');
+    console.log('🚨 [WEBSOCKET] Called at:', new Date().toISOString());
+
     // Almacenar userId para uso posterior
     this._userId = userId;
 
     // Si ya está conectado, no hacer nada
     if (this._isConnected) {
+      console.log('🚨 [WEBSOCKET] Already connected, skipping reconnection');
       return;
     }
 
     // Logging para debugging
-    logger.info('🔌 [WEBSOCKET] Attempting connection', {
+    const connectionInfo = {
       userId: this._userId,
       hasToken: !!token,
       hasPusherKey: !!process.env.NEXT_PUBLIC_PUSHER_KEY,
@@ -97,37 +104,52 @@ class WebSocketClient {
       shouldUsePusher: this.shouldUsePusher(),
       currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server',
       wsUrl: process.env.NEXT_PUBLIC_WS_URL,
-    });
+    };
+
+    console.log('🚨 [WEBSOCKET] Connection info:', connectionInfo);
+    logger.info('🔌 [WEBSOCKET] Attempting connection', connectionInfo);
 
     if (this.shouldUsePusher()) {
+      console.log('🚨 [WEBSOCKET] Should use PUSHER, attempting Pusher connection...');
       this.connectWithPusher(token).catch(async error => {
+        console.error('🚨 [WEBSOCKET] Pusher connection failed, falling back to Socket.io');
         logger.error('❌ [PUSHER] Failed to connect with Pusher, falling back to Socket.io', {
           error,
         });
         await this.connectWithSocketIO(token);
       });
     } else {
+      console.log('🚨 [WEBSOCKET] Should use SOCKET.IO, attempting Socket.io connection...');
       await this.connectWithSocketIO(token);
     }
   }
 
   private async connectWithPusher(token?: string): Promise<void> {
     try {
+      console.log('🚨 [PUSHER] connectWithPusher() called');
       logger.info('🚀 [PUSHER] Connecting with Pusher');
 
       // Load Pusher client dynamically
+      console.log('🚨 [PUSHER] Loading Pusher client dynamically...');
       const PusherWebSocketClient = await loadPusherClient();
       if (!PusherWebSocketClient) {
+        console.error('🚨 [PUSHER] PusherWebSocketClient class not available!');
         throw new Error('Pusher client not available');
       }
+      console.log('🚨 [PUSHER] PusherWebSocketClient loaded successfully');
 
       // Create and connect Pusher client
+      console.log('🚨 [PUSHER] Creating new PusherWebSocketClient instance...');
       const pusherInstance = new PusherWebSocketClient();
+      console.log('🚨 [PUSHER] Instance created, calling connect() method...');
       const connected = await pusherInstance.connect(token);
+      console.log('🚨 [PUSHER] connect() returned:', connected);
 
       if (!connected) {
+        console.error('🚨 [PUSHER] Connection failed (returned false)');
         throw new Error('Pusher connection failed');
       }
+      console.log('🚨 [PUSHER] Connection successful!');
 
       // Store reference and setup event forwarding
       this.pusherChannel = pusherInstance;

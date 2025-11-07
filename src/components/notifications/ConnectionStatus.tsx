@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-// 🚨🚨🚨 VERIFICACIÓN DE CARGA DEL COMPONENTE 🚨🚨🚨
-console.log('🚨🚨🚨🚨🚨 [CONNECTION STATUS COMPONENT] ConnectionStatus.tsx LOADED 🚨🚨🚨🚨🚨');
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Wifi, WifiOff, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { websocketClient } from '@/lib/websocket/socket-client';
+
+// 🚨 LOG A NIVEL DE MÓDULO (se ejecuta una vez cuando se importa)
+console.log('🚨🚨🚨🚨🚨 [CONNECTION STATUS MODULE] ConnectionStatus.tsx LOADED 🚨🚨🚨🚨🚨');
+console.log('🚨 [CONNECTION STATUS] Module loaded at:', new Date().toISOString());
+console.log('🚨 [CONNECTION STATUS] typeof window:', typeof window);
+console.log('🚨 [CONNECTION STATUS] websocketClient available:', !!websocketClient);
 
 interface ConnectionStatusProps {
   showDetails?: boolean;
@@ -18,10 +21,17 @@ export default function ConnectionStatus({
   showDetails = false,
   className = '',
 }: ConnectionStatusProps) {
+  // 🚨 LOG EN CADA RENDER
   console.log('🚨🚨🚨🚨🚨 [CONNECTION STATUS] COMPONENT RENDERED 🚨🚨🚨🚨🚨');
+  console.log('🚨 [CONNECTION STATUS] Render at:', new Date().toISOString());
+  console.log('🚨 [CONNECTION STATUS] Current props:', { showDetails, className });
 
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [isConnected, setIsConnected] = useState(websocketClient.isConnected);
+  const [isConnected, setIsConnected] = useState(() => {
+    const connected = websocketClient.isConnected;
+    console.log('🚨 [CONNECTION STATUS] Initial isConnected state:', connected);
+    return connected;
+  });
 
   // Escuchar cambios en el estado de conexión
   useEffect(() => {
