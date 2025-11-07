@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// 🚨🚨🚨 VERIFICACIÓN DE CARGA DEL COMPONENTE 🚨🚨🚨
+console.log('🚨🚨🚨🚨🚨 [CONNECTION STATUS COMPONENT] ConnectionStatus.tsx LOADED 🚨🚨🚨🚨🚨');
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Wifi, WifiOff, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react';
@@ -15,6 +18,8 @@ export default function ConnectionStatus({
   showDetails = false,
   className = '',
 }: ConnectionStatusProps) {
+  console.log('🚨🚨🚨🚨🚨 [CONNECTION STATUS] COMPONENT RENDERED 🚨🚨🚨🚨🚨');
+
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(websocketClient.isConnected);
 

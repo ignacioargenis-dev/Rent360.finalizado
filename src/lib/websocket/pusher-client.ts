@@ -1,6 +1,11 @@
 // Pusher WebSocket client - separate file to avoid build issues
 import { logger } from '../logger';
 
+// 🚨🚨🚨 VERIFICACIÓN DE CARGA DEL ARCHIVO 🚨🚨🚨
+if (typeof window !== 'undefined') {
+  console.log('🚨🚨🚨🚨🚨 [PUSHER FILE] pusher-client.ts LOADED SUCCESSFULLY 🚨🚨🚨🚨🚨');
+}
+
 export class PusherWebSocketClient {
   private pusher: any = null;
   private channel: any = null;
@@ -10,8 +15,12 @@ export class PusherWebSocketClient {
 
   async connect(token?: string): Promise<boolean> {
     this._connectionAttempts++;
-    console.log('🔥🔥🔥 [PUSHER DEBUG] connect() called, attempt #' + this._connectionAttempts);
-    console.trace('🔥🔥🔥 [PUSHER DEBUG] Call stack:');
+    console.log(
+      '🚨🚨🚨🚨🚨 [PUSHER DEBUG] connect() CALLED, attempt #' +
+        this._connectionAttempts +
+        ' 🚨🚨🚨🚨🚨'
+    );
+    console.trace('🚨🚨🚨🚨🚨 [PUSHER DEBUG] Call stack: 🚨🚨🚨🚨🚨');
     try {
       // Import Pusher dynamically
       let Pusher: any;
@@ -32,8 +41,9 @@ export class PusherWebSocketClient {
 
       // ✅ ACTIVAR LOGS DE PUSHER SIEMPRE (para debugging en producción)
       if (typeof window !== 'undefined') {
-        console.log('🔥 [PUSHER DEBUG] Activating Pusher console logs');
+        console.log('🚨🚨🚨 [PUSHER DEBUG] ACTIVATING PUSHER CONSOLE LOGS 🚨🚨🚨');
         (Pusher as any).logToConsole = true;
+        console.log('🚨🚨🚨 [PUSHER DEBUG] Pusher.logToConsole set to true 🚨🚨🚨');
       }
 
       // Verificar configuración de Pusher
