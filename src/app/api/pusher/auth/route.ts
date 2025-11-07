@@ -93,12 +93,24 @@ export async function POST(request: NextRequest) {
       hasBody: !!request.body,
     });
 
+    // Log the complete URL with all parameters
+    const fullUrl = request.url;
+    logger.info('🔍 [PUSHER] Full URL:', { fullUrl });
+
+    // Log all query parameters
+    const urlObj = new URL(request.url);
+    const queryParams: Record<string, string> = {};
+    urlObj.searchParams.forEach((value, key) => {
+      queryParams[key] = value;
+    });
+    logger.info('🔍 [PUSHER] Query params:', queryParams);
+
     try {
       // Intentar primero como JSON (caso normal)
       const jsonData = await request.json();
       socket_id = jsonData.socket_id;
       channel_name = jsonData.channel_name;
-      logger.info('📨 Auth data received as JSON');
+      logger.info('📨 Auth data received as JSON:', { socket_id, channel_name, jsonData });
     } catch (jsonError) {
       logger.info('📨 JSON parsing failed, trying other methods');
 
@@ -108,7 +120,13 @@ export async function POST(request: NextRequest) {
         socket_id = formData.get('socket_id') as string;
         channel_name = formData.get('channel_name') as string;
         if (socket_id && channel_name) {
-          logger.info('📨 Auth data received as Form Data');
+          logger.info('📨 Auth data received as Form Data:', { socket_id, channel_name });
+        } else {
+          logger.info('📨 Form Data parsed but missing fields:', {
+            socket_id: formData.get('socket_id'),
+            channel_name: formData.get('channel_name'),
+            allKeys: Array.from(formData.keys()),
+          });
         }
       } catch (formError) {
         // Finalmente, intentar como query parameters
@@ -116,9 +134,28 @@ export async function POST(request: NextRequest) {
         socket_id = url.searchParams.get('socket_id')!;
         channel_name = url.searchParams.get('channel_name')!;
         if (socket_id && channel_name) {
-          logger.info('📨 Auth data received as Query Params');
+          logger.info('📨 Auth data received as Query Params:', { socket_id, channel_name });
+        } else {
+          logger.info('📨 Query params parsed but missing fields:', {
+            socket_id: url.searchParams.get('socket_id'),
+            channel_name: url.searchParams.get('channel_name'),
+            allParams: queryParams,
+          });
         }
       }
+    }
+
+    // Try to read the body as text to see what Pusher is actually sending (after parsing attempts)
+    try {
+      // Create a clone to read the body
+      const clonedRequest = request.clone();
+      const bodyText = await clonedRequest.text();
+      logger.info('🔍 [PUSHER] Raw body text (after parsing):', {
+        bodyText,
+        bodyLength: bodyText.length,
+      });
+    } catch (bodyError) {
+      logger.info('🔍 [PUSHER] Could not read body as text (after parsing):', bodyError);
     }
 
     if (!socket_id || !channel_name) {
