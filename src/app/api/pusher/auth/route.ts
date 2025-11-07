@@ -71,6 +71,13 @@ export async function POST(request: NextRequest) {
     const url = new URL(request.url);
     const tokenFromQuery = url.searchParams.get('token');
 
+    logger.info('🔐 [PUSHER] Checking authentication', {
+      hasTokenInQuery: !!tokenFromQuery,
+      tokenQueryLength: tokenFromQuery?.length,
+      hasAuthHeader: request.headers.has('authorization'),
+      authHeaderValue: request.headers.get('authorization')?.substring(0, 20) + '...',
+    });
+
     if (tokenFromQuery) {
       logger.info('🔑 Token received from query params, setting authorization header');
       // Modificar los headers del request actual
@@ -174,8 +181,22 @@ export async function POST(request: NextRequest) {
     }
 
     if (!socket_id || !channel_name) {
-      logger.error('❌ Missing socket_id or channel_name', { socket_id, channel_name });
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+      logger.error('❌ Missing socket_id or channel_name', {
+        socket_id,
+        channel_name,
+        socket_id_type: typeof socket_id,
+        channel_name_type: typeof channel_name,
+        socket_id_length: socket_id?.length,
+        channel_name_length: channel_name?.length,
+      });
+      return NextResponse.json(
+        {
+          error: 'Missing required parameters',
+          socket_id: socket_id || 'MISSING',
+          channel_name: channel_name || 'MISSING',
+        },
+        { status: 400 }
+      );
     }
 
     logger.info('🔐 [PUSHER] Auth request received', {

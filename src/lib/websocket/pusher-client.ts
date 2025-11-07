@@ -82,6 +82,50 @@ export class PusherWebSocketClient {
           },
           // ✅ SIN params - Pusher envía socket_id y channel_name automáticamente
         },
+        authorizer: (channel: any, options: any) => {
+          return {
+            authorize: (socketId: string, callback: Function) => {
+              console.log('🔥 [PUSHER DEBUG] Authorizer called:', {
+                socketId,
+                channelName: channel.name,
+                options,
+              });
+
+              // Llamar al auth endpoint
+              fetch('/api/pusher/auth', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token || this.getTokenFromCookies() || ''}`,
+                },
+                body: JSON.stringify({
+                  socket_id: socketId,
+                  channel_name: channel.name,
+                }),
+              })
+                .then(response => {
+                  console.log('🔥 [PUSHER DEBUG] Auth response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                  });
+                  return response.json();
+                })
+                .then(data => {
+                  console.log('🔥 [PUSHER DEBUG] Auth response data:', data);
+                  if (data.error) {
+                    callback(new Error(data.error), null);
+                  } else {
+                    callback(null, data);
+                  }
+                })
+                .catch(error => {
+                  console.error('🔥 [PUSHER DEBUG] Auth fetch error:', error);
+                  callback(error, null);
+                });
+            },
+          };
+        },
       });
 
       console.log('🔥 [PUSHER DEBUG] Pusher instance created');
