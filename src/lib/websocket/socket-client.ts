@@ -155,13 +155,18 @@ class WebSocketClient {
       this.pusherChannel = pusherInstance;
 
       // Forward events to our event system
+      console.log('🚨 [SOCKET-CLIENT] Setting up event forwarding from pusherInstance...');
       pusherInstance.on('connect', () => {
+        console.log('🚨🚨🚨 [SOCKET-CLIENT] Received CONNECT event from pusherInstance!');
         this._isConnected = true;
         this._usingPusher = true;
+        console.log('🚨 [SOCKET-CLIENT] Emitting connect event to listeners...');
         this.emitEvent('connect');
+        console.log('🚨 [SOCKET-CLIENT] Connect event emitted successfully');
       });
 
       pusherInstance.on('disconnect', () => {
+        console.log('🚨 [SOCKET-CLIENT] Received DISCONNECT event from pusherInstance');
         this._isConnected = false;
         this.emitEvent('disconnect');
       });
@@ -174,6 +179,7 @@ class WebSocketClient {
         this.emitEvent('notification', data);
       });
 
+      console.log('🚨 [SOCKET-CLIENT] Event forwarding setup complete');
       logger.info('✅ [PUSHER] Connected successfully');
     } catch (error) {
       logger.error('❌ [PUSHER] Connection failed', { error });
@@ -368,15 +374,27 @@ class WebSocketClient {
   }
 
   private emitEvent(event: string, ...args: any[]): void {
+    console.log('🚨 [SOCKET-CLIENT] emitEvent called:', {
+      event,
+      hasListeners: this.eventListeners.has(event),
+      listenersCount: this.eventListeners.get(event)?.length || 0,
+    });
+
     const listeners = this.eventListeners.get(event);
     if (listeners) {
-      listeners.forEach(callback => {
+      console.log(`🚨 [SOCKET-CLIENT] Calling ${listeners.length} listener(s) for event: ${event}`);
+      listeners.forEach((callback, index) => {
         try {
+          console.log(`🚨 [SOCKET-CLIENT] Calling listener #${index + 1} for ${event}`);
           callback(...args);
+          console.log(`🚨 [SOCKET-CLIENT] Listener #${index + 1} completed successfully`);
         } catch (error) {
+          console.error(`🚨 [SOCKET-CLIENT] Error in listener #${index + 1}:`, error);
           logger.error('Error in event listener', { event, error });
         }
       });
+    } else {
+      console.warn(`🚨 [SOCKET-CLIENT] No listeners registered for event: ${event}`);
     }
   }
 
