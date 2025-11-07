@@ -66,15 +66,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pusher not configured' }, { status: 503 });
     }
 
-    // Autenticar al usuario
+    // Autenticar al usuario - verificar si hay token en query params
+    const url = new URL(request.url);
+    const tokenFromQuery = url.searchParams.get('token');
+
+    if (tokenFromQuery) {
+      logger.info('🔑 Token received from query params, setting authorization header');
+      // Modificar los headers del request actual
+      (request as any).headers.set('authorization', `Bearer ${tokenFromQuery}`);
+    }
+
     const user = await requireAuth(request);
     if (!user) {
       logger.warn('Unauthorized Pusher auth attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Obtener datos del request
-    const { socket_id, channel_name } = await request.json();
+    // Obtener datos del request - pueden venir como JSON, form data o query params
+    let socket_id: string;
+    let channel_name: string;
+
+    logger.info('🔍 [PUSHER] Request details:', {
+      method: request.method,
+      contentType: request.headers.get('content-type'),
+      url: request.url,
+      hasBody: !!request.body,
+    });
+
+    try {
+      // Intentar primero como JSON (caso normal)
+      const jsonData = await request.json();
+      socket_id = jsonData.socket_id;
+      channel_name = jsonData.channel_name;
+      logger.info('📨 Auth data received as JSON');
+    } catch (jsonError) {
+      logger.info('📨 JSON parsing failed, trying other methods');
+
+      // Intentar como form data
+      try {
+        const formData = await request.formData();
+        socket_id = formData.get('socket_id') as string;
+        channel_name = formData.get('channel_name') as string;
+        if (socket_id && channel_name) {
+          logger.info('📨 Auth data received as Form Data');
+        }
+      } catch (formError) {
+        // Finalmente, intentar como query parameters
+        logger.info('📨 Form data parsing failed, trying query params');
+        socket_id = url.searchParams.get('socket_id')!;
+        channel_name = url.searchParams.get('channel_name')!;
+        if (socket_id && channel_name) {
+          logger.info('📨 Auth data received as Query Params');
+        }
+      }
+    }
+
+    if (!socket_id || !channel_name) {
+      logger.error('❌ Missing socket_id or channel_name', { socket_id, channel_name });
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
 
     logger.info('🔐 [PUSHER] Auth request received', {
       userId: user.id,
@@ -136,7 +186,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pusher authentication failed' }, { status: 500 });
     }
   } catch (error) {
-    logger.error('❌ [PUSHER] Auth error:', error);
+    logger.error('❌ [PUSHER] Auth error:', {
+      error: error instanceof Error ? error.message : String(error),
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
   }
 }

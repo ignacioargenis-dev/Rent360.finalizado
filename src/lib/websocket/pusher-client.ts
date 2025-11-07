@@ -32,6 +32,11 @@ export class PusherWebSocketClient {
         auth: {
           headers: {
             Authorization: token || this.getTokenFromCookies() || '',
+            'Content-Type': 'application/json',
+          },
+          params: {
+            // Pusher puede enviar datos como query params, asegurémonos de que el token esté disponible
+            token: token || this.getTokenFromCookies() || '',
           },
         },
       });
