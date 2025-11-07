@@ -472,7 +472,7 @@ export default function ProviderDashboard() {
                       <Button
                         size="sm"
                         className="mt-2"
-                        onClick={() => sendQuote(request.id, 50000)}
+                        onClick={() => router.push(`/provider/requests/${request.id}`)}
                       >
                         Enviar Cotización
                       </Button>

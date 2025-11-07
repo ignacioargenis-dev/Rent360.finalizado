@@ -203,7 +203,12 @@ export default function ProviderRequestsPage() {
   };
 
   const handleSubmitQuote = async () => {
+    console.log('🚨🚨🚨 [QUOTE MODAL] handleSubmitQuote called');
+    console.log('Selected request:', selectedRequest);
+    console.log('Quote data:', quoteData);
+
     if (!selectedRequest) {
+      console.log('❌ No selected request');
       return;
     }
 

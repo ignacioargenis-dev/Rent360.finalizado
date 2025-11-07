@@ -38,6 +38,7 @@ import {
   Droplets,
   Car,
   CheckCircle,
+  FileText,
   AlertTriangle,
 } from 'lucide-react';
 
@@ -128,8 +129,13 @@ export default function TenantServicesPage() {
   const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
   const [providersLoading, setProvidersLoading] = useState(true);
 
+  // Estado para solicitudes existentes
+  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
+
   useEffect(() => {
     loadProviders();
+    loadMyRequests();
   }, []);
 
   useEffect(() => {
@@ -211,6 +217,31 @@ export default function TenantServicesPage() {
     } finally {
       setProvidersLoading(false);
       setLoading(false);
+    }
+  };
+
+  const loadMyRequests = async () => {
+    try {
+      setRequestsLoading(true);
+      const response = await fetch('/api/services/request', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setMyRequests(data.data || []);
+        } else {
+          setMyRequests([]);
+        }
+      } else {
+        setMyRequests([]);
+      }
+    } catch (error) {
+      logger.error('Error loading my requests:', { error });
+      setMyRequests([]);
+    } finally {
+      setRequestsLoading(false);
     }
   };
 
@@ -482,6 +513,84 @@ export default function TenantServicesPage() {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
                 <span className="text-red-800">{errorMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* My Service Requests */}
+        {!requestsLoading && myRequests.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-900">
+                    Mis Solicitudes de Servicio
+                  </h3>
+                  <p className="text-blue-700">
+                    Tienes {myRequests.length} solicitud{myRequests.length > 1 ? 'es' : ''} activa
+                    {myRequests.length > 1 ? 's' : ''}
+                    {myRequests.filter(r => r.status === 'quoted').length > 0 && (
+                      <span className="font-medium">
+                        {' '}
+                        • {myRequests.filter(r => r.status === 'quoted').length} con cotización
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  onClick={() => router.push('/tenant/service-requests')}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Ver Solicitudes
+                </Button>
+              </div>
+
+              {/* Mostrar las últimas 2-3 solicitudes */}
+              <div className="mt-4 space-y-2">
+                {myRequests.slice(0, 3).map((request: any) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-3 bg-white rounded-lg border"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{request.title}</p>
+                      <p className="text-sm text-gray-600">
+                        {getServiceTypeLabel(request.serviceType)} •{' '}
+                        {new Date(request.createdAt).toLocaleDateString('es-CL')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          request.status === 'quoted'
+                            ? 'default'
+                            : request.status === 'accepted'
+                              ? 'secondary'
+                              : 'outline'
+                        }
+                        className="text-xs"
+                      >
+                        {request.status === 'pending'
+                          ? 'Pendiente'
+                          : request.status === 'quoted'
+                            ? 'Cotizado'
+                            : request.status === 'accepted'
+                              ? 'Aceptado'
+                              : request.status}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => router.push(`/tenant/service-requests/${request.id}`)}
+                      >
+                        Ver
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
