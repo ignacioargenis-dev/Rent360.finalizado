@@ -98,79 +98,13 @@ export class PusherWebSocketClient {
           },
           // ✅ SIN params - Pusher envía socket_id y channel_name automáticamente
         },
-        authorizer: (channel: any, options: any) => {
-          return {
-            authorize: (socketId: string, callback: Function) => {
-              console.log('🔥 [PUSHER DEBUG] Authorizer called:', {
-                socketId,
-                channelName: channel.name,
-                options,
-              });
-
-              // Llamar al auth endpoint
-              fetch('/api/pusher/auth', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token || this.getTokenFromCookies() || ''}`,
-                },
-                body: JSON.stringify({
-                  socket_id: socketId,
-                  channel_name: channel.name,
-                }),
-              })
-                .then(response => {
-                  console.log('🔥 [PUSHER DEBUG] Auth response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries()),
-                  });
-                  return response.json();
-                })
-                .then(data => {
-                  console.log('🔥 [PUSHER DEBUG] Auth response data:', data);
-                  if (data.error) {
-                    console.error('🔥 [PUSHER DEBUG] Auth failed:', data.error);
-                    this._isConnected = false;
-                    callback(new Error(data.error), null);
-                  } else {
-                    console.log('🔥 [PUSHER DEBUG] Auth successful, marking as connected');
-                    // ✅ MARCAR COMO CONECTADO CUANDO AUTH TENGA ÉXITO
-                    this._isConnected = true;
-                    console.log('🔥 [PUSHER DEBUG] About to emit connect event');
-                    this.emit('connect');
-                    console.log('🔥 [PUSHER DEBUG] Connect event emitted successfully');
-
-                    // Asignar el canal autorizado
-                    this.channel = channel;
-                    // También asignar para compatibilidad con socket-client.ts
-                    (this as any).pusherChannel = channel;
-
-                    // Configurar event listeners para mensajes
-                    console.log('🔥 [PUSHER DEBUG] Setting up message listeners');
-                    this.channel.bind('new-message', (data: any) => this.emit('new-message', data));
-                    this.channel.bind('notification', (data: any) =>
-                      this.emit('notification', data)
-                    );
-
-                    callback(null, data);
-                  }
-                })
-                .catch(error => {
-                  console.error('🔥 [PUSHER DEBUG] Auth fetch error:', error);
-                  this._isConnected = false;
-                  callback(error, null);
-                });
-            },
-          };
-        },
       });
 
       console.log('🔥 [PUSHER DEBUG] Pusher instance created');
       console.log('🔥 [PUSHER DEBUG] Connection state:', this.pusher.connection.state);
       logger.info('🔧 [PUSHER] Pusher instance created, waiting for connection...');
 
-      // ✅ ESPERAR A QUE LA AUTENTICACIÓN TENGA ÉXITO
+      // ✅ ESPERAR A QUE PUSHER SE CONECTE Y AUTENTIQUE EL CANAL
       return new Promise(resolve => {
         console.log('🔥 [PUSHER DEBUG] Setting up event listeners');
 
@@ -183,7 +117,7 @@ export class PusherWebSocketClient {
           });
         });
 
-        // Escuchar cuando Pusher comienza a conectar (para detectar peticiones prematuras)
+        // Escuchar cuando Pusher comienza a conectar
         this.pusher.connection.bind('connecting', () => {
           console.log('🔥 [PUSHER DEBUG] Pusher is connecting to server...');
           logger.info('🔌 [PUSHER] Pusher is connecting to server...');
@@ -199,12 +133,38 @@ export class PusherWebSocketClient {
             '✅ [PUSHER] Connection established, socket_id:',
             this.pusher.connection.socket_id
           );
-        });
 
-        // Escuchar nuestro evento personalizado de conexión exitosa (desde authorizer)
-        this.on('connect', () => {
-          console.log('🔥 [PUSHER DEBUG] Our custom connect event fired, resolving promise');
-          resolve(true);
+          // AHORA suscribirse al canal privado (después de tener socket_id)
+          console.log('🔥 [PUSHER DEBUG] Subscribing to private-user channel...');
+          this.channel = this.pusher.subscribe('private-user');
+
+          // ✅ Escuchar suscripción exitosa
+          this.channel.bind('pusher:subscription_succeeded', () => {
+            console.log('🔥🔥🔥 [PUSHER DEBUG] Subscription SUCCEEDED! Marking as connected');
+            logger.info('✅ [PUSHER] Subscription successful');
+            this._isConnected = true;
+            this.emit('connect');
+            resolve(true);
+          });
+
+          // ❌ Escuchar errores de suscripción
+          this.channel.bind('pusher:subscription_error', (error: any) => {
+            console.error('🔥 [PUSHER DEBUG] Subscription error:', error);
+            logger.error('❌ [PUSHER] Subscription error:', error);
+            this._isConnected = false;
+            this.emit('disconnect');
+            resolve(false);
+          });
+
+          // Bind standard events
+          this.channel.bind('new-message', (data: any) => {
+            console.log('🔥 [PUSHER DEBUG] new-message event received:', data);
+            this.emit('new-message', data);
+          });
+          this.channel.bind('notification', (data: any) => {
+            console.log('🔥 [PUSHER DEBUG] notification event received:', data);
+            this.emit('notification', data);
+          });
         });
 
         // Manejar errores de conexión
@@ -225,15 +185,12 @@ export class PusherWebSocketClient {
           resolve(false);
         });
 
-        // Intentar suscribirse al canal (esto activará el authorizer)
-        console.log('🔥 [PUSHER DEBUG] Subscribing to private-user channel to trigger auth...');
-        this.pusher.subscribe('private-user');
-
-        // Timeout de seguridad (15 segundos - aumentado por auth)
+        // Timeout de seguridad (15 segundos)
         setTimeout(() => {
           if (!this._isConnected) {
             console.error('🔥 [PUSHER DEBUG] Connection timeout after 15 seconds');
             console.log('🔥 [PUSHER DEBUG] Final connection state:', this.pusher.connection.state);
+            console.log('🔥 [PUSHER DEBUG] Channel state:', this.channel?.state);
             logger.error('❌ [PUSHER] Connection timeout');
             resolve(false);
           }
