@@ -82,6 +82,23 @@ export default function ProviderRequestsPage() {
     materialsCost: '',
   });
 
+  // Función para obtener el conteo de solicitudes por tab
+  const getTabCount = (tabValue: string) => {
+    if (tabValue === 'all') {
+      return requests.length;
+    }
+
+    const statusMapping: { [key: string]: string[] } = {
+      pending: ['OPEN'],
+      quoted: ['ASSIGNED'],
+      accepted: ['ASSIGNED'],
+      completed: ['CLOSED'],
+    };
+
+    const mappedStatuses = statusMapping[tabValue] || [tabValue.toUpperCase()];
+    return requests.filter(request => mappedStatuses.includes(request.status)).length;
+  };
+
   useEffect(() => {
     loadPageData();
   }, []);
@@ -465,18 +482,33 @@ export default function ProviderRequestsPage() {
         {/* Gestión de solicitudes por pestañas */}
         <Tabs defaultValue="all" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all">Todas</TabsTrigger>
-            <TabsTrigger value="pending">Pendientes</TabsTrigger>
-            <TabsTrigger value="quoted">Cotizadas</TabsTrigger>
-            <TabsTrigger value="accepted">Aceptadas</TabsTrigger>
-            <TabsTrigger value="completed">Completadas</TabsTrigger>
+            <TabsTrigger value="all">Todas ({getTabCount('all')})</TabsTrigger>
+            <TabsTrigger value="pending">Pendientes ({getTabCount('pending')})</TabsTrigger>
+            <TabsTrigger value="quoted">Cotizadas ({getTabCount('quoted')})</TabsTrigger>
+            <TabsTrigger value="accepted">Aceptadas ({getTabCount('accepted')})</TabsTrigger>
+            <TabsTrigger value="completed">Completadas ({getTabCount('completed')})</TabsTrigger>
           </TabsList>
 
           {['all', 'pending', 'quoted', 'accepted', 'completed'].map(tabValue => (
             <TabsContent key={tabValue} value={tabValue}>
               <div className="space-y-4">
                 {requests
-                  .filter(request => tabValue === 'all' || request.status === tabValue)
+                  .filter(request => {
+                    if (tabValue === 'all') {
+                      return true;
+                    }
+
+                    // Mapear los valores de los tabs a los estados reales de la base de datos
+                    const statusMapping: { [key: string]: string[] } = {
+                      pending: ['OPEN'],
+                      quoted: ['ASSIGNED'],
+                      accepted: ['ASSIGNED'], // Las asignadas son las aceptadas por el cliente
+                      completed: ['CLOSED'],
+                    };
+
+                    const mappedStatuses = statusMapping[tabValue] || [tabValue.toUpperCase()];
+                    return mappedStatuses.includes(request.status);
+                  })
                   .map(request => (
                     <Card key={request.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="pt-6">

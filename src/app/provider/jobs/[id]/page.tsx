@@ -66,16 +66,17 @@ export default function ProviderJobDetailPage() {
   const [notes, setNotes] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     loadJob();
   }, [jobId]);
 
-  // Auto-save cuando cambien status o notes
+  // Auto-save cuando cambien status o notes (solo después de carga inicial)
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
 
-    if (job && !loading) {
+    if (job && !loading && initialLoadComplete) {
       timeoutId = setTimeout(() => {
         updateJobProgress();
       }, 1000); // Esperar 1 segundo después del último cambio
@@ -86,7 +87,7 @@ export default function ProviderJobDetailPage() {
         clearTimeout(timeoutId);
       }
     };
-  }, [status, notes, job, loading]);
+  }, [status, notes, job, loading, initialLoadComplete]);
 
   const loadJob = async () => {
     try {
@@ -106,6 +107,7 @@ export default function ProviderJobDetailPage() {
         setProgress(data.job.progress || 0);
         setStatus(data.job.status || '');
         setNotes(data.job.notes || '');
+        setInitialLoadComplete(true);
       } else {
         throw new Error('Trabajo no encontrado');
       }
