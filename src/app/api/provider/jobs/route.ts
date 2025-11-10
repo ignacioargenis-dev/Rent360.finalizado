@@ -122,6 +122,7 @@ function mapJobStatus(status: string): string {
   const statusMap: Record<string, string> = {
     PENDING: 'Pendiente',
     ACCEPTED: 'Aceptado',
+    ACTIVE: 'Activo',
     IN_PROGRESS: 'En progreso',
     COMPLETED: 'Completado',
     CANCELLED: 'Cancelado',
@@ -131,7 +132,7 @@ function mapJobStatus(status: string): string {
 }
 
 function getPriorityFromStatus(status: string): string {
-  if (status === 'IN_PROGRESS' || status === 'ACCEPTED') {
+  if (status === 'IN_PROGRESS' || status === 'ACCEPTED' || status === 'ACTIVE') {
     return 'Alta';
   }
   if (status === 'PENDING') {

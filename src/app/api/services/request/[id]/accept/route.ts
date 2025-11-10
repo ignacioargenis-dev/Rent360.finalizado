@@ -54,12 +54,34 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       );
     }
 
-    // Actualizar el estado de la solicitud a ACCEPTED
+    // Actualizar el estado de la solicitud a ACCEPTED y crear trabajo activo
     const updatedRequest = await db.serviceJob.update({
       where: { id: requestId },
       data: {
         status: 'ACCEPTED',
       },
+    });
+
+    // Crear automáticamente un trabajo activo para el provider
+    const activeJob = await db.serviceJob.create({
+      data: {
+        serviceProviderId: serviceRequest.serviceProviderId,
+        requesterId: serviceRequest.requesterId,
+        title: `Trabajo activo: ${serviceRequest.serviceType}`,
+        description: `Trabajo generado automáticamente desde la cotización aceptada.\n\nDetalles originales:\n${serviceRequest.description}\n\nCotización aceptada por: $${serviceRequest.finalPrice}`,
+        serviceType: serviceRequest.serviceType,
+        status: 'ACTIVE', // Trabajo activo
+        basePrice: serviceRequest.finalPrice,
+        scheduledDate: serviceRequest.scheduledDate,
+        images: serviceRequest.images,
+      },
+    });
+
+    console.log('🚨🚨🚨 [QUOTE ACCEPT] Trabajo activo creado automáticamente:', {
+      jobId: activeJob.id,
+      providerId: serviceRequest.serviceProviderId,
+      requesterId: serviceRequest.requesterId,
+      finalPrice: serviceRequest.finalPrice,
     });
 
     console.log('🚨🚨🚨 [QUOTE ACCEPT] Cotización aceptada:', {
@@ -78,7 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         type: NotificationType.QUOTE_ACCEPTED,
         title: `Cotización aceptada: ${serviceRequest.serviceType}`,
         message: `${user.name || 'Un inquilino'} ha aceptado tu cotización de $${serviceRequest.finalPrice} para el servicio de ${serviceRequest.serviceType}`,
-        link: `/provider/requests/${requestId}`,
+        link: `/provider/jobs/${activeJob.id}`,
         metadata: {
           serviceRequestId: requestId,
           tenantId: user.id,
@@ -114,10 +136,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     return NextResponse.json({
       success: true,
-      message: 'Cotización aceptada exitosamente. El proveedor ha sido notificado.',
+      message:
+        'Cotización aceptada exitosamente. Se ha creado un trabajo activo y el proveedor ha sido notificado.',
       request: {
         id: updatedRequest.id,
         status: updatedRequest.status,
+      },
+      activeJob: {
+        id: activeJob.id,
+        title: activeJob.title,
+        status: activeJob.status,
+        scheduledDate: activeJob.scheduledDate,
       },
     });
   } catch (error) {

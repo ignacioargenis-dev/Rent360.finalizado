@@ -506,12 +506,33 @@ export function useWebSocket() {
     const handleDisconnect = () => setIsConnected(false);
 
     const handleNotification = (data: any) => {
-      console.log('📨 [WEBSOCKET CLIENT] Notification received:', data);
-      setNotifications(prev => [data, ...prev]);
+      console.log('🚨🚨🚨 [WEBSOCKET CLIENT] Notification received:', data);
+      console.log('🚨 [WEBSOCKET CLIENT] Notification type:', data.type);
+      console.log(
+        '🚨 [WEBSOCKET CLIENT] Current notifications before adding:',
+        notifications.length
+      );
+
+      setNotifications(prev => {
+        const newNotifications = [data, ...prev];
+        console.log(
+          '🚨 [WEBSOCKET CLIENT] New notifications array length:',
+          newNotifications.length
+        );
+        return newNotifications;
+      });
 
       // Incrementar contador de mensajes no leídos si es una notificación de mensaje nuevo
       if (data.type === 'NEW_MESSAGE' || data.type === 'new-message') {
         console.log('📨 [WEBSOCKET CLIENT] Incrementing unread messages count');
+        setUnreadMessagesCount(prev => prev + 1);
+      }
+
+      // También incrementar para notificaciones de cotización
+      if (data.type === 'QUOTE_ACCEPTED' || data.type === 'QUOTE_REJECTED') {
+        console.log(
+          '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for quote notification'
+        );
         setUnreadMessagesCount(prev => prev + 1);
       }
     };

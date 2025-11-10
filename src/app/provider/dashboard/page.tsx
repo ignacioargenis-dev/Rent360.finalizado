@@ -319,6 +319,7 @@ export default function ProviderDashboard() {
         setSuccessMessage('Cotización enviada exitosamente');
         setTimeout(() => setSuccessMessage(''), 3000);
         loadServiceRequests(); // Recargar solicitudes
+        loadJobs(); // Recargar trabajos por si se creó uno nuevo
       } else {
         setErrorMessage('Error al enviar cotización');
         setTimeout(() => setErrorMessage(''), 5000);

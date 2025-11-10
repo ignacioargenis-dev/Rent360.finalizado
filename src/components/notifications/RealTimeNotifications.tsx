@@ -37,7 +37,7 @@ interface NotificationItem {
 }
 
 export default function RealTimeNotifications() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
@@ -47,7 +47,7 @@ export default function RealTimeNotifications() {
     isConnected,
     wsNotificationsLength: wsNotifications?.length,
     unreadMessagesCount,
-    localNotificationsLength: notifications.length,
+    localNotificationsLength: localNotifications.length,
   });
 
   // Procesar notificaciones que llegan desde WebSocket
@@ -73,7 +73,7 @@ export default function RealTimeNotifications() {
         newNotifications
       );
 
-      setNotifications(prev => {
+      setLocalNotifications(prev => {
         // Evitar duplicados
         const existingIds = prev.map(n => n.id);
         const uniqueNew = newNotifications.filter(n => !existingIds.includes(n.id));
@@ -142,25 +142,25 @@ export default function RealTimeNotifications() {
 
   // Guardar notificaciones en localStorage cuando cambien
   useEffect(() => {
-    if (notifications.length > 0) {
-      localStorage.setItem('rent360_notifications', JSON.stringify(notifications));
+    if (localNotifications.length > 0) {
+      localStorage.setItem('rent360_notifications', JSON.stringify(localNotifications));
     }
-  }, [notifications]);
+  }, [localNotifications]);
 
   const markAsRead = (notificationId: string) => {
-    setNotifications(prev =>
+    setLocalNotifications(prev =>
       prev.map(notif => (notif.id === notificationId ? { ...notif, read: true } : notif))
     );
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+    setLocalNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
     setUnreadCount(0);
   };
 
   const deleteNotification = (notificationId: string) => {
-    setNotifications(prev => {
+    setLocalNotifications(prev => {
       const updated = prev.filter(notif => notif.id !== notificationId);
       localStorage.setItem('rent360_notifications', JSON.stringify(updated));
       return updated;
@@ -305,7 +305,7 @@ export default function RealTimeNotifications() {
           </CardHeader>
 
           <CardContent className="p-0">
-            {notifications.length === 0 ? (
+            {localNotifications.length === 0 ? (
               <div className="text-center py-8">
                 <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 text-sm">No tienes notificaciones</p>
@@ -314,7 +314,7 @@ export default function RealTimeNotifications() {
               <>
                 <ScrollArea className="h-64">
                   <div className="space-y-1">
-                    {notifications.map(notification => (
+                    {localNotifications.map(notification => (
                       <div
                         key={notification.id}
                         className={`p-3 border-l-4 ${getPriorityColor(notification.priority || 'low')} ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}

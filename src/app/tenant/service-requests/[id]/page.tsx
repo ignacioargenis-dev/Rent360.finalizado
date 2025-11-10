@@ -217,8 +217,17 @@ export default function TenantServiceRequestDetailPage() {
         quoteAmount: request.quotedPrice,
       });
 
-      setSuccessMessage('Cotización aceptada exitosamente. El proveedor ha sido notificado.');
+      setSuccessMessage(
+        'Cotización aceptada exitosamente. Se ha creado un trabajo activo y el proveedor ha sido notificado.'
+      );
       await loadRequest(); // Recargar datos para mostrar el nuevo estado
+
+      // Mostrar información adicional sobre el trabajo creado
+      setTimeout(() => {
+        alert(
+          '✅ Trabajo activo creado para el proveedor. Puedes hacer seguimiento desde "Mis Solicitudes".'
+        );
+      }, 1000);
     } catch (error) {
       logger.error('Error aceptando cotización:', { error, requestId });
       setErrorMessage(
