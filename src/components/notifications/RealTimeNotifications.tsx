@@ -95,7 +95,7 @@ export default function RealTimeNotifications() {
           ...n,
           timestamp: new Date(n.timestamp),
         }));
-        setNotifications(notificationsWithDates);
+        setLocalNotifications(notificationsWithDates);
         setUnreadCount(notificationsWithDates.filter((n: NotificationItem) => !n.read).length);
       } catch (error) {
         logger.error('Error loading notifications:', {
@@ -119,7 +119,7 @@ export default function RealTimeNotifications() {
         read: false,
       }));
 
-      setNotifications(prev => {
+      setLocalNotifications(prev => {
         const updated = [...newNotifications, ...prev];
         // Limitar a 100 notificaciones
         const limited = updated.slice(0, 100);
@@ -167,14 +167,14 @@ export default function RealTimeNotifications() {
     });
 
     // Actualizar contador de no leídas
-    const deletedNotif = notifications.find(n => n.id === notificationId);
+    const deletedNotif = localNotifications.find(n => n.id === notificationId);
     if (deletedNotif && !deletedNotif.read) {
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
   };
 
   const clearAllNotifications = () => {
-    setNotifications([]);
+    setLocalNotifications([]);
     setUnreadCount(0);
     localStorage.removeItem('rent360_notifications');
   };

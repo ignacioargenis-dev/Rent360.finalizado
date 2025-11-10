@@ -54,6 +54,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       );
     }
 
+    // Verificar que la cotización tenga un precio final
+    if (!serviceRequest.finalPrice) {
+      return NextResponse.json(
+        { error: 'La cotización no tiene un precio final definido.' },
+        { status: 400 }
+      );
+    }
+
     // Actualizar el estado de la solicitud a ACCEPTED y crear trabajo activo
     const updatedRequest = await db.serviceJob.update({
       where: { id: requestId },

@@ -30,11 +30,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
     }
 
+    const providerId = fullUser.serviceProvider?.id || fullUser.maintenanceProvider?.id;
+
+    if (!providerId) {
+      return NextResponse.json(
+        { error: 'Usuario no tiene un perfil de proveedor válido.' },
+        { status: 403 }
+      );
+    }
+
     // Buscar el trabajo específico
     const job = await db.serviceJob.findFirst({
       where: {
         id: jobId,
-        serviceProviderId: fullUser.serviceProvider?.id || fullUser.maintenanceProvider?.id,
+        serviceProviderId: providerId,
       },
       include: {
         requester: {
