@@ -542,7 +542,12 @@ export default function ProviderDashboard() {
                           <p className="text-sm font-medium">
                             {new Date(job.dueDate).toLocaleDateString('es-CL')}
                           </p>
-                          <Button size="sm" variant="outline" className="mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2"
+                            onClick={() => router.push(`/provider/jobs/${job.id}`)}
+                          >
                             Ver detalles
                           </Button>
                         </div>

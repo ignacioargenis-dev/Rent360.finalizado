@@ -34,13 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           select: {
             id: true,
             businessName: true,
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-              },
-            },
+            userId: true,
           },
         },
       },
@@ -72,7 +66,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       requestId,
       tenantId: user.id,
       tenantEmail: user.email,
-      providerId: serviceRequest.serviceProvider.user.id,
+      providerId: serviceRequest.serviceProvider.userId,
       providerName: serviceRequest.serviceProvider.businessName,
       finalPrice: serviceRequest.finalPrice,
     });
@@ -80,7 +74,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Enviar notificación al proveedor
     try {
       await NotificationService.create({
-        userId: serviceRequest.serviceProvider.user.id,
+        userId: serviceRequest.serviceProvider.userId,
         type: NotificationType.QUOTE_ACCEPTED,
         title: `Cotización aceptada: ${serviceRequest.serviceType}`,
         message: `${user.name || 'Un inquilino'} ha aceptado tu cotización de $${serviceRequest.finalPrice} para el servicio de ${serviceRequest.serviceType}`,
@@ -90,7 +84,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           tenantId: user.id,
           tenantName: user.name,
           tenantEmail: user.email,
-          providerId: serviceRequest.serviceProvider.user.id,
+          providerId: serviceRequest.serviceProvider.userId,
           providerName: serviceRequest.serviceProvider.businessName,
           finalPrice: serviceRequest.finalPrice,
           serviceType: serviceRequest.serviceType,
@@ -98,7 +92,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       });
 
       console.log('✅✅✅ [QUOTE ACCEPT] Notificación enviada al proveedor:', {
-        providerId: serviceRequest.serviceProvider.user.id,
+        providerId: serviceRequest.serviceProvider.userId,
         requestId,
         finalPrice: serviceRequest.finalPrice,
       });
@@ -114,7 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     logger.info('Cotización aceptada exitosamente', {
       requestId,
       tenantId: user.id,
-      providerId: serviceRequest.serviceProvider.user.id,
+      providerId: serviceRequest.serviceProvider.userId,
       finalPrice: serviceRequest.finalPrice,
     });
 
