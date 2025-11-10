@@ -367,7 +367,7 @@ export default function TenantServiceRequestDetailPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Descripción
                   </label>
-                  <p className="text-gray-900">{request.description}</p>
+                  <p className="text-gray-900">{request?.description}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -375,15 +375,17 @@ export default function TenantServiceRequestDetailPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Tipo de Servicio
                     </label>
-                    <p className="text-gray-900">{getServiceTypeLabel(request.serviceType)}</p>
+                    <p className="text-gray-900">
+                      {request?.serviceType && getServiceTypeLabel(request.serviceType)}
+                    </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                    <div className="mt-1">{getStatusBadge(request.status)}</div>
+                    <div className="mt-1">{request?.status && getStatusBadge(request.status)}</div>
                   </div>
 
-                  {request.preferredDate && (
+                  {request?.preferredDate && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Fecha Preferida
@@ -394,7 +396,7 @@ export default function TenantServiceRequestDetailPage() {
                     </div>
                   )}
 
-                  {request.preferredTimeSlot && (
+                  {request?.preferredTimeSlot && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Horario Preferido
@@ -408,17 +410,17 @@ export default function TenantServiceRequestDetailPage() {
                     </div>
                   )}
 
-                  {(request.budgetMin || request.budgetMax) && (
+                  {(request?.budgetMin || request?.budgetMax) && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Rango de Presupuesto
                       </label>
                       <p className="text-gray-900">
-                        {request.budgetMin && request.budgetMax
+                        {request?.budgetMin && request?.budgetMax
                           ? `${formatCurrency(request.budgetMin)} - ${formatCurrency(request.budgetMax)}`
-                          : request.budgetMin
+                          : request?.budgetMin
                             ? `Desde ${formatCurrency(request.budgetMin)}`
-                            : request.budgetMax
+                            : request?.budgetMax
                               ? `Hasta ${formatCurrency(request.budgetMax)}`
                               : 'Sin presupuesto especificado'}
                       </p>
@@ -430,13 +432,16 @@ export default function TenantServiceRequestDetailPage() {
                       Fecha de Solicitud
                     </label>
                     <p className="text-gray-900">
-                      {new Date(request.createdAt).toLocaleDateString('es-CL')} a las{' '}
-                      {new Date(request.createdAt).toLocaleTimeString('es-CL')}
+                      {request?.createdAt &&
+                        new Date(request.createdAt).toLocaleDateString('es-CL')}{' '}
+                      a las{' '}
+                      {request?.createdAt &&
+                        new Date(request.createdAt).toLocaleTimeString('es-CL')}
                     </p>
                   </div>
                 </div>
 
-                {request.notes && (
+                {request?.notes && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Notas Adicionales
@@ -448,7 +453,7 @@ export default function TenantServiceRequestDetailPage() {
             </Card>
 
             {/* Cotización (si existe) */}
-            {request.status === 'quoted' && request.quotedPrice && (
+            {request?.status === 'quoted' && request?.quotedPrice && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -471,13 +476,13 @@ export default function TenantServiceRequestDetailPage() {
                   </div>
 
                   {/* Detalles de la cotización */}
-                  {request.quoteDetails && (
+                  {request?.quoteDetails && (
                     <div className="space-y-4">
                       <h4 className="font-medium text-gray-900">Detalles de la Cotización</h4>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Tiempo estimado */}
-                        {request.quoteDetails.estimatedTime && (
+                        {request?.quoteDetails?.estimatedTime && (
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <div className="flex items-center gap-2">
                               <Clock className="w-4 h-4 text-blue-600" />
@@ -492,7 +497,7 @@ export default function TenantServiceRequestDetailPage() {
                         )}
 
                         {/* Fecha disponible */}
-                        {request.quoteDetails.availabilityDate && (
+                        {request?.quoteDetails?.availabilityDate && (
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4 text-blue-600" />
@@ -509,7 +514,7 @@ export default function TenantServiceRequestDetailPage() {
                         )}
 
                         {/* Costo de mano de obra */}
-                        {request.quoteDetails.laborCost && (
+                        {request?.quoteDetails?.laborCost && (
                           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                             <div className="flex items-center gap-2">
                               <DollarSign className="w-4 h-4 text-orange-600" />
@@ -524,7 +529,7 @@ export default function TenantServiceRequestDetailPage() {
                         )}
 
                         {/* Costo de materiales */}
-                        {request.quoteDetails.materialsCost && (
+                        {request?.quoteDetails?.materialsCost && (
                           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                             <div className="flex items-center gap-2">
                               <DollarSign className="w-4 h-4 text-orange-600" />
@@ -540,7 +545,7 @@ export default function TenantServiceRequestDetailPage() {
                       </div>
 
                       {/* Materiales incluidos */}
-                      {request.quoteDetails.materials && (
+                      {request?.quoteDetails?.materials && (
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                           <div className="flex items-start gap-2">
                             <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
@@ -559,7 +564,7 @@ export default function TenantServiceRequestDetailPage() {
                   )}
 
                   {/* Notas adicionales de la solicitud */}
-                  {request.notes && (
+                  {request?.notes && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                       <div className="flex items-start gap-2">
                         <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
@@ -574,7 +579,7 @@ export default function TenantServiceRequestDetailPage() {
                   )}
 
                   {/* Acciones */}
-                  {request.status === 'quoted' && (
+                  {request?.status === 'quoted' && (
                     <div className="flex gap-3 pt-2">
                       <Button
                         className="flex-1 bg-green-600 hover:bg-green-700"
@@ -605,41 +610,53 @@ export default function TenantServiceRequestDetailPage() {
                   )}
 
                   {/* Estado final */}
-                  {request.status === 'accepted' && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                        <p className="text-sm font-medium text-green-800">
-                          Cotización aceptada. El proveedor comenzará el trabajo pronto.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {(() => {
+                    const status = request?.status as any;
+                    return (
+                      status &&
+                      status === 'accepted' && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                            <p className="text-sm font-medium text-green-800">
+                              Cotización aceptada. El proveedor comenzará el trabajo pronto.
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    );
+                  })()}
 
-                  {request.status === 'cancelled' && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <div className="flex items-center">
-                        <XCircle className="w-5 h-5 text-red-600 mr-2" />
-                        <p className="text-sm font-medium text-red-800">
-                          Cotización rechazada. Puedes contactar al proveedor para solicitar una
-                          nueva cotización.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {(() => {
+                    const status = request?.status as any;
+                    return (
+                      status &&
+                      status === 'cancelled' && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <XCircle className="w-5 h-5 text-red-600 mr-2" />
+                            <p className="text-sm font-medium text-red-800">
+                              Cotización rechazada. Puedes contactar al proveedor para solicitar una
+                              nueva cotización.
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    );
+                  })()}
                 </CardContent>
               </Card>
             )}
 
             {/* Imágenes adjuntas */}
-            {request.images && request.images.length > 0 && (
+            {request?.images && request.images.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Imágenes Adjuntas</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {request.images.map((image, index) => (
+                    {request?.images?.map((image, index) => (
                       <div
                         key={index}
                         className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
@@ -667,11 +684,13 @@ export default function TenantServiceRequestDetailPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarFallback>{request.providerName.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>
+                      {request?.providerName?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{request.providerName}</p>
-                    <p className="text-sm text-gray-600">{request.providerEmail}</p>
+                    <p className="font-medium">{request?.providerName}</p>
+                    <p className="text-sm text-gray-600">{request?.providerEmail}</p>
                   </div>
                 </div>
 
