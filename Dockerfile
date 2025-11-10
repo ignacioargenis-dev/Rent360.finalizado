@@ -63,8 +63,8 @@ COPY --from=builder /app/scripts ./scripts/
 COPY --from=builder /app/src ./src/
 COPY --from=builder /app/node_modules ./node_modules/
 
-# Ejecutar migraciones antes de cambiar usuario (necesita permisos root)
-RUN npx prisma migrate deploy --schema=./prisma/schema.prisma || echo "Migration may have failed, continuing..."
+# Ejecutar script de migraciones robusto
+RUN node scripts/migrate-production.js || echo "Migration script failed, continuing with app startup..."
 
 # Configurar permisos
 RUN chown -R nextjs:nodejs /app
