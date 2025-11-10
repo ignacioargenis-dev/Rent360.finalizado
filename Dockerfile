@@ -57,10 +57,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 
 # Copiar archivos de configuración y servidor personalizado
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/server.js ./
+COPY --from=builder /app/server.ts ./
 COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/scripts ./scripts/
 COPY --from=builder /app/src ./src/
+COPY --from=builder /app/node_modules ./node_modules/
+
+# Ejecutar migraciones antes de cambiar usuario (necesita permisos root)
+RUN npx prisma migrate deploy --schema=./prisma/schema.prisma || echo "Migration may have failed, continuing..."
 
 # Configurar permisos
 RUN chown -R nextjs:nodejs /app
