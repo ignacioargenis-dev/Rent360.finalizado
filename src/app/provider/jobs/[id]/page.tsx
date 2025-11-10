@@ -73,14 +73,20 @@ export default function ProviderJobDetailPage() {
 
   // Auto-save cuando cambien status o notes
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     if (job && !loading) {
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         updateJobProgress();
       }, 1000); // Esperar 1 segundo después del último cambio
-
-      return () => clearTimeout(timeoutId);
     }
-  }, [status, notes]);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [status, notes, job, loading]);
 
   const loadJob = async () => {
     try {

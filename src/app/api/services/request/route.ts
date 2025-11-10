@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
     // Transformar las solicitudes de corredores
     const transformedBrokerRequests = brokerRequests.map(request => {
       const latestResponse = request.responses[0];
+      const budget = request.budget as any; // JSON field
       return {
         id: request.id,
         serviceType: request.requestType,
@@ -91,16 +92,16 @@ export async function GET(request: NextRequest) {
             : request.status === 'ASSIGNED'
               ? 'QUOTED'
               : request.status,
-        scheduledDate: request.preferredDate,
-        preferredTimeSlot: request.preferredTimeSlot,
-        budgetMin: request.budgetMin,
-        budgetMax: request.budgetMax,
+        scheduledDate: null, // No hay campo específico para fecha preferida
+        preferredTimeSlot: null, // No hay campo específico para horario
+        budgetMin: budget?.min || null,
+        budgetMax: budget?.max || null,
         createdAt: request.createdAt,
         providerName: latestResponse?.broker.name || 'Esperando respuesta',
         providerEmail: latestResponse?.broker.email,
         providerId: latestResponse?.broker.id,
-        notes: request.additionalNotes,
-        images: request.images ? JSON.parse(request.images) : [],
+        notes: null, // No hay campo para notas adicionales
+        images: [], // No hay campo para imágenes en este modelo
         type: 'broker_request', // Para distinguir el tipo
       };
     });
