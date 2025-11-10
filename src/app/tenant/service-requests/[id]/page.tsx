@@ -62,7 +62,9 @@ export default function TenantServiceRequestDetailPage() {
   const { user } = useAuth();
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const requestId = params?.id as string;
 
@@ -117,7 +119,7 @@ export default function TenantServiceRequestDetailPage() {
       }
     } catch (error) {
       logger.error('Error al cargar solicitud de servicio:', { error, requestId });
-      setError(error instanceof Error ? error.message : 'Error desconocido');
+      setErrorMessage(error instanceof Error ? error.message : 'Error desconocido');
     } finally {
       setIsLoading(false);
     }
@@ -184,18 +186,48 @@ export default function TenantServiceRequestDetailPage() {
       return;
     }
 
-    try {
-      // Aquí iría la lógica para aceptar la cotización
-      // Por ahora, solo mostramos un mensaje
-      alert(
-        `Cotización de ${formatCurrency(request.quotedPrice)} aceptada. El proveedor será notificado y comenzará el trabajo.`
-      );
+    const confirmed = window.confirm(
+      `¿Estás seguro de aceptar la cotización de ${formatCurrency(request.quotedPrice)}? El proveedor será notificado y comenzará el trabajo.`
+    );
 
-      // En el futuro, esto debería hacer una llamada a la API para cambiar el estado a ACCEPTED
-      await loadRequest(); // Recargar datos
+    if (!confirmed) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(`/api/services/request/${requestId}/accept`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al aceptar la cotización');
+      }
+
+      logger.info('Cotización aceptada exitosamente:', {
+        requestId,
+        quoteAmount: request.quotedPrice,
+      });
+
+      setSuccessMessage('Cotización aceptada exitosamente. El proveedor ha sido notificado.');
+      await loadRequest(); // Recargar datos para mostrar el nuevo estado
     } catch (error) {
-      logger.error('Error aceptando cotización:', { error });
-      alert('Error al aceptar la cotización. Por favor, inténtalo nuevamente.');
+      logger.error('Error aceptando cotización:', { error, requestId });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al aceptar la cotización. Por favor, inténtalo nuevamente.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -204,17 +236,45 @@ export default function TenantServiceRequestDetailPage() {
       return;
     }
 
-    try {
-      // Aquí iría la lógica para rechazar la cotización
-      alert(
-        'Cotización rechazada. Puedes contactar al proveedor para solicitar una nueva cotización.'
-      );
+    const confirmed = window.confirm(
+      '¿Estás seguro de rechazar esta cotización? El proveedor será notificado y podrás solicitar una nueva cotización si lo deseas.'
+    );
 
-      // En el futuro, esto debería hacer una llamada a la API para cambiar el estado o crear una nueva solicitud
-      await loadRequest(); // Recargar datos
+    if (!confirmed) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(`/api/services/request/${requestId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al rechazar la cotización');
+      }
+
+      logger.info('Cotización rechazada exitosamente:', { requestId });
+
+      setSuccessMessage('Cotización rechazada. El proveedor ha sido notificado.');
+      await loadRequest(); // Recargar datos para mostrar el nuevo estado
     } catch (error) {
-      logger.error('Error rechazando cotización:', { error });
-      alert('Error al rechazar la cotización. Por favor, inténtalo nuevamente.');
+      logger.error('Error rechazando cotización:', { error, requestId });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al rechazar la cotización. Por favor, inténtalo nuevamente.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -228,13 +288,13 @@ export default function TenantServiceRequestDetailPage() {
     );
   }
 
-  if (error || !request) {
+  if (errorMessage && !request) {
     return (
       <UnifiedDashboardLayout user={user} title="Detalle de Solicitud">
         <div className="text-center py-8">
           <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">Error al cargar la solicitud</h3>
-          <p className="mt-1 text-sm text-gray-500">{error}</p>
+          <p className="mt-1 text-sm text-gray-500">{errorMessage}</p>
           <div className="mt-6">
             <Button onClick={() => router.push('/tenant/service-requests')}>
               Volver a Mis Solicitudes
@@ -259,11 +319,40 @@ export default function TenantServiceRequestDetailPage() {
             Volver
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">{request.title}</h1>
-            <p className="text-gray-600">{getServiceTypeLabel(request.serviceType)}</p>
+            <h1 className="text-2xl font-bold">{request?.title}</h1>
+            <p className="text-gray-600">
+              {request?.serviceType && getServiceTypeLabel(request.serviceType)}
+            </p>
           </div>
-          {getStatusBadge(request.status)}
+          {request?.status && getStatusBadge(request.status)}
         </div>
+
+        {/* Mensajes de éxito y error */}
+        {successMessage && (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-green-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800">{successMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Información principal */}
@@ -485,23 +574,59 @@ export default function TenantServiceRequestDetailPage() {
                   )}
 
                   {/* Acciones */}
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={handleAcceptQuote}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Aceptar Cotización
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                      onClick={handleRejectQuote}
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Rechazar
-                    </Button>
-                  </div>
+                  {request.status === 'quoted' && (
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={handleAcceptQuote}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        ) : (
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                        )}
+                        {isSubmitting ? 'Procesando...' : 'Aceptar Cotización'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                        onClick={handleRejectQuote}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                        ) : (
+                          <XCircle className="w-4 h-4 mr-2" />
+                        )}
+                        {isSubmitting ? 'Procesando...' : 'Rechazar'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Estado final */}
+                  {request.status === 'accepted' && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                        <p className="text-sm font-medium text-green-800">
+                          Cotización aceptada. El proveedor comenzará el trabajo pronto.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {request.status === 'cancelled' && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <XCircle className="w-5 h-5 text-red-600 mr-2" />
+                        <p className="text-sm font-medium text-red-800">
+                          Cotización rechazada. Puedes contactar al proveedor para solicitar una
+                          nueva cotización.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
