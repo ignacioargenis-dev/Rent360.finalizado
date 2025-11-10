@@ -71,7 +71,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       description: job.description,
       serviceType: job.serviceType,
       status: job.status,
-      progress: job.progress || 0,
       price: job.finalPrice || job.basePrice,
       scheduledDate: job.scheduledDate?.toISOString() || job.createdAt.toISOString(),
       createdAt: job.createdAt.toISOString(),

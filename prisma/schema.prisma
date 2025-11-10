@@ -897,7 +897,6 @@ model ServiceJob {
   description     String
   serviceType     String
   status          String @default("PENDING")
-  progress        Int @default(0) // Progreso del trabajo en porcentaje (0-100)
   scheduledDate   DateTime?
   completedDate   DateTime?
   basePrice       Float
