@@ -36,6 +36,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           select: {
             id: true,
             businessName: true,
+            user: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
       },
@@ -46,6 +51,51 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         { error: 'Solicitud no encontrada o no tienes acceso a ella.' },
         { status: 404 }
       );
+    }
+
+    // Buscar la notificación de cotización más reciente para esta solicitud
+    let quoteDetails = null;
+    if (serviceRequest.status === 'QUOTED' || serviceRequest.finalPrice) {
+      // Buscar todas las notificaciones de cotización y filtrar manualmente
+      const quoteNotifications = await db.notification.findMany({
+        where: {
+          userId: user.id, // Solo notificaciones del usuario actual
+          type: 'SERVICE_REQUEST_RESPONSE',
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      // Filtrar la que corresponde a esta solicitud
+      const latestQuoteNotification = quoteNotifications.find(notification => {
+        try {
+          const metadata = JSON.parse(notification.metadata || '{}');
+          return metadata.serviceRequestId === requestId;
+        } catch {
+          return false;
+        }
+      });
+
+      if (latestQuoteNotification) {
+        try {
+          const metadata = JSON.parse(latestQuoteNotification.metadata || '{}');
+          quoteDetails = {
+            estimatedTime: metadata.estimatedTime,
+            availabilityDate: metadata.availabilityDate,
+            materials: metadata.materials,
+            laborCost: metadata.laborCost,
+            materialsCost: metadata.materialsCost,
+            providerName: metadata.providerName,
+            providerId: metadata.providerId,
+          };
+        } catch (error) {
+          logger.warn('Error parsing quote notification metadata:', {
+            error,
+            notificationId: latestQuoteNotification.id,
+          });
+        }
+      }
     }
 
     // Transformar datos para el frontend
@@ -72,6 +122,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       requesterEmail: serviceRequest.requester.email,
       serviceProviderId: serviceRequest.serviceProviderId,
       serviceProviderName: serviceRequest.serviceProvider.businessName,
+      serviceProviderEmail: serviceRequest.serviceProvider.user.email,
+      // Incluir detalles de cotización si existen
+      quoteDetails: quoteDetails,
     };
 
     logger.info('Solicitud de servicio obtenida por inquilino', {

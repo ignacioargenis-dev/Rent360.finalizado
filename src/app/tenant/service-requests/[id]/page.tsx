@@ -44,6 +44,16 @@ interface ServiceRequest {
   notes?: string;
   images?: string[];
   providerId?: string;
+  serviceProviderEmail?: string;
+  quoteDetails?: {
+    estimatedTime?: string;
+    availabilityDate?: string;
+    materials?: string;
+    laborCost?: number;
+    materialsCost?: number;
+    providerName?: string;
+    providerId?: string;
+  };
 }
 
 export default function TenantServiceRequestDetailPage() {
@@ -92,11 +102,13 @@ export default function TenantServiceRequestDetailPage() {
           providerName: data.request.serviceProviderName || 'Proveedor',
           providerEmail: data.request.serviceProviderEmail || '',
           providerId: data.request.serviceProviderId,
+          serviceProviderEmail: data.request.serviceProviderEmail || '',
           finalPrice: data.request.finalPrice,
           quotedPrice: data.request.finalPrice || data.request.quotedPrice,
           estimatedPrice: data.request.basePrice || data.request.estimatedPrice,
           notes: data.request.notes,
           images: data.request.images || [],
+          quoteDetails: data.request.quoteDetails,
         };
 
         setRequest(transformedRequest);
@@ -355,11 +367,12 @@ export default function TenantServiceRequestDetailPage() {
                     Cotización Recibida
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                  {/* Precio principal */}
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-green-800">Precio cotizado</p>
+                        <p className="text-sm text-green-800">Precio total cotizado</p>
                         <p className="text-2xl font-bold text-green-600">
                           {formatCurrency(request.quotedPrice)}
                         </p>
@@ -368,7 +381,111 @@ export default function TenantServiceRequestDetailPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  {/* Detalles de la cotización */}
+                  {request.quoteDetails && (
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">Detalles de la Cotización</h4>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Tiempo estimado */}
+                        {request.quoteDetails.estimatedTime && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-blue-600" />
+                              <div>
+                                <p className="text-xs text-blue-800">Tiempo Estimado</p>
+                                <p className="text-sm font-medium text-blue-900">
+                                  {request.quoteDetails.estimatedTime}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Fecha disponible */}
+                        {request.quoteDetails.availabilityDate && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <div>
+                                <p className="text-xs text-blue-800">Fecha Disponible</p>
+                                <p className="text-sm font-medium text-blue-900">
+                                  {new Date(
+                                    request.quoteDetails.availabilityDate
+                                  ).toLocaleDateString('es-CL')}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Costo de mano de obra */}
+                        {request.quoteDetails.laborCost && (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-4 h-4 text-orange-600" />
+                              <div>
+                                <p className="text-xs text-orange-800">Mano de Obra</p>
+                                <p className="text-sm font-medium text-orange-900">
+                                  {formatCurrency(request.quoteDetails.laborCost)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Costo de materiales */}
+                        {request.quoteDetails.materialsCost && (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-4 h-4 text-orange-600" />
+                              <div>
+                                <p className="text-xs text-orange-800">Materiales</p>
+                                <p className="text-sm font-medium text-orange-900">
+                                  {formatCurrency(request.quoteDetails.materialsCost)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Materiales incluidos */}
+                      {request.quoteDetails.materials && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-start gap-2">
+                            <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
+                            <div>
+                              <p className="text-xs text-gray-700 font-medium mb-1">
+                                Materiales Incluidos
+                              </p>
+                              <p className="text-sm text-gray-900">
+                                {request.quoteDetails.materials}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Notas adicionales de la solicitud */}
+                  {request.notes && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-yellow-700 font-medium mb-1">
+                            Notas de la Solicitud
+                          </p>
+                          <p className="text-sm text-yellow-900">{request.notes}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Acciones */}
+                  <div className="flex gap-3 pt-2">
                     <Button
                       className="flex-1 bg-green-600 hover:bg-green-700"
                       onClick={handleAcceptQuote}

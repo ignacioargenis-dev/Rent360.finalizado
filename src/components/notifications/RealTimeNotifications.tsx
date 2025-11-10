@@ -43,6 +43,48 @@ export default function RealTimeNotifications() {
   const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
   const { success } = useToast();
 
+  console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Component render:', {
+    isConnected,
+    wsNotificationsLength: wsNotifications?.length,
+    unreadMessagesCount,
+    localNotificationsLength: notifications.length,
+  });
+
+  // Procesar notificaciones que llegan desde WebSocket
+  useEffect(() => {
+    console.log(
+      '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing WebSocket notifications:',
+      wsNotifications
+    );
+    if (wsNotifications && wsNotifications.length > 0) {
+      const newNotifications = wsNotifications.map((wsNotif: any) => ({
+        id: wsNotif.id || `ws_${Date.now()}_${Math.random()}`,
+        type: wsNotif.type || 'unknown',
+        title: wsNotif.title || 'Nueva notificación',
+        message: wsNotif.message || '',
+        data: wsNotif,
+        priority: wsNotif.priority || 'medium',
+        timestamp: new Date(wsNotif.timestamp || Date.now()),
+        read: false,
+      }));
+
+      console.log(
+        '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Adding new notifications to list:',
+        newNotifications
+      );
+
+      setNotifications(prev => {
+        // Evitar duplicados
+        const existingIds = prev.map(n => n.id);
+        const uniqueNew = newNotifications.filter(n => !existingIds.includes(n.id));
+        return [...uniqueNew, ...prev];
+      });
+
+      // Incrementar contador de no leídas
+      setUnreadCount(prev => prev + newNotifications.length);
+    }
+  }, [wsNotifications]);
+
   // Cargar notificaciones desde localStorage al iniciar
   useEffect(() => {
     const savedNotifications = localStorage.getItem('rent360_notifications');

@@ -102,7 +102,15 @@ export async function POST(request: NextRequest) {
 
     // Enviar notificación al inquilino
     try {
-      await NotificationService.create({
+      console.log('🚨🚨🚨 [QUOTE API] Enviando notificación al inquilino:', {
+        userId: serviceRequest.requester.id,
+        type: NotificationType.SERVICE_REQUEST_RESPONSE,
+        title: `Cotización recibida: ${serviceRequest.serviceType}`,
+        message: `${user.name || 'Un proveedor'} te ha enviado una cotización por $${price}`,
+        link: `/tenant/service-requests/${requestId}`,
+      });
+
+      const notificationResult = await NotificationService.create({
         userId: serviceRequest.requester.id,
         type: NotificationType.SERVICE_REQUEST_RESPONSE,
         title: `Cotización recibida: ${serviceRequest.serviceType}`,
@@ -121,12 +129,23 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      console.log('✅✅✅ [QUOTE API] Notificación enviada exitosamente:', {
+        notificationId: notificationResult?.id,
+        requesterId: serviceRequest.requester.id,
+        requestId,
+        providerId: user.id,
+      });
+
       logger.info('✅ Notificación enviada al inquilino por cotización:', {
         requesterId: serviceRequest.requester.id,
         requestId,
         providerId: user.id,
       });
     } catch (notificationError) {
+      console.error(
+        '❌❌❌ [QUOTE API] Error enviando notificación de cotización:',
+        notificationError
+      );
       logger.warn('Error enviando notificación de cotización:', notificationError);
       // No fallar si la notificación falla
     }
