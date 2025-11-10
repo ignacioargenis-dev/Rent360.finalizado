@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const jobId = params.id;
     const body = await request.json();
-    const { status, notes } = body;
+    const { status, progress, notes } = body;
 
     // Obtener datos completos del usuario
     const fullUser = await db.user.findUnique({
@@ -69,6 +69,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (status) {
       updateData.status = status;
     }
+    if (progress !== undefined) {
+      updateData.progress = progress;
+    }
     if (notes) {
       updateData.notes = notes;
     }
@@ -82,6 +85,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       jobId,
       providerId: user.id,
       newStatus: status,
+      progress,
       notes,
     });
 
@@ -111,6 +115,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       job: {
         id: updatedJob.id,
         status: updatedJob.status,
+        progress: updatedJob.progress,
         notes: updatedJob.notes,
       },
     });

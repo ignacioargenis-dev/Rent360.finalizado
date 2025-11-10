@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   ArrowLeft,
   CheckCircle,
@@ -33,6 +34,7 @@ interface Job {
   description: string;
   serviceType: string;
   status: string;
+  progress: number;
   price: number;
   scheduledDate: string;
   createdAt: string;
@@ -53,6 +55,7 @@ export default function ProviderJobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState('');
+  const [progress, setProgress] = useState(0);
   const [notes, setNotes] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -76,6 +79,7 @@ export default function ProviderJobDetailPage() {
 
       if (data.success && data.job) {
         setJob(data.job);
+        setProgress(data.job.progress || 0);
         setStatus(data.job.status || '');
         setNotes(data.job.notes || '');
       } else {
@@ -107,6 +111,7 @@ export default function ProviderJobDetailPage() {
         credentials: 'include',
         body: JSON.stringify({
           status: status || undefined,
+          progress: progress,
           notes: notes || undefined,
         }),
       });
@@ -134,6 +139,7 @@ export default function ProviderJobDetailPage() {
 
   const startJob = () => {
     setStatus('IN_PROGRESS');
+    setProgress(10); // Iniciar con 10% de progreso
   };
 
   const pauseJob = () => {
@@ -142,6 +148,7 @@ export default function ProviderJobDetailPage() {
 
   const completeJob = () => {
     setStatus('COMPLETED');
+    setProgress(100);
   };
 
   const getStatusBadge = (status: string) => {
@@ -277,6 +284,15 @@ export default function ProviderJobDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Barra de progreso */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label className="text-sm font-medium">Progreso del Trabajo</Label>
+                    <span className="text-sm text-gray-600">{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="w-full" />
+                </div>
+
                 {/* Controles de progreso */}
                 <div className="flex gap-2">
                   <Button
@@ -297,7 +313,12 @@ export default function ProviderJobDetailPage() {
                     <Pause className="w-4 h-4 mr-1" />
                     Pausar
                   </Button>
-                  <Button size="sm" variant="outline" onClick={completeJob}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={completeJob}
+                    disabled={progress < 100}
+                  >
                     <CheckCircle className="w-4 h-4 mr-1" />
                     Completar
                   </Button>
