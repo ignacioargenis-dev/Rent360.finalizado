@@ -69,7 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (status) {
       updateData.status = status;
     }
-    if (progress !== undefined) {
+    if (progress !== undefined && progress !== null) {
       updateData.progress = progress;
     }
     if (notes) {
