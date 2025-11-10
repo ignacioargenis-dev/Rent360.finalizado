@@ -72,22 +72,18 @@ export default function ProviderJobDetailPage() {
     loadJob();
   }, [jobId]);
 
-  // Auto-save cuando cambien status o notes (solo después de carga inicial)
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
+  // Función para guardar cambios silenciosamente
+  const saveChangesSilently = async () => {
     if (job && !loading && initialLoadComplete) {
-      timeoutId = setTimeout(() => {
-        updateJobProgress();
-      }, 1000); // Esperar 1 segundo después del último cambio
-    }
-
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      try {
+        await updateJobProgress();
+        // No mostrar mensajes de éxito para mantenerlo silencioso
+      } catch (error) {
+        // Solo mostrar error si hay problemas reales
+        logger.error('Error guardando cambios:', { error });
       }
-    };
-  }, [status, notes, job, loading, initialLoadComplete]);
+    }
+  };
 
   const loadJob = async () => {
     try {
@@ -356,7 +352,14 @@ export default function ProviderJobDetailPage() {
                 {/* Estado */}
                 <div>
                   <Label htmlFor="status">Estado del Trabajo</Label>
-                  <Select value={status} onValueChange={setStatus}>
+                  <Select
+                    value={status}
+                    onValueChange={newStatus => {
+                      setStatus(newStatus);
+                      // Guardar automáticamente cuando cambia el estado
+                      setTimeout(() => saveChangesSilently(), 100);
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar estado" />
                     </SelectTrigger>
@@ -376,6 +379,7 @@ export default function ProviderJobDetailPage() {
                     id="notes"
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
+                    onBlur={() => saveChangesSilently()} // Guardar cuando pierde el foco
                     placeholder="Agregar notas sobre el progreso del trabajo..."
                     rows={3}
                   />

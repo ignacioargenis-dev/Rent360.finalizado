@@ -96,7 +96,12 @@ export default function ProviderRequestsPage() {
     };
 
     const mappedStatuses = statusMapping[tabValue] || [tabValue.toUpperCase()];
-    return requests.filter(request => mappedStatuses.includes(request.status)).length;
+    const filtered = requests.filter(request => mappedStatuses.includes(request.status));
+
+    console.log(
+      `📊 Tab ${tabValue}: buscando ${mappedStatuses.join(',')}, encontrados: ${filtered.length}`
+    );
+    return filtered.length;
   };
 
   useEffect(() => {
@@ -116,6 +121,12 @@ export default function ProviderRequestsPage() {
       if (response.ok) {
         const apiData = await response.json();
         if (apiData.success && apiData.requests) {
+          // Log para debugging de estados
+          console.log(
+            '📊 Estados de solicitudes:',
+            apiData.requests.map((req: any) => req.status)
+          );
+
           // Transformar datos de la API al formato esperado
           const transformedRequests = apiData.requests.map((req: any) => ({
             id: req.id,
