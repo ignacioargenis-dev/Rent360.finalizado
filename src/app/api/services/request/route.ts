@@ -113,43 +113,33 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ Validar que el serviceProviderId existe y corresponde a un ServiceProvider
-    let providerId: string | null = null;
-    if (serviceProviderId) {
-      const provider = await db.serviceProvider.findUnique({
-        where: { id: serviceProviderId },
-        select: { id: true },
-      });
-
-      if (!provider) {
-        return NextResponse.json(
-          { error: 'Proveedor de servicios no encontrado' },
-          { status: 404 }
-        );
-      }
-
-      providerId = provider.id;
-    }
-
-    // Si no se proporcionó un proveedor, crear solicitud sin asignar (para que aparezca en el marketplace)
-    // Por ahora, requerimos que se proporcione un proveedor
-    if (!providerId) {
+    if (!serviceProviderId) {
       return NextResponse.json(
         { error: 'Debe especificar un proveedor de servicios' },
         { status: 400 }
       );
     }
 
+    const provider = await db.serviceProvider.findUnique({
+      where: { id: serviceProviderId },
+      select: { id: true },
+    });
+
+    if (!provider) {
+      return NextResponse.json({ error: 'Proveedor de servicios no encontrado' }, { status: 404 });
+    }
+
     // Crear la solicitud de servicio en la base de datos
     const serviceRequest = await db.serviceJob.create({
       data: {
-        serviceProviderId: providerId, // ✅ Usar el ID del proveedor seleccionado
+        serviceProviderId: serviceProviderId, // ✅ Usar el ID del proveedor seleccionado
         requesterId: user.id,
         title: `${serviceType} - Solicitud de ${user.name || 'Usuario'}`,
         description,
         serviceType,
         status: 'PENDING',
         scheduledDate: preferredDate ? new Date(preferredDate) : null,
-        basePrice: budgetMin ? parseFloat(budgetMin.toString()) : 0,
+        basePrice: budgetMin ? Number(budgetMin) : 0,
         finalPrice: null,
         images: null,
         notes: preferredTimeSlot ? `Horario preferido: ${preferredTimeSlot}` : null,
@@ -175,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     logger.info('Nueva solicitud de servicio doméstico creada:', {
       requesterId: user.id,
-      serviceProviderId: providerId,
+      serviceProviderId: serviceProviderId,
       serviceType,
       requestId: serviceRequest.id,
     });
@@ -186,7 +176,7 @@ export async function POST(request: NextRequest) {
       const providerUser = await db.user.findFirst({
         where: {
           serviceProvider: {
-            id: providerId,
+            id: serviceProviderId,
           },
         },
         select: { id: true },
