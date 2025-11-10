@@ -18,31 +18,95 @@ export async function GET(request: NextRequest) {
 
     const userId = user.id;
 
-    const serviceRequests = await db.serviceJob.findMany({
-      where: {
-        requesterId: userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        requester: {
-          select: {
-            name: true,
-            email: true,
+    // Obtener tanto solicitudes iniciales (brokerServiceRequest) como trabajos activos (serviceJob)
+    const [brokerRequests, serviceJobs] = await Promise.all([
+      // Solicitudes iniciales a corredores
+      db.brokerServiceRequest.findMany({
+        where: {
+          userId: userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          responses: {
+            include: {
+              broker: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1, // Solo la respuesta más reciente
+          },
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
           },
         },
-        serviceProvider: {
-          select: {
-            id: true,
-            businessName: true,
+      }),
+      // Trabajos activos con proveedores
+      db.serviceJob.findMany({
+        where: {
+          requesterId: userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          requester: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          serviceProvider: {
+            select: {
+              id: true,
+              businessName: true,
+            },
           },
         },
-      },
+      }),
+    ]);
+
+    // Transformar las solicitudes de corredores
+    const transformedBrokerRequests = brokerRequests.map(request => {
+      const latestResponse = request.responses[0];
+      return {
+        id: request.id,
+        serviceType: request.requestType,
+        title: request.title,
+        description: request.description,
+        status:
+          request.status === 'OPEN'
+            ? 'PENDING'
+            : request.status === 'ASSIGNED'
+              ? 'QUOTED'
+              : request.status,
+        scheduledDate: request.preferredDate,
+        preferredTimeSlot: request.preferredTimeSlot,
+        budgetMin: request.budgetMin,
+        budgetMax: request.budgetMax,
+        createdAt: request.createdAt,
+        providerName: latestResponse?.broker.name || 'Esperando respuesta',
+        providerEmail: latestResponse?.broker.email,
+        providerId: latestResponse?.broker.id,
+        notes: request.additionalNotes,
+        images: request.images ? JSON.parse(request.images) : [],
+        type: 'broker_request', // Para distinguir el tipo
+      };
     });
 
-    // Transformar los datos para el frontend
-    const transformedRequests = serviceRequests.map(request => ({
+    // Transformar los trabajos con proveedores
+    const transformedServiceJobs = serviceJobs.map(request => ({
       id: request.id,
       serviceType: request.serviceType,
       title: request.title,
@@ -51,17 +115,24 @@ export async function GET(request: NextRequest) {
       scheduledDate: request.scheduledDate,
       basePrice: request.basePrice,
       finalPrice: request.finalPrice,
+      quotedPrice: request.finalPrice,
       rating: request.rating,
       feedback: request.feedback,
       createdAt: request.createdAt,
+      providerName: request.serviceProvider.businessName,
       requesterName: request.requester.name,
-      serviceProviderName: request.serviceProvider.businessName,
       images: request.images ? JSON.parse(request.images) : [],
+      type: 'service_job', // Para distinguir el tipo
     }));
+
+    // Combinar y ordenar por fecha de creación
+    const allRequests = [...transformedBrokerRequests, ...transformedServiceJobs].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     return NextResponse.json({
       success: true,
-      data: transformedRequests,
+      data: allRequests,
     });
   } catch (error) {
     logger.error('Error obteniendo solicitudes de servicio:', {

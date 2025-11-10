@@ -45,6 +45,7 @@ interface ServiceRequest {
   estimatedPrice?: number;
   notes?: string;
   images?: string[];
+  type?: string; // 'broker_request' o 'service_job'
 }
 
 export default function TenantServiceRequestsPage() {
@@ -172,7 +173,17 @@ export default function TenantServiceRequestsPage() {
     if (activeTab === 'all') {
       return true;
     }
-    return request.status === activeTab;
+
+    // Mapear los valores de los tabs a los estados reales de la base de datos
+    const statusMapping: { [key: string]: string[] } = {
+      pending: ['PENDING'],
+      quoted: ['QUOTED'],
+      accepted: ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'],
+      completed: ['COMPLETED'],
+    };
+
+    const mappedStatuses = statusMapping[activeTab] || [activeTab.toUpperCase()];
+    return mappedStatuses.includes(request.status);
   });
 
   if (loading) {
@@ -264,16 +275,52 @@ export default function TenantServiceRequestsPage() {
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="all">Todas ({requests.length})</TabsTrigger>
                 <TabsTrigger value="pending">
-                  Pendientes ({requests.filter(r => r.status === 'pending').length})
+                  Pendientes (
+                  {
+                    requests.filter(r => {
+                      const statusMapping = { pending: ['PENDING'] };
+                      const mappedStatuses = statusMapping.pending || ['PENDING'];
+                      return mappedStatuses.includes(r.status);
+                    }).length
+                  }
+                  )
                 </TabsTrigger>
                 <TabsTrigger value="quoted">
-                  Cotizadas ({requests.filter(r => r.status === 'quoted').length})
+                  Cotizadas (
+                  {
+                    requests.filter(r => {
+                      const statusMapping = { quoted: ['QUOTED'] };
+                      const mappedStatuses = statusMapping.quoted || ['QUOTED'];
+                      return mappedStatuses.includes(r.status);
+                    }).length
+                  }
+                  )
                 </TabsTrigger>
                 <TabsTrigger value="accepted">
-                  Aceptadas ({requests.filter(r => r.status === 'accepted').length})
+                  Aceptadas (
+                  {
+                    requests.filter(r => {
+                      const statusMapping = { accepted: ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'] };
+                      const mappedStatuses = statusMapping.accepted || [
+                        'ACCEPTED',
+                        'ACTIVE',
+                        'IN_PROGRESS',
+                      ];
+                      return mappedStatuses.includes(r.status);
+                    }).length
+                  }
+                  )
                 </TabsTrigger>
                 <TabsTrigger value="completed">
-                  Completadas ({requests.filter(r => r.status === 'completed').length})
+                  Completadas (
+                  {
+                    requests.filter(r => {
+                      const statusMapping = { completed: ['COMPLETED'] };
+                      const mappedStatuses = statusMapping.completed || ['COMPLETED'];
+                      return mappedStatuses.includes(r.status);
+                    }).length
+                  }
+                  )
                 </TabsTrigger>
               </TabsList>
 

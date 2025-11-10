@@ -8,6 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import {
   ArrowLeft,
@@ -63,6 +70,17 @@ export default function ProviderJobDetailPage() {
   useEffect(() => {
     loadJob();
   }, [jobId]);
+
+  // Auto-save cuando cambien status o notes
+  useEffect(() => {
+    if (job && !loading) {
+      const timeoutId = setTimeout(() => {
+        updateJobProgress();
+      }, 1000); // Esperar 1 segundo después del último cambio
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [status, notes]);
 
   const loadJob = async () => {
     try {
@@ -137,18 +155,21 @@ export default function ProviderJobDetailPage() {
     }
   };
 
-  const startJob = () => {
+  const startJob = async () => {
     setStatus('IN_PROGRESS');
     setProgress(10); // Iniciar con 10% de progreso
+    // La actualización automática se hará por el useEffect
   };
 
-  const pauseJob = () => {
+  const pauseJob = async () => {
     setStatus('ACTIVE'); // Cambiar a activo pero no en progreso
+    // La actualización automática se hará por el useEffect
   };
 
-  const completeJob = () => {
+  const completeJob = async () => {
     setStatus('COMPLETED');
     setProgress(100);
+    // La actualización automática se hará por el useEffect
   };
 
   const getStatusBadge = (status: string) => {
@@ -327,18 +348,17 @@ export default function ProviderJobDetailPage() {
                 {/* Estado */}
                 <div>
                   <Label htmlFor="status">Estado del Trabajo</Label>
-                  <select
-                    id="status"
-                    value={status}
-                    onChange={e => setStatus(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    <option value="">Seleccionar estado</option>
-                    <option value="ACTIVE">Activo</option>
-                    <option value="IN_PROGRESS">En Progreso</option>
-                    <option value="COMPLETED">Completado</option>
-                    <option value="CANCELLED">Cancelado</option>
-                  </select>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Activo</SelectItem>
+                      <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                      <SelectItem value="COMPLETED">Completado</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Notas */}
