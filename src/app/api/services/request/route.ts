@@ -77,8 +77,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚨🚨🚨 [SERVICE REQUEST] Starting service request creation');
     const user = await requireAuth(request);
+    console.log('🚨 [SERVICE REQUEST] User authenticated:', user.id, user.role);
+
     const body = await request.json();
+    console.log('🚨 [SERVICE REQUEST] Request body:', body);
     const {
       serviceType,
       description,
@@ -113,23 +117,33 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ Validar que el serviceProviderId existe y corresponde a un ServiceProvider
+    console.log('🚨 [SERVICE REQUEST] Validating serviceProviderId:', serviceProviderId);
+
     if (!serviceProviderId) {
+      console.log('🚨 [SERVICE REQUEST] ERROR: serviceProviderId is missing');
       return NextResponse.json(
         { error: 'Debe especificar un proveedor de servicios' },
         { status: 400 }
       );
     }
 
+    console.log('🚨 [SERVICE REQUEST] Looking up provider in database...');
     const provider = await db.serviceProvider.findUnique({
       where: { id: serviceProviderId },
       select: { id: true },
     });
 
+    console.log('🚨 [SERVICE REQUEST] Provider lookup result:', provider ? 'found' : 'not found');
+
     if (!provider) {
+      console.log('🚨 [SERVICE REQUEST] ERROR: Provider not found in database');
       return NextResponse.json({ error: 'Proveedor de servicios no encontrado' }, { status: 404 });
     }
 
+    console.log('🚨 [SERVICE REQUEST] Provider validation passed');
+
     // Crear la solicitud de servicio en la base de datos
+    console.log('🚨 [SERVICE REQUEST] Creating ServiceJob...');
     const serviceRequest = await db.serviceJob.create({
       data: {
         serviceProviderId: serviceProviderId, // ✅ Usar el ID del proveedor seleccionado
