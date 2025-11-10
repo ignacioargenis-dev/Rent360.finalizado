@@ -4,6 +4,7 @@ import { logger } from '../logger';
 export class PusherWebSocketClient {
   private pusher: any = null;
   private channel: any = null;
+  private pusherChannel: any = null; // ✅ Para compatibilidad con socket-client.ts
   private eventListeners: Map<string, Function[]> = new Map();
   private _isConnected = false;
   private _connectionAttempts = 0;
@@ -109,6 +110,25 @@ export class PusherWebSocketClient {
           },
           // ✅ SIN params - Pusher envía socket_id y channel_name automáticamente
         },
+      });
+
+      // ✅ IMPORTANTE: Agregar binding global para manejar suscripciones correctamente
+      this.pusher.bind('pusher:subscription_succeeded', (channel: any) => {
+        console.log('🔥 [PUSHER GLOBAL] Subscription succeeded for channel:', channel?.name);
+        if (channel?.name === 'private-user') {
+          this.pusherChannel = channel; // ✅ Asignar el canal válido
+          console.log(
+            '🔥 [PUSHER GLOBAL] pusherChannel assigned successfully:',
+            !!this.pusherChannel
+          );
+        }
+      });
+
+      this.pusher.bind('pusher:subscription_error', (error: any, channel: any) => {
+        console.error('🔥 [PUSHER GLOBAL] Subscription error:', {
+          error,
+          channelName: channel?.name,
+        });
       });
 
       console.log('🔥 [PUSHER DEBUG] Pusher instance created');

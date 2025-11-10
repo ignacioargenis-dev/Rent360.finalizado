@@ -54,13 +54,13 @@ interface ServiceRequest {
 }
 
 interface QuoteData {
-  amount: number;
-  currency: string;
-  description: string;
-  estimatedDuration: string;
-  validUntil: string;
-  terms: string;
-  notes: string;
+  price: number;
+  estimatedTime?: string;
+  availabilityDate?: string;
+  notes?: string;
+  materials?: string;
+  laborCost?: number;
+  materialsCost?: number;
 }
 
 export default function ServiceRequestDetailPage() {
@@ -71,13 +71,13 @@ export default function ServiceRequestDetailPage() {
 
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [quote, setQuote] = useState<QuoteData>({
-    amount: 0,
-    currency: 'CLP',
-    description: '',
-    estimatedDuration: '',
-    validUntil: '',
-    terms: '',
+    price: 0,
+    estimatedTime: '',
+    availabilityDate: '',
     notes: '',
+    materials: '',
+    laborCost: 0,
+    materialsCost: 0,
   });
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -181,8 +181,8 @@ export default function ServiceRequestDetailPage() {
   };
 
   const handleSendQuote = async () => {
-    if (!quote.amount || !quote.description) {
-      setErrorMessage('Por favor complete al menos el monto y descripción de la cotización');
+    if (!quote.price || quote.price <= 0) {
+      setErrorMessage('Por favor ingrese un monto válido para la cotización');
       return;
     }
 
@@ -191,22 +191,47 @@ export default function ServiceRequestDetailPage() {
     setErrorMessage('');
 
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('/api/services/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          requestId,
+          price: quote.price.toString(),
+          estimatedTime: quote.estimatedTime || undefined,
+          availabilityDate: quote.availabilityDate || undefined,
+          notes: quote.notes || undefined,
+          materials: quote.materials || undefined,
+          laborCost: quote.laborCost || undefined,
+          materialsCost: quote.materialsCost || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al enviar la cotización');
+      }
 
       logger.info('Cotización enviada exitosamente', {
         requestId,
-        amount: quote.amount,
-        description: quote.description,
+        quoteId: data.quote?.id,
+        price: quote.price,
       });
 
       setSuccessMessage('Cotización enviada exitosamente al cliente');
 
-      // Update request status
+      // Update request status locally
       setRequest(prev => (prev ? { ...prev, status: 'quoted' } : null));
     } catch (error) {
       logger.error('Error al enviar cotización', { error, requestId });
-      setErrorMessage('Error al enviar la cotización. Por favor intente nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al enviar la cotización. Por favor intente nuevamente.'
+      );
     } finally {
       setIsSubmittingQuote(false);
     }
@@ -548,75 +573,82 @@ export default function ServiceRequestDetailPage() {
                   <CardTitle>Enviar Cotización</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="quoteAmount">Monto de Cotización *</Label>
-                      <Input
-                        id="quoteAmount"
-                        type="number"
-                        value={quote.amount || ''}
-                        onChange={e =>
-                          setQuote(prev => ({ ...prev, amount: parseInt(e.target.value) || 0 }))
-                        }
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="quoteCurrency">Moneda</Label>
-                      <select
-                        id="quoteCurrency"
-                        value={quote.currency}
-                        onChange={e => setQuote(prev => ({ ...prev, currency: e.target.value }))}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="CLP">CLP - Peso Chileno</option>
-                        <option value="USD">USD - Dólar Americano</option>
-                      </select>
-                    </div>
-                  </div>
-
                   <div>
-                    <Label htmlFor="quoteDescription">Descripción de la Cotización *</Label>
-                    <Textarea
-                      id="quoteDescription"
-                      value={quote.description}
-                      onChange={e => setQuote(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Describe detalladamente los trabajos a realizar, materiales incluidos, etc."
-                      rows={4}
+                    <Label htmlFor="quotePrice">Monto de Cotización (CLP) *</Label>
+                    <Input
+                      id="quotePrice"
+                      type="number"
+                      value={quote.price || ''}
+                      onChange={e =>
+                        setQuote(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))
+                      }
+                      placeholder="0"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="quoteDuration">Duración Estimada</Label>
+                      <Label htmlFor="quoteEstimatedTime">Tiempo Estimado</Label>
                       <Input
-                        id="quoteDuration"
-                        value={quote.estimatedDuration}
+                        id="quoteEstimatedTime"
+                        value={quote.estimatedTime || ''}
                         onChange={e =>
-                          setQuote(prev => ({ ...prev, estimatedDuration: e.target.value }))
+                          setQuote(prev => ({ ...prev, estimatedTime: e.target.value }))
                         }
-                        placeholder="Ej: 2 horas"
+                        placeholder="Ej: 2-4 horas"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="quoteValidUntil">Válida Hasta</Label>
+                      <Label htmlFor="quoteAvailabilityDate">Fecha Disponible</Label>
                       <Input
-                        id="quoteValidUntil"
+                        id="quoteAvailabilityDate"
                         type="date"
-                        value={quote.validUntil}
-                        onChange={e => setQuote(prev => ({ ...prev, validUntil: e.target.value }))}
+                        value={quote.availabilityDate || ''}
+                        onChange={e =>
+                          setQuote(prev => ({ ...prev, availabilityDate: e.target.value }))
+                        }
                         min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="quoteLaborCost">Costo Mano de Obra</Label>
+                      <Input
+                        id="quoteLaborCost"
+                        type="number"
+                        value={quote.laborCost || ''}
+                        onChange={e =>
+                          setQuote(prev => ({ ...prev, laborCost: parseInt(e.target.value) || 0 }))
+                        }
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="quoteMaterialsCost">Costo Materiales</Label>
+                      <Input
+                        id="quoteMaterialsCost"
+                        type="number"
+                        value={quote.materialsCost || ''}
+                        onChange={e =>
+                          setQuote(prev => ({
+                            ...prev,
+                            materialsCost: parseInt(e.target.value) || 0,
+                          }))
+                        }
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="quoteTerms">Términos y Condiciones</Label>
+                    <Label htmlFor="quoteMaterials">Materiales Incluidos</Label>
                     <Textarea
-                      id="quoteTerms"
-                      value={quote.terms}
-                      onChange={e => setQuote(prev => ({ ...prev, terms: e.target.value }))}
-                      placeholder="Condiciones de pago, garantías, etc."
+                      id="quoteMaterials"
+                      value={quote.materials || ''}
+                      onChange={e => setQuote(prev => ({ ...prev, materials: e.target.value }))}
+                      placeholder="Lista de materiales que se incluirán en el trabajo..."
                       rows={3}
                     />
                   </div>
@@ -625,10 +657,10 @@ export default function ServiceRequestDetailPage() {
                     <Label htmlFor="quoteNotes">Notas Adicionales</Label>
                     <Textarea
                       id="quoteNotes"
-                      value={quote.notes}
+                      value={quote.notes || ''}
                       onChange={e => setQuote(prev => ({ ...prev, notes: e.target.value }))}
-                      placeholder="Información adicional relevante..."
-                      rows={2}
+                      placeholder="Información adicional relevante, condiciones, garantías..."
+                      rows={3}
                     />
                   </div>
 

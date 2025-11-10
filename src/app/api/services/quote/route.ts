@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         type: NotificationType.SERVICE_REQUEST_RESPONSE,
         title: `Cotización recibida: ${serviceRequest.serviceType}`,
         message: `${user.name || 'Un proveedor'} te ha enviado una cotización por $${price}`,
-        link: `/tenant/services/${requestId}`, // Link a la solicitud del inquilino
+        link: `/tenant/service-requests/${requestId}`, // Link correcto a la solicitud del inquilino
         metadata: {
           serviceRequestId: requestId,
           providerId: user.id,
