@@ -193,10 +193,8 @@ export default function AdminDashboard() {
       case 'SUPPORT':
         return 'Soporte';
       case 'MAINTENANCE':
-      case 'MAINTENANCE_PROVIDER':
         return 'Servicio de Mantenimiento';
       case 'PROVIDER':
-      case 'SERVICE_PROVIDER':
         return 'Proveedor de Servicios';
       default:
         return role;

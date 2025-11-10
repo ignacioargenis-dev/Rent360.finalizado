@@ -721,8 +721,6 @@ export default function UnifiedSidebar({
       TENANT: 'tenant',
       SUPPORT: 'support',
       PROVIDER: 'provider',
-      SERVICE_PROVIDER: 'provider',
-      MAINTENANCE_PROVIDER: 'maintenance',
       MAINTENANCE: 'maintenance',
     };
 

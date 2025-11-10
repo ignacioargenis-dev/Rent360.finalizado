@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Si el usuario se registra como PROVIDER o MAINTENANCE, crear perfil automáticamente
-      if (normalizedRole === 'PROVIDER' || normalizedRole === 'SERVICE_PROVIDER') {
+      if (normalizedRole === 'PROVIDER') {
         // Crear perfil de ServiceProvider
         await tx.serviceProvider.create({
           data: {
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           email: user.email,
         });
-      } else if (normalizedRole === 'MAINTENANCE' || normalizedRole === 'MAINTENANCE_PROVIDER') {
+      } else if (normalizedRole === 'MAINTENANCE') {
         // Crear perfil de MaintenanceProvider
         await tx.maintenanceProvider.create({
           data: {

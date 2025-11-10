@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
           password: hashedPassword,
           name: validatedData.name,
           phone: validatedData.phone,
-          role: providerType === 'maintenance' ? 'MAINTENANCE_PROVIDER' : 'SERVICE_PROVIDER',
+          role: providerType === 'maintenance' ? 'MAINTENANCE' : 'PROVIDER',
           isActive: false, // Pendiente de verificación
           emailVerified: false,
         },

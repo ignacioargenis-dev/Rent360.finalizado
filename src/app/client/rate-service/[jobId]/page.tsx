@@ -34,7 +34,7 @@ interface JobDetails {
   id: string;
   providerId: string;
   providerName: string;
-  providerType: 'MAINTENANCE_PROVIDER' | 'SERVICE_PROVIDER';
+  providerType: 'MAINTENANCE' | 'PROVIDER';
   serviceType: string;
   serviceDescription: string;
   location: string;
@@ -168,11 +168,11 @@ export default function RateServicePage() {
 
       const ratingData = {
         providerId: job.providerId,
-        providerType: (job.providerType === 'MAINTENANCE_PROVIDER'
+        providerType: (job.providerType === 'MAINTENANCE'
           ? 'MAINTENANCE'
-          : job.providerType === 'SERVICE_PROVIDER'
-            ? 'SERVICE'
-            : 'SERVICE') as 'MAINTENANCE' | 'SERVICE',
+          : job.providerType === 'PROVIDER'
+            ? 'PROVIDER'
+            : 'PROVIDER') as 'MAINTENANCE' | 'PROVIDER',
         clientId: user.id,
         jobId: job.id,
         ratings: {
@@ -421,7 +421,7 @@ export default function RateServicePage() {
                   <div>
                     <h3 className="font-semibold text-gray-900">{job.providerName}</h3>
                     <p className="text-sm text-gray-600">
-                      {job.providerType === 'MAINTENANCE_PROVIDER'
+                      {job.providerType === 'MAINTENANCE'
                         ? 'Proveedor de Mantenimiento'
                         : 'Proveedor de Servicios'}
                     </p>

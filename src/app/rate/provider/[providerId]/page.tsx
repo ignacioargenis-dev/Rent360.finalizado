@@ -135,7 +135,7 @@ export default function RateProviderPage() {
 
       const ratingData: Omit<ProviderRating, 'id' | 'createdAt'> = {
         providerId,
-        providerType: job.providerType,
+        providerType: job.providerType === 'SERVICE' ? 'PROVIDER' : job.providerType,
         clientId: user.id,
         jobId: job.id,
         ratings,

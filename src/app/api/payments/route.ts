@@ -133,11 +133,11 @@ export async function GET(request: NextRequest) {
           });
           where.contractId = { in: tenantContracts.map(c => c.id) };
           break;
-        case UserRole.MAINTENANCE_PROVIDER:
-        case UserRole.SERVICE_PROVIDER:
+        case UserRole.MAINTENANCE:
+        case UserRole.PROVIDER:
           // Proveedores de mantenimiento/servicio ven pagos relacionados con sus trabajos
-          // - MAINTENANCE_PROVIDER: pagos por trabajos de mantenimiento (paga corredor/propietario)
-          // - SERVICE_PROVIDER: pagos por servicios contratados por inquilino (paga inquilino)
+          // - MAINTENANCE: pagos por trabajos de mantenimiento (paga corredor/propietario)
+          // - PROVIDER: pagos por servicios contratados por inquilino (paga inquilino)
           // Rent360 cobra comisión en ambos casos, payout redistribuye fondos
           // Nota: providerId no existe en el modelo actual, se puede implementar más adelante
           where.id = 'none'; // No mostrar pagos por ahora

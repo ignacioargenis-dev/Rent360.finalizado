@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     // ✅ Buscar usuarios con cualquier rol de proveedor (normalizado)
     const whereClause: any = {
       role: {
-        in: ['PROVIDER', 'MAINTENANCE', 'SERVICE_PROVIDER', 'MAINTENANCE_PROVIDER'],
+        in: ['PROVIDER', 'MAINTENANCE'],
       },
     };
     if (status !== 'all') {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     });
 
     // ✅ Obtener estadísticas de proveedores (todos los tipos)
-    const providerRoles = ['PROVIDER', 'MAINTENANCE', 'SERVICE_PROVIDER', 'MAINTENANCE_PROVIDER'];
+    const providerRoles = ['PROVIDER', 'MAINTENANCE'];
     const [totalProviders, activeProviders, pendingProviders] = await Promise.all([
       db.user.count({ where: { role: { in: providerRoles } } }),
       db.user.count({ where: { role: { in: providerRoles }, isActive: true } }),

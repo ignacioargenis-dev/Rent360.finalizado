@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger-minimal';
  */
 export enum ReferralType {
   CLIENT_REFERRAL = 'CLIENT_REFERRAL',
-  PROVIDER_REFERRAL = 'PROVIDER_REFERRAL'
+  PROVIDER_REFERRAL = 'PROVIDER_REFERRAL',
 }
 
 /**
@@ -16,7 +16,7 @@ export enum ReferralStatus {
   QUALIFIED = 'QUALIFIED',
   CONVERTED = 'CONVERTED',
   CANCELLED = 'CANCELLED',
-  EXPIRED = 'EXPIRED'
+  EXPIRED = 'EXPIRED',
 }
 
 /**
@@ -27,7 +27,7 @@ export enum ReferrerLevel {
   SILVER = 'SILVER',
   GOLD = 'GOLD',
   PLATINUM = 'PLATINUM',
-  DIAMOND = 'DIAMOND'
+  DIAMOND = 'DIAMOND',
 }
 
 /**
@@ -36,7 +36,7 @@ export enum ReferrerLevel {
 export interface Referral {
   id: string;
   referrerId: string;
-  referrerType: 'OWNER' | 'TENANT' | 'MAINTENANCE_PROVIDER' | 'SERVICE_PROVIDER';
+  referrerType: 'OWNER' | 'TENANT' | 'MAINTENANCE' | 'PROVIDER';
   referredId: string;
   referralType: ReferralType;
   status: ReferralStatus;
@@ -102,7 +102,7 @@ export class ReferralService {
       minimumReferrals: 0,
       maximumCommissionPerMonth: 50000,
       bonusThreshold: 10,
-      bonusAmount: 10000
+      bonusAmount: 10000,
     },
     {
       level: ReferrerLevel.SILVER,
@@ -111,7 +111,7 @@ export class ReferralService {
       minimumReferrals: 5,
       maximumCommissionPerMonth: 100000,
       bonusThreshold: 15,
-      bonusAmount: 25000
+      bonusAmount: 25000,
     },
     {
       level: ReferrerLevel.GOLD,
@@ -120,7 +120,7 @@ export class ReferralService {
       minimumReferrals: 15,
       maximumCommissionPerMonth: 200000,
       bonusThreshold: 25,
-      bonusAmount: 50000
+      bonusAmount: 50000,
     },
     {
       level: ReferrerLevel.PLATINUM,
@@ -129,7 +129,7 @@ export class ReferralService {
       minimumReferrals: 30,
       maximumCommissionPerMonth: 500000,
       bonusThreshold: 50,
-      bonusAmount: 100000
+      bonusAmount: 100000,
     },
     {
       level: ReferrerLevel.DIAMOND,
@@ -138,8 +138,8 @@ export class ReferralService {
       minimumReferrals: 50,
       maximumCommissionPerMonth: 1000000,
       bonusThreshold: 100,
-      bonusAmount: 200000
-    }
+      bonusAmount: 200000,
+    },
   ];
 
   private constructor() {
@@ -167,7 +167,7 @@ export class ReferralService {
    */
   async createReferral(
     referrerId: string,
-    referrerType: 'OWNER' | 'TENANT' | 'MAINTENANCE_PROVIDER' | 'SERVICE_PROVIDER',
+    referrerType: 'OWNER' | 'TENANT' | 'MAINTENANCE' | 'PROVIDER',
     referralType: ReferralType,
     metadata: {
       source: string;
@@ -189,7 +189,7 @@ export class ReferralService {
         createdAt: new Date(),
         commissionEarned: 0,
         commissionPaid: false,
-        metadata
+        metadata,
       };
 
       this.referrals.set(referral.id, referral);
@@ -200,7 +200,7 @@ export class ReferralService {
       logger.info('Referido creado:', {
         referrerId,
         referralCode,
-        referralType
+        referralType,
       });
 
       return { referralCode, referral };
@@ -213,7 +213,10 @@ export class ReferralService {
   /**
    * Registra cuando un referido se registra en la plataforma
    */
-  async registerReferredUser(referralCode: string, referredUserId: string): Promise<Referral | null> {
+  async registerReferredUser(
+    referralCode: string,
+    referredUserId: string
+  ): Promise<Referral | null> {
     try {
       // Buscar el referido por código
       let referral: Referral | undefined;
@@ -241,7 +244,7 @@ export class ReferralService {
       logger.info('Usuario referido registrado:', {
         referralCode,
         referredUserId,
-        referrerId: referral.referrerId
+        referrerId: referral.referrerId,
       });
 
       return referral;
@@ -266,7 +269,11 @@ export class ReferralService {
       }
 
       // Calcular comisión
-      const commission = this.calculateCommission(referral.referrerId, referral.referralType, transactionAmount);
+      const commission = this.calculateCommission(
+        referral.referrerId,
+        referral.referralType,
+        transactionAmount
+      );
 
       // Actualizar referido
       referral.status = ReferralStatus.CONVERTED;
@@ -279,9 +286,8 @@ export class ReferralService {
       logger.info('Referido convertido:', {
         referralId,
         commission,
-        referrerId: referral.referrerId
+        referrerId: referral.referrerId,
       });
-
     } catch (error) {
       logger.error('Error convirtiendo referido:', error as Error);
       throw error;
@@ -291,16 +297,25 @@ export class ReferralService {
   /**
    * Calcula la comisión para un referido
    */
-  private calculateCommission(referrerId: string, referralType: ReferralType, transactionAmount: number): number {
+  private calculateCommission(
+    referrerId: string,
+    referralType: ReferralType,
+    transactionAmount: number
+  ): number {
     const stats = this.referrerStats.get(referrerId);
-    if (!stats) return 0;
+    if (!stats) {
+      return 0;
+    }
 
     const config = this.commissionConfigs.find(c => c.level === stats.currentLevel);
-    if (!config) return 0;
+    if (!config) {
+      return 0;
+    }
 
-    const commissionPercentage = referralType === ReferralType.CLIENT_REFERRAL
-      ? config.clientReferralCommission
-      : config.providerReferralCommission;
+    const commissionPercentage =
+      referralType === ReferralType.CLIENT_REFERRAL
+        ? config.clientReferralCommission
+        : config.providerReferralCommission;
 
     const commission = (transactionAmount * commissionPercentage) / 100;
 
@@ -318,9 +333,12 @@ export class ReferralService {
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
     return Array.from(this.referrals.values())
-      .filter(r => r.referrerId === referrerId &&
-                   r.status === ReferralStatus.CONVERTED &&
-                   r.convertedAt?.toISOString().slice(0, 7) === currentMonth)
+      .filter(
+        r =>
+          r.referrerId === referrerId &&
+          r.status === ReferralStatus.CONVERTED &&
+          r.convertedAt?.toISOString().slice(0, 7) === currentMonth
+      )
       .reduce((sum, r) => sum + r.commissionEarned, 0);
   }
 
@@ -328,16 +346,15 @@ export class ReferralService {
    * Actualiza las estadísticas de un referidor
    */
   private async updateReferrerStats(referrerId: string): Promise<void> {
-    const referrerReferrals = Array.from(this.referrals.values())
-      .filter(r => r.referrerId === referrerId);
-
-    const qualifiedReferrals = referrerReferrals.filter(r =>
-      r.status === ReferralStatus.QUALIFIED || r.status === ReferralStatus.CONVERTED
+    const referrerReferrals = Array.from(this.referrals.values()).filter(
+      r => r.referrerId === referrerId
     );
 
-    const convertedReferrals = referrerReferrals.filter(r =>
-      r.status === ReferralStatus.CONVERTED
+    const qualifiedReferrals = referrerReferrals.filter(
+      r => r.status === ReferralStatus.QUALIFIED || r.status === ReferralStatus.CONVERTED
     );
+
+    const convertedReferrals = referrerReferrals.filter(r => r.status === ReferralStatus.CONVERTED);
 
     const totalCommission = convertedReferrals.reduce((sum, r) => sum + r.commissionEarned, 0);
     const pendingCommission = convertedReferrals
@@ -346,11 +363,14 @@ export class ReferralService {
 
     const currentLevel = this.calculateReferrerLevel(convertedReferrals.length);
     const nextLevel = this.getNextLevel(currentLevel);
-    const nextLevelThreshold = nextLevel ? this.commissionConfigs.find(c => c.level === nextLevel)?.minimumReferrals || 0 : 0;
-
-    const conversionRate = qualifiedReferrals.length > 0
-      ? (convertedReferrals.length / qualifiedReferrals.length) * 100
+    const nextLevelThreshold = nextLevel
+      ? this.commissionConfigs.find(c => c.level === nextLevel)?.minimumReferrals || 0
       : 0;
+
+    const conversionRate =
+      qualifiedReferrals.length > 0
+        ? (convertedReferrals.length / qualifiedReferrals.length) * 100
+        : 0;
 
     // Estadísticas mensuales (últimos 6 meses)
     const monthlyStats = this.calculateMonthlyStats(referrerReferrals);
@@ -364,7 +384,7 @@ export class ReferralService {
       currentLevel,
       nextLevelThreshold,
       conversionRate,
-      monthlyStats
+      monthlyStats,
     };
 
     this.referrerStats.set(referrerId, stats);
@@ -376,7 +396,11 @@ export class ReferralService {
   private calculateReferrerLevel(convertedCount: number): ReferrerLevel {
     for (let i = this.commissionConfigs.length - 1; i >= 0; i--) {
       const config = this.commissionConfigs[i];
-      if (config && config.minimumReferrals !== undefined && convertedCount >= config.minimumReferrals) {
+      if (
+        config &&
+        config.minimumReferrals !== undefined &&
+        convertedCount >= config.minimumReferrals
+      ) {
         return config.level;
       }
     }
@@ -399,7 +423,9 @@ export class ReferralService {
   /**
    * Calcula estadísticas mensuales
    */
-  private calculateMonthlyStats(referrals: Referral[]): Array<{ month: string; referrals: number; commission: number }> {
+  private calculateMonthlyStats(
+    referrals: Referral[]
+  ): Array<{ month: string; referrals: number; commission: number }> {
     const monthlyData: Record<string, { referrals: number; commission: number }> = {};
 
     referrals.forEach(referral => {
@@ -422,7 +448,7 @@ export class ReferralService {
       result.push({
         month,
         referrals: monthlyData[month]?.referrals || 0,
-        commission: monthlyData[month]?.commission || 0
+        commission: monthlyData[month]?.commission || 0,
       });
     }
 
@@ -449,7 +475,7 @@ export class ReferralService {
 
     // Si no existe, crear uno
     const result = await this.createReferral(referrerId, 'OWNER', ReferralType.CLIENT_REFERRAL, {
-      source: 'system_generated'
+      source: 'system_generated',
     });
 
     return result.referralCode;
@@ -469,10 +495,9 @@ export class ReferralService {
     paidCommissions: number;
     totalAmount: number;
   }> {
-    const pendingReferrals = Array.from(this.referrals.values())
-      .filter(r => r.referrerId === referrerId &&
-                   r.status === ReferralStatus.CONVERTED &&
-                   !r.commissionPaid);
+    const pendingReferrals = Array.from(this.referrals.values()).filter(
+      r => r.referrerId === referrerId && r.status === ReferralStatus.CONVERTED && !r.commissionPaid
+    );
 
     pendingReferrals.forEach(referral => {
       referral.commissionPaid = true;
@@ -486,12 +511,12 @@ export class ReferralService {
     logger.info('Comisiones procesadas:', {
       referrerId,
       count: pendingReferrals.length,
-      totalAmount
+      totalAmount,
     });
 
     return {
       paidCommissions: pendingReferrals.length,
-      totalAmount
+      totalAmount,
     };
   }
 
@@ -525,13 +550,13 @@ export class ReferralService {
       thisMonth,
       lastMonth,
       totalEarned: summary.totalCommission,
-      availableForWithdrawal: summary.pendingCommission
+      availableForWithdrawal: summary.pendingCommission,
     };
 
     return {
       summary,
       recentReferrals,
-      earningsBreakdown
+      earningsBreakdown,
     };
   }
 
@@ -561,7 +586,7 @@ export class ReferralService {
         convertedAt: new Date('2024-01-20'),
         commissionEarned: 2500,
         commissionPaid: true,
-        metadata: { source: 'social_media', campaign: 'facebook_campaign' }
+        metadata: { source: 'social_media', campaign: 'facebook_campaign' },
       },
       {
         id: 'ref_002',
@@ -576,8 +601,8 @@ export class ReferralService {
         convertedAt: new Date('2024-01-18'),
         commissionEarned: 4000,
         commissionPaid: false,
-        metadata: { source: 'direct_invitation' }
-      }
+        metadata: { source: 'direct_invitation' },
+      },
     ];
 
     mockReferrals.forEach(referral => {
@@ -609,7 +634,10 @@ export class ReferralService {
     const referrerStats = new Map<string, { convertedCount: number; totalCommission: number }>();
 
     convertedReferrals.forEach(referral => {
-      const stats = referrerStats.get(referral.referrerId) || { convertedCount: 0, totalCommission: 0 };
+      const stats = referrerStats.get(referral.referrerId) || {
+        convertedCount: 0,
+        totalCommission: 0,
+      };
       stats.convertedCount++;
       stats.totalCommission += referral.commissionEarned;
       referrerStats.set(referral.referrerId, stats);
@@ -624,7 +652,7 @@ export class ReferralService {
       totalReferrals: allReferrals.length,
       totalConverted: convertedReferrals.length,
       totalCommissionPaid,
-      topReferrers
+      topReferrers,
     };
   }
 }

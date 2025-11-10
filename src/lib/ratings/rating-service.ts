@@ -10,7 +10,7 @@ export enum RatingType {
   COMMUNICATION = 'communication',
   PROPERTY_KNOWLEDGE = 'property_knowledge',
   CLEANLINESS = 'cleanliness',
-  QUALITY_OF_WORK = 'quality_of_work'
+  QUALITY_OF_WORK = 'quality_of_work',
 }
 
 /**
@@ -19,7 +19,7 @@ export enum RatingType {
 export interface ProviderRating {
   id: string;
   providerId: string;
-  providerType: 'MAINTENANCE' | 'SERVICE';
+  providerType: 'MAINTENANCE' | 'PROVIDER';
   clientId: string;
   jobId: string;
   ratings: Record<RatingType, number>; // 1-5 estrellas
@@ -88,7 +88,7 @@ export class RatingService {
         ...rating,
         id: this.generateRatingId(),
         createdAt: new Date(),
-        isVerified: true // Asumimos verificación por ahora
+        isVerified: true, // Asumimos verificación por ahora
       };
 
       // Guardar el rating
@@ -104,7 +104,7 @@ export class RatingService {
         providerId: rating.providerId,
         clientId: rating.clientId,
         jobId: rating.jobId,
-        overallRating: rating.ratings.overall
+        overallRating: rating.ratings.overall,
       });
 
       return newRating;
@@ -130,7 +130,7 @@ export class RatingService {
       [RatingType.COMMUNICATION]: criteria.communicationQuality ? 5 : 3,
       [RatingType.PROPERTY_KNOWLEDGE]: 4, // Asumimos conocimiento básico
       [RatingType.CLEANLINESS]: criteria.workQuality ? 5 : 4,
-      [RatingType.QUALITY_OF_WORK]: criteria.workQuality ? 5 : 3
+      [RatingType.QUALITY_OF_WORK]: criteria.workQuality ? 5 : 3,
     };
 
     const comments = this.generateAutomaticComments(criteria);
@@ -143,7 +143,7 @@ export class RatingService {
       ratings: automaticRatings,
       comments,
       isAnonymous: true,
-      isVerified: true
+      isVerified: true,
     });
   }
 
@@ -157,7 +157,7 @@ export class RatingService {
       criteria.workQuality ? 5 : 3,
       criteria.communicationQuality ? 5 : 4,
       criteria.completionOnTime ? 5 : 2,
-      criteria.followUpProvided ? 5 : 3
+      criteria.followUpProvided ? 5 : 3,
     ];
 
     const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
@@ -240,19 +240,23 @@ export class RatingService {
       totalRatings: ratings.length,
       averageRatings: {} as Record<RatingType, number>,
       overallAverage: 0,
-      ratingDistribution: {} as Record<RatingType, { 1: number; 2: number; 3: number; 4: number; 5: number }>,
+      ratingDistribution: {} as Record<
+        RatingType,
+        { 1: number; 2: number; 3: number; 4: number; 5: number }
+      >,
       recentRatings: ratings.slice(0, 10),
       lastUpdated: new Date(),
-      trustScore: this.calculateTrustScore(ratings)
+      trustScore: this.calculateTrustScore(ratings),
     };
 
     // Calcular promedios por tipo de rating
     const ratingTypes = Object.values(RatingType);
     ratingTypes.forEach(type => {
       const typeRatings = ratings.map(r => r.ratings[type]).filter(r => r !== undefined);
-      summary.averageRatings[type] = typeRatings.length > 0
-        ? typeRatings.reduce((sum, rating) => sum + rating, 0) / typeRatings.length
-        : 0;
+      summary.averageRatings[type] =
+        typeRatings.length > 0
+          ? typeRatings.reduce((sum, rating) => sum + rating, 0) / typeRatings.length
+          : 0;
 
       // Distribución de ratings
       summary.ratingDistribution[type] = {
@@ -260,7 +264,7 @@ export class RatingService {
         2: typeRatings.filter(r => r === 2).length,
         3: typeRatings.filter(r => r === 3).length,
         4: typeRatings.filter(r => r === 4).length,
-        5: typeRatings.filter(r => r === 5).length
+        5: typeRatings.filter(r => r === 5).length,
       };
     });
 
@@ -273,7 +277,7 @@ export class RatingService {
       providerId,
       totalRatings: summary.totalRatings,
       overallAverage: summary.overallAverage,
-      trustScore: summary.trustScore
+      trustScore: summary.trustScore,
     });
   }
 
@@ -281,10 +285,14 @@ export class RatingService {
    * Calcula el trust score basado en múltiples factores
    */
   private calculateTrustScore(ratings: ProviderRating[]): number {
-    if (ratings.length === 0 || !ratings[0]) return 0;
+    if (ratings.length === 0 || !ratings[0]) {
+      return 0;
+    }
 
     const summary = this.summaries.get(ratings[0].providerId);
-    if (!summary) return 0;
+    if (!summary) {
+      return 0;
+    }
 
     // Factores que influyen en el trust score:
     // 1. Rating promedio (40%)
@@ -304,12 +312,16 @@ export class RatingService {
     const countScore = Math.min(ratingCount * 2, 20);
 
     // 3. Consistencia (coeficiente de variación inverso)
-    const recentAvg = recentRatings.reduce((sum, r) => sum + r.ratings.overall, 0) / recentRatings.length;
-    const variance = recentRatings.reduce((sum, r) => sum + Math.pow(r.ratings.overall - recentAvg, 2), 0) / recentRatings.length;
+    const recentAvg =
+      recentRatings.reduce((sum, r) => sum + r.ratings.overall, 0) / recentRatings.length;
+    const variance =
+      recentRatings.reduce((sum, r) => sum + Math.pow(r.ratings.overall - recentAvg, 2), 0) /
+      recentRatings.length;
     const consistencyScore = Math.max(0, 20 - Math.sqrt(variance) * 4);
 
     // 4. Ratings recientes positivos
-    const recentPositive = recentRatings.filter(r => r.ratings.overall >= 4).length / recentRatings.length;
+    const recentPositive =
+      recentRatings.filter(r => r.ratings.overall >= 4).length / recentRatings.length;
     const recentScore = recentPositive * 10;
 
     // 5. Variedad de aspectos calificados
@@ -326,10 +338,12 @@ export class RatingService {
   /**
    * Obtiene el top de proveedores por rating
    */
-  async getTopRatedProviders(limit: number = 10): Promise<Array<{
-    providerId: string;
-    summary: ProviderRatingSummary;
-  }>> {
+  async getTopRatedProviders(limit: number = 10): Promise<
+    Array<{
+      providerId: string;
+      summary: ProviderRatingSummary;
+    }>
+  > {
     const allSummaries = Array.from(this.summaries.entries())
       .map(([providerId, summary]) => ({ providerId, summary }))
       .filter(item => item.summary.totalRatings >= 5) // Mínimo 5 ratings
@@ -358,7 +372,7 @@ export class RatingService {
     logger.warn('Rating reportado:', {
       ratingId,
       reason,
-      reportedBy
+      reportedBy,
     });
 
     // En una implementación real, esto guardaría el reporte para revisión
@@ -378,15 +392,16 @@ export class RatingService {
 
     const totalRatings = allRatings.length;
     const totalProviders = this.ratings.size;
-    const averageRating = totalRatings > 0
-      ? allRatings.reduce((sum, r) => sum + r.ratings.overall, 0) / totalRatings
-      : 0;
+    const averageRating =
+      totalRatings > 0
+        ? allRatings.reduce((sum, r) => sum + r.ratings.overall, 0) / totalRatings
+        : 0;
 
     return {
       totalRatings,
       totalProviders,
       averageRating: Math.round(averageRating * 10) / 10,
-      topCategories: [] // Por ahora vacío, se implementaría con categorías de servicios
+      topCategories: [], // Por ahora vacío, se implementaría con categorías de servicios
     };
   }
 }

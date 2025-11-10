@@ -31,13 +31,10 @@ const getProviderPaymentsSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     // Solo admins, owners y brokers pueden crear pagos
     if (!['ADMIN', 'OWNER', 'BROKER'].includes(user.role)) {
-      return NextResponse.json(
-        { error: 'No autorizado para crear pagos' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado para crear pagos' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -88,10 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!provider) {
-      return NextResponse.json(
-        { error: 'Proveedor no encontrado' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Proveedor no encontrado' }, { status: 404 });
     }
 
     // Calcular comisión
@@ -100,7 +94,7 @@ export async function POST(request: NextRequest) {
     const netAmount = validatedData.amount - commissionAmount;
 
     // Crear transacción en una transacción de base de datos
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async tx => {
       // Crear transacción de provider
       const transactionData: any = {
         providerType: validatedData.providerType === 'maintenance' ? 'MAINTENANCE' : 'SERVICE',
@@ -171,9 +165,14 @@ export async function POST(request: NextRequest) {
         });
 
         // Enviar notificación al provider (implementar sistema de notificaciones)
-        logger.info('Pago completado para provider:', { providerName: provider.user.name, netAmount });
+        logger.info('Pago completado para provider:', {
+          providerName: provider.user.name,
+          netAmount,
+        });
       } catch (error) {
-        logger.error('Error procesando pago:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error procesando pago:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         await db.providerTransaction.update({
           where: { id: result.id },
           data: {
@@ -184,19 +183,21 @@ export async function POST(request: NextRequest) {
       }
     }, 2000); // Simular 2 segundos de procesamiento
 
-    return NextResponse.json({
-      message: 'Pago creado exitosamente',
-      transaction: {
-        id: result.id,
-        amount: result.amount,
-        netAmount: result.netAmount,
-        commissionAmount: commissionAmount,
-        status: result.status,
-        providerName: provider.user.name,
-        description: validatedData.description,
+    return NextResponse.json(
+      {
+        message: 'Pago creado exitosamente',
+        transaction: {
+          id: result.id,
+          amount: result.amount,
+          netAmount: result.netAmount,
+          commissionAmount: commissionAmount,
+          status: result.status,
+          providerName: provider.user.name,
+          description: validatedData.description,
+        },
       },
-    }, { status: 201 });
-
+      { status: 201 }
+    );
   } catch (error) {
     return handleApiError(error);
   }
@@ -206,7 +207,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     const { searchParams } = new URL(request.url);
     const queryParams = {
       providerId: searchParams.get('providerId'),
@@ -219,23 +220,17 @@ export async function GET(request: NextRequest) {
     };
 
     const validatedParams = getProviderPaymentsSchema.parse(queryParams);
-    
+
     // Verificar permisos
     if (user.role === 'ADMIN') {
       // Admin puede ver todos los pagos
-    } else if (['MAINTENANCE_PROVIDER', 'SERVICE_PROVIDER'].includes(user.role)) {
+    } else if (['MAINTENANCE', 'PROVIDER'].includes(user.role)) {
       // Providers solo pueden ver sus propios pagos
       if (validatedParams.providerId !== user.id) {
-        return NextResponse.json(
-          { error: 'Solo puedes ver tus propios pagos' },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: 'Solo puedes ver tus propios pagos' }, { status: 403 });
       }
     } else {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const page = validatedParams.page || 1;
@@ -310,7 +305,6 @@ export async function GET(request: NextRequest) {
         totalTransactions: stats._count || 0,
       },
     });
-
   } catch (error) {
     return handleApiError(error);
   }

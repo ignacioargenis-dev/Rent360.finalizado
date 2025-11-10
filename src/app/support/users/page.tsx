@@ -653,7 +653,7 @@ export default function SupportUsersPage() {
                                         ? 'Soporte'
                                         : user.role === UserRoleEnum.PROVIDER
                                           ? 'Proveedor'
-                                          : user.role === UserRoleEnum.MAINTENANCE_PROVIDER
+                                          : user.role === UserRoleEnum.MAINTENANCE
                                             ? 'Mantenimiento'
                                             : user.role}
                             </Badge>

@@ -8,8 +8,8 @@ export enum UserRole {
   BROKER = 'BROKER',
   RUNNER = 'RUNNER',
   SUPPORT = 'SUPPORT',
-  MAINTENANCE_PROVIDER = 'MAINTENANCE_PROVIDER',
-  SERVICE_PROVIDER = 'SERVICE_PROVIDER'
+  MAINTENANCE = 'MAINTENANCE',
+  PROVIDER = 'PROVIDER',
 }
 
 export enum ContractStatus {
@@ -18,14 +18,14 @@ export enum ContractStatus {
   COMPLETED = 'COMPLETED',
   EXPIRED = 'EXPIRED',
   TERMINATED = 'TERMINATED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 export enum PropertyStatus {
   AVAILABLE = 'AVAILABLE',
   RENTED = 'RENTED',
   PENDING = 'PENDING',
-  MAINTENANCE = 'MAINTENANCE'
+  MAINTENANCE = 'MAINTENANCE',
 }
 
 export enum PropertyType {
@@ -33,14 +33,14 @@ export enum PropertyType {
   HOUSE = 'HOUSE',
   STUDIO = 'STUDIO',
   ROOM = 'ROOM',
-  COMMERCIAL = 'COMMERCIAL'
+  COMMERCIAL = 'COMMERCIAL',
 }
 
 export enum PaymentStatus {
   PENDING = 'PENDING',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 // Interfaces comunes
@@ -72,7 +72,7 @@ export interface User {
   name: string;
   role: UserRole;
   isActive: boolean;
-    avatar?: string | undefined;
+  avatar?: string | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,13 +105,13 @@ export interface Contract {
   propertyId: string;
   tenantId: string;
   ownerId: string;
-    brokerId?: string | undefined;
+  brokerId?: string | undefined;
   startDate: Date;
   endDate: Date;
   monthlyRent: number;
   deposit: number;
   status: ContractStatus;
-    terms?: string | undefined;
+  terms?: string | undefined;
   signedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -121,7 +121,7 @@ export interface Payment {
   id: string;
   paymentNumber: string;
   contractId: string;
-    payerId?: string | undefined;
+  payerId?: string | undefined;
   amount: number;
   dueDate: Date;
   paidDate?: Date;
@@ -149,7 +149,7 @@ export interface ValidationResult {
 
 export interface FileUploadResult {
   success: boolean;
-    fileId?: string | undefined;
+  fileId?: string | undefined;
   url?: string | undefined;
   error?: string;
 }
@@ -313,7 +313,7 @@ export interface SystemMetrics {
 // Tipos para firma electrónica
 export enum SignatureType {
   ADVANCED = 'ADVANCED',
-  QUALIFIED = 'QUALIFIED'
+  QUALIFIED = 'QUALIFIED',
 }
 
 export enum SignatureStatus {
@@ -322,7 +322,7 @@ export enum SignatureStatus {
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
   EXPIRED = 'EXPIRED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 export interface SignatureRequest {

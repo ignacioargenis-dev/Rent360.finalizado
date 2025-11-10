@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'MAINTENANCE_PROVIDER' && user.role !== 'SERVICE_PROVIDER') {
+    if (user.role !== 'MAINTENANCE' && user.role !== 'PROVIDER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
         { status: 403 }

@@ -269,7 +269,6 @@ export default function RegisterPage() {
       case 'PROVIDER':
         return '/provider/dashboard';
       case 'MAINTENANCE':
-      case 'MAINTENANCE_PROVIDER':
         return '/maintenance';
       default:
         return '/';

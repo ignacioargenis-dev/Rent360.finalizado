@@ -131,8 +131,8 @@ export async function GET(request: NextRequest) {
         case 'BROKER':
           where.brokerId = user.id;
           break;
-        case 'MAINTENANCE_PROVIDER':
-        case 'SERVICE_PROVIDER':
+        case 'MAINTENANCE':
+        case 'PROVIDER':
           // Los proveedores pueden ver contratos de propiedades donde trabajan
           // Nota: providerId no existe en el modelo actual, se puede implementar más adelante
           where.id = 'none'; // No mostrar contratos por ahora

@@ -61,7 +61,7 @@ export default function UserDetailPage() {
       OWNER: { label: 'Propietario', className: 'bg-blue-100 text-blue-800' },
       TENANT: { label: 'Arrendatario', className: 'bg-green-100 text-green-800' },
       BROKER: { label: 'Corredor', className: 'bg-purple-100 text-purple-800' },
-      SERVICE_PROVIDER: { label: 'Proveedor', className: 'bg-orange-100 text-orange-800' },
+      PROVIDER: { label: 'Proveedor', className: 'bg-orange-100 text-orange-800' },
       MAINTENANCE: { label: 'Mantenimiento', className: 'bg-yellow-100 text-yellow-800' },
     };
 

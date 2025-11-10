@@ -27,7 +27,16 @@ export type {
 } from '@prisma/client';
 
 // Import explícito para resolver referencias circulares
-import type { Contract as PrismaContract, Property as PrismaProperty, User as PrismaUser, Payment as PrismaPayment, Ticket as PrismaTicket, Maintenance as PrismaMaintenance, TicketComment as PrismaTicketComment, MaintenanceProvider as PrismaMaintenanceProvider } from '@prisma/client';
+import type {
+  Contract as PrismaContract,
+  Property as PrismaProperty,
+  User as PrismaUser,
+  Payment as PrismaPayment,
+  Ticket as PrismaTicket,
+  Maintenance as PrismaMaintenance,
+  TicketComment as PrismaTicketComment,
+  MaintenanceProvider as PrismaMaintenanceProvider,
+} from '@prisma/client';
 
 // Definir enums locales ya que no están disponibles en @prisma/client
 export enum PropertyStatus {
@@ -160,7 +169,6 @@ export enum TransactionStatus {
   CANCELLED = 'CANCELLED',
 }
 
-
 export enum RefundStatus {
   PENDING = 'PENDING',
   UNDER_REVIEW = 'UNDER_REVIEW',
@@ -180,8 +188,7 @@ export enum UserRole {
   RUNNER = 'RUNNER',
   SUPPORT = 'SUPPORT',
   PROVIDER = 'PROVIDER',
-  MAINTENANCE_PROVIDER = 'MAINTENANCE_PROVIDER',
-  SERVICE_PROVIDER = 'SERVICE_PROVIDER'
+  MAINTENANCE = 'MAINTENANCE',
 }
 
 // Tipos personalizados que no están en Prisma
@@ -388,9 +395,8 @@ export enum SignatureStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
-
 
 // Tipos para búsqueda
 export interface SearchFilters {

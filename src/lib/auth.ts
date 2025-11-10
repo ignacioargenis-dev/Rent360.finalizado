@@ -288,19 +288,17 @@ export function normalizeProviderRole(role: string): string {
 }
 
 /**
- * Verifica si un usuario es un proveedor de servicios (acepta ambos formatos)
+ * Verifica si un usuario es un proveedor de servicios
  */
 export function isServiceProvider(role: string): boolean {
-  const normalized = normalizeProviderRole(role);
-  return normalized === 'PROVIDER';
+  return role === 'PROVIDER';
 }
 
 /**
- * Verifica si un usuario es un proveedor de mantenimiento (acepta ambos formatos)
+ * Verifica si un usuario es un proveedor de mantenimiento
  */
 export function isMaintenanceProvider(role: string): boolean {
-  const normalized = normalizeProviderRole(role);
-  return normalized === 'MAINTENANCE';
+  return role === 'MAINTENANCE';
 }
 
 /**

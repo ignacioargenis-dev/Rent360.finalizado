@@ -46,8 +46,6 @@ export async function POST(request: NextRequest) {
       'BROKER',
       'PROVIDER',
       'MAINTENANCE',
-      'SERVICE_PROVIDER',
-      'MAINTENANCE_PROVIDER',
       'RUNNER',
       'SUPPORT',
     ];

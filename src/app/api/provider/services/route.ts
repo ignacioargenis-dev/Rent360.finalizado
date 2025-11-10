@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (
-      user.role !== 'SERVICE_PROVIDER' &&
-      user.role !== 'MAINTENANCE_PROVIDER' &&
+      user.role !== 'PROVIDER' &&
+      user.role !== 'MAINTENANCE' &&
       user.role !== 'PROVIDER' &&
       user.role !== 'MAINTENANCE'
     ) {
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         serviceTypes = [freshServiceProvider.serviceType].filter(Boolean);
       }
 
-      logger.info('Servicios obtenidos para SERVICE_PROVIDER', {
+      logger.info('Servicios obtenidos para PROVIDER', {
         providerId: fullUser.serviceProvider.id,
         serviceTypesCount: serviceTypes.length,
         serviceTypes,
@@ -419,8 +419,8 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (
-      user.role !== 'SERVICE_PROVIDER' &&
-      user.role !== 'MAINTENANCE_PROVIDER' &&
+      user.role !== 'PROVIDER' &&
+      user.role !== 'MAINTENANCE' &&
       user.role !== 'PROVIDER' &&
       user.role !== 'MAINTENANCE'
     ) {
