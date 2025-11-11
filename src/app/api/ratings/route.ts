@@ -174,6 +174,16 @@ export async function GET(request: NextRequest) {
 
     const { ratings, total } = await UserRatingService.getUserRatings(targetUserId, filters);
 
+    console.log('📤 [API RATINGS] GET response', {
+      targetUserId,
+      total,
+      ratingsCount: ratings.length,
+      isSummary,
+      given,
+      userId: user.id,
+      userRole: user.role,
+    });
+
     return NextResponse.json({
       success: true,
       data: { ratings, total },

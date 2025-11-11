@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         completedDate: job.completedDate?.toISOString(),
         serviceProviderId: job.serviceProviderId,
         serviceProvider: {
-          id: job.serviceProvider.id,
+          id: job.serviceProvider.user.id, // ID del usuario, no del perfil
           businessName: job.serviceProvider.businessName,
           name: job.serviceProvider.user.name,
           email: job.serviceProvider.user.email,

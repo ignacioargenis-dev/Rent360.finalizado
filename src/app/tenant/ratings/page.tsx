@@ -116,6 +116,10 @@ export default function TenantRatingsPage() {
 
       const data = await response.json();
 
+      // Debug logging
+      console.log('📊 [TENANT RATINGS] API Response:', data);
+      console.log('📊 [TENANT RATINGS] Raw ratings data:', data.data?.ratings || data.ratings);
+
       // Transform API data to match our interface
       const ratingsData = data.data?.ratings || data.ratings || [];
 
@@ -196,7 +200,7 @@ export default function TenantRatingsPage() {
               recipientType: 'provider' as const,
               recipientName:
                 job.serviceProvider?.businessName || job.serviceProvider?.name || 'Proveedor',
-              recipientId: job.serviceProviderId,
+              recipientId: job.serviceProvider?.id, // ID del usuario, no del perfil
               propertyTitle: job.property?.title || 'Propiedad',
               serviceRequestId: job.id,
               canRate: job.status === 'COMPLETED',
