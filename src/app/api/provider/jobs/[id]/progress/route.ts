@@ -87,7 +87,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       newStatus: status,
       progress,
       notes,
+      updateData,
     });
+
+    // Verificar el estado final del trabajo
+    const finalJob = await db.serviceJob.findUnique({
+      where: { id: jobId },
+      select: { id: true, status: true, progress: true },
+    });
+    console.log('🚨🚨🚨 [JOB PROGRESS] Estado final en BD:', finalJob);
 
     // Si el trabajo se completa, enviar notificación al cliente
     if (status === 'COMPLETED') {

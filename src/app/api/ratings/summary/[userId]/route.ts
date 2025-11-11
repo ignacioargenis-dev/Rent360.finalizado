@@ -8,10 +8,10 @@ import { handleApiError } from '@/lib/api-error-handler';
  * GET /api/ratings/summary/[userId]
  * Obtener resumen de calificaciones de un usuario
  */
-export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { userId?: string } }) {
   try {
     const user = await requireAuth(request);
-    const targetUserId = params.userId;
+    const targetUserId = params.userId || user.id;
 
     // Obtener el resumen de calificaciones
     const summary = await UserRatingService.getUserRatingSummary(targetUserId);

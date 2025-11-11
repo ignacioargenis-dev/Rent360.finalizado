@@ -117,14 +117,38 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/ratings
- * Obtener calificaciones (propias o de otros usuarios)
+ * GET /api/ratings/summary
+ * Obtener resumen de calificaciones del usuario autenticado
  */
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
+    // Verificar si es una petición de resumen
     const { searchParams } = new URL(request.url);
+    const isSummary = searchParams.get('summary') === 'true';
+
+    if (isSummary) {
+      const summary = await UserRatingService.getUserRatingSummary(user.id);
+
+      return NextResponse.json({
+        success: true,
+        data: summary || {
+          userId: user.id,
+          userName: user.name || 'Usuario',
+          totalRatings: 0,
+          averageRating: 0,
+          ratingDistribution: {},
+          averageCommunication: 0,
+          averageReliability: 0,
+          averageProfessionalism: 0,
+          averageQuality: 0,
+          averagePunctuality: 0,
+        },
+      });
+    }
+
+    // Código original para obtener calificaciones
     const userId = searchParams.get('userId'); // Para ver calificaciones de otro usuario
     const contextType = searchParams.get('contextType') as RatingContextType;
     const isPublic = searchParams.get('isPublic') === 'true';
@@ -150,7 +174,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: ratings,
+      data: { ratings, total },
       pagination: {
         total,
         limit,

@@ -91,7 +91,7 @@ export default function TenantRatingsPage() {
       }
 
       // Cargar resumen de calificaciones
-      const summaryResponse = await fetch('/api/ratings/summary', {
+      const summaryResponse = await fetch('/api/ratings?summary=true', {
         credentials: 'include',
       });
 
