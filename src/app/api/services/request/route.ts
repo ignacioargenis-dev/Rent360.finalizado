@@ -71,8 +71,6 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               businessName: true,
-            },
-            include: {
               user: {
                 select: {
                   id: true,
