@@ -45,11 +45,11 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        property: {
+        requester: {
           select: {
             id: true,
-            title: true,
-            address: true,
+            name: true,
+            email: true,
           },
         },
       },
@@ -87,7 +87,11 @@ export async function GET(request: NextRequest) {
           name: job.serviceProvider.user.name,
           email: job.serviceProvider.user.email,
         },
-        property: job.property,
+        property: {
+          id: 'unknown',
+          title: 'Propiedad no especificada',
+          address: 'Dirección no disponible',
+        },
         finalPrice: job.finalPrice,
         notes: job.notes,
       })),
