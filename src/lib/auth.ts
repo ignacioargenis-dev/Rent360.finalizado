@@ -290,9 +290,9 @@ export function hasSpecificRole(user: any, expectedRole: string): boolean {
 }
 
 /**
- * Normaliza roles de proveedor para manejar duplicados
- * PROVIDER -> SERVICE_PROVIDER
- * MAINTENANCE -> MAINTENANCE_PROVIDER
+ * Normaliza roles de proveedor para mantener consistencia
+ * PROVIDER -> proveedor de servicios (limpieza, mudanzas, etc.)
+ * MAINTENANCE -> proveedor de mantenimiento técnico
  */
 export function normalizeProviderRole(role: string): string {
   const normalized = normalizeRole(role);
