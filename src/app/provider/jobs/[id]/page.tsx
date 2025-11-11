@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import {
   ArrowLeft,
   CheckCircle,
@@ -72,49 +73,47 @@ export default function ProviderJobDetailPage() {
     loadJob();
   }, [jobId]);
 
-  // Función para guardar cambios silenciosamente
+  // Función para guardar cambios silenciosamente (sin mensajes ni recargas)
   const saveChangesSilently = async () => {
     if (job && !loading && initialLoadComplete) {
       try {
-        await updateJobProgress();
-        // No mostrar mensajes de éxito para mantenerlo silencioso
+        const response = await fetch(`/api/provider/jobs/${jobId}/progress`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            status: status || undefined,
+            progress: progress,
+            notes: notes || undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Error al guardar cambios');
+        }
+
+        // Actualizar el estado local del job sin recargar
+        setJob(prev =>
+          prev
+            ? {
+                ...prev,
+                status: status || prev.status,
+                progress: progress,
+                notes: notes || prev.notes || '',
+              }
+            : null
+        );
       } catch (error) {
-        // Solo mostrar error si hay problemas reales
-        logger.error('Error guardando cambios:', { error });
+        logger.error('Error guardando cambios silenciosamente:', { error });
+        // Solo mostrar error en consola, no en UI para mantenerlo silencioso
       }
     }
   };
 
-  const loadJob = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/provider/jobs/${jobId}`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cargar el trabajo');
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.job) {
-        setJob(data.job);
-        setProgress(data.job.progress || 0);
-        setStatus(data.job.status || '');
-        setNotes(data.job.notes || '');
-        setInitialLoadComplete(true);
-      } else {
-        throw new Error('Trabajo no encontrado');
-      }
-    } catch (error) {
-      logger.error('Error cargando trabajo:', { error, jobId });
-      setErrorMessage('Error al cargar el trabajo. Por favor, inténtalo nuevamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Función para actualizar con mensajes y recarga (para el botón manual)
   const updateJobProgress = async () => {
     if (!job) {
       return;
@@ -159,21 +158,54 @@ export default function ProviderJobDetailPage() {
     }
   };
 
+  const loadJob = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/provider/jobs/${jobId}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cargar el trabajo');
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.job) {
+        setJob(data.job);
+        setProgress(data.job.progress || 0);
+        setStatus(data.job.status || '');
+        setNotes(data.job.notes || '');
+        setInitialLoadComplete(true);
+      } else {
+        throw new Error('Trabajo no encontrado');
+      }
+    } catch (error) {
+      logger.error('Error cargando trabajo:', { error, jobId });
+      setErrorMessage('Error al cargar el trabajo. Por favor, inténtalo nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const startJob = async () => {
     setStatus('IN_PROGRESS');
     setProgress(10); // Iniciar con 10% de progreso
-    // La actualización automática se hará por el useEffect
+    // Guardar automáticamente después de cambiar el estado
+    setTimeout(() => saveChangesSilently(), 100);
   };
 
   const pauseJob = async () => {
     setStatus('ACTIVE'); // Cambiar a activo pero no en progreso
-    // La actualización automática se hará por el useEffect
+    // Guardar automáticamente después de cambiar el estado
+    setTimeout(() => saveChangesSilently(), 100);
   };
 
   const completeJob = async () => {
     setStatus('COMPLETED');
     setProgress(100);
-    // La actualización automática se hará por el useEffect
+    // Guardar automáticamente después de cambiar el estado
+    setTimeout(() => saveChangesSilently(), 100);
   };
 
   const getStatusBadge = (status: string) => {
@@ -370,6 +402,33 @@ export default function ProviderJobDetailPage() {
                       <SelectItem value="CANCELLED">Cancelado</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Progreso */}
+                <div>
+                  <Label htmlFor="progress">Progreso del Trabajo ({progress}%)</Label>
+                  <div className="space-y-3 mt-2">
+                    <Slider
+                      id="progress"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={[progress]}
+                      onValueChange={value => {
+                        const newProgress = value[0] ?? 0;
+                        setProgress(newProgress);
+                        // Guardar automáticamente cuando cambia el progreso
+                        setTimeout(() => saveChangesSilently(), 300);
+                      }}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>0%</span>
+                      <span>{progress}%</span>
+                      <span>100%</span>
+                    </div>
+                    <Progress value={progress} className="w-full h-2" />
+                  </div>
                 </div>
 
                 {/* Notas */}
