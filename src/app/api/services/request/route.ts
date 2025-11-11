@@ -72,6 +72,14 @@ export async function GET(request: NextRequest) {
               id: true,
               businessName: true,
             },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                },
+              },
+            },
           },
         },
       }),
@@ -112,16 +120,16 @@ export async function GET(request: NextRequest) {
       serviceType: request.serviceType,
       title: request.title,
       description: request.description,
-      status: request.status,
+      status: request.status, // Mantener el status tal como viene de la BD
       scheduledDate: request.scheduledDate,
-      basePrice: request.basePrice,
-      finalPrice: request.finalPrice,
-      quotedPrice: request.finalPrice,
-      rating: request.rating,
-      feedback: request.feedback,
+      preferredTimeSlot: request.notes, // El notes contiene el preferredTimeSlot
+      budgetMin: request.basePrice, // Usar basePrice como budgetMin
+      budgetMax: null, // No hay budgetMax en serviceJob
+      notes: request.notes,
       createdAt: request.createdAt,
       providerName: request.serviceProvider.businessName,
-      requesterName: request.requester.name,
+      providerEmail: request.serviceProvider.user.email,
+      providerId: request.serviceProvider.user.id, // Agregar providerId
       images: request.images ? JSON.parse(request.images) : [],
       type: 'service_job', // Para distinguir el tipo
     }));

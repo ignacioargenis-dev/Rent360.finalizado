@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   ArrowLeft,
   MapPin,
@@ -323,11 +324,11 @@ export default function TenantServiceRequestDetailPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          contextType: 'maintenance',
-          contextId: request.providerId,
+          contextType: 'MAINTENANCE',
+          contextId: requestId, // Usar el ID de la solicitud completada
+          toUserId: request.providerId, // ID del provider a calificar
           overallRating: ratingData.rating,
           comment: ratingData.comment,
-          serviceRequestId: requestId, // Para relacionar con la solicitud completada
         }),
       });
 
@@ -884,9 +885,9 @@ export default function TenantServiceRequestDetailPage() {
             {/* Comentario */}
             <div>
               <Label htmlFor="rating-comment">Comentario</Label>
-              <textarea
+              <Textarea
                 id="rating-comment"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
+                className="mt-1"
                 rows={4}
                 placeholder="Comparte tu experiencia con este servicio..."
                 value={ratingData.comment}
