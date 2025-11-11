@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAnyProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { NotificationService, NotificationType } from '@/lib/notification-service';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -100,18 +101,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Si el trabajo se completa, enviar notificación al cliente
     if (status === 'COMPLETED') {
       try {
-        await fetch('/api/notifications', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: job.requester.id,
-            type: 'JOB_COMPLETED',
-            title: 'Trabajo completado',
-            message: `El trabajo "${job.title}" ha sido completado exitosamente.`,
-            link: `/tenant/jobs/${jobId}`,
-          }),
+        await NotificationService.create({
+          userId: job.requester.id,
+          type: 'SERVICE_REQUEST_ACCEPTED', // Usando un tipo existente para trabajos completados
+          title: 'Trabajo completado',
+          message: `El trabajo "${job.title}" ha sido completado exitosamente.`,
+          link: `/tenant/jobs/${jobId}`,
         });
       } catch (notificationError) {
         logger.warn('Error enviando notificación de trabajo completado:', notificationError);
