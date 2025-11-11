@@ -4,14 +4,25 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Validar que DATABASE_URL esté configurada solo en el servidor
-if (typeof window === 'undefined' && !process.env.DATABASE_URL) {
-  console.error('❌ [DB] DATABASE_URL no configurada');
-  throw new Error('DATABASE_URL es obligatorio. Configure la variable de entorno DATABASE_URL.');
-}
+// Función para validar DATABASE_URL de forma lazy
+function validateDatabaseUrl() {
+  // No validar durante el build de Next.js (cuando no hay runtime disponible)
+  if (typeof window !== 'undefined') {
+    return; // Estamos en el navegador, no validar
+  }
 
-// ✅ CRÍTICO: Log de configuración de base de datos (sin exponer credenciales)
-if (typeof window === 'undefined' && process.env.DATABASE_URL) {
+  // No validar si estamos en un entorno de build/testing sin DB
+  if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'production') {
+    console.warn('⚠️ [DB] DATABASE_URL no configurada (ignorando en desarrollo/build)');
+    return;
+  }
+
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ [DB] DATABASE_URL no configurada');
+    throw new Error('DATABASE_URL es obligatorio. Configure la variable de entorno DATABASE_URL.');
+  }
+
+  // ✅ CRÍTICO: Log de configuración de base de datos (sin exponer credenciales)
   const dbUrl = process.env.DATABASE_URL;
   const dbInfo = {
     hasUrl: !!dbUrl,
@@ -46,12 +57,24 @@ if (process.env.NODE_ENV === 'production') {
 // Crear instancia de Prisma con configuración optimizada
 const createPrismaClient = () => {
   console.log('🔧 [DB] Creando instancia de PrismaClient');
+  // Validar DATABASE_URL antes de crear el cliente
+  validateDatabaseUrl();
   const client = new PrismaClient(prismaConfig);
   console.log('✅ [DB] PrismaClient creado exitosamente');
   return client;
 };
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+// Lazy initialization del cliente de Prisma
+let dbInstance: PrismaClient | null = null;
+
+export const db = new Proxy({} as PrismaClient, {
+  get(target, prop) {
+    if (!dbInstance) {
+      dbInstance = globalForPrisma.prisma ?? createPrismaClient();
+    }
+    return (dbInstance as any)[prop];
+  },
+});
 
 // Función mejorada para verificar conexión DB con timeout
 export async function ensureDatabaseConnection(): Promise<boolean> {

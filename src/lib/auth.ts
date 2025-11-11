@@ -4,39 +4,54 @@ import * as bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
 
 // JWT Secrets - Obligatorios en producción
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+let JWT_SECRET: string;
+let JWT_REFRESH_SECRET: string;
 
-// Validar que los secrets existen
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET es obligatorio. Configure la variable de entorno JWT_SECRET.');
+// Función para obtener JWT_SECRET con validación lazy
+function getJWTSecret(): string {
+  if (!JWT_SECRET) {
+    JWT_SECRET = process.env.JWT_SECRET!;
+    if (!JWT_SECRET) {
+      throw new Error('JWT_SECRET es obligatorio. Configure la variable de entorno JWT_SECRET.');
+    }
+
+    // Validar longitud en producción
+    if (process.env.NODE_ENV === 'production' && JWT_SECRET.length < 32) {
+      throw new Error('JWT_SECRET debe tener al menos 32 caracteres por seguridad en producción');
+    }
+  }
+  return JWT_SECRET;
 }
 
-if (!JWT_REFRESH_SECRET) {
-  throw new Error(
-    'JWT_REFRESH_SECRET es obligatorio. Configure la variable de entorno JWT_REFRESH_SECRET.'
-  );
+// Función para obtener JWT_REFRESH_SECRET con validación lazy
+function getJWTRefreshSecret(): string {
+  if (!JWT_REFRESH_SECRET) {
+    JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
+    if (!JWT_REFRESH_SECRET) {
+      throw new Error(
+        'JWT_REFRESH_SECRET es obligatorio. Configure la variable de entorno JWT_REFRESH_SECRET.'
+      );
+    }
+
+    // Validar longitud en producción
+    if (process.env.NODE_ENV === 'production' && JWT_REFRESH_SECRET.length < 32) {
+      throw new Error(
+        'JWT_REFRESH_SECRET debe tener al menos 32 caracteres por seguridad en producción'
+      );
+    }
+
+    // Validar que no sean idénticos (solo cuando ambos están disponibles)
+    const secret = getJWTSecret();
+    if (secret === JWT_REFRESH_SECRET) {
+      throw new Error('JWT_SECRET y JWT_REFRESH_SECRET no pueden ser idénticos');
+    }
+  }
+  return JWT_REFRESH_SECRET;
 }
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
-// Validar configuración de JWT (solo en producción)
-if (process.env.NODE_ENV === 'production') {
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-    throw new Error('JWT_SECRET debe tener al menos 32 caracteres por seguridad en producción');
-  }
-
-  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 32) {
-    throw new Error(
-      'JWT_REFRESH_SECRET debe tener al menos 32 caracteres por seguridad en producción'
-    );
-  }
-
-  // Validar que los secretos no sean idénticos
-  if (process.env.JWT_SECRET === process.env.JWT_REFRESH_SECRET) {
-    throw new Error('JWT_SECRET y JWT_REFRESH_SECRET no pueden ser idénticos');
-  }
-}
+// Validaciones de JWT ahora se hacen de forma lazy en las funciones getter
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -67,12 +82,12 @@ export function verifyToken(request: NextRequest): DecodedToken | null {
     // Obtener token de la cookie
     const token = request.cookies.get('auth-token')?.value;
 
-    if (!token || !JWT_SECRET) {
+    if (!token || !getJWTSecret()) {
       return null;
     }
 
     // Verificar token
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, getJWTSecret()) as any;
     return decoded as DecodedToken;
   } catch (error) {
     return null;
@@ -84,12 +99,12 @@ export function verifyRefreshToken(request: NextRequest): DecodedRefreshToken | 
     // Obtener refresh token de la cookie
     const refreshToken = request.cookies.get('refresh-token')?.value;
 
-    if (!refreshToken || !JWT_REFRESH_SECRET) {
+    if (!refreshToken || !getJWTRefreshSecret()) {
       return null;
     }
 
     // Verificar refresh token
-    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as any;
+    const decoded = jwt.verify(refreshToken, getJWTRefreshSecret()) as any;
     return decoded as DecodedRefreshToken;
   } catch (error) {
     return null;
@@ -165,17 +180,17 @@ export async function requireAnyRole(
 }
 
 export function generateTokens(userId: string, email: string, role: string, name: string) {
-  if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+  if (!getJWTSecret() || !getJWTRefreshSecret()) {
     logger.error('JWT secrets no configurados');
     throw new Error('Configuración de autenticación incompleta');
   }
 
   try {
-    const accessToken = jwt.sign({ id: userId, email, role, name }, JWT_SECRET, {
+    const accessToken = jwt.sign({ id: userId, email, role, name }, getJWTSecret(), {
       expiresIn: JWT_EXPIRES_IN as any,
     });
 
-    const refreshToken = jwt.sign({ id: userId, type: 'refresh' }, JWT_REFRESH_SECRET, {
+    const refreshToken = jwt.sign({ id: userId, type: 'refresh' }, getJWTRefreshSecret(), {
       expiresIn: JWT_REFRESH_EXPIRES_IN as any,
     });
 

@@ -108,7 +108,7 @@ export default function TenantServiceRequestsPage() {
         console.log('📊 Total de solicitudes:', transformedRequests.length);
 
         // Log detallado de cada solicitud para debugging
-        transformedRequests.forEach((req, index) => {
+        transformedRequests.forEach((req: ServiceRequest, index: number) => {
           console.log(
             `📋 Solicitud ${index + 1}: ID=${req.id}, Status=${req.status}, Title=${req.title}`
           );
