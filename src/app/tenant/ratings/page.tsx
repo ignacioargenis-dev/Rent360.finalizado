@@ -174,10 +174,10 @@ export default function TenantRatingsPage() {
         logger.error('Error fetching contracts for ratings:', error);
       }
 
-      // Add from service requests
+      // Add from service jobs (trabajos completados del tenant)
       try {
-        const servicesResponse = await fetch(
-          '/api/tenant/service-requests?status=COMPLETED&limit=20',
+        const serviceJobsResponse = await fetch(
+          '/api/tenant/service-jobs?status=COMPLETED&limit=20',
           {
             method: 'GET',
             headers: {
@@ -188,26 +188,24 @@ export default function TenantRatingsPage() {
           }
         );
 
-        if (servicesResponse.ok) {
-          const servicesData = await servicesResponse.json();
+        if (serviceJobsResponse.ok) {
+          const serviceJobsData = await serviceJobsResponse.json();
           const serviceRatings =
-            servicesData.requests?.map((request: any) => ({
-              id: `service-${request.id}`,
+            serviceJobsData.jobs?.map((job: any) => ({
+              id: `job-${job.id}`,
               recipientType: 'provider' as const,
               recipientName:
-                request.serviceProvider?.businessName ||
-                request.serviceProvider?.name ||
-                'Proveedor',
-              recipientId: request.serviceProviderId,
-              propertyTitle: request.property?.title || 'Propiedad',
-              serviceRequestId: request.id,
-              canRate: request.status === 'COMPLETED',
-              reason: request.status !== 'COMPLETED' ? 'Servicio aún pendiente' : undefined,
+                job.serviceProvider?.businessName || job.serviceProvider?.name || 'Proveedor',
+              recipientId: job.serviceProviderId,
+              propertyTitle: job.property?.title || 'Propiedad',
+              serviceRequestId: job.id,
+              canRate: job.status === 'COMPLETED',
+              reason: job.status !== 'COMPLETED' ? 'Servicio aún pendiente' : undefined,
             })) || [];
           ratingsToGive.push(...serviceRatings);
         }
       } catch (error) {
-        logger.error('Error fetching services for ratings:', error);
+        logger.error('Error fetching service jobs for ratings:', error);
       }
 
       // Use only real data from database

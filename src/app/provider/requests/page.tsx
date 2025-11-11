@@ -93,6 +93,7 @@ export default function ProviderRequestsPage() {
       quoted: ['QUOTED'],
       accepted: ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'],
       completed: ['COMPLETED'],
+      all: ['PENDING', 'QUOTED', 'ACCEPTED', 'ACTIVE', 'IN_PROGRESS', 'COMPLETED'],
     };
 
     const mappedStatuses = statusMapping[tabValue] || [tabValue.toUpperCase()];
@@ -522,10 +523,11 @@ export default function ProviderRequestsPage() {
 
                     // Mapear los valores de los tabs a los estados reales de la base de datos
                     const statusMapping: { [key: string]: string[] } = {
-                      pending: ['OPEN'],
-                      quoted: ['ASSIGNED'],
-                      accepted: ['ASSIGNED'], // Las asignadas son las aceptadas por el cliente
-                      completed: ['CLOSED'],
+                      pending: ['PENDING'],
+                      quoted: ['QUOTED'],
+                      accepted: ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'],
+                      completed: ['COMPLETED'],
+                      all: ['PENDING', 'QUOTED', 'ACCEPTED', 'ACTIVE', 'IN_PROGRESS', 'COMPLETED'],
                     };
 
                     const mappedStatuses = statusMapping[tabValue] || [tabValue.toUpperCase()];
