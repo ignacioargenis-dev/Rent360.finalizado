@@ -257,8 +257,22 @@ export default function TenantRatingsPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          recipientType: selectedRatingToGive.recipientType,
-          recipientId: selectedRatingToGive.recipientId,
+          toUserId: selectedRatingToGive.recipientId,
+          contextType:
+            selectedRatingToGive.recipientType === 'provider'
+              ? 'SERVICE'
+              : selectedRatingToGive.recipientType === 'maintenance'
+                ? 'MAINTENANCE'
+                : selectedRatingToGive.recipientType === 'owner'
+                  ? 'CONTRACT'
+                  : selectedRatingToGive.recipientType === 'broker'
+                    ? 'BROKER'
+                    : 'SERVICE',
+          contextId:
+            selectedRatingToGive.serviceRequestId ||
+            selectedRatingToGive.contractId ||
+            selectedRatingToGive.maintenanceId ||
+            'unknown',
           overallRating: ratingForm.overallRating,
           punctuality: ratingForm.punctuality,
           professionalism: ratingForm.professionalism,
@@ -266,10 +280,9 @@ export default function TenantRatingsPage() {
           quality: ratingForm.quality,
           reliability: ratingForm.reliability,
           comment: ratingForm.comment,
-          anonymous: ratingForm.anonymous,
+          isAnonymous: ratingForm.anonymous,
           contractId: selectedRatingToGive.contractId,
-          maintenanceId: selectedRatingToGive.maintenanceId,
-          serviceRequestId: selectedRatingToGive.serviceRequestId,
+          propertyId: selectedRatingToGive.propertyTitle ? 'unknown' : undefined,
         }),
       });
 
