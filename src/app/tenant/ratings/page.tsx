@@ -286,7 +286,7 @@ export default function TenantRatingsPage() {
           comment: ratingForm.comment,
           isAnonymous: ratingForm.anonymous,
           contractId: selectedRatingToGive.contractId,
-          propertyId: selectedRatingToGive.propertyTitle ? 'unknown' : undefined,
+          propertyId: undefined, // No enviar propertyId ya que no tenemos propiedades reales
         }),
       });
 
