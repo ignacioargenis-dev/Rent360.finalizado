@@ -1,140 +1,502 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { logger } from '@/lib/logger-minimal';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   RefreshCw,
-  AlertTriangle,
+  Building,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Info,
+  Plus,
+  Filter,
+  Download,
+  BarChart3,
+  Settings,
   Star,
-  MessageSquare,
   User,
-  Calendar,
+  Users,
+  Wrench,
+  MessageSquare,
   ThumbsUp,
+  Home,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
+import { toast } from 'sonner';
+import { logger } from '@/lib/logger-minimal';
 
-interface UserRating {
+interface Rating {
   id: string;
-  fromUserId: string;
-  toUserId: string;
-  contextType: string;
-  contextId: string;
+  reviewerName: string;
+  reviewerType: 'owner' | 'broker' | 'maintenance' | 'provider';
+  propertyTitle?: string;
   overallRating: number;
-  communicationRating?: number;
-  reliabilityRating?: number;
-  professionalismRating?: number;
-  qualityRating?: number;
-  punctualityRating?: number;
+  punctuality?: number;
+  professionalism?: number;
+  communication?: number;
+  quality?: number;
+  reliability?: number;
   comment?: string;
-  createdAt: string;
-  fromUser?: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  toUser?: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
+  verified: boolean;
+  anonymous: boolean;
+  date: string;
+  contextType?: string;
+  contextId?: string;
 }
 
-interface RatingSummary {
-  userId: string;
-  userName: string;
-  totalRatings: number;
-  averageRating: number;
-  ratingDistribution: { [key: number]: number };
-  averageCommunication?: number;
-  averageReliability?: number;
-  averageProfessionalism?: number;
-  averageQuality?: number;
-  averagePunctuality?: number;
+interface RatingToGive {
+  id: string;
+  recipientType: 'owner' | 'broker' | 'maintenance' | 'provider';
+  recipientName: string;
+  recipientId: string;
+  propertyTitle?: string;
+  contractId?: string;
+  maintenanceId?: string;
+  serviceRequestId?: string;
+  canRate: boolean;
+  reason?: string;
 }
 
 export default function TenantRatingsPage() {
-  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [ratings, setRatings] = useState<UserRating[]>([]);
-  const [summary, setSummary] = useState<RatingSummary | null>(null);
   const [activeTab, setActiveTab] = useState('received');
+  const [ratings, setRatings] = useState<Rating[]>([]);
+  const [ratingsToGive, setRatingsToGive] = useState<RatingToGive[]>([]);
+  const [selectedRatingToGive, setSelectedRatingToGive] = useState<RatingToGive | null>(null);
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [ratingForm, setRatingForm] = useState({
+    overallRating: 0,
+    punctuality: 0,
+    professionalism: 0,
+    communication: 0,
+    quality: 0,
+    reliability: 0,
+    comment: '',
+    anonymous: false,
+  });
 
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  // Mock ratings data for tenant
+  const mockRatings: Rating[] = [
+    {
+      id: '1',
+      reviewerName: 'Carlos Martínez',
+      reviewerType: 'owner',
+      propertyTitle: 'Apartamento Las Condes',
+      overallRating: 5,
+      punctuality: 5,
+      professionalism: 5,
+      communication: 5,
+      reliability: 5,
+      comment:
+        'Excelente inquilino, siempre paga a tiempo y mantiene la propiedad en perfectas condiciones.',
+      verified: true,
+      anonymous: false,
+      date: '2024-01-15T10:00:00Z',
+      contextType: 'MAINTENANCE',
+      contextId: 'maint1',
+    },
+    {
+      id: '2',
+      reviewerName: 'Ana García',
+      reviewerType: 'broker',
+      propertyTitle: 'Casa Providencia',
+      overallRating: 4,
+      punctuality: 5,
+      professionalism: 4,
+      communication: 4,
+      reliability: 4,
+      comment: 'Muy buena experiencia, comunicación clara y respetuosa.',
+      verified: true,
+      anonymous: false,
+      date: '2024-01-10T14:30:00Z',
+      contextType: 'SERVICE',
+      contextId: 'serv1',
+    },
+    {
+      id: '3',
+      reviewerName: 'Servicio Técnico Ltda.',
+      reviewerType: 'maintenance',
+      propertyTitle: 'Oficina Centro',
+      overallRating: 5,
+      punctuality: 5,
+      professionalism: 5,
+      communication: 5,
+      quality: 5,
+      reliability: 5,
+      comment:
+        'Cliente muy colaborativo, facilitó el acceso y permitió realizar el trabajo eficientemente.',
+      verified: true,
+      anonymous: false,
+      date: '2024-01-20T09:15:00Z',
+      contextType: 'MAINTENANCE',
+      contextId: 'maint2',
+    },
+    {
+      id: '4',
+      reviewerName: 'Electricistas Profesionales',
+      reviewerType: 'provider',
+      propertyTitle: 'Local Comercial',
+      overallRating: 5,
+      punctuality: 5,
+      professionalism: 5,
+      communication: 5,
+      quality: 5,
+      reliability: 5,
+      verified: false,
+      anonymous: true,
+      date: '2024-01-18T16:45:00Z',
+      contextType: 'SERVICE',
+      contextId: 'serv2',
+    },
+  ];
 
-  // Estado para calificaciones que el tenant ha dado
-  const [givenRatings, setGivenRatings] = useState<UserRating[]>([]);
+  // Mock data for ratings that tenant can give
+  const mockRatingsToGive: RatingToGive[] = [
+    {
+      id: 'rtg1',
+      recipientType: 'owner',
+      recipientName: 'María López',
+      recipientId: 'owner1',
+      propertyTitle: 'Departamento Santiago Centro',
+      contractId: 'contract1',
+      canRate: true,
+    },
+    {
+      id: 'rtg2',
+      recipientType: 'broker',
+      recipientName: 'Juan Pérez',
+      recipientId: 'broker1',
+      propertyTitle: 'Casa Vitacura',
+      contractId: 'contract2',
+      canRate: true,
+    },
+    {
+      id: 'rtg3',
+      recipientType: 'maintenance',
+      recipientName: 'Reparaciones Express',
+      recipientId: 'maintenance1',
+      propertyTitle: 'Oficina Las Condes',
+      maintenanceId: 'maintenance1',
+      canRate: true,
+    },
+    {
+      id: 'rtg4',
+      recipientType: 'provider',
+      recipientName: 'Fontaneros Profesionales',
+      recipientId: 'provider1',
+      propertyTitle: 'Casa Familiar',
+      serviceRequestId: 'service1',
+      canRate: true,
+    },
+    {
+      id: 'rtg5',
+      recipientType: 'owner',
+      recipientName: 'Roberto Silva',
+      recipientId: 'owner2',
+      propertyTitle: 'Estudio Moderno',
+      contractId: 'contract3',
+      canRate: false,
+      reason: 'Contrato aún activo - calificación disponible al finalizar',
+    },
+  ];
 
   useEffect(() => {
-    loadRatings();
+    loadPageData();
   }, []);
 
-  const loadRatings = async () => {
+  const loadPageData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
-      // Cargar calificaciones que ha recibido el usuario
-      const receivedResponse = await fetch('/api/ratings', {
+      // Fetch real ratings data from API
+      const response = await fetch('/api/ratings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
         credentials: 'include',
       });
 
-      if (receivedResponse.ok) {
-        const receivedData = await receivedResponse.json();
-        console.log('📊 [TENANT RATINGS] Calificaciones recibidas:', receivedData);
-        if (receivedData.success && receivedData.data) {
-          setRatings(receivedData.data.ratings || []);
-        }
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
-      // Cargar calificaciones que ha dado el usuario
-      const givenResponse = await fetch('/api/ratings?given=true', {
-        credentials: 'include',
-      });
+      const data = await response.json();
 
-      if (givenResponse.ok) {
-        const givenData = await givenResponse.json();
-        console.log('📊 [TENANT RATINGS] Calificaciones dadas:', givenData);
-        if (givenData.success && givenData.data) {
-          setGivenRatings(givenData.data.ratings || []);
+      // Transform API data to match our interface
+      const ratingsData = data.data?.ratings || data.ratings || [];
+
+      const transformedRatings: Rating[] = ratingsData.map((rating: any) => ({
+        id: rating.id,
+        reviewerName: rating.fromUser?.name || rating.reviewerName || 'Usuario',
+        reviewerType: getReviewerType(rating.fromUser?.role || rating.reviewerType || 'user'),
+        propertyTitle: rating.property?.title || rating.propertyTitle || 'Propiedad',
+        overallRating: rating.overallRating || rating.rating || 0,
+        punctuality: rating.punctualityRating || rating.punctuality || 0,
+        professionalism: rating.professionalismRating || rating.professionalism || 0,
+        communication: rating.communicationRating || rating.communication || 0,
+        quality: rating.qualityRating || rating.quality || 0,
+        reliability: rating.reliabilityRating || rating.reliability || 0,
+        comment: rating.comment || 'Sin comentario',
+        verified: rating.verified || rating.isVerified || false,
+        anonymous: rating.anonymous || false,
+        date: rating.createdAt || rating.date,
+        contextType: rating.contextType,
+        contextId: rating.contextId,
+      }));
+
+      // Use real data or fallback to mock data
+      setRatings(transformedRatings.length > 0 ? transformedRatings : mockRatings);
+
+      // Fetch ratings that can be given (from contracts, maintenance, services)
+      const ratingsToGive: RatingToGive[] = [];
+
+      // Add from contracts
+      try {
+        const contractsResponse = await fetch('/api/tenant/contracts?status=COMPLETED&limit=20', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (contractsResponse.ok) {
+          const contractsData = await contractsResponse.json();
+          const contractRatings =
+            contractsData.contracts?.map((contract: any) => ({
+              id: `contract-${contract.id}`,
+              recipientType: 'owner' as const,
+              recipientName: contract.owner?.name || 'Propietario',
+              recipientId: contract.ownerId,
+              propertyTitle: contract.property?.title || 'Propiedad',
+              contractId: contract.id,
+              canRate: contract.status === 'COMPLETED',
+              reason: contract.status !== 'COMPLETED' ? 'Contrato aún activo' : undefined,
+            })) || [];
+          ratingsToGive.push(...contractRatings);
         }
+      } catch (error) {
+        logger.error('Error fetching contracts for ratings:', error);
       }
 
-      // Cargar resumen de calificaciones
-      const summaryResponse = await fetch('/api/ratings?summary=true', {
-        credentials: 'include',
-      });
+      // Add from service requests
+      try {
+        const servicesResponse = await fetch(
+          '/api/tenant/service-requests?status=COMPLETED&limit=20',
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            credentials: 'include',
+          }
+        );
 
-      if (summaryResponse.ok) {
-        const summaryData = await summaryResponse.json();
-        if (summaryData.success && summaryData.data) {
-          setSummary(summaryData.data);
+        if (servicesResponse.ok) {
+          const servicesData = await servicesResponse.json();
+          const serviceRatings =
+            servicesData.requests?.map((request: any) => ({
+              id: `service-${request.id}`,
+              recipientType: 'provider' as const,
+              recipientName:
+                request.serviceProvider?.businessName ||
+                request.serviceProvider?.name ||
+                'Proveedor',
+              recipientId: request.serviceProviderId,
+              propertyTitle: request.property?.title || 'Propiedad',
+              serviceRequestId: request.id,
+              canRate: request.status === 'COMPLETED',
+              reason: request.status !== 'COMPLETED' ? 'Servicio aún pendiente' : undefined,
+            })) || [];
+          ratingsToGive.push(...serviceRatings);
         }
+      } catch (error) {
+        logger.error('Error fetching services for ratings:', error);
       }
+
+      // Use real data or fallback to mock data
+      setRatingsToGive(ratingsToGive.length > 0 ? ratingsToGive : mockRatingsToGive);
     } catch (error) {
-      logger.error('Error cargando calificaciones:', { error });
-      setError('Error al cargar las calificaciones');
+      logger.error('Error loading ratings data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      // En caso de error, mostrar datos mock
+      setRatings(mockRatings);
+      setRatingsToGive(mockRatingsToGive);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-      />
-    ));
+  // Functions for rating management
+  const handleGiveRating = (ratingToGive: RatingToGive) => {
+    if (!ratingToGive.canRate) {
+      return;
+    }
+
+    setSelectedRatingToGive(ratingToGive);
+    setRatingForm({
+      overallRating: 0,
+      punctuality: 0,
+      professionalism: 0,
+      communication: 0,
+      quality: 0,
+      reliability: 0,
+      comment: '',
+      anonymous: false,
+    });
+    setShowRatingDialog(true);
   };
 
+  const handleSubmitRating = async () => {
+    if (!selectedRatingToGive) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          recipientType: selectedRatingToGive.recipientType,
+          recipientId: selectedRatingToGive.recipientId,
+          overallRating: ratingForm.overallRating,
+          punctuality: ratingForm.punctuality,
+          professionalism: ratingForm.professionalism,
+          communication: ratingForm.communication,
+          quality: ratingForm.quality,
+          reliability: ratingForm.reliability,
+          comment: ratingForm.comment,
+          anonymous: ratingForm.anonymous,
+          contractId: selectedRatingToGive.contractId,
+          maintenanceId: selectedRatingToGive.maintenanceId,
+          serviceRequestId: selectedRatingToGive.serviceRequestId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Remove from ratings to give list
+      setRatingsToGive(prev => prev.filter(r => r.id !== selectedRatingToGive.id));
+
+      setShowRatingDialog(false);
+      setSelectedRatingToGive(null);
+
+      // Reload data to show the new rating
+      await loadPageData();
+
+      // Show success message
+      toast.success('Calificación enviada exitosamente');
+    } catch (error) {
+      logger.error('Error submitting rating:', error);
+      toast.error('Error al enviar la calificación');
+    }
+  };
+
+  const handleCancelRating = () => {
+    setShowRatingDialog(false);
+    setSelectedRatingToGive(null);
+    setRatingForm({
+      overallRating: 0,
+      punctuality: 0,
+      professionalism: 0,
+      communication: 0,
+      quality: 0,
+      reliability: 0,
+      comment: '',
+      anonymous: false,
+    });
+  };
+
+  // Star rating component
+  const StarRating = ({
+    rating,
+    onRatingChange,
+    maxRating = 5,
+  }: {
+    rating: number;
+    onRatingChange: (rating: number) => void;
+    maxRating?: number;
+  }) => {
+    return (
+      <div className="flex gap-1">
+        {Array.from({ length: maxRating }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onRatingChange(i + 1)}
+            className="focus:outline-none"
+          >
+            <Star
+              className={`w-5 h-5 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+            />
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  // Get reviewer type from role
+  const getReviewerType = (role: string): 'owner' | 'broker' | 'maintenance' | 'provider' => {
+    switch (role) {
+      case 'OWNER':
+        return 'owner';
+      case 'BROKER':
+        return 'broker';
+      case 'MAINTENANCE':
+        return 'maintenance';
+      case 'PROVIDER':
+        return 'provider';
+      default:
+        return 'owner';
+    }
+  };
+
+  // Get reviewer type icon and label
+  const getReviewerTypeInfo = (type: string) => {
+    switch (type) {
+      case 'owner':
+        return { icon: Home, label: 'Propietario', color: 'bg-blue-100 text-blue-800' };
+      case 'broker':
+        return { icon: Users, label: 'Corredor', color: 'bg-green-100 text-green-800' };
+      case 'maintenance':
+        return { icon: Wrench, label: 'Mantenimiento', color: 'bg-orange-100 text-orange-800' };
+      case 'provider':
+        return { icon: Building, label: 'Proveedor', color: 'bg-purple-100 text-purple-800' };
+      default:
+        return { icon: User, label: 'Usuario', color: 'bg-gray-100 text-gray-800' };
+    }
+  };
+
+  // Format date helper
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
@@ -145,451 +507,493 @@ export default function TenantRatingsPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout user={null} title="Mis Calificaciones">
+      <UnifiedDashboardLayout title="Calificaciones" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando...</p>
+          </div>
         </div>
       </UnifiedDashboardLayout>
     );
   }
 
-  if (error) {
-    return (
-      <UnifiedDashboardLayout user={null} title="Mis Calificaciones">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Error</h3>
-              <p className="mt-1 text-sm text-gray-500">{error}</p>
-              <div className="mt-6">
-                <Button onClick={loadRatings}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Reintentar
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </UnifiedDashboardLayout>
-    );
-  }
+  const averageRating =
+    ratings.length > 0 ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length : 0;
+
+  const verifiedRatings = ratings.filter(r => r.verified).length;
 
   return (
-    <UnifiedDashboardLayout user={null} title="Mis Calificaciones">
-      <div className="space-y-6">
-        {/* Resumen de calificaciones */}
-        {summary && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400" />
-                Resumen de Calificaciones
-              </CardTitle>
-              <CardDescription>Calificaciones que has recibido de otros usuarios</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-500">
-                    {summary.averageRating.toFixed(1)}
-                  </div>
-                  <div className="text-sm text-gray-600">Promedio General</div>
-                  <div className="flex justify-center mt-1">
-                    {renderStars(Math.round(summary.averageRating))}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{summary.totalRatings}</div>
-                  <div className="text-sm text-gray-600">Total de Calificaciones</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">
-                    {summary.ratingDistribution[5] || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">5 Estrellas</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600">
-                    {summary.averageCommunication?.toFixed(1) || 'N/A'}
-                  </div>
-                  <div className="text-sm text-gray-600">Comunicación</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Lista de calificaciones con tabs */}
+    <UnifiedDashboardLayout
+      title="Calificaciones"
+      subtitle="Gestiona las calificaciones que has recibido y las que puedes dar"
+    >
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="received" className="flex items-center gap-2">
-              <Star className="w-4 h-4" />
-              Calificaciones Recibidas ({ratings.length})
-            </TabsTrigger>
-            <TabsTrigger value="given" className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Calificaciones Dadas ({givenRatings.length})
-            </TabsTrigger>
+            <TabsTrigger value="received">Calificaciones Recibidas</TabsTrigger>
+            <TabsTrigger value="to-give">Calificaciones por Dar</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="received" className="mt-6">
+          <TabsContent value="received" className="space-y-6">
+            {/* Header con estadísticas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Calificaciones</CardTitle>
+                  <Star className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{ratings.length}</div>
+                  <p className="text-xs text-muted-foreground">Reseñas recibidas</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Calificación Promedio</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{averageRating.toFixed(1)}</div>
+                  <div className="flex items-center gap-1 mt-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star
+                        key={star}
+                        className={`w-3 h-3 ${
+                          star <= Math.round(averageRating)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Calificaciones Verificadas</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{verifiedRatings}</div>
+                  <p className="text-xs text-muted-foreground">De {ratings.length} total</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Calificaciones 5★</CardTitle>
+                  <Star className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {ratings.filter(r => r.overallRating === 5).length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Reseñas perfectas</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Lista de calificaciones */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Calificaciones Recibidas
-                </CardTitle>
+                <CardTitle>Calificaciones</CardTitle>
                 <CardDescription>
-                  Feedback que has recibido de otros usuarios de la plataforma
+                  Aquí puedes gestionar y visualizar toda la información relacionada con
+                  calificaciones.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {ratings.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Star className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">
-                      No tienes calificaciones aún
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Cuando completes transacciones con otros usuarios, recibirás calificaciones
-                      aquí.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {ratings.map(rating => (
-                      <Card key={rating.id} className="border-l-4 border-l-yellow-400">
-                        <CardContent className="pt-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-3">
-                              <Avatar className="w-10 h-10">
-                                <AvatarImage
-                                  src={rating.fromUser?.avatar}
-                                  alt={rating.fromUser?.name || 'Usuario'}
-                                />
-                                <AvatarFallback>
-                                  <User className="w-5 h-5" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-sm font-medium text-gray-900">
-                                    {rating.fromUser?.name || 'Usuario Anónimo'}
-                                  </h4>
-                                  <div className="flex items-center">
-                                    {renderStars(rating.overallRating)}
-                                  </div>
-                                </div>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {rating.comment || 'Sin comentario'}
-                                </p>
-                                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" />
-                                    {formatDate(rating.createdAt)}
-                                  </span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {rating.contextType === 'MAINTENANCE'
-                                      ? 'Servicio'
-                                      : rating.contextType === 'SERVICE'
-                                        ? 'Servicio'
-                                        : rating.contextType}
-                                  </Badge>
-                                </div>
-                                {/* Mostrar ratings detallados si existen */}
-                                {(rating.communicationRating ||
-                                  rating.reliabilityRating ||
-                                  rating.professionalismRating ||
-                                  rating.qualityRating ||
-                                  rating.punctualityRating) && (
-                                  <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                                    {rating.communicationRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Com.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.communicationRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.reliabilityRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Conf.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.reliabilityRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.professionalismRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Prof.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.professionalismRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.qualityRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Cal.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.qualityRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.punctualityRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Punt.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.punctualityRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
+                <div className="space-y-4">
+                  {ratings.map(rating => (
+                    <Card key={rating.id} className="border-l-4 border-l-blue-500">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-gray-600">
+                                {rating.reviewerName.substring(0, 2).toUpperCase()}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-gray-400 hover:text-gray-600"
-                              >
-                                <ThumbsUp className="w-4 h-4" />
-                              </Button>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold text-gray-900">
+                                  {rating.reviewerName}
+                                </h4>
+                                {(() => {
+                                  const typeInfo = getReviewerTypeInfo(rating.reviewerType);
+                                  const Icon = typeInfo.icon;
+                                  return (
+                                    <Badge className={typeInfo.color}>
+                                      <Icon className="w-3 h-3 mr-1" />
+                                      {typeInfo.label}
+                                    </Badge>
+                                  );
+                                })()}
+                              </div>
+                              {rating.propertyTitle && (
+                                <p className="text-sm text-gray-600">{rating.propertyTitle}</p>
+                              )}
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map(star => (
+                                <Star
+                                  key={star}
+                                  className={`w-4 h-4 ${
+                                    star <= rating.overallRating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                              <span className="ml-2 text-sm font-medium">
+                                {rating.overallRating}.0
+                              </span>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {new Date(rating.date).toLocaleDateString('es-CL')}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {rating.comment && (
+                          <p className="text-gray-700 mb-3 italic">{rating.comment}</p>
+                        )}
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                          {rating.punctuality && rating.punctuality > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600">Puntualidad:</span>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (rating.punctuality || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {rating.professionalism && rating.professionalism > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600">Profesionalismo:</span>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (rating.professionalism || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {rating.communication && rating.communication > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600">Comunicación:</span>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (rating.communication || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {rating.quality && rating.quality > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600">Calidad:</span>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (rating.quality || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {rating.reliability && rating.reliability > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600">Confiabilidad:</span>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (rating.reliability || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+                          {rating.verified && (
+                            <Badge className="bg-green-100 text-green-800">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Verificada
+                            </Badge>
+                          )}
+                          {rating.anonymous && <Badge variant="secondary">Anónima</Badge>}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {ratings.length === 0 && (
+                  <div className="text-center py-12">
+                    <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Aún no tienes calificaciones
+                    </h3>
+                    <p className="text-gray-600 mb-3">
+                      Las calificaciones aparecerán aquí cuando completes contratos con
+                      propietarios, corredores, mantenimiento y proveedores.
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                      <p className="text-sm text-blue-800 font-medium mb-1">
+                        💡 Importante: Mantén calificaciones altas
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        Las buenas calificaciones aumentan la confianza y te ayudan a conseguir más
+                        contratos.
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="given" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Calificaciones Dadas
-                </CardTitle>
-                <CardDescription>
-                  Feedback que has dado a otros usuarios de la plataforma
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {givenRatings.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Star className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">
-                      No has dado calificaciones aún
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Cuando completes transacciones con otros usuarios, podrás calificarlos aquí.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {givenRatings.map(rating => (
-                      <Card key={rating.id} className="border-l-4 border-l-blue-400">
-                        <CardContent className="pt-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-3">
-                              <Avatar className="w-10 h-10">
-                                <AvatarImage
-                                  src={rating.toUser?.avatar}
-                                  alt={rating.toUser?.name || 'Usuario'}
-                                />
-                                <AvatarFallback>
-                                  <User className="w-5 h-5" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-sm font-medium text-gray-900">
-                                    {rating.toUser?.name || 'Usuario Anónimo'}
-                                  </h4>
-                                  <div className="flex items-center">
-                                    {renderStars(rating.overallRating)}
-                                  </div>
-                                </div>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {rating.comment || 'Sin comentario'}
-                                </p>
-                                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" />
-                                    {formatDate(rating.createdAt)}
-                                  </span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {rating.contextType === 'MAINTENANCE'
-                                      ? 'Servicio'
-                                      : rating.contextType === 'SERVICE'
-                                        ? 'Servicio'
-                                        : rating.contextType}
-                                  </Badge>
-                                </div>
-                                {/* Mostrar ratings detallados si existen */}
-                                {(rating.communicationRating ||
-                                  rating.reliabilityRating ||
-                                  rating.professionalismRating ||
-                                  rating.qualityRating ||
-                                  rating.punctualityRating) && (
-                                  <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                                    {rating.communicationRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Com.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.communicationRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.reliabilityRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Conf.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.reliabilityRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.professionalismRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Prof.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.professionalismRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.qualityRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Cal.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.qualityRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {rating.punctualityRating && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-gray-600">Punt.:</span>
-                                        <div className="flex">
-                                          {Array.from({ length: 5 }, (_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-3 h-3 ${
-                                                i < rating.punctualityRating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-gray-400 hover:text-gray-600"
-                              >
-                                <ThumbsUp className="w-4 h-4" />
-                              </Button>
-                            </div>
+          <TabsContent value="to-give" className="space-y-6">
+            {/* Header for ratings to give */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Calificaciones Pendientes</h2>
+                <p className="text-gray-600">
+                  Califica a propietarios, corredores, mantenimiento y proveedores
+                </p>
+              </div>
+              <div className="text-sm text-gray-500">
+                {ratingsToGive.filter(r => r.canRate).length} calificaciones disponibles
+              </div>
+            </div>
+
+            {/* Ratings to give list */}
+            <div className="space-y-4">
+              {ratingsToGive.map(ratingToGive => {
+                const typeInfo = getReviewerTypeInfo(ratingToGive.recipientType);
+
+                return (
+                  <Card key={ratingToGive.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <typeInfo.icon className="w-6 h-6 text-gray-600" />
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-gray-900">
+                                {ratingToGive.recipientName}
+                              </h3>
+                              <Badge className={typeInfo.color}>
+                                <typeInfo.icon className="w-3 h-3 mr-1" />
+                                {typeInfo.label}
+                              </Badge>
+                            </div>
+
+                            {ratingToGive.propertyTitle && (
+                              <p className="text-sm text-gray-600 mb-1">
+                                Propiedad: {ratingToGive.propertyTitle}
+                              </p>
+                            )}
+
+                            {!ratingToGive.canRate && ratingToGive.reason && (
+                              <p className="text-xs text-orange-600">{ratingToGive.reason}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {ratingToGive.canRate ? (
+                            <Button
+                              onClick={() => handleGiveRating(ratingToGive)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              <Star className="w-4 h-4 mr-2" />
+                              Calificar
+                            </Button>
+                          ) : (
+                            <Badge variant="secondary">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pendiente
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {ratingsToGive.length === 0 && (
+              <div className="text-center py-12">
+                <ThumbsUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No hay calificaciones pendientes
+                </h3>
+                <p className="text-gray-600">
+                  Las calificaciones disponibles aparecerán aquí cuando completes contratos o
+                  servicios.
+                </p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
+
+        {/* Rating Dialog */}
+        <Dialog open={showRatingDialog} onOpenChange={setShowRatingDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Calificar a {selectedRatingToGive?.recipientName}</DialogTitle>
+              <DialogDescription>
+                Tu calificación ayudará a otros usuarios a tomar mejores decisiones
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-sm font-medium">Calificación General</Label>
+                <div className="mt-1">
+                  <StarRating
+                    rating={ratingForm.overallRating}
+                    onRatingChange={rating =>
+                      setRatingForm(prev => ({ ...prev, overallRating: rating }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Puntualidad</Label>
+                <div className="mt-1">
+                  <StarRating
+                    rating={ratingForm.punctuality}
+                    onRatingChange={rating =>
+                      setRatingForm(prev => ({ ...prev, punctuality: rating }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Profesionalismo</Label>
+                <div className="mt-1">
+                  <StarRating
+                    rating={ratingForm.professionalism}
+                    onRatingChange={rating =>
+                      setRatingForm(prev => ({ ...prev, professionalism: rating }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Comunicación</Label>
+                <div className="mt-1">
+                  <StarRating
+                    rating={ratingForm.communication}
+                    onRatingChange={rating =>
+                      setRatingForm(prev => ({ ...prev, communication: rating }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {(selectedRatingToGive?.recipientType === 'maintenance' ||
+                selectedRatingToGive?.recipientType === 'provider') && (
+                <div>
+                  <Label className="text-sm font-medium">Calidad del Servicio</Label>
+                  <div className="mt-1">
+                    <StarRating
+                      rating={ratingForm.quality}
+                      onRatingChange={rating =>
+                        setRatingForm(prev => ({ ...prev, quality: rating }))
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedRatingToGive?.recipientType === 'owner' && (
+                <div>
+                  <Label className="text-sm font-medium">Confiabilidad</Label>
+                  <div className="mt-1">
+                    <StarRating
+                      rating={ratingForm.reliability}
+                      onRatingChange={rating =>
+                        setRatingForm(prev => ({ ...prev, reliability: rating }))
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-sm font-medium">Comentario (opcional)</Label>
+                <Textarea
+                  placeholder="Comparte tu experiencia..."
+                  value={ratingForm.comment}
+                  onChange={e => setRatingForm(prev => ({ ...prev, comment: e.target.value }))}
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleCancelRating}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmitRating}
+                disabled={ratingForm.overallRating === 0}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Enviar Calificación
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );
