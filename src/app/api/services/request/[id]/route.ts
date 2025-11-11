@@ -134,8 +134,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       requestId,
       userId: user.id,
       role: user.role,
-      status: serviceRequest.status,
+      originalStatus: serviceRequest.status,
       transformedStatus: transformedRequest.status,
+      isCompleted: serviceRequest.status === 'COMPLETED' || serviceRequest.status === 'completed',
     });
 
     return NextResponse.json({

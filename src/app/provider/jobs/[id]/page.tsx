@@ -262,10 +262,13 @@ export default function ProviderJobDetailPage() {
 
       if (!response.ok) {
         // Si es un error de calificación duplicada, mostrar mensaje más claro
-        if (data.error && data.error.includes('Ya has calificado')) {
+        const errorMessage = data.error?.message || data.error || 'Error al enviar la calificación';
+        if (typeof errorMessage === 'string' && errorMessage.includes('Ya has calificado')) {
           throw new Error('Ya has calificado a este cliente por este trabajo anteriormente.');
         }
-        throw new Error(data.error || 'Error al enviar la calificación');
+        throw new Error(
+          typeof errorMessage === 'string' ? errorMessage : 'Error al enviar la calificación'
+        );
       }
 
       logger.info('Calificación del cliente enviada exitosamente:', {
