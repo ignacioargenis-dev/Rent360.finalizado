@@ -7,6 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
   ArrowLeft,
   MapPin,
   User,
@@ -20,6 +28,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Star,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
@@ -65,6 +74,11 @@ export default function TenantServiceRequestDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingData, setRatingData] = useState({
+    rating: 5,
+    comment: '',
+  });
 
   const requestId = params?.id as string;
 
@@ -281,6 +295,71 @@ export default function TenantServiceRequestDetailPage() {
         error instanceof Error
           ? error.message
           : 'Error al rechazar la cotización. Por favor, inténtalo nuevamente.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmitRating = async () => {
+    if (!request || !request.providerId) {
+      setErrorMessage('No se puede calificar: información del proveedor no disponible');
+      return;
+    }
+
+    if (!ratingData.comment.trim()) {
+      setErrorMessage('Por favor escribe un comentario para la calificación');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          contextType: 'maintenance',
+          contextId: request.providerId,
+          overallRating: ratingData.rating,
+          comment: ratingData.comment,
+          serviceRequestId: requestId, // Para relacionar con la solicitud completada
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al enviar la calificación');
+      }
+
+      logger.info('Calificación enviada exitosamente:', {
+        requestId,
+        providerId: request.providerId,
+        rating: ratingData.rating,
+      });
+
+      setSuccessMessage(
+        '¡Gracias por tu calificación! Ayudas a otros usuarios a tomar mejores decisiones.'
+      );
+      setShowRatingModal(false);
+
+      // Resetear el formulario
+      setRatingData({
+        rating: 5,
+        comment: '',
+      });
+
+      // Limpiar mensaje después de 5 segundos
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (error) {
+      logger.error('Error enviando calificación:', { error, requestId });
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Error inesperado al enviar la calificación'
       );
     } finally {
       setIsSubmitting(false);
@@ -653,6 +732,34 @@ export default function TenantServiceRequestDetailPage() {
                       )
                     );
                   })()}
+
+                  {/* Calificación del servicio completado */}
+                  {(() => {
+                    const status = request?.status as any;
+                    return (
+                      status &&
+                      status === 'completed' && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                              <p className="text-sm font-medium text-green-800">
+                                Servicio completado exitosamente.
+                              </p>
+                            </div>
+                            <Button
+                              onClick={() => setShowRatingModal(true)}
+                              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                              size="sm"
+                            >
+                              <Star className="w-4 h-4 mr-2" />
+                              Calificar Servicio
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    );
+                  })()}
                 </CardContent>
               </Card>
             )}
@@ -738,6 +845,87 @@ export default function TenantServiceRequestDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Calificación */}
+      <Dialog open={showRatingModal} onOpenChange={setShowRatingModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-500" />
+              Calificar Servicio
+            </DialogTitle>
+            <DialogDescription>
+              Tu opinión nos ayuda a mejorar la calidad de nuestros servicios. ¿Cómo calificarías el
+              trabajo realizado por {request?.providerName}?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Selector de estrellas */}
+            <div>
+              <Label>Calificación</Label>
+              <div className="flex items-center gap-2 mt-2">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRatingData(prev => ({ ...prev, rating: star }))}
+                    className="text-2xl focus:outline-none hover:scale-110 transition-transform"
+                  >
+                    {star <= ratingData.rating ? '⭐' : '☆'}
+                  </button>
+                ))}
+                <span className="ml-2 text-sm text-gray-600">
+                  {ratingData.rating} de 5 estrellas
+                </span>
+              </div>
+            </div>
+
+            {/* Comentario */}
+            <div>
+              <Label htmlFor="rating-comment">Comentario</Label>
+              <textarea
+                id="rating-comment"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
+                rows={4}
+                placeholder="Comparte tu experiencia con este servicio..."
+                value={ratingData.comment}
+                onChange={e => setRatingData(prev => ({ ...prev, comment: e.target.value }))}
+              />
+            </div>
+
+            {/* Mensajes de error */}
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-800">{errorMessage}</p>
+              </div>
+            )}
+
+            {/* Botones */}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowRatingModal(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmitRating}
+                disabled={isSubmitting || !ratingData.comment.trim()}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white"
+              >
+                {isSubmitting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <Star className="w-4 h-4 mr-2" />
+                )}
+                {isSubmitting ? 'Enviando...' : 'Enviar Calificación'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

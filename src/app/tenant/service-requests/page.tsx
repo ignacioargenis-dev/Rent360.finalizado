@@ -84,7 +84,7 @@ export default function TenantServiceRequestsPage() {
           title: req.title,
           description: req.description,
           serviceType: req.serviceType,
-          status: req.status.toLowerCase(),
+          status: req.status.toUpperCase(), // Mantener en mayúsculas para consistencia
           createdAt: req.createdAt,
           preferredDate: req.scheduledDate?.split('T')[0] || req.preferredDate,
           preferredTimeSlot: req.preferredTimeSlot,
@@ -99,6 +99,13 @@ export default function TenantServiceRequestsPage() {
           notes: req.notes,
           images: req.images || [],
         }));
+
+        // Log para debugging de estados
+        console.log(
+          '📊 Estados de solicitudes del inquilino:',
+          transformedRequests.map(req => req.status)
+        );
+        console.log('📊 Total de solicitudes:', transformedRequests.length);
 
         setRequests(transformedRequests);
       } else {
@@ -169,12 +176,29 @@ export default function TenantServiceRequestsPage() {
     router.push('/tenant/messages?new=true');
   };
 
+  // Función para obtener el conteo de solicitudes por tab
+  const getTabCount = (tabValue: string) => {
+    if (tabValue === 'all') {
+      return requests.length;
+    }
+
+    // Mapear los valores de los tabs a los estados reales de la base de datos
+    const statusMapping: { [key: string]: string[] } = {
+      pending: ['PENDING'],
+      quoted: ['QUOTED'],
+      accepted: ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'],
+      completed: ['COMPLETED'],
+    };
+
+    const mappedStatuses = statusMapping[tabValue] || [tabValue.toUpperCase()];
+    return requests.filter(request => mappedStatuses.includes(request.status)).length;
+  };
+
   const filteredRequests = requests.filter(request => {
     if (activeTab === 'all') {
       return true;
     }
 
-    // Mapear los valores de los tabs a los estados reales de la base de datos
     const statusMapping: { [key: string]: string[] } = {
       pending: ['PENDING'],
       quoted: ['QUOTED'],
@@ -273,54 +297,12 @@ export default function TenantServiceRequestsPage() {
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="all">Todas ({requests.length})</TabsTrigger>
-                <TabsTrigger value="pending">
-                  Pendientes (
-                  {
-                    requests.filter(r => {
-                      const statusMapping = { pending: ['PENDING'] };
-                      const mappedStatuses = statusMapping.pending || ['PENDING'];
-                      return mappedStatuses.includes(r.status);
-                    }).length
-                  }
-                  )
-                </TabsTrigger>
-                <TabsTrigger value="quoted">
-                  Cotizadas (
-                  {
-                    requests.filter(r => {
-                      const statusMapping = { quoted: ['QUOTED'] };
-                      const mappedStatuses = statusMapping.quoted || ['QUOTED'];
-                      return mappedStatuses.includes(r.status);
-                    }).length
-                  }
-                  )
-                </TabsTrigger>
-                <TabsTrigger value="accepted">
-                  Aceptadas (
-                  {
-                    requests.filter(r => {
-                      const statusMapping = { accepted: ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'] };
-                      const mappedStatuses = statusMapping.accepted || [
-                        'ACCEPTED',
-                        'ACTIVE',
-                        'IN_PROGRESS',
-                      ];
-                      return mappedStatuses.includes(r.status);
-                    }).length
-                  }
-                  )
-                </TabsTrigger>
+                <TabsTrigger value="all">Todas ({getTabCount('all')})</TabsTrigger>
+                <TabsTrigger value="pending">Pendientes ({getTabCount('pending')})</TabsTrigger>
+                <TabsTrigger value="quoted">Cotizadas ({getTabCount('quoted')})</TabsTrigger>
+                <TabsTrigger value="accepted">Aceptadas ({getTabCount('accepted')})</TabsTrigger>
                 <TabsTrigger value="completed">
-                  Completadas (
-                  {
-                    requests.filter(r => {
-                      const statusMapping = { completed: ['COMPLETED'] };
-                      const mappedStatuses = statusMapping.completed || ['COMPLETED'];
-                      return mappedStatuses.includes(r.status);
-                    }).length
-                  }
-                  )
+                  Completadas ({getTabCount('completed')})
                 </TabsTrigger>
               </TabsList>
 
