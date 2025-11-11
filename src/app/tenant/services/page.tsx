@@ -181,10 +181,26 @@ export default function TenantServicesPage() {
               }
             }
 
+            // Mapear serviceType a valores en minúsculas esperados por el frontend
+            const serviceTypeMap: {
+              [key: string]: 'maintenance' | 'cleaning' | 'moving' | 'security' | 'other';
+            } = {
+              MAINTENANCE: 'maintenance',
+              CLEANING: 'cleaning',
+              MOVING: 'moving',
+              SECURITY: 'security',
+              OTHER: 'other',
+              maintenance: 'maintenance',
+              cleaning: 'cleaning',
+              moving: 'moving',
+              security: 'security',
+              other: 'other',
+            };
+
             return {
               id: provider.id,
               name: provider.businessName,
-              serviceType: provider.serviceType,
+              serviceType: serviceTypeMap[provider.serviceType] || 'other',
               specialty: specialty,
               rating: provider.rating || 0,
               reviewCount: provider.totalRatings || 0,

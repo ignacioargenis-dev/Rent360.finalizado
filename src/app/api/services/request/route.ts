@@ -68,10 +68,6 @@ export async function GET(request: NextRequest) {
             },
           },
           serviceProvider: {
-            select: {
-              id: true,
-              businessName: true,
-            },
             include: {
               user: {
                 select: {
@@ -79,6 +75,11 @@ export async function GET(request: NextRequest) {
                   email: true,
                 },
               },
+            },
+            select: {
+              id: true,
+              businessName: true,
+              user: true,
             },
           },
         },

@@ -247,10 +247,9 @@ export default function ProviderJobDetailPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          contextType: 'maintenance',
+          contextType: 'MAINTENANCE',
           contextId: jobId,
-          fromUserId: user.id, // Provider calificando
-          toUserId: job.clientId || '', // Cliente siendo calificado
+          toUserId: job.requesterId, // Cliente siendo calificado
           overallRating: clientRatingData.overallRating,
           communicationRating: clientRatingData.communicationRating,
           reliabilityRating: clientRatingData.reliabilityRating,
@@ -702,9 +701,9 @@ export default function ProviderJobDetailPage() {
             {/* Comentario */}
             <div>
               <Label htmlFor="client-rating-comment">Comentario</Label>
-              <textarea
+              <Textarea
                 id="client-rating-comment"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
+                className="mt-1"
                 rows={4}
                 placeholder="Comparte tu experiencia trabajando con este cliente..."
                 value={clientRatingData.comment}

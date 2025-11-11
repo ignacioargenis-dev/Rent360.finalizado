@@ -339,7 +339,12 @@ class WebSocketClient {
     this.eventListeners.get(event)!.push(callback);
 
     // Si ya está conectado, intentar bind inmediato para Pusher
-    if (this._usingPusher && this.pusherChannel && this._isConnected) {
+    if (
+      this._usingPusher &&
+      this.pusherChannel &&
+      this._isConnected &&
+      typeof this.pusherChannel.bind === 'function'
+    ) {
       try {
         this.pusherChannel.bind(event, callback);
       } catch (error) {
@@ -364,7 +369,11 @@ class WebSocketClient {
     }
 
     // Unbind de Pusher si está conectado
-    if (this._usingPusher && this.pusherChannel) {
+    if (
+      this._usingPusher &&
+      this.pusherChannel &&
+      typeof this.pusherChannel.unbind === 'function'
+    ) {
       try {
         if (callback) {
           this.pusherChannel.unbind(event, callback);
