@@ -92,131 +92,6 @@ export default function TenantRatingsPage() {
     anonymous: false,
   });
 
-  // Mock ratings data for tenant
-  const mockRatings: Rating[] = [
-    {
-      id: '1',
-      reviewerName: 'Carlos Martínez',
-      reviewerType: 'owner',
-      propertyTitle: 'Apartamento Las Condes',
-      overallRating: 5,
-      punctuality: 5,
-      professionalism: 5,
-      communication: 5,
-      reliability: 5,
-      comment:
-        'Excelente inquilino, siempre paga a tiempo y mantiene la propiedad en perfectas condiciones.',
-      verified: true,
-      anonymous: false,
-      date: '2024-01-15T10:00:00Z',
-      contextType: 'MAINTENANCE',
-      contextId: 'maint1',
-    },
-    {
-      id: '2',
-      reviewerName: 'Ana García',
-      reviewerType: 'broker',
-      propertyTitle: 'Casa Providencia',
-      overallRating: 4,
-      punctuality: 5,
-      professionalism: 4,
-      communication: 4,
-      reliability: 4,
-      comment: 'Muy buena experiencia, comunicación clara y respetuosa.',
-      verified: true,
-      anonymous: false,
-      date: '2024-01-10T14:30:00Z',
-      contextType: 'SERVICE',
-      contextId: 'serv1',
-    },
-    {
-      id: '3',
-      reviewerName: 'Servicio Técnico Ltda.',
-      reviewerType: 'maintenance',
-      propertyTitle: 'Oficina Centro',
-      overallRating: 5,
-      punctuality: 5,
-      professionalism: 5,
-      communication: 5,
-      quality: 5,
-      reliability: 5,
-      comment:
-        'Cliente muy colaborativo, facilitó el acceso y permitió realizar el trabajo eficientemente.',
-      verified: true,
-      anonymous: false,
-      date: '2024-01-20T09:15:00Z',
-      contextType: 'MAINTENANCE',
-      contextId: 'maint2',
-    },
-    {
-      id: '4',
-      reviewerName: 'Electricistas Profesionales',
-      reviewerType: 'provider',
-      propertyTitle: 'Local Comercial',
-      overallRating: 5,
-      punctuality: 5,
-      professionalism: 5,
-      communication: 5,
-      quality: 5,
-      reliability: 5,
-      verified: false,
-      anonymous: true,
-      date: '2024-01-18T16:45:00Z',
-      contextType: 'SERVICE',
-      contextId: 'serv2',
-    },
-  ];
-
-  // Mock data for ratings that tenant can give
-  const mockRatingsToGive: RatingToGive[] = [
-    {
-      id: 'rtg1',
-      recipientType: 'owner',
-      recipientName: 'María López',
-      recipientId: 'owner1',
-      propertyTitle: 'Departamento Santiago Centro',
-      contractId: 'contract1',
-      canRate: true,
-    },
-    {
-      id: 'rtg2',
-      recipientType: 'broker',
-      recipientName: 'Juan Pérez',
-      recipientId: 'broker1',
-      propertyTitle: 'Casa Vitacura',
-      contractId: 'contract2',
-      canRate: true,
-    },
-    {
-      id: 'rtg3',
-      recipientType: 'maintenance',
-      recipientName: 'Reparaciones Express',
-      recipientId: 'maintenance1',
-      propertyTitle: 'Oficina Las Condes',
-      maintenanceId: 'maintenance1',
-      canRate: true,
-    },
-    {
-      id: 'rtg4',
-      recipientType: 'provider',
-      recipientName: 'Fontaneros Profesionales',
-      recipientId: 'provider1',
-      propertyTitle: 'Casa Familiar',
-      serviceRequestId: 'service1',
-      canRate: true,
-    },
-    {
-      id: 'rtg5',
-      recipientType: 'owner',
-      recipientName: 'Roberto Silva',
-      recipientId: 'owner2',
-      propertyTitle: 'Estudio Moderno',
-      contractId: 'contract3',
-      canRate: false,
-      reason: 'Contrato aún activo - calificación disponible al finalizar',
-    },
-  ];
-
   useEffect(() => {
     loadPageData();
   }, []);
@@ -263,8 +138,8 @@ export default function TenantRatingsPage() {
         contextId: rating.contextId,
       }));
 
-      // Use real data or fallback to mock data
-      setRatings(transformedRatings.length > 0 ? transformedRatings : mockRatings);
+      // Use only real data from database
+      setRatings(transformedRatings);
 
       // Fetch ratings that can be given (from contracts, maintenance, services)
       const ratingsToGive: RatingToGive[] = [];
@@ -335,16 +210,16 @@ export default function TenantRatingsPage() {
         logger.error('Error fetching services for ratings:', error);
       }
 
-      // Use real data or fallback to mock data
-      setRatingsToGive(ratingsToGive.length > 0 ? ratingsToGive : mockRatingsToGive);
+      // Use only real data from database
+      setRatingsToGive(ratingsToGive);
     } catch (error) {
       logger.error('Error loading ratings data:', {
         error: error instanceof Error ? error.message : String(error),
       });
 
-      // En caso de error, mostrar datos mock
-      setRatings(mockRatings);
-      setRatingsToGive(mockRatingsToGive);
+      // En caso de error, mostrar arrays vacíos
+      setRatings([]);
+      setRatingsToGive([]);
     } finally {
       setLoading(false);
     }
