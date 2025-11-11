@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { RatingContextType } from '@/types/index';
 
 const createRatingSchema = z.object({
+  fromUserId: z.string().optional(), // Usuario que califica (opcional, por defecto el autenticado)
   toUserId: z.string().min(1, 'ID del usuario a calificar requerido'),
   contextType: z.enum(['CONTRACT', 'SERVICE', 'MAINTENANCE', 'PROPERTY_VISIT', 'GENERAL', 'OTHER']),
   contextId: z.string().min(1, 'ID del contexto requerido'),
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Crear la calificación
     const ratingData: any = {
-      fromUserId: user.id,
+      fromUserId: validatedData.fromUserId || user.id,
       toUserId: validatedData.toUserId,
       contextType: validatedData.contextType,
       contextId: validatedData.contextId,

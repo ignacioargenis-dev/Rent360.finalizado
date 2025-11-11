@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -17,6 +16,14 @@ import {
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   ArrowLeft,
   CheckCircle,
@@ -31,6 +38,7 @@ import {
   Play,
   Pause,
   Square,
+  Star,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
@@ -49,6 +57,7 @@ interface Job {
   clientName: string;
   clientEmail: string;
   clientPhone?: string;
+  clientId?: string; // ID del usuario cliente
   notes?: string;
   images?: string[];
 }
@@ -68,6 +77,14 @@ export default function ProviderJobDetailPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [showClientRatingModal, setShowClientRatingModal] = useState(false);
+  const [clientRatingData, setClientRatingData] = useState({
+    overallRating: 5,
+    communicationRating: 5,
+    reliabilityRating: 5,
+    professionalismRating: 5,
+    comment: '',
+  });
 
   useEffect(() => {
     loadJob();
@@ -206,6 +223,79 @@ export default function ProviderJobDetailPage() {
     setProgress(100);
     // Guardar automáticamente después de cambiar el estado
     setTimeout(() => saveChangesSilently(), 100);
+  };
+
+  const handleClientRating = async () => {
+    if (!job || !user) {
+      setErrorMessage('Información del trabajo o usuario no disponible');
+      return;
+    }
+
+    if (!clientRatingData.comment.trim()) {
+      setErrorMessage('Por favor escribe un comentario para la calificación');
+      return;
+    }
+
+    setUpdating(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          contextType: 'maintenance',
+          contextId: jobId,
+          fromUserId: user.id, // Provider calificando
+          toUserId: job.clientId || '', // Cliente siendo calificado
+          overallRating: clientRatingData.overallRating,
+          communicationRating: clientRatingData.communicationRating,
+          reliabilityRating: clientRatingData.reliabilityRating,
+          professionalismRating: clientRatingData.professionalismRating,
+          comment: clientRatingData.comment,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al enviar la calificación');
+      }
+
+      logger.info('Calificación del cliente enviada exitosamente:', {
+        jobId,
+        fromUserId: user.id,
+        toUserId: job.clientId,
+        overallRating: clientRatingData.overallRating,
+      });
+
+      setSuccessMessage(
+        '¡Gracias por calificar a tu cliente! Tu feedback ayuda a mejorar la plataforma.'
+      );
+      setShowClientRatingModal(false);
+
+      // Resetear el formulario
+      setClientRatingData({
+        overallRating: 5,
+        communicationRating: 5,
+        reliabilityRating: 5,
+        professionalismRating: 5,
+        comment: '',
+      });
+
+      // Limpiar mensaje después de 5 segundos
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (error) {
+      logger.error('Error enviando calificación del cliente:', { error, jobId });
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Error inesperado al enviar la calificación'
+      );
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -481,6 +571,19 @@ export default function ProviderJobDetailPage() {
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Contactar Cliente
                 </Button>
+
+                {/* Botón para calificar cliente (solo cuando trabajo completado) */}
+                {job.status === 'COMPLETED' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    onClick={() => setShowClientRatingModal(true)}
+                  >
+                    <Star className="w-4 h-4 mr-2" />
+                    Calificar Cliente
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -503,6 +606,144 @@ export default function ProviderJobDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Calificación del Cliente */}
+      <Dialog open={showClientRatingModal} onOpenChange={setShowClientRatingModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-500" />
+              Calificar Cliente
+            </DialogTitle>
+            <DialogDescription>
+              Tu opinión sobre {job?.clientName} nos ayuda a mejorar la calidad de nuestros
+              servicios. ¿Cómo calificarías la experiencia trabajando con este cliente?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Calificación General */}
+            <div>
+              <Label>Calificación General</Label>
+              <div className="flex items-center gap-2 mt-2">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setClientRatingData(prev => ({ ...prev, overallRating: star }))}
+                    className="text-2xl focus:outline-none hover:scale-110 transition-transform"
+                  >
+                    {star <= clientRatingData.overallRating ? '⭐' : '☆'}
+                  </button>
+                ))}
+                <span className="ml-2 text-sm text-gray-600">
+                  {clientRatingData.overallRating} de 5 estrellas
+                </span>
+              </div>
+            </div>
+
+            {/* Comunicación */}
+            <div>
+              <Label>Comunicación</Label>
+              <div className="flex items-center gap-2 mt-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() =>
+                      setClientRatingData(prev => ({ ...prev, communicationRating: star }))
+                    }
+                    className="text-xl focus:outline-none hover:scale-110 transition-transform"
+                  >
+                    {star <= clientRatingData.communicationRating ? '⭐' : '☆'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Confiabilidad */}
+            <div>
+              <Label>Confiabilidad (pagos, puntualidad)</Label>
+              <div className="flex items-center gap-2 mt-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() =>
+                      setClientRatingData(prev => ({ ...prev, reliabilityRating: star }))
+                    }
+                    className="text-xl focus:outline-none hover:scale-110 transition-transform"
+                  >
+                    {star <= clientRatingData.reliabilityRating ? '⭐' : '☆'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Profesionalismo */}
+            <div>
+              <Label>Profesionalismo</Label>
+              <div className="flex items-center gap-2 mt-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() =>
+                      setClientRatingData(prev => ({ ...prev, professionalismRating: star }))
+                    }
+                    className="text-xl focus:outline-none hover:scale-110 transition-transform"
+                  >
+                    {star <= clientRatingData.professionalismRating ? '⭐' : '☆'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Comentario */}
+            <div>
+              <Label htmlFor="client-rating-comment">Comentario</Label>
+              <textarea
+                id="client-rating-comment"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
+                rows={4}
+                placeholder="Comparte tu experiencia trabajando con este cliente..."
+                value={clientRatingData.comment}
+                onChange={e => setClientRatingData(prev => ({ ...prev, comment: e.target.value }))}
+              />
+            </div>
+
+            {/* Mensajes de error */}
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-800">{errorMessage}</p>
+              </div>
+            )}
+
+            {/* Botones */}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowClientRatingModal(false)}
+                disabled={updating}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleClientRating}
+                disabled={updating || !clientRatingData.comment.trim()}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white"
+              >
+                {updating ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <Star className="w-4 h-4 mr-2" />
+                )}
+                {updating ? 'Enviando...' : 'Enviar Calificación'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

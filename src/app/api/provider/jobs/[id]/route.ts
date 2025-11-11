@@ -78,6 +78,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       clientName: job.requester.name || 'Cliente',
       clientEmail: job.requester.email || '',
       clientPhone: job.requester.phone || '',
+      clientId: job.requester.id,
       notes: job.notes || '',
       images: job.images ? JSON.parse(job.images) : [],
     };
