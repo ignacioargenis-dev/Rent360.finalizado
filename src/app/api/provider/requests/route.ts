@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
           pending: 'PENDING',
           quoted: 'QUOTED',
           accepted: 'ACCEPTED',
+          active: 'ACTIVE',
+          in_progress: 'IN_PROGRESS',
           completed: 'COMPLETED',
         };
         whereClause.status = statusMap[status.toLowerCase()] || status.toUpperCase();
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
         description: req.description,
         serviceType: req.serviceType,
         urgency: 'medium',
-        status: req.status.toLowerCase(),
+        status: req.status.toUpperCase(),
         createdAt: req.createdAt.toISOString(),
         clientName: req.requester.name || 'Cliente',
         clientEmail: req.requester.email || '',
@@ -139,7 +141,7 @@ export async function GET(request: NextRequest) {
         description: req.description,
         serviceType: req.category,
         urgency: req.priority?.toLowerCase() || 'medium',
-        status: req.status.toLowerCase(),
+        status: req.status.toUpperCase(),
         createdAt: req.createdAt.toISOString(),
         clientName: req.requester.name || 'Cliente',
         clientEmail: req.requester.email || '',

@@ -89,10 +89,10 @@ export default function ProviderRequestsPage() {
     }
 
     const statusMapping: { [key: string]: string[] } = {
-      pending: ['OPEN'],
-      quoted: ['ASSIGNED'],
-      accepted: ['ASSIGNED'],
-      completed: ['CLOSED'],
+      pending: ['PENDING'],
+      quoted: ['QUOTED'],
+      accepted: ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'],
+      completed: ['COMPLETED'],
     };
 
     const mappedStatuses = statusMapping[tabValue] || [tabValue.toUpperCase()];
@@ -123,9 +123,10 @@ export default function ProviderRequestsPage() {
         if (apiData.success && apiData.requests) {
           // Log para debugging de estados
           console.log(
-            '📊 Estados de solicitudes:',
+            '📊 Estados de solicitudes del provider:',
             apiData.requests.map((req: any) => req.status)
           );
+          console.log('📊 Total de solicitudes del provider:', apiData.requests.length);
 
           // Transformar datos de la API al formato esperado
           const transformedRequests = apiData.requests.map((req: any) => ({
