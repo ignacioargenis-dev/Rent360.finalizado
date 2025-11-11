@@ -261,6 +261,10 @@ export default function ProviderJobDetailPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Si es un error de calificación duplicada, mostrar mensaje más claro
+        if (data.error && data.error.includes('Ya has calificado')) {
+          throw new Error('Ya has calificado a este cliente por este trabajo anteriormente.');
+        }
         throw new Error(data.error || 'Error al enviar la calificación');
       }
 
@@ -572,7 +576,7 @@ export default function ProviderJobDetailPage() {
                 </Button>
 
                 {/* Botón para calificar cliente (solo cuando trabajo completado) */}
-                {job.status === 'COMPLETED' && (
+                {(job.status === 'COMPLETED' || job.status === 'completed') && (
                   <Button
                     variant="outline"
                     size="sm"

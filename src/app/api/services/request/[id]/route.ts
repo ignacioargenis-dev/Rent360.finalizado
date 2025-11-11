@@ -106,6 +106,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       serviceType: serviceRequest.serviceType,
       status: serviceRequest.status.toLowerCase(),
       createdAt: serviceRequest.createdAt.toISOString(),
+
+      // Debug: agregar el status original para debugging
+      originalStatus: serviceRequest.status,
       scheduledDate: serviceRequest.scheduledDate?.toISOString(),
       preferredDate: serviceRequest.scheduledDate?.toISOString().split('T')[0],
       preferredTimeSlot: serviceRequest.notes?.includes('Horario preferido:')
@@ -131,6 +134,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       requestId,
       userId: user.id,
       role: user.role,
+      status: serviceRequest.status,
+      transformedStatus: transformedRequest.status,
     });
 
     return NextResponse.json({
