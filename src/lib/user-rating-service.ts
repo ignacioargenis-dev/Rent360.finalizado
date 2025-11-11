@@ -231,10 +231,13 @@ export class UserRatingService {
       isPublic?: boolean;
       limit?: number;
       offset?: number;
+      given?: boolean; // Nuevo filtro: si true, buscar calificaciones dadas por el usuario
     }
   ): Promise<{ ratings: UserRating[]; total: number }> {
     try {
-      const where: any = { toUserId: userId };
+      // Si given=true, buscar calificaciones dadas por el usuario (fromUserId)
+      // Si given=false o undefined, buscar calificaciones recibidas por el usuario (toUserId)
+      const where: any = filters?.given ? { fromUserId: userId } : { toUserId: userId };
 
       if (filters?.contextType) {
         where.contextType = filters.contextType;

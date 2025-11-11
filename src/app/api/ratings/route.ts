@@ -150,6 +150,7 @@ export async function GET(request: NextRequest) {
 
     // Código original para obtener calificaciones
     const userId = searchParams.get('userId'); // Para ver calificaciones de otro usuario
+    const given = searchParams.get('given') === 'true'; // Si es true, buscar calificaciones dadas por el usuario
     const contextType = searchParams.get('contextType') as RatingContextType;
     const isPublic = searchParams.get('isPublic') === 'true';
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -161,6 +162,7 @@ export async function GET(request: NextRequest) {
     const filters: any = {
       limit,
       offset,
+      given, // Nuevo filtro para buscar calificaciones dadas
     };
 
     if (contextType) {
