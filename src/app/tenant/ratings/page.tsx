@@ -116,10 +116,6 @@ export default function TenantRatingsPage() {
 
       const data = await response.json();
 
-      // Debug logging
-      console.log('📊 [TENANT RATINGS] API Response:', data);
-      console.log('📊 [TENANT RATINGS] Raw ratings data:', data.data?.ratings || data.ratings);
-
       // Transform API data to match our interface
       const ratingsData = data.data?.ratings || data.ratings || [];
 

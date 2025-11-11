@@ -239,13 +239,6 @@ export class UserRatingService {
       // Si given=false o undefined, buscar calificaciones recibidas por el usuario (toUserId)
       const where: any = filters?.given ? { fromUserId: userId } : { toUserId: userId };
 
-      console.log('🔍 [USER RATING SERVICE] getUserRatings called', {
-        userId,
-        filters,
-        where,
-        searchType: filters?.given ? 'given' : 'received',
-      });
-
       if (filters?.contextType) {
         where.contextType = filters.contextType;
       }
@@ -274,20 +267,6 @@ export class UserRatingService {
         }),
         db.userRating.count({ where }),
       ]);
-
-      console.log('✅ [USER RATING SERVICE] getUserRatings results', {
-        userId,
-        total,
-        ratingsCount: ratings.length,
-        ratingsSample: ratings.slice(0, 2).map(r => ({
-          id: r.id,
-          fromUserId: r.fromUserId,
-          toUserId: r.toUserId,
-          contextType: r.contextType,
-          contextId: r.contextId,
-          fromUserName: r.fromUser?.name,
-        })),
-      });
 
       return { ratings, total };
     } catch (error) {
