@@ -249,7 +249,7 @@ export default function ProviderJobDetailPage() {
         body: JSON.stringify({
           contextType: 'MAINTENANCE',
           contextId: jobId,
-          toUserId: job.requesterId, // Cliente siendo calificado
+          toUserId: job.clientId, // Cliente siendo calificado
           overallRating: clientRatingData.overallRating,
           communicationRating: clientRatingData.communicationRating,
           reliabilityRating: clientRatingData.reliabilityRating,
