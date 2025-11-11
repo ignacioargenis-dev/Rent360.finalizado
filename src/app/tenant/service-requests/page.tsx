@@ -103,7 +103,7 @@ export default function TenantServiceRequestsPage() {
         // Log para debugging de estados
         console.log(
           '📊 Estados de solicitudes del inquilino:',
-          transformedRequests.map(req => req.status)
+          transformedRequests.map((req: ServiceRequest) => req.status)
         );
         console.log('📊 Total de solicitudes:', transformedRequests.length);
 
