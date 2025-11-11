@@ -107,6 +107,13 @@ export default function TenantServiceRequestsPage() {
         );
         console.log('📊 Total de solicitudes:', transformedRequests.length);
 
+        // Log detallado de cada solicitud para debugging
+        transformedRequests.forEach((req, index) => {
+          console.log(
+            `📋 Solicitud ${index + 1}: ID=${req.id}, Status=${req.status}, Title=${req.title}`
+          );
+        });
+
         setRequests(transformedRequests);
       } else {
         setRequests([]);
@@ -128,7 +135,9 @@ export default function TenantServiceRequestsPage() {
       cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800', icon: XCircle },
     };
 
-    const statusConfig = config[status as keyof typeof config] || config.pending;
+    // Convertir status a minúsculas para buscar en el config
+    const statusKey = status?.toLowerCase() as keyof typeof config;
+    const statusConfig = config[statusKey] || config.pending;
     const Icon = statusConfig.icon;
 
     return (

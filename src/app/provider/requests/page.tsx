@@ -128,6 +128,13 @@ export default function ProviderRequestsPage() {
           );
           console.log('📊 Total de solicitudes del provider:', apiData.requests.length);
 
+          // Log detallado de cada solicitud para debugging
+          apiData.requests.forEach((req: any, index: number) => {
+            console.log(
+              `📋 Solicitud ${index + 1}: ID=${req.id}, Status=${req.status}, Title=${req.title}`
+            );
+          });
+
           // Transformar datos de la API al formato esperado
           const transformedRequests = apiData.requests.map((req: any) => ({
             id: req.id,
@@ -359,7 +366,10 @@ export default function ProviderRequestsPage() {
       completed: { label: 'Completado', color: 'bg-purple-100 text-purple-800' },
       rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-800' },
     };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+
+    // Convertir status a minúsculas para buscar en el config
+    const statusKey = status?.toLowerCase() as keyof typeof statusConfig;
+    const config = statusConfig[statusKey] || statusConfig.pending;
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
