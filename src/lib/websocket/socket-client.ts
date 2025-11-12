@@ -169,12 +169,28 @@ class WebSocketClient {
         this.emitEvent('new-message', data);
       });
 
+      // Forward Pusher events to socket-client listeners
+      pusherInstance.on('connect', () => {
+        console.log('🔌 [SOCKET-CLIENT] Pusher connected, forwarding to listeners...');
+        this.emitEvent('connect');
+      });
+
+      pusherInstance.on('disconnect', () => {
+        console.log('🔌 [SOCKET-CLIENT] Pusher disconnected, forwarding to listeners...');
+        this.emitEvent('disconnect');
+      });
+
       pusherInstance.on('notification', (data: any) => {
         console.log('🚨🚨🚨 [SOCKET-CLIENT] PUSHER NOTIFICATION RECEIVED!');
         console.log('🚨 [SOCKET-CLIENT] Notification data:', JSON.stringify(data, null, 2));
         console.log('🚨 [SOCKET-CLIENT] Emitting notification event to listeners...');
         this.emitEvent('notification', data);
         console.log('🚨 [SOCKET-CLIENT] Notification event emitted successfully');
+      });
+
+      pusherInstance.on('new-message', (data: any) => {
+        console.log('💬 [SOCKET-CLIENT] New message received, forwarding...');
+        this.emitEvent('new-message', data);
       });
 
       console.log('🚨 [SOCKET-CLIENT] Event forwarding setup complete, NOW calling connect()...');
