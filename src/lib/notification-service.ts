@@ -101,7 +101,92 @@ export class NotificationService {
       timestamp: new Date().toISOString(),
     });
 
-    // 🔍 Verificar configuraciones de notificaciones del usuario (solo logging, no bloqueo)
+    // 🚫 Verificar configuraciones GLOBALES del administrador (pueden BLOQUEAR notificaciones)
+    let shouldSendNotification = true;
+    try {
+      console.log('🔍 [NOTIFICATION SERVICE] Checking global admin settings...');
+
+      // Consultar configuraciones globales que pueden bloquear notificaciones
+      const globalSettings = await db.systemSetting.findMany({
+        where: {
+          key: {
+            in: [
+              'pushNotifications', // Canal push
+              'emailNotifications', // Canal email
+              'smsNotifications', // Canal SMS
+              'inAppNotifications', // Canal in-app
+              'paymentReminders', // Tipo: recordatorios de pago
+              'maintenanceAlerts', // Tipo: alertas de mantenimiento
+              'supportAlerts', // Tipo: alertas de soporte
+              'commissionAlerts', // Tipo: alertas de comisiones
+            ],
+          },
+          isActive: true,
+        },
+        select: { key: true, value: true },
+      });
+
+      console.log('🔍 [NOTIFICATION SERVICE] Global admin settings retrieved:', {
+        count: globalSettings.length,
+        settings: globalSettings.reduce(
+          (acc, setting) => {
+            acc[setting.key] = setting.value === 'true' || setting.value === '1';
+            return acc;
+          },
+          {} as Record<string, boolean>
+        ),
+      });
+
+      // 🚫 Verificar si el CANAL está deshabilitado globalmente
+      if (params.type === 'NEW_MESSAGE' || params.type === 'SERVICE_REQUEST_RESPONSE') {
+        // Para notificaciones que usan push por defecto
+        if (globalSettings.find(s => s.key === 'pushNotifications')?.value === 'false') {
+          console.log('🚫 [NOTIFICATION SERVICE] Push notifications DISABLED globally by admin');
+          shouldSendNotification = false;
+        }
+
+        // Para notificaciones que usan email
+        if (
+          params.type === 'SERVICE_REQUEST_RESPONSE' &&
+          globalSettings.find(s => s.key === 'emailNotifications')?.value === 'false'
+        ) {
+          console.log('🚫 [NOTIFICATION SERVICE] Email notifications DISABLED globally by admin');
+          shouldSendNotification = false;
+        }
+      }
+
+      // 🚫 Verificar si el TIPO específico está deshabilitado globalmente
+      if (params.type === 'SERVICE_REQUEST_RESPONSE' && params.title?.includes('Cotización')) {
+        // No hay configuración específica para cotizaciones, usar emailNotifications
+        if (globalSettings.find(s => s.key === 'emailNotifications')?.value === 'false') {
+          console.log('🚫 [NOTIFICATION SERVICE] Quote notifications DISABLED globally by admin');
+          shouldSendNotification = false;
+        }
+      }
+
+      if (params.title?.includes('completado') || params.title?.includes('Completado')) {
+        // No hay configuración específica para trabajos completados, usar pushNotifications
+        if (globalSettings.find(s => s.key === 'pushNotifications')?.value === 'false') {
+          console.log(
+            '🚫 [NOTIFICATION SERVICE] Job completion notifications DISABLED globally by admin'
+          );
+          shouldSendNotification = false;
+        }
+      }
+    } catch (globalError) {
+      console.log('⚠️ [NOTIFICATION SERVICE] Error fetching global admin settings:', globalError);
+      // Si hay error consultando configuraciones globales, asumir que están habilitadas
+    }
+
+    // 🚫 Si las notificaciones están deshabilitadas globalmente, retornar sin crear
+    if (!shouldSendNotification) {
+      console.log(
+        '🚫 [NOTIFICATION SERVICE] Notification blocked by GLOBAL admin settings - returning early'
+      );
+      return null;
+    }
+
+    // 🔍 Verificar configuraciones INDIVIDUALES del usuario (solo logging, no bloqueo)
     try {
       const user = await db.user.findUnique({
         where: { id: params.userId },
@@ -127,10 +212,10 @@ export class NotificationService {
             ratingUpdates: userSettings.notifications?.ratingUpdates,
           });
 
-          // ⚠️ Solo logging - NO BLOQUEAR notificaciones por configuración de usuario
-          // Las configuraciones se aplicarán en el cliente (componente UI)
+          // ⚠️ Solo logging - NO BLOQUEAR notificaciones por configuración individual
+          // Las configuraciones individuales se aplicarán en el cliente (componente UI)
           console.log(
-            '📊 [NOTIFICATION SERVICE] User settings logged - notification will be sent regardless of preferences'
+            '📊 [NOTIFICATION SERVICE] User settings logged - notification will be sent (global settings allow it)'
           );
         } catch (parseError) {
           console.log('⚠️ [NOTIFICATION SERVICE] Error parsing user bio settings:', parseError);
@@ -144,7 +229,7 @@ export class NotificationService {
       console.log('⚠️ [NOTIFICATION SERVICE] Error fetching user settings:', userError);
     }
 
-    // ✅ Siempre enviar notificaciones - las preferencias se manejan en el cliente
+    // ✅ Enviar notificaciones si pasan las validaciones globales
 
     try {
       const notification = await db.notification.create({
