@@ -239,6 +239,53 @@ export class NotificationService {
             '✅ [NOTIFICATION SERVICE] Notificación de MENSAJE NUEVO enviada exitosamente'
           );
         }
+
+        // Enviar por Pusher (servicio externo) - usando el mismo canal que el cliente
+        if (pusherInstance) {
+          try {
+            const channelName = 'private-user'; // Canal correcto que usa el cliente
+            const eventData = {
+              id: notification.id,
+              title: params.title,
+              message: params.message,
+              link: params.link,
+              priority: params.priority,
+              timestamp: notification.createdAt,
+              type: params.type,
+              userId: params.userId, // Agregar userId para que el cliente pueda filtrar
+            };
+
+            await pusherInstance.trigger(channelName, 'notification', eventData);
+            console.log('✅ [NOTIFICATION SERVICE] Enviado por Pusher:', {
+              channel: channelName,
+              event: 'notification',
+              userId: params.userId,
+              dataKeys: Object.keys(eventData),
+            });
+
+            // LOG ESPECÍFICO PARA MENSAJES NUEVOS
+            if (params.type === NotificationType.NEW_MESSAGE) {
+              console.log(
+                '✅ [NOTIFICATION SERVICE] Notificación de MENSAJE NUEVO enviada por Pusher exitosamente'
+              );
+            }
+          } catch (pusherError) {
+            console.log(
+              '⚠️ [NOTIFICATION SERVICE] Error enviando por Pusher:',
+              pusherError instanceof Error ? pusherError.message : String(pusherError)
+            );
+
+            // LOG ESPECÍFICO PARA ERRORES EN MENSAJES
+            if (params.type === NotificationType.NEW_MESSAGE) {
+              console.log(
+                '⚠️ [NOTIFICATION SERVICE] Error enviando notificación de MENSAJE NUEVO por Pusher:',
+                pusherError instanceof Error ? pusherError.message : String(pusherError)
+              );
+            }
+          }
+        } else {
+          console.log('⚠️ [NOTIFICATION SERVICE] Pusher no disponible, solo Socket.IO');
+        }
       } catch (wsError) {
         console.error('❌ [NOTIFICATION SERVICE] Failed to send WebSocket notification:', {
           error: wsError instanceof Error ? wsError.message : String(wsError),
