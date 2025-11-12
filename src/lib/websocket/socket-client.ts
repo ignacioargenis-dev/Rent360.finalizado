@@ -532,42 +532,81 @@ export function useWebSocket() {
     const handleDisconnect = () => setIsConnected(false);
 
     const handleNotification = (data: any) => {
-      console.log('🚨🚨🚨 [WEBSOCKET CLIENT] Notification received:', data);
-      console.log('🚨 [WEBSOCKET CLIENT] Notification type:', data.type);
-      console.log(
-        '🚨 [WEBSOCKET CLIENT] Current notifications before adding:',
-        notifications.length
-      );
+      try {
+        console.log('🚨🚨🚨 [WEBSOCKET CLIENT] Notification received:', data);
+        console.log('🚨 [WEBSOCKET CLIENT] Notification type:', data.type);
 
-      setNotifications(prev => {
-        const newNotifications = [data, ...prev];
+        // Validar que los datos sean válidos
+        if (!data || typeof data !== 'object') {
+          console.error('🚨 [WEBSOCKET CLIENT] Invalid notification data:', data);
+          return;
+        }
+
+        // Validar campos requeridos
+        if (!data.id || !data.title || !data.message) {
+          console.error('🚨 [WEBSOCKET CLIENT] Notification missing required fields:', data);
+          return;
+        }
+
         console.log(
-          '🚨 [WEBSOCKET CLIENT] New notifications array length:',
-          newNotifications.length
+          '🚨 [WEBSOCKET CLIENT] Current notifications before adding:',
+          notifications.length
         );
-        return newNotifications;
-      });
 
-      // Incrementar contador de mensajes no leídos si es una notificación de mensaje nuevo
-      if (data.type === 'NEW_MESSAGE' || data.type === 'new-message') {
-        console.log('📨 [WEBSOCKET CLIENT] Incrementing unread messages count');
-        setUnreadMessagesCount(prev => prev + 1);
-      }
+        // Usar callback seguro para actualizar estado
+        setNotifications(prev => {
+          try {
+            // Verificar que prev sea un array válido
+            const currentNotifications = Array.isArray(prev) ? prev : [];
+            const newNotifications = [data, ...currentNotifications];
+            console.log(
+              '🚨 [WEBSOCKET CLIENT] New notifications array length:',
+              newNotifications.length
+            );
+            return newNotifications;
+          } catch (stateError) {
+            console.error('🚨 [WEBSOCKET CLIENT] Error updating notifications state:', stateError);
+            return prev; // Retornar estado anterior si hay error
+          }
+        });
 
-      // También incrementar para notificaciones de cotización
-      if (data.type === 'QUOTE_ACCEPTED' || data.type === 'QUOTE_REJECTED') {
-        console.log(
-          '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for quote notification'
-        );
-        setUnreadMessagesCount(prev => prev + 1);
-      }
+        // Incrementar contador de mensajes no leídos de forma segura
+        try {
+          if (data.type === 'NEW_MESSAGE' || data.type === 'new-message') {
+            console.log('📨 [WEBSOCKET CLIENT] Incrementing unread messages count');
+            setUnreadMessagesCount(prev => {
+              const newCount = typeof prev === 'number' ? prev + 1 : 1;
+              return newCount;
+            });
+          }
 
-      // Incrementar para cualquier notificación del sistema
-      if (data.type && data.type !== 'NEW_MESSAGE' && data.type !== 'new-message') {
-        console.log(
-          '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for system notification'
-        );
-        setUnreadMessagesCount(prev => prev + 1);
+          // También incrementar para notificaciones de cotización
+          if (data.type === 'QUOTE_ACCEPTED' || data.type === 'QUOTE_REJECTED') {
+            console.log(
+              '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for quote notification'
+            );
+            setUnreadMessagesCount(prev => {
+              const newCount = typeof prev === 'number' ? prev + 1 : 1;
+              return newCount;
+            });
+          }
+
+          // Incrementar para cualquier notificación del sistema
+          if (data.type && data.type !== 'NEW_MESSAGE' && data.type !== 'new-message') {
+            console.log(
+              '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for system notification'
+            );
+            setUnreadMessagesCount(prev => {
+              const newCount = typeof prev === 'number' ? prev + 1 : 1;
+              return newCount;
+            });
+          }
+        } catch (countError) {
+          console.error('🚨 [WEBSOCKET CLIENT] Error updating unread count:', countError);
+        }
+      } catch (error) {
+        console.error('🚨🚨🚨 [WEBSOCKET CLIENT] CRITICAL ERROR in handleNotification:', error);
+        console.error('🚨 [WEBSOCKET CLIENT] Notification data that caused error:', data);
       }
     };
 
