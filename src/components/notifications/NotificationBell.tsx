@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { websocketClient } from '@/lib/websocket/socket-client';
 
 interface Notification {
   id: string;
@@ -46,15 +47,61 @@ export function NotificationBell() {
     return () => clearInterval(interval);
   }, []);
 
+  // Escuchar notificaciones en tiempo real
+  useEffect(() => {
+    const handleNotification = (data: any) => {
+      console.log('🔔 [NOTIFICATION BELL] Received real-time notification:', data);
+
+      // Agregar la nueva notificación al estado local
+      const newNotification: Notification = {
+        id: data.id,
+        type: data.type,
+        title: data.title,
+        message: data.message,
+        link: data.link,
+        isRead: false, // Las notificaciones en tiempo real siempre son no leídas
+        createdAt: data.timestamp,
+        priority: data.priority || 'medium',
+      };
+
+      setNotifications(prev => [newNotification, ...prev]);
+
+      // Mostrar toast de notificación
+      toast.success(data.title, {
+        description: data.message,
+        duration: 5000,
+      });
+    };
+
+    // Suscribirse a eventos de notificación
+    websocketClient.on('notification', handleNotification);
+
+    return () => {
+      websocketClient.off('notification', handleNotification);
+    };
+  }, []);
+
   // Marcar como leída
   const markAsRead = async (notificationId: string) => {
     try {
+      // Actualizar estado local inmediatamente para mejor UX
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, isRead: true } : n))
+      );
+
+      // Enviar al servidor en background
       await fetch(`/api/notifications/${notificationId}`, {
         method: 'PATCH',
       });
+
+      // Recargar para asegurar sincronización
       loadNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      // Revertir cambio si falló
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, isRead: false } : n))
+      );
     }
   };
 
@@ -62,6 +109,10 @@ export function NotificationBell() {
   const markAllAsRead = async () => {
     setLoading(true);
     try {
+      // Actualizar estado local inmediatamente para mejor UX
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+
+      // Enviar al servidor en background
       const res = await fetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,8 +123,14 @@ export function NotificationBell() {
       if (data.success) {
         toast.success(data.message);
         loadNotifications();
+      } else {
+        // Revertir si falló
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: false })));
+        toast.error('Error al marcar notificaciones');
       }
     } catch (error) {
+      // Revertir si falló
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: false })));
       toast.error('Error al marcar notificaciones');
     } finally {
       setLoading(false);
@@ -83,12 +140,20 @@ export function NotificationBell() {
   // Eliminar notificación
   const deleteNotification = async (notificationId: string) => {
     try {
+      // Actualizar estado local inmediatamente para mejor UX
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+      // Enviar al servidor en background
       await fetch(`/api/notifications/${notificationId}`, {
         method: 'DELETE',
       });
+
+      // Recargar para asegurar sincronización
       loadNotifications();
     } catch (error) {
       console.error('Error deleting notification:', error);
+      // Recargar para restaurar el estado si falló
+      loadNotifications();
     }
   };
 
@@ -101,7 +166,7 @@ export function NotificationBell() {
     setIsOpen(false);
   };
 
-  const unreadCount = notifications.length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
