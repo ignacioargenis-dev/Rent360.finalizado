@@ -39,6 +39,9 @@ interface NotificationItem {
 export default function RealTimeNotifications() {
   console.log('🎯 [REAL TIME NOTIFICATIONS] FUNCTION CALLED - COMPONENT MOUNTING');
 
+  // Log inmediato para confirmar que el componente se ejecuta
+  console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT EXECUTING RIGHT NOW');
+
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);

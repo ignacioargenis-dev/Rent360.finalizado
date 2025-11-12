@@ -952,7 +952,21 @@ export default function UnifiedSidebar({
 
             // TEMPORARILY FORCE RENDERING FOR DEBUG
             console.log('🏠 [SIDEBAR] FORCE RENDERING RealTimeNotifications COMPONENT');
-            return <RealTimeNotifications />;
+            return (
+              <div>
+                <div
+                  style={{
+                    background: 'blue',
+                    color: 'white',
+                    padding: '5px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  RealTimeNotifications should render here
+                </div>
+                <RealTimeNotifications />
+              </div>
+            );
           })()}
         </div>
 
