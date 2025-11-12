@@ -108,6 +108,14 @@ export class UserRatingService {
    * Crear una nueva calificación
    */
   static async createRating(ratingData: UserRatingData): Promise<UserRating> {
+    console.log('🎯🎯🎯 [USER RATING SERVICE] createRating CALLED with data:', {
+      fromUserId: ratingData.fromUserId,
+      toUserId: ratingData.toUserId,
+      contextType: ratingData.contextType,
+      overallRating: ratingData.overallRating,
+      timestamp: new Date().toISOString(),
+    });
+
     try {
       // Validar que el usuario no se califique a sí mismo
       if (ratingData.fromUserId === ratingData.toUserId) {

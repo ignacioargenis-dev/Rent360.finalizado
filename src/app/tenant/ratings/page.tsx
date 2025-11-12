@@ -275,6 +275,8 @@ export default function TenantRatingsPage() {
       return;
     }
 
+    console.log('📝📝📝 [TENANT RATINGS] handleSubmitRating called for:', selectedRatingToGive);
+
     try {
       const response = await fetch('/api/ratings', {
         method: 'POST',

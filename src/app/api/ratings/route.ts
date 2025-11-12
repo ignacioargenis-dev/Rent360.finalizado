@@ -31,6 +31,8 @@ const createRatingSchema = z.object({
  * Crear una nueva calificación
  */
 export async function POST(request: NextRequest) {
+  console.log('🚀🚀🚀 [API RATINGS] POST request received at:', new Date().toISOString());
+
   try {
     const user = await requireAuth(request);
 
