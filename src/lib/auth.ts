@@ -232,7 +232,9 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
 
   // Configurar domain específico para DigitalOcean
   if (isDigitalOcean) {
-    cookieOptions.domain = '.rent360management-2yxgz.ondigitalocean.app';
+    // Usar el dominio correcto según la configuración CORS
+    // Si hay múltiples dominios, no establecer domain específico para evitar problemas
+    // cookieOptions.domain = '.rent360management-2yxgz.ondigitalocean.app';
   }
 
   response.cookies.set('auth-token', accessToken, {
