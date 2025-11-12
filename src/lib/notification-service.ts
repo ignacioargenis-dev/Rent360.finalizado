@@ -289,7 +289,7 @@ export class NotificationService {
         // Enviar por Pusher (servicio externo) - usando el mismo canal que el cliente
         if (pusherInstance) {
           try {
-            const channelName = 'private-user'; // Canal correcto que usa el cliente
+            const channelName = `private-user-${params.userId}`; // Canal específico por usuario
             const eventData = {
               id: notification.id,
               title: params.title,
@@ -298,7 +298,7 @@ export class NotificationService {
               priority: params.priority,
               timestamp: notification.createdAt,
               type: params.type,
-              userId: params.userId, // Agregar userId para que el cliente pueda filtrar
+              // Ya no necesitamos userId - el canal específico lo identifica
             };
 
             await pusherInstance.trigger(channelName, 'notification', eventData);

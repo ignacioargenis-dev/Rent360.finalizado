@@ -179,12 +179,19 @@ export class PusherWebSocketClient {
             this.pusher.connection.socket_id
           );
 
-          // AHORA suscribirse al canal privado (después de tener socket_id)
-          if (typeof window !== 'undefined') {
-            window.console.log('🔥🔥🔥 [PUSHER] About to subscribe to private-user channel');
+          // AHORA suscribirse al canal privado específico del usuario (después de tener socket_id)
+          if (!this.userId) {
+            console.error('🔥 [PUSHER DEBUG] ERROR: userId not set before subscribing to channel!');
+            resolve(false);
+            return;
           }
-          console.log('🔥 [PUSHER DEBUG] Subscribing to private-user channel...');
-          this.channel = this.pusher.subscribe('private-user');
+
+          const userChannelName = `private-user-${this.userId}`;
+          if (typeof window !== 'undefined') {
+            window.console.log(`🔥🔥🔥 [PUSHER] About to subscribe to ${userChannelName} channel`);
+          }
+          console.log(`🔥 [PUSHER DEBUG] Subscribing to ${userChannelName} channel...`);
+          this.channel = this.pusher.subscribe(userChannelName);
 
           if (typeof window !== 'undefined') {
             window.console.log('🔥 [PUSHER] Channel subscribed, registering callbacks...');
@@ -229,22 +236,11 @@ export class PusherWebSocketClient {
               '🔥 [PUSHER DEBUG] ============ NOTIFICATION CALLBACK EXECUTED ============'
             );
             console.log('🔥 [PUSHER DEBUG] notification event received:', data);
-            console.log('🔥 [PUSHER DEBUG] Current userId in Pusher client:', this.userId);
-            console.log('🔥 [PUSHER DEBUG] Notification userId:', data.userId);
+            console.log('🔥 [PUSHER DEBUG] Channel:', this.channel.name);
 
-            // Filtrar notificaciones solo para el usuario actual
-            if (data.userId === this.userId) {
-              console.log('🔥 [PUSHER DEBUG] notification is for current user, emitting');
-              this.emit('notification', data);
-            } else {
-              console.log('🔥 [PUSHER DEBUG] notification is for different user, ignoring');
-              console.log(
-                '🔥 [PUSHER DEBUG] Expected userId:',
-                this.userId,
-                'Received userId:',
-                data.userId
-              );
-            }
+            // Ya no necesitamos filtrar - el canal específico garantiza que solo llegan nuestras notificaciones
+            console.log('🔥 [PUSHER DEBUG] emitting notification (no filtering needed)');
+            this.emit('notification', data);
           });
         });
 

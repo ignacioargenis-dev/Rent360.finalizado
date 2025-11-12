@@ -180,10 +180,24 @@ export async function POST(request: NextRequest) {
       channelName: channel_name,
     });
 
-    // Verificar que sea un canal privado de usuario
-    if (!channel_name.startsWith('private-user')) {
-      logger.warn('❌ Invalid channel name for Pusher auth:', channel_name);
-      return NextResponse.json({ error: 'Invalid channel' }, { status: 403 });
+    // Verificar que sea un canal privado específico del usuario autenticado
+    if (!channel_name.startsWith('private-user-')) {
+      logger.warn(
+        '❌ Invalid channel name for Pusher auth (must be private-user-*):',
+        channel_name
+      );
+      return NextResponse.json({ error: 'Invalid channel format' }, { status: 403 });
+    }
+
+    // Verificar que el canal corresponda exactamente al usuario autenticado
+    const expectedChannel = `private-user-${user.id}`;
+    if (channel_name !== expectedChannel) {
+      logger.warn('❌ Channel name does not match authenticated user:', {
+        requestedChannel: channel_name,
+        expectedChannel: expectedChannel,
+        userId: user.id,
+      });
+      return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
     }
 
     logger.info('✅ Channel validation passed');
