@@ -13,6 +13,17 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 // import { ratingService, RatingType, type ProviderRating } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger-minimal';
 
+// Definir RatingType localmente ya que no podemos importarlo
+enum RatingType {
+  OVERALL = 'overall',
+  PUNCTUALITY = 'punctuality',
+  PROFESSIONALISM = 'professionalism',
+  COMMUNICATION = 'communication',
+  PROPERTY_KNOWLEDGE = 'property_knowledge',
+  CLEANLINESS = 'cleanliness',
+  QUALITY_OF_WORK = 'quality_of_work',
+}
+
 interface JobDetails {
   id: string;
   type: string;

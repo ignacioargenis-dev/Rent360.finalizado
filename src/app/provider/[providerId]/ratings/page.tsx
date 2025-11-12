@@ -579,7 +579,8 @@ export default function ProviderRatingsPage() {
                           </Avatar>
                           <div>
                             <div className="font-medium">
-                              Cliente {rating.clientId.substring(0, 8)}
+                              Cliente{' '}
+                              {rating.clientId ? rating.clientId.substring(0, 8) : 'Anónimo'}
                             </div>
                             <div className="text-sm text-gray-600">
                               {rating.createdAt
