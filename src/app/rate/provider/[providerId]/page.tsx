@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Star, CheckCircle, AlertCircle, ThumbsUp, MessageSquare } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { ratingService, RatingType, type ProviderRating } from '@/lib/ratings/rating-service';
+// import { ratingService, RatingType, type ProviderRating } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger-minimal';
 
 interface JobDetails {
@@ -133,18 +133,33 @@ export default function RateProviderPage() {
     try {
       setSubmitting(true);
 
-      const ratingData: Omit<ProviderRating, 'id' | 'createdAt'> = {
-        providerId,
-        providerType: job.providerType === 'SERVICE' ? 'PROVIDER' : job.providerType,
-        clientId: user.id,
-        jobId: job.id,
-        ratings,
-        comments: comments.trim(),
-        isAnonymous,
-        isVerified: true,
-      };
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          toUserId: providerId,
+          contextType: 'SERVICE',
+          contextId: job?.id || `job_${Date.now()}`,
+          overallRating: ratings.overall || ratings[RatingType.OVERALL],
+          punctuality: ratings.punctuality || ratings[RatingType.PUNCTUALITY],
+          professionalism: ratings.professionalism || ratings[RatingType.PROFESSIONALISM],
+          communication: ratings.communication || ratings[RatingType.COMMUNICATION],
+          quality: ratings.quality_of_work || ratings[RatingType.QUALITY_OF_WORK],
+          reliability: ratings.cleanliness || ratings[RatingType.CLEANLINESS],
+          comment: comments.trim(),
+          isAnonymous,
+        }),
+      });
 
-      const result = await ratingService.createRating(ratingData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Error al enviar la calificación');
+      }
+
+      const result = await response.json();
 
       logger.info('Rating enviado exitosamente:', {
         ratingId: result.id,
