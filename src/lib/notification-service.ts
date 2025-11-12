@@ -2,6 +2,9 @@ import { db } from './db';
 import { logger } from './logger';
 import { sendNotification } from './websocket/socket-server';
 
+// Log para confirmar que el archivo se carga
+console.log('🔥 [NOTIFICATION SERVICE] Module loaded at:', new Date().toISOString());
+
 /**
  * Servicio de Notificaciones en Tiempo Real
  * Gestiona la creación y envío de notificaciones a usuarios
@@ -58,10 +61,12 @@ export class NotificationService {
    * Crea una nueva notificación para un usuario
    */
   static async create(params: CreateNotificationParams): Promise<any> {
+    console.log('🚨🚨🚨 [NOTIFICATION SERVICE] CREATE METHOD CALLED 🚨🚨🚨');
     console.log('📨 [NOTIFICATION SERVICE] Creating notification:', {
       userId: params.userId,
       type: params.type,
       title: params.title,
+      hasMessage: !!params.message,
       timestamp: new Date().toISOString(),
     });
 

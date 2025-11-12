@@ -43,6 +43,7 @@ export default function RealTimeNotifications() {
   const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
   const { success } = useToast();
 
+  console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT RENDERED AT:', new Date().toISOString());
   console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Component render:', {
     isConnected,
     wsNotificationsLength: wsNotifications?.length,
