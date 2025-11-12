@@ -929,11 +929,30 @@ export default function UnifiedSidebar({
       <div className="flex-1 flex flex-col min-w-0">
         {/* Desktop Header */}
         <div className="hidden lg:flex bg-white border-b border-gray-200 px-6 py-3 justify-end items-center">
+          {/* Debug: Always visible for testing */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              background: 'red',
+              color: 'white',
+              padding: '5px',
+              fontSize: '12px',
+            }}
+          >
+            Debug: Desktop Header Visible
+          </div>
           {(() => {
             console.log('🏠 [SIDEBAR] showNotifications value:', showNotifications);
             console.log('🏠 [SIDEBAR] notificationCount value:', notificationCount);
             console.log('🏠 [SIDEBAR] user role:', user?.role);
-            return showNotifications && <RealTimeNotifications />;
+            console.log('🏠 [SIDEBAR] user id:', user?.id);
+            console.log('🏠 [SIDEBAR] user email:', user?.email);
+
+            // TEMPORARILY FORCE RENDERING FOR DEBUG
+            console.log('🏠 [SIDEBAR] FORCE RENDERING RealTimeNotifications COMPONENT');
+            return <RealTimeNotifications />;
           })()}
         </div>
 
