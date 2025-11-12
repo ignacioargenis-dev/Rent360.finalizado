@@ -274,7 +274,7 @@ export class NotificationService {
           message: params.message,
           link: params.link,
           priority: params.priority,
-          timestamp: notification.createdAt,
+          timestamp: new Date().toISOString(), // ✅ Timestamp consistente y serializable
         });
 
         console.log('✅ [NOTIFICATION SERVICE] WebSocket notification sent successfully');
@@ -296,7 +296,7 @@ export class NotificationService {
               message: params.message,
               link: params.link,
               priority: params.priority,
-              timestamp: notification.createdAt,
+              timestamp: new Date().toISOString(), // ✅ Timestamp consistente y serializable
               type: params.type,
               // Ya no necesitamos userId - el canal específico lo identifica
             };
