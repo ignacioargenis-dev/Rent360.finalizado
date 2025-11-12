@@ -244,7 +244,7 @@ export default function TenantServiceRequestsPage() {
                 <Clock className="h-8 w-8 text-yellow-600" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {requests.filter(r => r.status === 'pending').length}
+                    {requests.filter(r => r.status === 'PENDING').length}
                   </p>
                   <p className="text-sm text-gray-600">Pendientes</p>
                 </div>
@@ -258,7 +258,7 @@ export default function TenantServiceRequestsPage() {
                 <DollarSign className="h-8 w-8 text-blue-600" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {requests.filter(r => r.status === 'quoted').length}
+                    {requests.filter(r => r.status === 'QUOTED').length}
                   </p>
                   <p className="text-sm text-gray-600">Cotizados</p>
                 </div>
@@ -272,7 +272,10 @@ export default function TenantServiceRequestsPage() {
                 <CheckCircle className="h-8 w-8 text-green-600" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {requests.filter(r => r.status === 'accepted').length}
+                    {
+                      requests.filter(r => ['ACCEPTED', 'ACTIVE', 'IN_PROGRESS'].includes(r.status))
+                        .length
+                    }
                   </p>
                   <p className="text-sm text-gray-600">Aceptados</p>
                 </div>
@@ -286,7 +289,7 @@ export default function TenantServiceRequestsPage() {
                 <CheckCircle className="h-8 w-8 text-purple-600" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {requests.filter(r => r.status === 'completed').length}
+                    {requests.filter(r => r.status === 'COMPLETED').length}
                   </p>
                   <p className="text-sm text-gray-600">Completados</p>
                 </div>

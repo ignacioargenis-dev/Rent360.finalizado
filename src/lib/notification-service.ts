@@ -2,8 +2,39 @@ import { db } from './db';
 import { logger } from './logger';
 import { sendNotification } from './websocket/socket-server';
 
+// Importar Pusher dinámicamente para el servidor
+let Pusher: any = null;
+try {
+  // Solo cargar en el servidor, no en el cliente
+  if (typeof window === 'undefined') {
+    Pusher = require('pusher');
+  }
+} catch (error) {
+  logger.warn('Pusher SDK not available for server-side notifications');
+}
+
 // Log para confirmar que el archivo se carga
 console.log('🔥 [NOTIFICATION SERVICE] Module loaded at:', new Date().toISOString());
+
+// Instancia de Pusher para enviar notificaciones desde el servidor
+let pusherInstance: any = null;
+if (Pusher && typeof window === 'undefined') {
+  try {
+    pusherInstance = new Pusher({
+      appId: process.env.PUSHER_APP_ID || '0e2a9dcef32dd41bae83',
+      key: process.env.NEXT_PUBLIC_PUSHER_KEY || '0e2a9dcef32dd41bae83',
+      secret: process.env.PUSHER_SECRET,
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'us2',
+      useTLS: true,
+    });
+    console.log('✅ [NOTIFICATION SERVICE] Pusher server instance created');
+  } catch (error) {
+    console.log(
+      '⚠️ [NOTIFICATION SERVICE] Could not create Pusher server instance:',
+      error.message
+    );
+  }
+}
 
 /**
  * Servicio de Notificaciones en Tiempo Real
