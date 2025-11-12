@@ -218,6 +218,8 @@ export class PusherWebSocketClient {
           });
           this.channel.bind('notification', (data: any) => {
             console.log('🔥 [PUSHER DEBUG] notification event received:', data);
+            console.log('🔥 [PUSHER DEBUG] Current userId in Pusher client:', this.userId);
+            console.log('🔥 [PUSHER DEBUG] Notification userId:', data.userId);
 
             // Filtrar notificaciones solo para el usuario actual
             if (data.userId === this.userId) {
@@ -225,6 +227,12 @@ export class PusherWebSocketClient {
               this.emit('notification', data);
             } else {
               console.log('🔥 [PUSHER DEBUG] notification is for different user, ignoring');
+              console.log(
+                '🔥 [PUSHER DEBUG] Expected userId:',
+                this.userId,
+                'Received userId:',
+                data.userId
+              );
             }
           });
         });

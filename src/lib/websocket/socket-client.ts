@@ -170,8 +170,11 @@ class WebSocketClient {
       });
 
       pusherInstance.on('notification', (data: any) => {
-        console.log('🚨 [SOCKET-CLIENT] Received notification event');
+        console.log('🚨🚨🚨 [SOCKET-CLIENT] PUSHER NOTIFICATION RECEIVED!');
+        console.log('🚨 [SOCKET-CLIENT] Notification data:', JSON.stringify(data, null, 2));
+        console.log('🚨 [SOCKET-CLIENT] Emitting notification event to listeners...');
         this.emitEvent('notification', data);
+        console.log('🚨 [SOCKET-CLIENT] Notification event emitted successfully');
       });
 
       console.log('🚨 [SOCKET-CLIENT] Event forwarding setup complete, NOW calling connect()...');
@@ -541,6 +544,14 @@ export function useWebSocket() {
       if (data.type === 'QUOTE_ACCEPTED' || data.type === 'QUOTE_REJECTED') {
         console.log(
           '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for quote notification'
+        );
+        setUnreadMessagesCount(prev => prev + 1);
+      }
+
+      // Incrementar para cualquier notificación del sistema
+      if (data.type && data.type !== 'NEW_MESSAGE' && data.type !== 'new-message') {
+        console.log(
+          '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for system notification'
         );
         setUnreadMessagesCount(prev => prev + 1);
       }

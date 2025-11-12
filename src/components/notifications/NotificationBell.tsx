@@ -26,6 +26,8 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  console.log('🔔 [NOTIFICATION BELL] Component rendered/mounted');
+
   // Cargar notificaciones
   const loadNotifications = async () => {
     try {
@@ -49,34 +51,51 @@ export function NotificationBell() {
 
   // Escuchar notificaciones en tiempo real
   useEffect(() => {
+    console.log('🔔 [NOTIFICATION BELL] Setting up real-time notification listener');
+
     const handleNotification = (data: any) => {
       console.log('🔔 [NOTIFICATION BELL] Received real-time notification:', data);
+      console.log('🔔 [NOTIFICATION BELL] Current userId check needed');
 
-      // Agregar la nueva notificación al estado local
-      const newNotification: Notification = {
-        id: data.id,
-        type: data.type,
-        title: data.title,
-        message: data.message,
-        link: data.link,
-        isRead: false, // Las notificaciones en tiempo real siempre son no leídas
-        createdAt: data.timestamp,
-        priority: data.priority || 'medium',
-      };
+      // Verificar si la notificación es para el usuario actual
+      if (data.userId) {
+        console.log('🔔 [NOTIFICATION BELL] Processing notification for user:', data.userId);
 
-      setNotifications(prev => [newNotification, ...prev]);
+        // Agregar la nueva notificación al estado local
+        const newNotification: Notification = {
+          id: data.id,
+          type: data.type,
+          title: data.title,
+          message: data.message,
+          link: data.link,
+          isRead: false, // Las notificaciones en tiempo real siempre son no leídas
+          createdAt: data.timestamp,
+          priority: data.priority || 'medium',
+        };
 
-      // Mostrar toast de notificación
-      toast.success(data.title, {
-        description: data.message,
-        duration: 5000,
-      });
+        console.log('🔔 [NOTIFICATION BELL] Adding notification to state:', newNotification);
+        setNotifications(prev => [newNotification, ...prev]);
+
+        // Mostrar toast de notificación
+        console.log('🔔 [NOTIFICATION BELL] Showing toast notification');
+        toast.success(data.title, {
+          description: data.message,
+          duration: 5000,
+        });
+
+        console.log('🔔 [NOTIFICATION BELL] Notification processing completed');
+      } else {
+        console.log('🔔 [NOTIFICATION BELL] Notification missing userId, ignoring');
+      }
     };
 
     // Suscribirse a eventos de notificación
+    console.log('🔔 [NOTIFICATION BELL] Subscribing to websocket notification events');
     websocketClient.on('notification', handleNotification);
+    console.log('🔔 [NOTIFICATION BELL] Subscription completed');
 
     return () => {
+      console.log('🔔 [NOTIFICATION BELL] Unsubscribing from websocket notification events');
       websocketClient.off('notification', handleNotification);
     };
   }, []);
