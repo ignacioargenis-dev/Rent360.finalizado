@@ -42,16 +42,20 @@ export default function RealTimeNotifications() {
   // Log inmediato para confirmar que el componente se ejecuta
   console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT EXECUTING RIGHT NOW');
 
+  // Mover hooks fuera del try-catch para cumplir con las reglas de React
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
+
+  console.log('🎯 [REAL TIME NOTIFICATIONS] useWebSocket hook executed successfully');
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] useWebSocket hook result:', {
     isConnected,
     wsNotificationsCount: wsNotifications?.length,
     unreadMessagesCount,
   });
+
   const { success } = useToast();
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT RENDERED AT:', new Date().toISOString());
@@ -296,159 +300,174 @@ export default function RealTimeNotifications() {
     unreadMessagesCount
   );
 
-  return (
-    <>
-      {/* Botón de notificaciones */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="relative"
-        onClick={() => {
-          console.log('🎯 [REAL TIME NOTIFICATIONS] Button clicked, toggling panel');
-          setShowPanel(!showPanel);
-        }}
-      >
-        <Bell className="h-4 w-4" />
-        {unreadMessagesCount > 0 && (
-          <Badge
-            variant="destructive"
-            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-          >
-            {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
-          </Badge>
-        )}
-      </Button>
+  try {
+    return (
+      <>
+        {/* Botón de notificaciones */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative"
+          onClick={() => {
+            console.log('🎯 [REAL TIME NOTIFICATIONS] Button clicked, toggling panel');
+            setShowPanel(!showPanel);
+          }}
+        >
+          <Bell className="h-4 w-4" />
+          {unreadMessagesCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+            </Badge>
+          )}
+        </Button>
 
-      {/* Estado de conexión WebSocket */}
-      <div className="flex items-center gap-2 ml-2">
-        {isConnected ? (
-          <Wifi className="h-4 w-4 text-green-600" />
-        ) : (
-          <WifiOff className="h-4 w-4 text-red-600" />
-        )}
-      </div>
+        {/* Estado de conexión WebSocket */}
+        <div className="flex items-center gap-2 ml-2">
+          {isConnected ? (
+            <Wifi className="h-4 w-4 text-green-600" />
+          ) : (
+            <WifiOff className="h-4 w-4 text-red-600" />
+          )}
+        </div>
 
-      {/* Panel de notificaciones */}
-      {showPanel && (
-        <Card className="absolute top-8 right-0 w-96 max-h-96 shadow-lg border z-50">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notificaciones
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                {unreadMessagesCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs">
-                    Marcar todas como leídas
+        {/* Panel de notificaciones */}
+        {showPanel && (
+          <Card className="absolute top-8 right-0 w-96 max-h-96 shadow-lg border z-50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notificaciones
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  {unreadMessagesCount > 0 && (
+                    <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs">
+                      Marcar todas como leídas
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => setShowPanel(false)}>
+                    <X className="h-4 w-4" />
                   </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+                />
+                <span className="text-sm text-gray-600">
+                  {isConnected ? 'Conectado' : 'Desconectado'}
+                </span>
+                {unreadMessagesCount > 0 && (
+                  <Badge variant="outline" className="ml-auto">
+                    {unreadMessagesCount}
+                  </Badge>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => setShowPanel(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
+            </CardHeader>
 
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
-              />
-              <span className="text-sm text-gray-600">
-                {isConnected ? 'Conectado' : 'Desconectado'}
-              </span>
-              {unreadMessagesCount > 0 && (
-                <Badge variant="outline" className="ml-auto">
-                  {unreadMessagesCount}
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            {localNotifications.length === 0 ? (
-              <div className="text-center py-8">
-                <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 text-sm">No tienes notificaciones</p>
-              </div>
-            ) : (
-              <>
-                <ScrollArea className="h-64">
-                  <div className="space-y-1">
-                    {localNotifications.map(notification => (
-                      <div
-                        key={notification.id}
-                        className={`p-3 border-l-4 ${getPriorityColor(notification.priority || 'low')} ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-1">
-                            {getNotificationIcon(notification.type)}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between">
-                              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                {notification.title}
-                              </h4>
-                              {!notification.read && (
-                                <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 ml-2" />
-                              )}
+            <CardContent className="p-0">
+              {localNotifications.length === 0 ? (
+                <div className="text-center py-8">
+                  <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 text-sm">No tienes notificaciones</p>
+                </div>
+              ) : (
+                <>
+                  <ScrollArea className="h-64">
+                    <div className="space-y-1">
+                      {localNotifications.map(notification => (
+                        <div
+                          key={notification.id}
+                          className={`p-3 border-l-4 ${getPriorityColor(notification.priority || 'low')} ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-1">
+                              {getNotificationIcon(notification.type)}
                             </div>
 
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                              {notification.message}
-                            </p>
-
-                            <div className="flex items-center justify-between mt-2">
-                              <span className="text-xs text-gray-500">
-                                {formatTimestamp(notification.timestamp)}
-                              </span>
-
-                              <div className="flex items-center gap-1">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between">
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                  {notification.title}
+                                </h4>
                                 {!notification.read && (
+                                  <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 ml-2" />
+                                )}
+                              </div>
+
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                {notification.message}
+                              </p>
+
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-xs text-gray-500">
+                                  {formatTimestamp(notification.timestamp)}
+                                </span>
+
+                                <div className="flex items-center gap-1">
+                                  {!notification.read && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => markAsRead(notification.id)}
+                                      className="h-6 px-2 text-xs"
+                                    >
+                                      <CheckCircle className="h-3 w-3" />
+                                    </Button>
+                                  )}
+
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => markAsRead(notification.id)}
-                                    className="h-6 px-2 text-xs"
+                                    onClick={() => deleteNotification(notification.id)}
+                                    className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
                                   >
-                                    <CheckCircle className="h-3 w-3" />
+                                    <X className="h-3 w-3" />
                                   </Button>
-                                )}
-
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => deleteNotification(notification.id)}
-                                  className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </ScrollArea>
+
+                  <Separator />
+
+                  <div className="p-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllNotifications}
+                      className="w-full text-red-600 hover:text-red-700"
+                    >
+                      Limpiar todas las notificaciones
+                    </Button>
                   </div>
-                </ScrollArea>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </>
+    );
+  } catch (error) {
+    console.error('🚨🚨🚨 [REAL TIME NOTIFICATIONS] ERROR in component:', error);
+    console.error('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+    });
 
-                <Separator />
-
-                <div className="p-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAllNotifications}
-                    className="w-full text-red-600 hover:text-red-700"
-                  >
-                    Limpiar todas las notificaciones
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </>
-  );
+    // Return a fallback UI
+    return (
+      <div style={{ background: 'red', color: 'white', padding: '10px', margin: '10px' }}>
+        ❌ RealTimeNotifications Error: {error instanceof Error ? error.message : 'Unknown error'}
+      </div>
+    );
+  }
 }
