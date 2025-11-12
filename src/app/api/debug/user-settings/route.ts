@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
           settings = JSON.parse(user.bio);
           console.log(`✅ Configuraciones parseadas correctamente`);
         } catch (parseError) {
-          console.log(`❌ Error parseando bio: ${parseError.message}`);
+          console.log(
+            `❌ Error parseando bio: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+          );
         }
       } else {
         console.log(`⚠️ No tiene bio (configuraciones)`);

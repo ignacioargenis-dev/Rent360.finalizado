@@ -31,7 +31,7 @@ if (Pusher && typeof window === 'undefined') {
   } catch (error) {
     console.log(
       '⚠️ [NOTIFICATION SERVICE] Could not create Pusher server instance:',
-      error.message
+      error instanceof Error ? error.message : String(error)
     );
   }
 }
