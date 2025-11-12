@@ -156,7 +156,15 @@ class WebSocketServer {
 
   // Enviar notificación a un usuario específico
   sendToUser(userId: string, event: string, data: any): void {
+    console.log('📡 [WEBSOCKET SERVER] sendToUser called:', {
+      userId,
+      event,
+      hasSocketIO: !!this.io,
+      roomName: `user:${userId}`,
+    });
+
     if (!this.io) {
+      console.log('❌ [WEBSOCKET SERVER] No Socket.IO instance available');
       return;
     }
 
@@ -165,6 +173,7 @@ class WebSocketServer {
       timestamp: new Date(),
     });
 
+    console.log('✅ [WEBSOCKET SERVER] Notification emitted to room:', `user:${userId}`);
     logger.info('Notification sent to user', { userId, event });
   }
 
@@ -302,6 +311,11 @@ export const websocketServer = new WebSocketServer();
 
 // Funciones de conveniencia para enviar notificaciones
 export const sendNotification = (userId: string, type: string, data: any) => {
+  console.log('🚀 [WEBSOCKET SERVER] sendNotification called:', {
+    userId,
+    type,
+    dataKeys: Object.keys(data),
+  });
   websocketServer.sendToUser(userId, 'notification', { type, ...data });
 };
 

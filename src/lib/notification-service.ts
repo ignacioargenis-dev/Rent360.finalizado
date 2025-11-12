@@ -58,6 +58,13 @@ export class NotificationService {
    * Crea una nueva notificación para un usuario
    */
   static async create(params: CreateNotificationParams): Promise<any> {
+    console.log('📨 [NOTIFICATION SERVICE] Creating notification:', {
+      userId: params.userId,
+      type: params.type,
+      title: params.title,
+      timestamp: new Date().toISOString(),
+    });
+
     try {
       const notification = await db.notification.create({
         data: {
