@@ -51,38 +51,70 @@ export default function RealTimeNotifications() {
     localNotificationsLength: localNotifications.length,
   });
 
+  // Log adicional para verificar que el componente se está ejecutando
+  console.log('🎯 [REAL TIME NOTIFICATIONS] === COMPONENT IS ACTIVE ===');
+  console.log('🎯 [REAL TIME NOTIFICATIONS] Current state:', {
+    showPanel,
+    unreadCount,
+    isConnected,
+    hasNotifications: localNotifications.length > 0,
+  });
+
   // Procesar notificaciones que llegan desde WebSocket
   useEffect(() => {
     console.log(
-      '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing WebSocket notifications:',
-      wsNotifications
+      '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing WebSocket notifications - useEffect triggered'
     );
-    if (wsNotifications && wsNotifications.length > 0) {
-      const newNotifications = wsNotifications.map((wsNotif: any) => ({
-        id: wsNotif.id || `ws_${Date.now()}_${Math.random()}`,
-        type: wsNotif.type || 'unknown',
-        title: wsNotif.title || 'Nueva notificación',
-        message: wsNotif.message || '',
-        data: wsNotif,
-        priority: wsNotif.priority || 'medium',
-        timestamp: new Date(wsNotif.timestamp || Date.now()),
-        read: false,
-      }));
+    console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] wsNotifications:', wsNotifications);
+    console.log(
+      '🚨🚨🚨 [REAL TIME NOTIFICATIONS] wsNotifications length:',
+      wsNotifications?.length
+    );
 
-      console.log(
-        '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Adding new notifications to list:',
-        newNotifications
-      );
+    if (wsNotifications && wsNotifications.length > 0) {
+      console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Found notifications to process!');
+
+      const newNotifications = wsNotifications.map((wsNotif: any) => {
+        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing notification:', wsNotif);
+
+        return {
+          id: wsNotif.id || `ws_${Date.now()}_${Math.random()}`,
+          type: wsNotif.type || 'unknown',
+          title: wsNotif.title || 'Nueva notificación',
+          message: wsNotif.message || '',
+          data: wsNotif,
+          priority: wsNotif.priority || 'medium',
+          timestamp: new Date(wsNotif.timestamp || Date.now()),
+          read: false,
+        };
+      });
+
+      console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Created new notifications:', newNotifications);
 
       setLocalNotifications(prev => {
         // Evitar duplicados
         const existingIds = prev.map(n => n.id);
         const uniqueNew = newNotifications.filter(n => !existingIds.includes(n.id));
-        return [...uniqueNew, ...prev];
+        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Unique new notifications:', uniqueNew.length);
+        const result = [...uniqueNew, ...prev];
+        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Final notifications list:', result.length);
+        return result;
       });
 
       // Incrementar contador de no leídas
-      setUnreadCount(prev => prev + newNotifications.length);
+      console.log(
+        '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Incrementing unread count by:',
+        newNotifications.length
+      );
+      setUnreadCount(prev => {
+        const newCount = prev + newNotifications.length;
+        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] New unread count:', newCount);
+        return newCount;
+      });
+    } else {
+      console.log(
+        '🚨🚨🚨 [REAL TIME NOTIFICATIONS] No notifications to process or wsNotifications is empty'
+      );
     }
   }, [wsNotifications]);
 
@@ -136,8 +168,16 @@ export default function RealTimeNotifications() {
       // Mostrar notificación del sistema si es importante
       const highPriorityNotif = newNotifications.find(n => n.priority === 'high');
       if (highPriorityNotif) {
+        console.log(
+          '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Showing high priority toast:',
+          highPriorityNotif.title
+        );
         success('Notificación', highPriorityNotif.title);
       }
+
+      // Mostrar toast para todas las notificaciones nuevas
+      console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Showing toast for new notifications');
+      success('Nueva notificación', `Tienes ${newNotifications.length} nueva(s) notificación(es)`);
     }
   }, [wsNotifications, success]);
 
@@ -240,6 +280,11 @@ export default function RealTimeNotifications() {
     return timestamp.toLocaleDateString();
   };
 
+  console.log(
+    '🎯 [REAL TIME NOTIFICATIONS] Rendering button, unreadMessagesCount:',
+    unreadMessagesCount
+  );
+
   return (
     <>
       {/* Botón de notificaciones */}
@@ -247,7 +292,10 @@ export default function RealTimeNotifications() {
         variant="ghost"
         size="sm"
         className="relative"
-        onClick={() => setShowPanel(!showPanel)}
+        onClick={() => {
+          console.log('🎯 [REAL TIME NOTIFICATIONS] Button clicked, toggling panel');
+          setShowPanel(!showPanel);
+        }}
       >
         <Bell className="h-4 w-4" />
         {unreadMessagesCount > 0 && (
