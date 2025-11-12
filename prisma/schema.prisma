@@ -906,6 +906,15 @@ model ServiceJob {
   feedback        String?
   images          String?       // JSON array de URLs
   notes           String?
+
+  // ✅ Campos adicionales para solicitud completa
+  urgency         String?       // low, medium, high, urgent
+  preferredTimeSlot String?     // mañana, tarde, noche
+  budgetMax       Float?        // Rango máximo del presupuesto
+  estimatedDuration String?     // duración estimada
+  specialRequirements String?   // JSON array de requerimientos especiales
+  attachments     String?       // JSON array de archivos adjuntos
+
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

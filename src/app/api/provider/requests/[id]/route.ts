@@ -94,7 +94,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         title: serviceRequest.title,
         description: serviceRequest.description,
         serviceType: serviceRequest.serviceType,
-        urgency: 'medium',
+        urgency: serviceRequest.urgency || 'medium',
         status: serviceRequest.status.toLowerCase(),
         createdAt: serviceRequest.createdAt.toISOString(),
         clientName: serviceRequest.requester.name || 'Cliente',
@@ -104,6 +104,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         estimatedPrice: serviceRequest.basePrice || 0,
         quotedPrice: serviceRequest.finalPrice || serviceRequest.basePrice,
         preferredDate: serviceRequest.scheduledDate?.toISOString().split('T')[0] || '',
+        preferredTimeSlot: serviceRequest.preferredTimeSlot || '',
+        estimatedDuration: serviceRequest.estimatedDuration || '',
+        budgetRange: {
+          min: serviceRequest.basePrice || 0,
+          max: serviceRequest.budgetMax || serviceRequest.basePrice || 0,
+        },
+        specialRequirements: serviceRequest.specialRequirements
+          ? JSON.parse(serviceRequest.specialRequirements)
+          : [],
+        attachments: serviceRequest.attachments ? JSON.parse(serviceRequest.attachments) : [],
         images: serviceRequest.images ? JSON.parse(serviceRequest.images) : [],
         notes: serviceRequest.notes || '',
       };

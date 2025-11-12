@@ -61,8 +61,25 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Merge configuraciones actuales con las nuevas
+    // Merge configuraciones actuales con las nuevas (preservar campos existentes)
     const updatedSettings = { ...currentSettings, ...body };
+
+    // Para roles específicos, agregar campos adicionales si no existen
+    if (user.role === 'RUNNER') {
+      if (!updatedSettings.workArea) {
+        updatedSettings.workArea = {
+          experience: '',
+          specialties: [],
+          languages: ['Español'],
+          hourlyRate: 0,
+          availability: 'available',
+          services: [],
+          responseTime: '',
+          regions: [],
+          communes: [],
+        };
+      }
+    }
 
     // Guardar en el campo bio del usuario
     await db.user.update({
