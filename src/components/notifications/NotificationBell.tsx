@@ -54,27 +54,54 @@ export function NotificationBell() {
     console.log('🔔 [NOTIFICATION BELL] Setting up real-time notification listener');
 
     const handleNotification = (data: any) => {
-      console.log('🔔 [NOTIFICATION BELL] Received real-time notification:', data);
-      console.log('🔔 [NOTIFICATION BELL] Current userId check needed');
+      try {
+        console.log('🔔 [NOTIFICATION BELL] Received real-time notification:', data);
 
-      // Verificar si la notificación es para el usuario actual
-      if (data.userId) {
-        console.log('🔔 [NOTIFICATION BELL] Processing notification for user:', data.userId);
+        // Validar que los datos sean válidos
+        if (!data || typeof data !== 'object') {
+          console.error('🔔 [NOTIFICATION BELL] Invalid notification data:', data);
+          return;
+        }
 
-        // Agregar la nueva notificación al estado local
+        // Validar campos requeridos (con canales específicos por usuario, no necesitamos validar userId)
+        if (!data.id || !data.title || !data.message) {
+          console.error('🔔 [NOTIFICATION BELL] Notification missing required fields:', {
+            hasId: !!data.id,
+            hasTitle: !!data.title,
+            hasMessage: !!data.message,
+            data: data,
+          });
+          return;
+        }
+
+        console.log(
+          "🔔 [NOTIFICATION BELL] Processing notification (channels ensure it's for current user)"
+        );
+
+        // Crear la notificación con manejo seguro de valores undefined
         const newNotification: Notification = {
           id: data.id,
-          type: data.type,
+          type: data.type || 'system',
           title: data.title,
           message: data.message,
-          link: data.link,
+          link: data.link || undefined,
           isRead: false, // Las notificaciones en tiempo real siempre son no leídas
-          createdAt: data.timestamp,
+          createdAt: data.timestamp || data.createdAt || new Date().toISOString(),
           priority: data.priority || 'medium',
         };
 
         console.log('🔔 [NOTIFICATION BELL] Adding notification to state:', newNotification);
-        setNotifications(prev => [newNotification, ...prev]);
+
+        // Actualizar estado de forma segura
+        setNotifications(prev => {
+          try {
+            const currentNotifications = Array.isArray(prev) ? prev : [];
+            return [newNotification, ...currentNotifications];
+          } catch (stateError) {
+            console.error('🔔 [NOTIFICATION BELL] Error updating notifications state:', stateError);
+            return prev; // Retornar estado anterior si hay error
+          }
+        });
 
         // Mostrar toast de notificación
         console.log('🔔 [NOTIFICATION BELL] Showing toast notification');
@@ -83,9 +110,10 @@ export function NotificationBell() {
           duration: 5000,
         });
 
-        console.log('🔔 [NOTIFICATION BELL] Notification processing completed');
-      } else {
-        console.log('🔔 [NOTIFICATION BELL] Notification missing userId, ignoring');
+        console.log('🔔 [NOTIFICATION BELL] Notification processing completed successfully');
+      } catch (error) {
+        console.error('🔔 [NOTIFICATION BELL] CRITICAL ERROR processing notification:', error);
+        console.error('🔔 [NOTIFICATION BELL] Notification data that caused error:', data);
       }
     };
 
