@@ -1,8 +1,17 @@
 'use client';
 
+// 🚨 LOGS DE DEBUG PARA IDENTIFICAR DÓNDE FALLA EL COMPONENTE
+console.log('🎯 [REAL TIME NOTIFICATIONS] FILE LOADED - STARTING IMPORTS');
+
 import React, { useState, useEffect } from 'react';
+console.log('🎯 [REAL TIME NOTIFICATIONS] React imported successfully');
+
 import { logger } from '@/lib/logger-minimal';
+console.log('🎯 [REAL TIME NOTIFICATIONS] Logger imported successfully');
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+console.log('🎯 [REAL TIME NOTIFICATIONS] UI components imported successfully');
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,8 +31,13 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+console.log('🎯 [REAL TIME NOTIFICATIONS] Lucide icons imported successfully');
+
 import { useWebSocket } from '@/lib/websocket/socket-client';
+console.log('🎯 [REAL TIME NOTIFICATIONS] useWebSocket imported successfully');
+
 import { useToast } from '@/components/notifications/NotificationSystem';
+console.log('🎯 [REAL TIME NOTIFICATIONS] useToast imported successfully');
 
 interface NotificationItem {
   id: string;
@@ -42,21 +56,32 @@ export default function RealTimeNotifications() {
   // Log inmediato para confirmar que el componente se ejecuta
   console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT EXECUTING RIGHT NOW');
 
+  console.log('🎯 [REAL TIME NOTIFICATIONS] About to execute hooks...');
+
   // Mover hooks fuera del try-catch para cumplir con las reglas de React
+  console.log('🎯 [REAL TIME NOTIFICATIONS] Executing useState hooks...');
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
+  console.log('🎯 [REAL TIME NOTIFICATIONS] useState hooks executed successfully');
 
+  console.log('🎯 [REAL TIME NOTIFICATIONS] About to execute useWebSocket hook...');
+  const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
   console.log('🎯 [REAL TIME NOTIFICATIONS] useWebSocket hook executed successfully');
+
+  console.log('🎯 [REAL TIME NOTIFICATIONS] About to execute useToast hook...');
+  const { success } = useToast();
+  console.log('🎯 [REAL TIME NOTIFICATIONS] useToast hook executed successfully');
+
+  console.log(
+    '🎯 [REAL TIME NOTIFICATIONS] All hooks executed successfully - proceeding to useEffect'
+  );
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] useWebSocket hook result:', {
     isConnected,
     wsNotificationsCount: wsNotifications?.length,
     unreadMessagesCount,
   });
-
-  const { success } = useToast();
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT RENDERED AT:', new Date().toISOString());
   console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Component render:', {
