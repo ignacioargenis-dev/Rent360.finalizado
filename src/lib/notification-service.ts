@@ -126,6 +126,18 @@ export class NotificationService {
             );
             shouldSendNotification = false;
           }
+
+          // Para notificaciones de cotizaciones
+          if (
+            params.type === 'SERVICE_REQUEST_RESPONSE' &&
+            params.title?.includes('Cotización recibida') &&
+            userSettings.emailNotifications === false
+          ) {
+            console.log(
+              '🚫 [NOTIFICATION SERVICE] Service request notifications disabled for user - NOT SENDING'
+            );
+            shouldSendNotification = false;
+          }
         } catch (parseError) {
           console.log('⚠️ [NOTIFICATION SERVICE] Error parsing user bio settings:', parseError);
         }
