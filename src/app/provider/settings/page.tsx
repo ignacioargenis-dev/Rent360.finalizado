@@ -259,29 +259,27 @@ export default function ProviderSettingsPage() {
             logger.error('Error cargando datos de seguridad:', { error });
           }
 
-          // ✅ Cargar preferencias de notificaciones desde bio del usuario
+          // ✅ Cargar configuraciones de notificaciones desde la nueva API
           try {
-            const userResponseForNotifications = await fetch('/api/auth/me', {
+            const settingsResponse = await fetch('/api/user/settings', {
+              method: 'GET',
               credentials: 'include',
+              headers: {
+                Accept: 'application/json',
+              },
             });
-            if (userResponseForNotifications.ok) {
-              const userDataForNotifications = await userResponseForNotifications.json();
-              if (userDataForNotifications.user?.bio) {
-                try {
-                  const notificationPrefs = JSON.parse(userDataForNotifications.user.bio);
-                  if (typeof notificationPrefs === 'object' && notificationPrefs !== null) {
-                    setNotificationsData(prev => ({
-                      ...prev,
-                      ...notificationPrefs,
-                    }));
-                  }
-                } catch {
-                  // Si no es JSON válido, usar valores por defecto
-                }
+
+            if (settingsResponse.ok) {
+              const settingsData = await settingsResponse.json();
+              if (settingsData.success && settingsData.settings.notifications) {
+                setNotificationsData(prev => ({
+                  ...prev,
+                  ...settingsData.settings.notifications,
+                }));
               }
             }
           } catch (error) {
-            logger.error('Error cargando preferencias de notificaciones:', { error });
+            logger.error('Error cargando configuraciones de notificaciones:', { error });
           }
 
           // Calcular estadísticas
@@ -439,9 +437,8 @@ export default function ProviderSettingsPage() {
           }),
         });
       } else if (section === 'notificaciones') {
-        // ✅ Guardar preferencias de notificaciones
-        // Guardar en el campo bio del usuario como JSON (similar a runner settings)
-        const notificationPreferences = {
+        // ✅ Guardar configuraciones de notificaciones usando la nueva API
+        const notificationSettings = {
           newJobs: notificationsData.newJobs,
           jobUpdates: notificationsData.jobUpdates,
           payments: notificationsData.payments,
@@ -452,14 +449,14 @@ export default function ProviderSettingsPage() {
           pushNotifications: notificationsData.pushNotifications,
         };
 
-        response = await fetch('/api/user/profile', {
+        response = await fetch('/api/user/settings', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
           body: JSON.stringify({
-            description: JSON.stringify(notificationPreferences),
+            notifications: notificationSettings,
           }),
         });
       } else if (section === 'seguridad') {

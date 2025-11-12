@@ -138,6 +138,56 @@ export default function MaintenanceSettingsPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<string>('');
 
+  // ✅ Cargar configuraciones iniciales
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        // Cargar datos del usuario
+        const userResponse = await fetch('/api/auth/me', {
+          credentials: 'include',
+        });
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          // Actualizar settings con datos reales del usuario
+          setSettings(prev => ({
+            ...prev,
+            companyName: userData.user?.name || prev.companyName,
+            email: userData.user?.email || prev.email,
+            phone: userData.user?.phone || prev.phone,
+          }));
+        }
+
+        // ✅ Cargar configuraciones de notificaciones desde la nueva API
+        const settingsResponse = await fetch('/api/user/settings', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json();
+          if (settingsData.success && settingsData.settings.notifications) {
+            setSettings(prev => ({
+              ...prev,
+              emailNotifications:
+                settingsData.settings.notifications.emailNotifications ?? prev.emailNotifications,
+              smsNotifications:
+                settingsData.settings.notifications.smsNotifications ?? prev.smsNotifications,
+              pushNotifications:
+                settingsData.settings.notifications.pushNotifications ?? prev.pushNotifications,
+            }));
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading maintenance settings:', error);
+      }
+    };
+
+    loadUserSettings();
+  }, []);
+
   // Funciones para documentos fiscales
   const handleViewDocument = (documentType: string) => {
     setSelectedDocument(documentType);
@@ -201,6 +251,31 @@ export default function MaintenanceSettingsPage() {
       }
 
       const data = await response.json();
+
+      // ✅ Guardar configuraciones de notificaciones
+      const notificationsResponse = await fetch('/api/user/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          notifications: {
+            emailNotifications: settings.emailNotifications,
+            smsNotifications: settings.smsNotifications,
+            pushNotifications: settings.pushNotifications,
+            jobReminders: true, // Valor por defecto para maintenance
+            paymentReminders: true,
+            ratingUpdates: true,
+          },
+        }),
+      });
+
+      if (!notificationsResponse.ok) {
+        logger.warn(
+          'Error al guardar configuraciones de notificaciones, pero el perfil se guardó correctamente'
+        );
+      }
 
       setSuccessMessage('Configuración guardada exitosamente');
       setTimeout(() => setSuccessMessage(''), 3000);

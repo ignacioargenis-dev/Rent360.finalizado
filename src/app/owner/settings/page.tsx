@@ -182,6 +182,27 @@ export default function OwnerSettingsPage() {
           // Load user properties for document upload
           const propertiesResponse = await fetch('/api/properties/list?limit=100');
           if (propertiesResponse.ok) {
+            // ✅ Cargar configuraciones de notificaciones desde la nueva API
+            const settingsResponse = await fetch('/api/user/settings', {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                Accept: 'application/json',
+              },
+            });
+
+            if (settingsResponse.ok) {
+              const settingsData = await settingsResponse.json();
+              if (settingsData.success && settingsData.settings.notifications) {
+                setSettings(prev => ({
+                  ...prev,
+                  notifications: {
+                    ...prev.notifications,
+                    ...settingsData.settings.notifications,
+                  },
+                }));
+              }
+            }
             const propertiesData = await propertiesResponse.json();
             setUserProperties(
               propertiesData.properties.map((prop: any) => ({
@@ -286,6 +307,24 @@ export default function OwnerSettingsPage() {
       }
 
       const data = await response.json();
+
+      // ✅ Guardar configuraciones de notificaciones
+      const notificationsResponse = await fetch('/api/user/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          notifications: settings.notifications,
+        }),
+      });
+
+      if (!notificationsResponse.ok) {
+        logger.warn(
+          'Error al guardar configuraciones de notificaciones, pero el perfil se guardó correctamente'
+        );
+      }
 
       setSuccessMessage('Configuraci�n guardada exitosamente');
       setTimeout(() => setSuccessMessage(''), 3000);

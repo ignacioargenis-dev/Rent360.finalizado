@@ -132,12 +132,34 @@ export default function TenantSettingsPage() {
           const data = await response.json();
           setUser(data.user);
 
-          // Load settings from localStorage or API
-          const savedSettings = localStorage.getItem('tenant-settings');
-          if (savedSettings) {
-            setSettings(JSON.parse(savedSettings));
+          // ✅ Cargar configuraciones desde la nueva API
+          const settingsResponse = await fetch('/api/user/settings', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+            },
+          });
+
+          if (settingsResponse.ok) {
+            const settingsData = await settingsResponse.json();
+            if (settingsData.success && settingsData.settings) {
+              setSettings(prev => ({
+                ...prev,
+                ...settingsData.settings,
+                profile: {
+                  firstName: data.user?.name?.split(' ')[0] || '',
+                  lastName: data.user?.name?.split(' ').slice(1).join(' ') || '',
+                  email: data.user?.email || '',
+                  phone: data.user?.phone || '',
+                  emergencyContact: settingsData.settings.emergencyContact || '',
+                  emergencyPhone: settingsData.settings.emergencyPhone || '',
+                  avatar: data.user?.avatar || '',
+                },
+              }));
+            }
           } else {
-            // ✅ CORREGIDO: Initialize with real user data
+            // Fallback: Initialize with real user data
             setSettings(prev => ({
               ...prev,
               profile: {
@@ -191,6 +213,26 @@ export default function TenantSettingsPage() {
       }
 
       const data = await response.json();
+
+      // ✅ Guardar configuraciones de notificaciones
+      const notificationsResponse = await fetch('/api/user/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          notifications: settings.notifications,
+          emergencyContact: settings.profile.emergencyContact,
+          emergencyPhone: settings.profile.emergencyPhone,
+        }),
+      });
+
+      if (!notificationsResponse.ok) {
+        logger.warn(
+          'Error al guardar configuraciones de notificaciones, pero el perfil se guardó correctamente'
+        );
+      }
 
       setSuccessMessage('Configuración guardada exitosamente.');
     } catch (error) {
