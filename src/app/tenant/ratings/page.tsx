@@ -141,6 +141,19 @@ export default function TenantRatingsPage() {
       // Use only real data from database
       setRatings(transformedRatings);
 
+      // Fetch ratings given by this tenant to filter out already rated items
+      const givenResponse = await fetch('/api/ratings?given=true', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const givenData = givenResponse.ok ? await givenResponse.json() : { data: { ratings: [] } };
+      const givenRatings = givenData.data?.ratings || [];
+
       // Fetch ratings that can be given (from contracts, maintenance, services)
       const ratingsToGive: RatingToGive[] = [];
 
@@ -208,8 +221,22 @@ export default function TenantRatingsPage() {
         logger.error('Error fetching service jobs for ratings:', error);
       }
 
+      // Filter out items that have already been rated
+      const filteredRatingsToGive = ratingsToGive.filter(item => {
+        // Check if this item has already been rated
+        const alreadyRated = givenRatings.some((rating: any) => {
+          return (
+            rating.toUserId === item.recipientId &&
+            (rating.contextId === item.serviceRequestId ||
+              rating.contextId === item.contractId ||
+              rating.contextId === item.maintenanceId)
+          );
+        });
+        return !alreadyRated;
+      });
+
       // Use only real data from database
-      setRatingsToGive(ratingsToGive);
+      setRatingsToGive(filteredRatingsToGive);
     } catch (error) {
       logger.error('Error loading ratings data:', {
         error: error instanceof Error ? error.message : String(error),
