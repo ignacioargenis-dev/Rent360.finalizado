@@ -261,6 +261,28 @@ export default function BrokerSettings() {
           const dashboardInfo = await dashboardResponse.json();
           setDashboardData(dashboardInfo.data);
         }
+
+        // Cargar configuraciones de notificaciones del usuario
+        const settingsResponse = await fetch('/api/user/settings', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json();
+          if (settingsData.success && settingsData.settings.notifications) {
+            setSettings(prevSettings => ({
+              ...prevSettings,
+              notifications: {
+                ...prevSettings.notifications,
+                ...settingsData.settings.notifications,
+              },
+            }));
+          }
+        }
       } catch (error) {
         logger.error('Error loading data:', {
           error: error instanceof Error ? error.message : String(error),
@@ -315,6 +337,24 @@ export default function BrokerSettings() {
         if (!bankResponse.ok) {
           logger.warn('Error al guardar datos bancarios, pero otras configuraciones se guardaron');
         }
+      }
+
+      // Guardar configuraciones de notificaciones
+      const notificationsResponse = await fetch('/api/user/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          notifications: settings.notifications,
+        }),
+      });
+
+      if (!notificationsResponse.ok) {
+        logger.warn(
+          'Error al guardar configuraciones de notificaciones, pero otras configuraciones se guardaron'
+        );
       }
 
       // Show success message
