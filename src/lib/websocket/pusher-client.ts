@@ -20,9 +20,13 @@ export class PusherWebSocketClient {
   }
 
   async connect(userId?: string, token?: string): Promise<boolean> {
+    console.log('🔥 [PUSHER DEBUG] connect() called with:', { userId, hasToken: !!token });
     // Guardar el userId para filtrar notificaciones
     if (userId) {
       this.userId = userId;
+      console.log('🔥 [PUSHER DEBUG] userId set to:', this.userId);
+    } else {
+      console.log('🔥 [PUSHER DEBUG] No userId provided to connect()');
     }
 
     this._connectionAttempts++;
@@ -211,12 +215,19 @@ export class PusherWebSocketClient {
             resolve(false);
           });
 
+          console.log('🔥 [PUSHER DEBUG] Registering event callbacks...');
+
           // Bind standard events
           this.channel.bind('new-message', (data: any) => {
             console.log('🔥 [PUSHER DEBUG] new-message event received:', data);
             this.emit('new-message', data);
           });
+
+          console.log('🔥 [PUSHER DEBUG] Binding notification callback...');
           this.channel.bind('notification', (data: any) => {
+            console.log(
+              '🔥 [PUSHER DEBUG] ============ NOTIFICATION CALLBACK EXECUTED ============'
+            );
             console.log('🔥 [PUSHER DEBUG] notification event received:', data);
             console.log('🔥 [PUSHER DEBUG] Current userId in Pusher client:', this.userId);
             console.log('🔥 [PUSHER DEBUG] Notification userId:', data.userId);

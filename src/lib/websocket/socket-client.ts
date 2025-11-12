@@ -505,13 +505,11 @@ export function useWebSocket() {
   useEffect(() => {
     console.log('🔌 [USE WEBSOCKET] Setting up WebSocket connection...');
 
-    // Conectar al WebSocket
-    const connectWebSocket = async () => {
-      console.log('🔌 [USE WEBSOCKET] Calling websocketClient.connect()...');
-      await websocketClient.connect();
-      console.log('✅ [USE WEBSOCKET] WebSocket connection attempt completed');
-    };
-    connectWebSocket();
+    // ⚠️ NO conectar automáticamente aquí - la conexión se maneja desde AuthProviderSimple.tsx
+    // para evitar conexiones duplicadas y asegurar que el userId esté disponible
+    console.log(
+      '🔌 [USE WEBSOCKET] Skipping automatic connection - will be handled by AuthProvider'
+    );
 
     // Configurar event listeners
     const handleConnect = () => setIsConnected(true);

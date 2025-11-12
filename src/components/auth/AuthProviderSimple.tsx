@@ -161,6 +161,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               };
 
               setUser(completeUser);
+
+              // ✅ RECONECTAR WEBSOCKET si el usuario está autenticado
+              console.log(
+                '🔌 [AUTH PROVIDER] Reconectando WebSocket para usuario existente:',
+                completeUser.id
+              );
+              (async () => {
+                try {
+                  await websocketClient.connect(completeUser.id);
+                  console.log('✅ [AUTH PROVIDER] WebSocket reconectado exitosamente');
+                } catch (wsError) {
+                  console.error('❌ [AUTH PROVIDER] Error reconectando WebSocket:', wsError);
+                }
+              })();
+
               setLoading(false);
               return true; // Usuario cargado exitosamente
             }

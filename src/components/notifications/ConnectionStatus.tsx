@@ -63,14 +63,15 @@ export default function ConnectionStatus({
   const handleReconnect = () => {
     setIsReconnecting(true);
 
-    // Desconectar y reconectar
+    // Desconectar
     websocketClient.disconnect();
 
-    // Intentar reconectar después de un breve delay
-    setTimeout(async () => {
-      await websocketClient.connect(); // Sin userId para reconexión
-      setIsReconnecting(false);
-    }, 1000);
+    // ⚠️ NO reconectar automáticamente aquí - la reconexión se maneja desde AuthProviderSimple.tsx
+    // para asegurar que el userId esté disponible y evitar conexiones duplicadas
+    console.log(
+      '🔄 [CONNECTION STATUS] Disconnected - reconnection will be handled by AuthProvider'
+    );
+    setIsReconnecting(false);
   };
 
   const getStatusText = () => {
