@@ -37,10 +37,18 @@ interface NotificationItem {
 }
 
 export default function RealTimeNotifications() {
+  console.log('🎯 [REAL TIME NOTIFICATIONS] FUNCTION CALLED - COMPONENT MOUNTING');
+
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
+
+  console.log('🎯 [REAL TIME NOTIFICATIONS] useWebSocket hook result:', {
+    isConnected,
+    wsNotificationsCount: wsNotifications?.length,
+    unreadMessagesCount,
+  });
   const { success } = useToast();
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT RENDERED AT:', new Date().toISOString());

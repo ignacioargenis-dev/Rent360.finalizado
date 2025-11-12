@@ -53,6 +53,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import RealTimeNotifications from '@/components/notifications/RealTimeNotifications';
+
+console.log('🏠 [SIDEBAR] RealTimeNotifications imported:', !!RealTimeNotifications);
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserType } from '@/types';
 import { logger } from '@/lib/logger-minimal';
@@ -927,7 +929,12 @@ export default function UnifiedSidebar({
       <div className="flex-1 flex flex-col min-w-0">
         {/* Desktop Header */}
         <div className="hidden lg:flex bg-white border-b border-gray-200 px-6 py-3 justify-end items-center">
-          {showNotifications && <RealTimeNotifications />}
+          {(() => {
+            console.log('🏠 [SIDEBAR] showNotifications value:', showNotifications);
+            console.log('🏠 [SIDEBAR] notificationCount value:', notificationCount);
+            console.log('🏠 [SIDEBAR] user role:', user?.role);
+            return showNotifications && <RealTimeNotifications />;
+          })()}
         </div>
 
         {/* Mobile Header */}
