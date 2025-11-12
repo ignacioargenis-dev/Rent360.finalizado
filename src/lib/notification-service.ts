@@ -70,6 +70,78 @@ export class NotificationService {
       timestamp: new Date().toISOString(),
     });
 
+    // 🔍 Verificar configuraciones de notificaciones del usuario
+    let shouldSendNotification = true;
+    try {
+      const user = await db.user.findUnique({
+        where: { id: params.userId },
+        select: { id: true, bio: true, role: true },
+      });
+
+      console.log('🔍 [NOTIFICATION SERVICE] User notification settings:', {
+        userId: params.userId,
+        userRole: user?.role,
+        hasBio: !!user?.bio,
+        bioLength: user?.bio?.length,
+      });
+
+      if (user?.bio) {
+        try {
+          const userSettings = JSON.parse(user.bio);
+          console.log('🔍 [NOTIFICATION SERVICE] Parsed user settings:', {
+            emailNotifications: userSettings.emailNotifications,
+            smsNotifications: userSettings.smsNotifications,
+            jobReminders: userSettings.jobReminders,
+            paymentReminders: userSettings.paymentReminders,
+            ratingUpdates: userSettings.ratingUpdates,
+          });
+
+          // 🚫 Verificar si las notificaciones específicas están deshabilitadas
+          if (params.type === 'NEW_MESSAGE' && userSettings.emailNotifications === false) {
+            console.log(
+              '🚫 [NOTIFICATION SERVICE] Email notifications disabled for user - NOT SENDING'
+            );
+            shouldSendNotification = false;
+          }
+
+          // Para calificaciones, verificar ratingUpdates
+          if (
+            params.type === 'NEW_MESSAGE' &&
+            params.title?.includes('calificación') &&
+            userSettings.ratingUpdates === false
+          ) {
+            console.log(
+              '🚫 [NOTIFICATION SERVICE] Rating notifications disabled for user - NOT SENDING'
+            );
+            shouldSendNotification = false;
+          }
+
+          // Para notificaciones de calificaciones recibidas
+          if (
+            params.title?.includes('⭐ Nueva Calificación') &&
+            userSettings.ratingUpdates === false
+          ) {
+            console.log(
+              '🚫 [NOTIFICATION SERVICE] Rating notifications disabled for user - NOT SENDING'
+            );
+            shouldSendNotification = false;
+          }
+        } catch (parseError) {
+          console.log('⚠️ [NOTIFICATION SERVICE] Error parsing user bio settings:', parseError);
+        }
+      }
+    } catch (userError) {
+      console.log('⚠️ [NOTIFICATION SERVICE] Error fetching user settings:', userError);
+    }
+
+    // 🚫 Si las notificaciones están deshabilitadas, retornar sin crear
+    if (!shouldSendNotification) {
+      console.log(
+        '🚫 [NOTIFICATION SERVICE] Notification blocked by user settings - returning early'
+      );
+      return null;
+    }
+
     try {
       const notification = await db.notification.create({
         data: {
