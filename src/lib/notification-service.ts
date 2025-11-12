@@ -101,8 +101,7 @@ export class NotificationService {
       timestamp: new Date().toISOString(),
     });
 
-    // 🔍 Verificar configuraciones de notificaciones del usuario
-    let shouldSendNotification = true;
+    // 🔍 Verificar configuraciones de notificaciones del usuario (solo logging, no bloqueo)
     try {
       const user = await db.user.findUnique({
         where: { id: params.userId },
@@ -120,70 +119,32 @@ export class NotificationService {
         try {
           const userSettings = JSON.parse(user.bio);
           console.log('🔍 [NOTIFICATION SERVICE] Parsed user settings:', {
-            emailNotifications: userSettings.emailNotifications,
-            smsNotifications: userSettings.smsNotifications,
-            jobReminders: userSettings.jobReminders,
-            paymentReminders: userSettings.paymentReminders,
-            ratingUpdates: userSettings.ratingUpdates,
+            emailNotifications: userSettings.notifications?.emailNotifications,
+            smsNotifications: userSettings.notifications?.smsNotifications,
+            pushNotifications: userSettings.notifications?.pushNotifications,
+            jobReminders: userSettings.notifications?.jobReminders,
+            paymentReminders: userSettings.notifications?.paymentReminders,
+            ratingUpdates: userSettings.notifications?.ratingUpdates,
           });
 
-          // 🚫 Verificar si las notificaciones específicas están deshabilitadas
-          if (params.type === 'NEW_MESSAGE' && userSettings.emailNotifications === false) {
-            console.log(
-              '🚫 [NOTIFICATION SERVICE] Email notifications disabled for user - NOT SENDING'
-            );
-            shouldSendNotification = false;
-          }
-
-          // Para calificaciones, verificar ratingUpdates
-          if (
-            params.type === 'NEW_MESSAGE' &&
-            params.title?.includes('calificación') &&
-            userSettings.ratingUpdates === false
-          ) {
-            console.log(
-              '🚫 [NOTIFICATION SERVICE] Rating notifications disabled for user - NOT SENDING'
-            );
-            shouldSendNotification = false;
-          }
-
-          // Para notificaciones de calificaciones recibidas
-          if (
-            params.title?.includes('⭐ Nueva Calificación') &&
-            userSettings.ratingUpdates === false
-          ) {
-            console.log(
-              '🚫 [NOTIFICATION SERVICE] Rating notifications disabled for user - NOT SENDING'
-            );
-            shouldSendNotification = false;
-          }
-
-          // Para notificaciones de cotizaciones
-          if (
-            params.type === 'SERVICE_REQUEST_RESPONSE' &&
-            params.title?.includes('Cotización recibida') &&
-            userSettings.emailNotifications === false
-          ) {
-            console.log(
-              '🚫 [NOTIFICATION SERVICE] Service request notifications disabled for user - NOT SENDING'
-            );
-            shouldSendNotification = false;
-          }
+          // ⚠️ Solo logging - NO BLOQUEAR notificaciones por configuración de usuario
+          // Las configuraciones se aplicarán en el cliente (componente UI)
+          console.log(
+            '📊 [NOTIFICATION SERVICE] User settings logged - notification will be sent regardless of preferences'
+          );
         } catch (parseError) {
           console.log('⚠️ [NOTIFICATION SERVICE] Error parsing user bio settings:', parseError);
         }
+      } else {
+        console.log(
+          '📊 [NOTIFICATION SERVICE] User has no settings - using defaults (notification will be sent)'
+        );
       }
     } catch (userError) {
       console.log('⚠️ [NOTIFICATION SERVICE] Error fetching user settings:', userError);
     }
 
-    // 🚫 Si las notificaciones están deshabilitadas, retornar sin crear
-    if (!shouldSendNotification) {
-      console.log(
-        '🚫 [NOTIFICATION SERVICE] Notification blocked by user settings - returning early'
-      );
-      return null;
-    }
+    // ✅ Siempre enviar notificaciones - las preferencias se manejan en el cliente
 
     try {
       const notification = await db.notification.create({
