@@ -100,6 +100,24 @@ export default function RealTimeNotifications() {
     hasNotifications: localNotifications.length > 0,
   });
 
+  // Función para validar y normalizar timestamp
+  const parseTimestamp = (ts: any): Date => {
+    if (!ts) {
+      return new Date();
+    }
+    if (ts instanceof Date) {
+      return ts;
+    }
+    if (typeof ts === 'number') {
+      return new Date(ts);
+    }
+    if (typeof ts === 'string') {
+      const parsed = new Date(ts);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+    return new Date(); // fallback para cualquier otro tipo
+  };
+
   // Procesar notificaciones que llegan desde WebSocket
   useEffect(() => {
     console.log(
@@ -114,20 +132,46 @@ export default function RealTimeNotifications() {
     if (wsNotifications && wsNotifications.length > 0) {
       console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Found notifications to process!');
 
-      const newNotifications = wsNotifications.map((wsNotif: any) => {
-        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing notification:', wsNotif);
+      const newNotifications = wsNotifications
+        .map((wsNotif: any) => {
+          try {
+            console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing notification:', wsNotif);
 
-        return {
-          id: wsNotif.id || `ws_${Date.now()}_${Math.random()}`,
-          type: wsNotif.type || 'unknown',
-          title: wsNotif.title || 'Nueva notificación',
-          message: wsNotif.message || '',
-          data: wsNotif,
-          priority: wsNotif.priority || 'medium',
-          timestamp: new Date(wsNotif.timestamp || Date.now()),
-          read: false,
-        };
-      });
+            // Validar campos requeridos
+            if (!wsNotif || typeof wsNotif !== 'object') {
+              console.error('🚨 [REAL TIME NOTIFICATIONS] Invalid notification object:', wsNotif);
+              return null;
+            }
+
+            if (!wsNotif.title && !wsNotif.message) {
+              console.error(
+                '🚨 [REAL TIME NOTIFICATIONS] Notification missing title and message:',
+                wsNotif
+              );
+              return null;
+            }
+
+            return {
+              id: wsNotif.id || `ws_${Date.now()}_${Math.random()}`,
+              type: wsNotif.type || 'unknown',
+              title: wsNotif.title || 'Nueva notificación',
+              message: wsNotif.message || '',
+              // No guardar el objeto completo para evitar problemas de serialización
+              link: wsNotif.link || undefined,
+              priority: typeof wsNotif.priority === 'string' ? wsNotif.priority : 'medium',
+              timestamp: parseTimestamp(wsNotif.timestamp),
+              read: false,
+            };
+          } catch (error) {
+            console.error(
+              '🚨 [REAL TIME NOTIFICATIONS] Error processing individual notification:',
+              error,
+              wsNotif
+            );
+            return null;
+          }
+        })
+        .filter(notification => notification !== null); // Filtrar notificaciones inválidas
 
       console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Created new notifications:', newNotifications);
 
@@ -298,6 +342,15 @@ export default function RealTimeNotifications() {
   };
 
   const formatTimestamp = (timestamp: Date) => {
+    // Validar que el timestamp sea un Date válido
+    if (!timestamp || !(timestamp instanceof Date) || isNaN(timestamp.getTime())) {
+      console.warn(
+        '🚨 [REAL TIME NOTIFICATIONS] Invalid timestamp provided to formatTimestamp:',
+        timestamp
+      );
+      return 'Fecha desconocida';
+    }
+
     const now = new Date();
     const diff = now.getTime() - timestamp.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
@@ -317,7 +370,12 @@ export default function RealTimeNotifications() {
       return `Hace ${days}d`;
     }
 
-    return timestamp.toLocaleDateString();
+    try {
+      return timestamp.toLocaleDateString();
+    } catch (error) {
+      console.error('🚨 [REAL TIME NOTIFICATIONS] Error formatting date:', error, timestamp);
+      return 'Fecha inválida';
+    }
   };
 
   console.log(
