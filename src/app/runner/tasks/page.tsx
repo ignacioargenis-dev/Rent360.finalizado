@@ -98,26 +98,40 @@ export default function TareasPage() {
 
       const result = await response.json();
       const tasks = result.tasks || result.data || [];
-      
+
       // Calcular estadísticas desde los datos reales
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const weekStart = new Date(today);
       weekStart.setDate(today.getDate() - today.getDay());
 
-      const completedTasks = tasks.filter((t: any) => t.status === 'COMPLETED' || t.status === 'completed').length;
-      const pendingTasks = tasks.filter((t: any) => t.status === 'SCHEDULED' || t.status === 'scheduled' || t.status === 'PENDING' || t.status === 'pending').length;
-      const inProgressTasks = tasks.filter((t: any) => t.status === 'IN_PROGRESS' || t.status === 'in_progress').length;
-      
+      const completedTasks = tasks.filter(
+        (t: any) => t.status === 'COMPLETED' || t.status === 'completed'
+      ).length;
+      const pendingTasks = tasks.filter(
+        (t: any) =>
+          t.status === 'SCHEDULED' ||
+          t.status === 'scheduled' ||
+          t.status === 'PENDING' ||
+          t.status === 'pending'
+      ).length;
+      const inProgressTasks = tasks.filter(
+        (t: any) => t.status === 'IN_PROGRESS' || t.status === 'in_progress'
+      ).length;
+
       const todayTasks = tasks.filter((t: any) => {
-        if (!t.scheduledDate) return false;
+        if (!t.scheduledDate) {
+          return false;
+        }
         const taskDate = new Date(t.scheduledDate);
         taskDate.setHours(0, 0, 0, 0);
         return taskDate.getTime() === today.getTime();
       }).length;
 
       const thisWeekTasks = tasks.filter((t: any) => {
-        if (!t.scheduledDate) return false;
+        if (!t.scheduledDate) {
+          return false;
+        }
         const taskDate = new Date(t.scheduledDate);
         return taskDate >= weekStart;
       }).length;
@@ -266,7 +280,7 @@ export default function TareasPage() {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Recargar las tareas para mostrar el estado actualizado
         await fetchTasks();

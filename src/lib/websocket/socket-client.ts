@@ -177,7 +177,7 @@ class WebSocketClient {
       console.log('🚨 [SOCKET-CLIENT] Event forwarding setup complete, NOW calling connect()...');
 
       // Ahora sí, llamar a connect()
-      const connected = await pusherInstance.connect(token);
+      const connected = await pusherInstance.connect(this._userId, token);
       console.log('🚨 [PUSHER] connect() returned:', connected);
 
       if (!connected) {

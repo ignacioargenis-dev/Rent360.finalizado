@@ -156,7 +156,9 @@ export default function RunnerEarningsPage() {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const thisMonthEarnings = transformedPayments
         .filter(p => {
-          if (!p.paymentDate) return false;
+          if (!p.paymentDate) {
+            return false;
+          }
           const paymentDate = new Date(p.paymentDate);
           return paymentDate >= monthStart;
         })
@@ -166,9 +168,10 @@ export default function RunnerEarningsPage() {
         .filter(p => p.status === 'pending' || p.status === 'overdue')
         .reduce((sum, p) => sum + p.amount, 0);
 
-      const averagePerVisit = transformedPayments.length > 0
-        ? transformedPayments.reduce((sum, p) => sum + p.amount, 0) / transformedPayments.length
-        : 0;
+      const averagePerVisit =
+        transformedPayments.length > 0
+          ? transformedPayments.reduce((sum, p) => sum + p.amount, 0) / transformedPayments.length
+          : 0;
 
       setPayments(transformedPayments);
       setStats({

@@ -222,12 +222,12 @@ export default function EditRunnerProfilePage() {
             phone: user?.phone || '',
             mobile: user?.phoneSecondary || '',
             dateOfBirth: (() => {
-              if (!user?.dateOfBirth) return '';
+              if (!user?.dateOfBirth) {
+                return '';
+              }
               try {
                 const date =
-                  user.dateOfBirth instanceof Date
-                    ? user.dateOfBirth
-                    : new Date(user.dateOfBirth);
+                  user.dateOfBirth instanceof Date ? user.dateOfBirth : new Date(user.dateOfBirth);
                 return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
               } catch {
                 return '';

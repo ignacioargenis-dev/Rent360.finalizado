@@ -106,7 +106,7 @@ export default function HorarioPage() {
       setError(null);
 
       // ✅ CORREGIDO: Obtener datos reales desde la API
-      const url = weekStart 
+      const url = weekStart
         ? `/api/runner/schedule?weekStart=${weekStart}`
         : '/api/runner/schedule';
       const response = await fetch(url, {
@@ -123,7 +123,7 @@ export default function HorarioPage() {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         setData({
           overview: result.overview || {},
@@ -205,7 +205,7 @@ export default function HorarioPage() {
       completed: { label: 'Completada', color: 'bg-green-100 text-green-800' },
       in_progress: { label: 'En Progreso', color: 'bg-blue-100 text-blue-800' },
       pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
-      cancelled: { label: 'Cancelada', color: 'bg-red-100 text-red-800' }
+      cancelled: { label: 'Cancelada', color: 'bg-red-100 text-red-800' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -220,11 +220,11 @@ export default function HorarioPage() {
   };
 
   const handleExportSchedule = () => {
-    if (!data) return;
+    if (!data) {
+      return;
+    }
 
-    const csvContent = [
-      ['Hora', 'Tipo', 'Propiedad', 'Dirección', 'Cliente', 'Estado', 'Notas']
-    ];
+    const csvContent = [['Hora', 'Tipo', 'Propiedad', 'Dirección', 'Cliente', 'Estado', 'Notas']];
 
     data.todaySchedule.forEach((visit: any) => {
       csvContent.push([
@@ -234,7 +234,7 @@ export default function HorarioPage() {
         visit.address,
         visit.client,
         visit.status,
-        visit.notes
+        visit.notes,
       ]);
     });
 
@@ -278,9 +278,7 @@ export default function HorarioPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.weekVisits || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Visitas programadas
-              </p>
+              <p className="text-xs text-muted-foreground">Visitas programadas</p>
             </CardContent>
           </Card>
 
@@ -291,9 +289,7 @@ export default function HorarioPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.pendingVisits || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Requieren atención
-              </p>
+              <p className="text-xs text-muted-foreground">Requieren atención</p>
             </CardContent>
           </Card>
 
@@ -304,9 +300,7 @@ export default function HorarioPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.monthVisits || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Total de visitas
-              </p>
+              <p className="text-xs text-muted-foreground">Total de visitas</p>
             </CardContent>
           </Card>
         </div>
@@ -316,7 +310,13 @@ export default function HorarioPage() {
           <CardHeader>
             <CardTitle>Agenda de Hoy</CardTitle>
             <CardDescription>
-              Tus visitas y actividades programadas para {new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              Tus visitas y actividades programadas para{' '}
+              {new Date().toLocaleDateString('es-CL', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -393,19 +393,11 @@ export default function HorarioPage() {
                 <CardDescription>Visitas programadas por día de la semana</CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePreviousWeek}
-                >
+                <Button variant="outline" size="sm" onClick={handlePreviousWeek}>
                   <Calendar className="w-4 h-4 mr-2" />
                   Semana Anterior
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNextWeek}
-                >
+                <Button variant="outline" size="sm" onClick={handleNextWeek}>
                   Semana Siguiente
                   <Calendar className="w-4 h-4 ml-2" />
                 </Button>

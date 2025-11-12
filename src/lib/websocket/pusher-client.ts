@@ -8,6 +8,7 @@ export class PusherWebSocketClient {
   private eventListeners: Map<string, Function[]> = new Map();
   private _isConnected = false;
   private _connectionAttempts = 0;
+  private userId: string = '';
 
   constructor() {
     // ✅ Log en constructor para confirmar que la clase se instancia
@@ -18,7 +19,12 @@ export class PusherWebSocketClient {
     console.log('🚨🚨🚨 [PUSHER] File loaded and class instantiated successfully');
   }
 
-  async connect(token?: string): Promise<boolean> {
+  async connect(userId?: string, token?: string): Promise<boolean> {
+    // Guardar el userId para filtrar notificaciones
+    if (userId) {
+      this.userId = userId;
+    }
+
     this._connectionAttempts++;
 
     // Usar window.console para asegurar que se muestre en producción
