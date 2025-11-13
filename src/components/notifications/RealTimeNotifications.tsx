@@ -66,7 +66,15 @@ export default function RealTimeNotifications() {
   console.log('🎯 [REAL TIME NOTIFICATIONS] useState hooks executed successfully');
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] About to execute useWebSocket hook...');
-  const { isConnected, notifications: wsNotifications, unreadMessagesCount } = useWebSocket();
+  const {
+    isConnected,
+    notifications: wsNotifications,
+    unreadMessagesCount,
+    unreadRequestsCount,
+    unreadTicketsCount,
+    unreadRatingsCount,
+    refreshCounters,
+  } = useWebSocket();
   console.log('🎯 [REAL TIME NOTIFICATIONS] useWebSocket hook executed successfully');
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] About to execute useToast hook...');
@@ -81,6 +89,9 @@ export default function RealTimeNotifications() {
     isConnected,
     wsNotificationsCount: wsNotifications?.length,
     unreadMessagesCount,
+    unreadRequestsCount,
+    unreadTicketsCount,
+    unreadRatingsCount,
   });
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] COMPONENT RENDERED AT:', new Date().toISOString());
@@ -88,6 +99,9 @@ export default function RealTimeNotifications() {
     isConnected,
     wsNotificationsLength: wsNotifications?.length,
     unreadMessagesCount,
+    unreadRequestsCount,
+    unreadTicketsCount,
+    unreadRatingsCount,
     localNotificationsLength: localNotifications.length,
   });
 
@@ -118,138 +132,231 @@ export default function RealTimeNotifications() {
     return new Date(); // fallback para cualquier otro tipo
   };
 
-  // Procesar notificaciones que llegan desde WebSocket
+  // Estado para rastrear notificaciones procesadas y evitar duplicados
+  // Usar sessionStorage para persistir entre re-renders
+  const getProcessedIds = (): Set<string> => {
+    if (typeof window === 'undefined') {
+      return new Set<string>();
+    }
+    try {
+      const stored = sessionStorage.getItem('processed_notification_ids');
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set<string>();
+    } catch {
+      return new Set<string>();
+    }
+  };
+
+  const saveProcessedIds = (ids: Set<string>) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      sessionStorage.setItem('processed_notification_ids', JSON.stringify([...ids]));
+    } catch (error) {
+      console.error('Error saving processed notification IDs:', error);
+    }
+  };
+
+  const [processedNotificationIds, setProcessedNotificationIds] =
+    useState<Set<string>>(getProcessedIds());
+
+  // Procesar notificaciones que llegan desde WebSocket - UN SOLO useEffect para evitar duplicados
   useEffect(() => {
+    if (!wsNotifications || wsNotifications.length === 0) {
+      return;
+    }
+
     console.log(
       '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing WebSocket notifications - useEffect triggered'
     );
-    console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] wsNotifications:', wsNotifications);
-    console.log(
-      '🚨🚨🚨 [REAL TIME NOTIFICATIONS] wsNotifications length:',
-      wsNotifications?.length
+    console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] wsNotifications length:', wsNotifications.length);
+
+    // Filtrar notificaciones que ya han sido procesadas usando el Set de IDs procesados
+    const unprocessedNotifications = wsNotifications.filter(
+      wsNotif => wsNotif.id && !processedNotificationIds.has(wsNotif.id)
     );
 
-    if (wsNotifications && wsNotifications.length > 0) {
-      console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Found notifications to process!');
+    if (unprocessedNotifications.length === 0) {
+      console.log('🚨 [REAL TIME NOTIFICATIONS] All notifications already processed');
+      return;
+    }
 
-      const newNotifications = wsNotifications
-        .map((wsNotif: any) => {
-          try {
-            console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing notification:', wsNotif);
+    console.log(
+      '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Processing',
+      unprocessedNotifications.length,
+      'new notifications'
+    );
 
-            // Validar campos requeridos
-            if (!wsNotif || typeof wsNotif !== 'object') {
-              console.error('🚨 [REAL TIME NOTIFICATIONS] Invalid notification object:', wsNotif);
-              return null;
-            }
-
-            if (!wsNotif.title && !wsNotif.message) {
-              console.error(
-                '🚨 [REAL TIME NOTIFICATIONS] Notification missing title and message:',
-                wsNotif
-              );
-              return null;
-            }
-
-            return {
-              id: wsNotif.id || `ws_${Date.now()}_${Math.random()}`,
-              type: wsNotif.type || 'unknown',
-              title: wsNotif.title || 'Nueva notificación',
-              message: wsNotif.message || '',
-              // No guardar el objeto completo para evitar problemas de serialización
-              link: wsNotif.link || undefined,
-              priority: typeof wsNotif.priority === 'string' ? wsNotif.priority : 'medium',
-              timestamp: parseTimestamp(wsNotif.timestamp),
-              read: false,
-            };
-          } catch (error) {
-            console.error(
-              '🚨 [REAL TIME NOTIFICATIONS] Error processing individual notification:',
-              error,
-              wsNotif
-            );
+    const newNotifications = unprocessedNotifications
+      .map((wsNotif: any) => {
+        try {
+          // Validar campos requeridos
+          if (!wsNotif || typeof wsNotif !== 'object' || !wsNotif.id) {
             return null;
           }
-        })
-        .filter(notification => notification !== null); // Filtrar notificaciones inválidas
 
-      console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Created new notifications:', newNotifications);
+          if (!wsNotif.title && !wsNotif.message) {
+            return null;
+          }
 
-      setLocalNotifications(prev => {
-        // Evitar duplicados
-        const existingIds = prev.map(n => n.id);
-        const uniqueNew = newNotifications.filter(n => !existingIds.includes(n.id));
-        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Unique new notifications:', uniqueNew.length);
-        const result = [...uniqueNew, ...prev];
-        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Final notifications list:', result.length);
-        return result;
-      });
+          return {
+            id: wsNotif.id,
+            type: wsNotif.type || 'unknown',
+            title: wsNotif.title || 'Nueva notificación',
+            message: wsNotif.message || '',
+            link: wsNotif.link || undefined,
+            priority: typeof wsNotif.priority === 'string' ? wsNotif.priority : 'medium',
+            timestamp: parseTimestamp(wsNotif.timestamp),
+            read: false,
+          };
+        } catch (error) {
+          console.error(
+            '🚨 [REAL TIME NOTIFICATIONS] Error processing notification:',
+            error,
+            wsNotif
+          );
+          return null;
+        }
+      })
+      .filter(notification => notification !== null) as NotificationItem[];
 
-      // Incrementar contador de no leídas
-      console.log(
-        '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Incrementing unread count by:',
-        newNotifications.length
-      );
-      setUnreadCount(prev => {
-        const newCount = prev + newNotifications.length;
-        console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] New unread count:', newCount);
-        return newCount;
-      });
-    } else {
-      console.log(
-        '🚨🚨🚨 [REAL TIME NOTIFICATIONS] No notifications to process or wsNotifications is empty'
-      );
+    if (newNotifications.length === 0) {
+      return;
     }
-  }, [wsNotifications]);
 
-  // Cargar notificaciones desde localStorage al iniciar
+    // Actualizar estado evitando duplicados
+    setLocalNotifications(prev => {
+      const existingIds = new Set(prev.map(n => n.id));
+      const uniqueNew = newNotifications.filter(n => !existingIds.has(n.id));
+      return [...uniqueNew, ...prev].slice(0, 100); // Limitar a 100 notificaciones
+    });
+
+    // Actualizar contador
+    setUnreadCount(prev => prev + newNotifications.length);
+
+    // Marcar como procesadas
+    setProcessedNotificationIds(prev => {
+      const newSet = new Set(prev);
+      newNotifications.forEach(notif => {
+        if (notif.id) {
+          newSet.add(notif.id);
+        }
+      });
+      saveProcessedIds(newSet);
+      return newSet;
+    });
+
+    // Mostrar toast solo para alta prioridad
+    const highPriorityNotif = newNotifications.find(n => n.priority === 'high');
+    if (highPriorityNotif) {
+      success('Notificación importante', highPriorityNotif.title);
+    }
+  }, [wsNotifications, processedNotificationIds, success]);
+
+  // Cargar notificaciones desde la base de datos al iniciar (para usuarios que estaban desconectados)
   useEffect(() => {
-    const savedNotifications = localStorage.getItem('rent360_notifications');
-    if (savedNotifications) {
+    const loadInitialNotifications = async () => {
       try {
-        const parsed = JSON.parse(savedNotifications);
-        const notificationsWithDates = parsed
-          .map((n: any) => {
-            try {
-              // Validar y convertir timestamp de forma segura
-              const timestamp = parseTimestamp(n.timestamp);
-              return {
-                ...n,
-                timestamp,
-              };
-            } catch (error) {
-              console.error(
-                '🚨 [REAL TIME NOTIFICATIONS] Error parsing saved notification timestamp:',
-                error,
-                n
-              );
-              return null;
-            }
-          })
-          .filter((n: any) => n !== null); // Filtrar notificaciones inválidas
-
-        setLocalNotifications(notificationsWithDates);
-        setUnreadCount(notificationsWithDates.filter((n: NotificationItem) => !n.read).length);
-
-        // Marcar las notificaciones cargadas como procesadas para evitar reprocesamiento
-        setProcessedNotificationIds(prev => {
-          const newSet = new Set(prev);
-          notificationsWithDates.forEach((notif: NotificationItem) => {
-            if (notif.id) {
-              newSet.add(notif.id);
-            }
-          });
-          return newSet;
+        console.log(
+          '📥 [REAL TIME NOTIFICATIONS] Loading unread notifications from DB on mount...'
+        );
+        const response = await fetch('/api/notifications', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data && Array.isArray(data.data)) {
+            console.log(
+              '📥 [REAL TIME NOTIFICATIONS] Loaded',
+              data.data.length,
+              'unread notifications from DB'
+            );
+
+            // Convertir notificaciones de BD al formato local
+            const dbNotifications: NotificationItem[] = data.data
+              .map((n: any) => {
+                try {
+                  return {
+                    id: n.id,
+                    type: n.type || 'unknown',
+                    title: n.title || 'Nueva notificación',
+                    message: n.message || '',
+                    link: n.link || undefined,
+                    priority: typeof n.priority === 'string' ? n.priority : 'medium',
+                    timestamp: parseTimestamp(n.createdAt || n.timestamp),
+                    read: n.isRead || false,
+                  };
+                } catch (error) {
+                  console.error('Error processing DB notification:', error, n);
+                  return null;
+                }
+              })
+              .filter((n: any) => n !== null) as NotificationItem[];
+
+            // Actualizar estado local con notificaciones de BD
+            setLocalNotifications(dbNotifications);
+            setUnreadCount(dbNotifications.filter(n => !n.read).length);
+
+            // Marcar como procesadas
+            setProcessedNotificationIds(prev => {
+              const newSet = new Set(prev);
+              dbNotifications.forEach(notif => {
+                if (notif.id) {
+                  newSet.add(notif.id);
+                }
+              });
+              saveProcessedIds(newSet);
+              return newSet;
+            });
+
+            // Guardar en localStorage para persistencia
+            try {
+              localStorage.setItem('rent360_notifications', JSON.stringify(dbNotifications));
+            } catch (storageError) {
+              console.error('Error saving to localStorage:', storageError);
+            }
+          }
+        }
       } catch (error) {
         console.error(
-          '🚨 [REAL TIME NOTIFICATIONS] Error loading notifications from localStorage:',
+          '❌ [REAL TIME NOTIFICATIONS] Error loading from DB, trying localStorage:',
           error
         );
-        // Limpiar localStorage corrupto
-        localStorage.removeItem('rent360_notifications');
+        // Fallback: cargar desde localStorage si falla la BD
+        const savedNotifications = localStorage.getItem('rent360_notifications');
+        if (savedNotifications) {
+          try {
+            const parsed = JSON.parse(savedNotifications);
+            const notificationsWithDates = parsed
+              .map((n: any) => {
+                try {
+                  const timestamp = parseTimestamp(n.timestamp);
+                  return {
+                    ...n,
+                    timestamp,
+                  };
+                } catch (error) {
+                  return null;
+                }
+              })
+              .filter((n: any) => n !== null);
+
+            setLocalNotifications(notificationsWithDates);
+            setUnreadCount(notificationsWithDates.filter((n: NotificationItem) => !n.read).length);
+          } catch (parseError) {
+            console.error('Error parsing localStorage notifications:', parseError);
+            localStorage.removeItem('rent360_notifications');
+          }
+        }
       }
-    }
+    };
+
+    loadInitialNotifications();
   }, []);
 
   // Guardar notificaciones en localStorage cuando cambien
@@ -266,94 +373,6 @@ export default function RealTimeNotifications() {
     }
   }, [localNotifications]);
 
-  // Estado para rastrear notificaciones procesadas y evitar duplicados
-  // Usar sessionStorage para persistir entre re-renders
-  const getProcessedIds = (): Set<string> => {
-    try {
-      const stored = sessionStorage.getItem('processed_notification_ids');
-      return stored ? new Set(JSON.parse(stored) as string[]) : new Set<string>();
-    } catch {
-      return new Set<string>();
-    }
-  };
-
-  const saveProcessedIds = (ids: Set<string>) => {
-    try {
-      sessionStorage.setItem('processed_notification_ids', JSON.stringify([...ids]));
-    } catch (error) {
-      console.error('Error saving processed notification IDs:', error);
-    }
-  };
-
-  const [processedNotificationIds, setProcessedNotificationIds] =
-    useState<Set<string>>(getProcessedIds());
-
-  // Manejar nuevas notificaciones desde WebSocket
-  useEffect(() => {
-    if (wsNotifications.length > 0) {
-      // Filtrar notificaciones que ya han sido procesadas
-      const unprocessedNotifications = wsNotifications.filter(
-        wsNotif => wsNotif.id && !processedNotificationIds.has(wsNotif.id)
-      );
-
-      if (unprocessedNotifications.length === 0) {
-        console.log('🚨 [REAL TIME NOTIFICATIONS] All notifications already processed');
-        return;
-      }
-
-      console.log(
-        '🚨 [REAL TIME NOTIFICATIONS] Processing new notifications:',
-        unprocessedNotifications.length
-      );
-
-      const newNotifications: NotificationItem[] = unprocessedNotifications.map(wsNotif => ({
-        id: wsNotif.id || `notif_${Date.now()}_${Math.random()}`,
-        type: wsNotif.type || 'system_alert',
-        title: wsNotif.title || 'Nueva Notificación',
-        message: wsNotif.message || wsNotif.content || 'Tienes una nueva notificación',
-        data: wsNotif.data,
-        priority: wsNotif.priority || 'medium',
-        timestamp: parseTimestamp(wsNotif.timestamp),
-        read: false,
-      }));
-
-      setLocalNotifications(prev => {
-        const updated = [...newNotifications, ...prev];
-        // Limitar a 100 notificaciones
-        return updated.slice(0, 100);
-      });
-
-      setUnreadCount(prev => prev + newNotifications.length);
-
-      // Marcar estas notificaciones como procesadas
-      setProcessedNotificationIds(prev => {
-        const newSet = new Set(prev);
-        newNotifications.forEach(notif => {
-          if (notif.id) {
-            newSet.add(notif.id);
-          }
-        });
-        // Guardar en sessionStorage
-        saveProcessedIds(newSet);
-        return newSet;
-      });
-
-      // Mostrar notificación del sistema si es importante
-      const highPriorityNotif = newNotifications.find(n => n.priority === 'high');
-      if (highPriorityNotif) {
-        console.log(
-          '🚨🚨🚨 [REAL TIME NOTIFICATIONS] Showing high priority toast:',
-          highPriorityNotif.title
-        );
-        success('Notificación', highPriorityNotif.title);
-      }
-
-      // Mostrar toast para todas las notificaciones nuevas
-      console.log('🚨🚨🚨 [REAL TIME NOTIFICATIONS] Showing toast for new notifications');
-      success('Nueva notificación', `Tienes ${newNotifications.length} nueva(s) notificación(es)`);
-    }
-  }, [wsNotifications, success]);
-
   // Guardar notificaciones en localStorage cuando cambien
   useEffect(() => {
     if (localNotifications.length > 0) {
@@ -361,72 +380,137 @@ export default function RealTimeNotifications() {
     }
   }, [localNotifications]);
 
-  const markAsRead = (notificationId: string) => {
-    setLocalNotifications(prev =>
-      prev.map(notif => (notif.id === notificationId ? { ...notif, read: true } : notif))
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
-
-  const markAllAsRead = () => {
-    setLocalNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-    setUnreadCount(0);
-  };
-
-  const deleteNotification = (notificationId: string) => {
-    setLocalNotifications(prev => {
-      const updated = prev.filter(notif => notif.id !== notificationId);
-      localStorage.setItem('rent360_notifications', JSON.stringify(updated));
-      return updated;
-    });
-
-    // Actualizar contador de no leídas
-    const deletedNotif = localNotifications.find(n => n.id === notificationId);
-    if (deletedNotif && !deletedNotif.read) {
+  const markAsRead = async (notificationId: string) => {
+    try {
+      // Actualizar estado local inmediatamente
+      setLocalNotifications(prev =>
+        prev.map(notif => (notif.id === notificationId ? { ...notif, read: true } : notif))
+      );
       setUnreadCount(prev => Math.max(0, prev - 1));
+
+      // Enviar al servidor
+      await fetch(`/api/notifications/${notificationId}`, {
+        method: 'PATCH',
+      });
+
+      // Recargar contadores desde la base de datos para mantener sincronización
+      if (refreshCounters) {
+        await refreshCounters();
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
   };
 
-  const clearAllNotifications = () => {
-    setLocalNotifications([]);
-    setUnreadCount(0);
-    localStorage.removeItem('rent360_notifications');
+  const markAllAsRead = async () => {
+    try {
+      // Actualizar estado local inmediatamente
+      setLocalNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+      setUnreadCount(0);
+
+      // Enviar al servidor
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'markAllRead' }),
+      });
+
+      // Recargar contadores desde la base de datos
+      if (refreshCounters) {
+        await refreshCounters();
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const deletedNotif = localNotifications.find(n => n.id === notificationId);
+      const wasUnread = deletedNotif && !deletedNotif.read;
+
+      // Actualizar estado local inmediatamente
+      setLocalNotifications(prev => {
+        const updated = prev.filter(notif => notif.id !== notificationId);
+        localStorage.setItem('rent360_notifications', JSON.stringify(updated));
+        return updated;
+      });
+
+      if (wasUnread) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+
+      // Enviar al servidor
+      await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+      });
+
+      // Recargar contadores desde la base de datos
+      if (refreshCounters) {
+        await refreshCounters();
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      // Actualizar estado local inmediatamente
+      setLocalNotifications([]);
+      setUnreadCount(0);
+      localStorage.removeItem('rent360_notifications');
+
+      // Marcar todas como leídas en el servidor
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'markAllRead' }),
+      });
+
+      // Recargar contadores desde la base de datos
+      if (refreshCounters) {
+        await refreshCounters();
+      }
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+    }
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'contract_created':
       case 'contract_signed':
-        return <FileText className="h-4 w-4 text-blue-600" />;
+        return <FileText className="h-4 w-4 text-emerald-600" />;
       case 'payment_received':
       case 'payment_overdue':
-        return <DollarSign className="h-4 w-4 text-green-600" />;
+        return <DollarSign className="h-4 w-4 text-emerald-600" />;
       case 'message_received':
       case 'NEW_MESSAGE':
-        return <MessageSquare className="h-4 w-4 text-purple-600" />;
+        return <MessageSquare className="h-4 w-4 text-emerald-600" />;
       case 'property_updated':
-        return <Settings className="h-4 w-4 text-orange-600" />;
+        return <Settings className="h-4 w-4 text-emerald-600" />;
       case 'system_alert':
       case 'SYSTEM_ALERT':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
+        return <AlertCircle className="h-4 w-4 text-emerald-600" />;
       case 'invitation_received':
       case 'INVITATION_RECEIVED':
-        return <Users className="h-4 w-4 text-indigo-600" />;
+        return <Users className="h-4 w-4 text-emerald-600" />;
       default:
-        return <Info className="h-4 w-4 text-gray-600" />;
+        return <Info className="h-4 w-4 text-emerald-600" />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'border-l-red-500 bg-red-50 dark:bg-red-900/10';
+        return 'border-l-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
       case 'medium':
-        return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-900/10';
+        return 'border-l-emerald-500 bg-emerald-50/70 dark:bg-emerald-900/15';
       case 'low':
-        return 'border-l-blue-500 bg-blue-50 dark:bg-blue-900/10';
+        return 'border-l-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10';
       default:
-        return 'border-l-gray-500 bg-gray-50 dark:bg-gray-900/10';
+        return 'border-l-emerald-300 bg-emerald-50/30 dark:bg-emerald-900/10';
     }
   };
 
@@ -467,10 +551,17 @@ export default function RealTimeNotifications() {
     }
   };
 
-  console.log(
-    '🎯 [REAL TIME NOTIFICATIONS] Rendering button, unreadMessagesCount:',
-    unreadMessagesCount
-  );
+  // Calcular total de notificaciones no leídas
+  const totalUnreadNotifications =
+    unreadMessagesCount + unreadRequestsCount + unreadTicketsCount + unreadRatingsCount;
+
+  console.log('🎯 [REAL TIME NOTIFICATIONS] Rendering button, total unread:', {
+    totalUnreadNotifications,
+    unreadMessagesCount,
+    unreadRequestsCount,
+    unreadTicketsCount,
+    unreadRatingsCount,
+  });
 
   try {
     return (
@@ -485,13 +576,10 @@ export default function RealTimeNotifications() {
             setShowPanel(!showPanel);
           }}
         >
-          <Bell className="h-4 w-4" />
-          {unreadMessagesCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-            >
-              {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+          <Bell className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+          {totalUnreadNotifications > 0 && (
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-emerald-600 text-white border-0">
+              {totalUnreadNotifications > 99 ? '99+' : totalUnreadNotifications}
             </Badge>
           )}
         </Button>
@@ -499,7 +587,7 @@ export default function RealTimeNotifications() {
         {/* Estado de conexión WebSocket */}
         <div className="flex items-center gap-2 ml-2">
           {isConnected ? (
-            <Wifi className="h-4 w-4 text-green-600" />
+            <Wifi className="h-4 w-4 text-emerald-600" />
           ) : (
             <WifiOff className="h-4 w-4 text-red-600" />
           )}
@@ -507,38 +595,38 @@ export default function RealTimeNotifications() {
 
         {/* Panel de notificaciones */}
         {showPanel && (
-          <Card className="absolute top-8 right-0 w-96 max-h-96 shadow-lg border z-50">
-            <CardHeader className="pb-4 bg-gradient-to-r from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700">
+          <Card className="absolute top-8 right-0 w-96 max-h-96 shadow-lg border border-emerald-200 dark:border-emerald-800 z-50 bg-white dark:bg-gray-900">
+            <CardHeader className="pb-4 bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950 dark:to-emerald-900 border-b border-emerald-200 dark:border-emerald-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
+                    <Bell className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
                   </div>
                   <div>
                     <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
                       Notificaciones
                     </CardTitle>
-                    {unreadMessagesCount > 0 && (
-                      <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                        {unreadMessagesCount} sin leer
+                    {totalUnreadNotifications > 0 && (
+                      <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">
+                        {totalUnreadNotifications} sin leer
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {unreadMessagesCount > 0 && (
+                  {totalUnreadNotifications > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={markAllAsRead}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 dark:text-emerald-400"
                     >
                       Marcar todas
                     </Button>
                   )}
                   <button
                     onClick={() => setShowPanel(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -549,12 +637,12 @@ export default function RealTimeNotifications() {
                 <div
                   className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
                     isConnected
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
                       : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                   }`}
                 >
                   <div
-                    className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+                    className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}
                   />
                   {isConnected ? 'Conectado' : 'Desconectado'}
                 </div>
@@ -578,15 +666,15 @@ export default function RealTimeNotifications() {
                         .map(notification => (
                           <div
                             key={notification.id}
-                            className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
+                            className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-200 dark:border-emerald-800 overflow-hidden transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
                               !notification.read
-                                ? 'ring-2 ring-blue-500/20 bg-gradient-to-r from-blue-50/50 to-white dark:from-blue-950/20 dark:to-gray-800'
-                                : 'hover:bg-gray-50 dark:hover:bg-gray-750'
+                                ? 'ring-2 ring-emerald-500/20 bg-gradient-to-r from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-gray-800'
+                                : 'hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20'
                             }`}
                           >
                             {/* Indicador de no leído */}
                             {!notification.read && (
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-600" />
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600" />
                             )}
 
                             <div className="p-4">
@@ -595,15 +683,15 @@ export default function RealTimeNotifications() {
                                 <div
                                   className={`flex-shrink-0 p-2 rounded-full ${
                                     !notification.read
-                                      ? 'bg-blue-100 dark:bg-blue-900/30'
-                                      : 'bg-gray-100 dark:bg-gray-700'
+                                      ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                                      : 'bg-emerald-50 dark:bg-emerald-900/20'
                                   }`}
                                 >
                                   <div
                                     className={`${
                                       !notification.read
-                                        ? 'text-blue-600 dark:text-blue-400'
-                                        : 'text-gray-600 dark:text-gray-400'
+                                        ? 'text-emerald-700 dark:text-emerald-400'
+                                        : 'text-emerald-600 dark:text-emerald-500'
                                     }`}
                                   >
                                     {getNotificationIcon(notification.type)}
@@ -623,7 +711,7 @@ export default function RealTimeNotifications() {
                                       {notification.title}
                                     </h4>
                                     {!notification.read && (
-                                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1 animate-pulse" />
+                                      <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0 mt-1 animate-pulse" />
                                     )}
                                   </div>
 
@@ -648,7 +736,7 @@ export default function RealTimeNotifications() {
                                       {!notification.read && (
                                         <button
                                           onClick={() => markAsRead(notification.id)}
-                                          className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"
+                                          className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 dark:text-emerald-400 rounded-full transition-colors"
                                           title="Marcar como leída"
                                         >
                                           <CheckCircle className="h-4 w-4" />
@@ -672,12 +760,12 @@ export default function RealTimeNotifications() {
                     </div>
                   </ScrollArea>
 
-                  <Separator />
+                  <Separator className="bg-emerald-200 dark:bg-emerald-800" />
 
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800">
                     <button
                       onClick={clearAllNotifications}
-                      className="w-full py-2 px-4 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
                     >
                       🗑️ Limpiar todas las notificaciones
                     </button>

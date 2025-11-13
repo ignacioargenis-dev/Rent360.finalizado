@@ -660,7 +660,12 @@ export default function UnifiedSidebar({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { unreadMessagesCount: wsUnreadCount } = useWebSocket();
+  const {
+    unreadMessagesCount: wsUnreadCount,
+    unreadRequestsCount: wsUnreadRequestsCount,
+    unreadTicketsCount: wsUnreadTicketsCount,
+    unreadRatingsCount: wsUnreadRatingsCount,
+  } = useWebSocket();
 
   // LOG MUY VISIBLE PARA COMPONENTE INICIALIZADO
   console.log('🏠 [SIDEBAR] UnifiedSidebar initialized, user:', user?.id, 'role:', user?.role);
@@ -775,21 +780,27 @@ export default function UnifiedSidebar({
     const isOpen = openSubmenus[item.title];
     const isActive = isActiveRoute(item.url);
 
-    // Agregar badge dinámico para Mensajes
-    const showUnreadBadge = item.title === 'Mensajes' && wsUnreadCount > 0;
-    const badgeText = showUnreadBadge ? String(wsUnreadCount) : item.badge;
+    // Determinar badge dinámico según la sección del menú
+    let showUnreadBadge = false;
+    let badgeText = item.badge;
+    let badgeVariant = item.badgeVariant || 'default';
 
-    // LOG MUY VISIBLE CUANDO SE RENDERIZA EL MENÚ DE MENSAJES
-    if (item.title === 'Mensajes') {
-      console.log('🚨🚨🚨 [SIDEBAR] RENDERING MESSAGES MENU ITEM 🚨🚨🚨');
-      console.log('🔔 [SIDEBAR] Rendering messages badge:', {
-        wsUnreadCount,
-        showUnreadBadge,
-        badgeText,
-        itemTitle: item.title,
-        userId: user?.id,
-        userRole: user?.role,
-      });
+    if (item.title === 'Mensajes' && wsUnreadCount > 0) {
+      showUnreadBadge = true;
+      badgeText = String(wsUnreadCount);
+      badgeVariant = 'destructive';
+    } else if (item.title === 'Solicitudes' && wsUnreadRequestsCount > 0) {
+      showUnreadBadge = true;
+      badgeText = String(wsUnreadRequestsCount);
+      badgeVariant = 'destructive';
+    } else if (item.title === 'Mis Tickets' && wsUnreadTicketsCount > 0) {
+      showUnreadBadge = true;
+      badgeText = String(wsUnreadTicketsCount);
+      badgeVariant = 'destructive';
+    } else if (item.title === 'Calificaciones' && wsUnreadRatingsCount > 0) {
+      showUnreadBadge = true;
+      badgeText = String(wsUnreadRatingsCount);
+      badgeVariant = 'destructive';
     }
 
     return (
@@ -804,10 +815,7 @@ export default function UnifiedSidebar({
                 <item.icon className="w-4 h-4" />
                 <span>{item.title}</span>
                 {badgeText && (
-                  <Badge
-                    variant={showUnreadBadge ? 'destructive' : item.badgeVariant || 'default'}
-                    className="ml-auto"
-                  >
+                  <Badge variant={badgeVariant} className="ml-auto">
                     {badgeText}
                   </Badge>
                 )}

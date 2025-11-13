@@ -508,6 +508,81 @@ class WebSocketClient {
 // Instancia singleton del cliente WebSocket
 export const websocketClient = new WebSocketClient();
 
+// Función para mapear tipos de notificación a secciones del sidebar
+// Funciona para todos los roles según el tipo de notificación
+function getNotificationSection(
+  type: string
+): 'messages' | 'requests' | 'tickets' | 'ratings' | null {
+  const normalizedType = type?.toUpperCase() || '';
+
+  // Mensajes - NEW_MESSAGE, mensajes directos
+  if (
+    normalizedType === 'NEW_MESSAGE' ||
+    normalizedType === 'NEW-MESSAGE' ||
+    normalizedType.includes('MESSAGE') ||
+    normalizedType === 'DIRECT_MESSAGE'
+  ) {
+    return 'messages';
+  }
+
+  // Solicitudes/Cotizaciones - Service requests, quotes, invitations, prospects, recomendaciones
+  if (
+    normalizedType.includes('SERVICE_REQUEST') ||
+    normalizedType.includes('QUOTE') ||
+    normalizedType === 'SERVICE_REQUEST_RECEIVED' ||
+    normalizedType === 'SERVICE_REQUEST_RESPONSE' ||
+    normalizedType === 'SERVICE_REQUEST_ACCEPTED' ||
+    normalizedType === 'SERVICE_REQUEST_REJECTED' ||
+    normalizedType === 'QUOTE_ACCEPTED' ||
+    normalizedType === 'QUOTE_REJECTED' ||
+    normalizedType === 'INVITATION_RECEIVED' ||
+    normalizedType === 'INVITATION_ACCEPTED' ||
+    normalizedType === 'INVITATION_REJECTED' ||
+    normalizedType === 'PROSPECT_CONVERTED' ||
+    normalizedType === 'PROSPECT_ACTIVITY' ||
+    normalizedType === 'NEW_RECOMMENDATIONS' ||
+    normalizedType.includes('SERVICE') ||
+    normalizedType.includes('REQUEST') ||
+    normalizedType.includes('PROSPECT') ||
+    normalizedType.includes('RECOMMENDATION')
+  ) {
+    return 'requests';
+  }
+
+  // Tickets - Soporte, tickets, casos legales, pagos/comisiones, alertas del sistema
+  if (
+    normalizedType.includes('TICKET') ||
+    normalizedType.includes('SUPPORT') ||
+    normalizedType.includes('LEGAL_CASE') ||
+    normalizedType === 'SYSTEM_ALERT' ||
+    normalizedType === 'ADMIN_ALERT' ||
+    normalizedType === 'COMMISSION_CALCULATED' ||
+    normalizedType === 'COMMISSION_PAID' ||
+    normalizedType === 'PAYOUT_READY' ||
+    normalizedType === 'PROVIDER_PAYOUT_APPROVED' ||
+    normalizedType.includes('COMMISSION') ||
+    normalizedType.includes('PAYOUT') ||
+    normalizedType.includes('PAYMENT')
+  ) {
+    return 'tickets';
+  }
+
+  // Calificaciones - Ratings, reviews, evaluaciones, incentivos
+  if (
+    normalizedType.includes('RATING') ||
+    normalizedType.includes('REVIEW') ||
+    normalizedType === 'RUNNER_RATING_UPDATED' ||
+    normalizedType === 'RATING_RECEIVED' ||
+    normalizedType === 'RATING_UPDATED' ||
+    normalizedType === 'RUNNER_INCENTIVE_ACHIEVED' ||
+    normalizedType.includes('INCENTIVE')
+  ) {
+    return 'ratings';
+  }
+
+  return null;
+}
+
 // Hook de React para usar WebSocket
 export function useWebSocket() {
   // LOG MUY VISIBLE PARA EL HOOK
@@ -517,6 +592,76 @@ export function useWebSocket() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [unreadRequestsCount, setUnreadRequestsCount] = useState(0);
+  const [unreadTicketsCount, setUnreadTicketsCount] = useState(0);
+  const [unreadRatingsCount, setUnreadRatingsCount] = useState(0);
+
+  // Función para cargar notificaciones no leídas desde la base de datos
+  const loadUnreadNotificationsFromDB = async () => {
+    try {
+      console.log('📥 [USE WEBSOCKET] Loading unread notifications from database...');
+      const response = await fetch('/api/notifications', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data && Array.isArray(data.data)) {
+          console.log(
+            '📥 [USE WEBSOCKET] Loaded',
+            data.data.length,
+            'unread notifications from DB'
+          );
+
+          // Inicializar contadores según el tipo de cada notificación
+          let messagesCount = 0;
+          let requestsCount = 0;
+          let ticketsCount = 0;
+          let ratingsCount = 0;
+
+          data.data.forEach((notification: any) => {
+            const section = getNotificationSection(notification.type);
+            switch (section) {
+              case 'messages':
+                messagesCount++;
+                break;
+              case 'requests':
+                requestsCount++;
+                break;
+              case 'tickets':
+                ticketsCount++;
+                break;
+              case 'ratings':
+                ratingsCount++;
+                break;
+            }
+          });
+
+          // Actualizar contadores
+          setUnreadMessagesCount(messagesCount);
+          setUnreadRequestsCount(requestsCount);
+          setUnreadTicketsCount(ticketsCount);
+          setUnreadRatingsCount(ratingsCount);
+
+          console.log('📊 [USE WEBSOCKET] Initialized counters from DB:', {
+            messages: messagesCount,
+            requests: requestsCount,
+            tickets: ticketsCount,
+            ratings: ratingsCount,
+          });
+
+          // Agregar notificaciones al estado
+          setNotifications(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('❌ [USE WEBSOCKET] Error loading unread notifications from DB:', error);
+    }
+  };
 
   useEffect(() => {
     console.log('🔌 [USE WEBSOCKET] Setting up WebSocket connection...');
@@ -527,8 +672,15 @@ export function useWebSocket() {
       '🔌 [USE WEBSOCKET] Skipping automatic connection - will be handled by AuthProvider'
     );
 
+    // Cargar notificaciones no leídas cuando el componente se monta
+    loadUnreadNotificationsFromDB();
+
     // Configurar event listeners
-    const handleConnect = () => setIsConnected(true);
+    const handleConnect = () => {
+      setIsConnected(true);
+      // Cuando se conecta, cargar notificaciones pendientes
+      loadUnreadNotificationsFromDB();
+    };
     const handleDisconnect = () => setIsConnected(false);
 
     const handleNotification = (data: any) => {
@@ -570,36 +722,32 @@ export function useWebSocket() {
           }
         });
 
-        // Incrementar contador de mensajes no leídos de forma segura
+        // Incrementar contador según el tipo de notificación
         try {
-          if (data.type === 'NEW_MESSAGE' || data.type === 'new-message') {
-            console.log('📨 [WEBSOCKET CLIENT] Incrementing unread messages count');
-            setUnreadMessagesCount(prev => {
-              const newCount = typeof prev === 'number' ? prev + 1 : 1;
-              return newCount;
-            });
-          }
+          const section = getNotificationSection(data.type);
+          console.log('📊 [WEBSOCKET CLIENT] Notification type:', data.type, '→ Section:', section);
 
-          // También incrementar para notificaciones de cotización
-          if (data.type === 'QUOTE_ACCEPTED' || data.type === 'QUOTE_REJECTED') {
-            console.log(
-              '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for quote notification'
-            );
-            setUnreadMessagesCount(prev => {
-              const newCount = typeof prev === 'number' ? prev + 1 : 1;
-              return newCount;
-            });
-          }
-
-          // Incrementar para cualquier notificación del sistema
-          if (data.type && data.type !== 'NEW_MESSAGE' && data.type !== 'new-message') {
-            console.log(
-              '📨 [WEBSOCKET CLIENT] Incrementing unread messages count for system notification'
-            );
-            setUnreadMessagesCount(prev => {
-              const newCount = typeof prev === 'number' ? prev + 1 : 1;
-              return newCount;
-            });
+          switch (section) {
+            case 'messages':
+              console.log('📨 [WEBSOCKET CLIENT] Incrementing unread messages count');
+              setUnreadMessagesCount(prev => (typeof prev === 'number' ? prev + 1 : 1));
+              break;
+            case 'requests':
+              console.log('📋 [WEBSOCKET CLIENT] Incrementing unread requests count');
+              setUnreadRequestsCount(prev => (typeof prev === 'number' ? prev + 1 : 1));
+              break;
+            case 'tickets':
+              console.log('🎫 [WEBSOCKET CLIENT] Incrementing unread tickets count');
+              setUnreadTicketsCount(prev => (typeof prev === 'number' ? prev + 1 : 1));
+              break;
+            case 'ratings':
+              console.log('⭐ [WEBSOCKET CLIENT] Incrementing unread ratings count');
+              setUnreadRatingsCount(prev => (typeof prev === 'number' ? prev + 1 : 1));
+              break;
+            default:
+              console.log(
+                'ℹ️ [WEBSOCKET CLIENT] Notification type does not map to any sidebar section'
+              );
           }
         } catch (countError) {
           console.error('🚨 [WEBSOCKET CLIENT] Error updating unread count:', countError);
@@ -628,11 +776,20 @@ export function useWebSocket() {
     };
   }, []);
 
+  // Función para recargar contadores desde la base de datos (útil cuando se marca como leída)
+  const refreshCounters = async () => {
+    await loadUnreadNotificationsFromDB();
+  };
+
   return {
     isConnected,
     notifications,
     messages,
     unreadMessagesCount,
+    unreadRequestsCount,
+    unreadTicketsCount,
+    unreadRatingsCount,
+    refreshCounters,
     sendMessage: websocketClient.sendMessage.bind(websocketClient),
     joinRoom: websocketClient.joinRoom.bind(websocketClient),
     leaveRoom: websocketClient.leaveRoom.bind(websocketClient),
