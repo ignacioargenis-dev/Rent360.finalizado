@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
       // Obtener tipos de servicios ofrecidos desde ServiceProvider
       const serviceTypesJson = freshServiceProvider.serviceTypes || '[]';
-      let serviceTypes: string[] = [];
+      let serviceTypes: Array<string | any> = [];
       try {
         serviceTypes = JSON.parse(serviceTypesJson);
       } catch {
@@ -117,10 +117,19 @@ export async function GET(request: NextRequest) {
       // Agrupar estadísticas por tipo de servicio
       const statsByType: Record<string, any> = {};
       serviceTypes.forEach(type => {
-        const jobsForType = serviceJobs.filter(j => j.serviceType === type);
+        // Extraer el nombre del servicio (puede ser string o objeto)
+        let serviceName: string;
+        if (typeof type === 'string') {
+          serviceName = type;
+        } else if (typeof type === 'object' && type !== null && 'name' in type) {
+          serviceName = (type as any).name || String(type);
+        } else {
+          serviceName = String(type);
+        }
+        const jobsForType = serviceJobs.filter(j => j.serviceType === serviceName);
         const completedJobs = jobsForType.filter(j => j.status === 'COMPLETED');
 
-        statsByType[type] = {
+        statsByType[serviceName] = {
           totalJobs: jobsForType.length,
           completedJobs: completedJobs.length,
           avgRating: providerAvgRating, // Usar calificación promedio real del proveedor
@@ -148,9 +157,12 @@ export async function GET(request: NextRequest) {
 
       serviceTypes.forEach((item, index) => {
         if (typeof item === 'string') {
-          // ✅ Migración: convertir string a objeto con ID único
-          // Generar ID único basado en timestamp y hash del nombre
-          const serviceId = `svc_${Date.now()}_${item.replace(/\s+/g, '_').toLowerCase()}_${index}`;
+          // ✅ Migración: convertir string a objeto con ID único determinístico
+          // Usar formato consistente con el que se busca en [id]/route.ts
+          if (!fullUser.serviceProvider) {
+            return; // Skip si no hay serviceProvider
+          }
+          const serviceId = `svc_${fullUser.serviceProvider.id}_${item.replace(/\s+/g, '_').toLowerCase()}`;
           parsedServices.push({
             id: serviceId,
             name: item,
