@@ -825,62 +825,126 @@ export class AIChatbotService {
       },
     },
 
-    // Navegación y uso del sistema
+    // Navegación y uso del sistema (AMPLIADO)
     navigation: {
       tenant: {
         responses: [
-          'Como inquilino, tu panel principal tiene estas secciones principales: **Dashboard** (resumen general), **Buscar Propiedades** (encuentra arriendo), **Mis Contratos** (documentos legales), **Pagos** (renta y métodos), **Mantenimiento** (reportar problemas), **Mensajes** (comunicación), **Calificaciones** (valorar servicios).',
-          'Navegación para inquilinos: Usa la barra lateral izquierda para acceder a todas las funciones. El dashboard te muestra un resumen de tus contratos activos, pagos pendientes y notificaciones importantes.',
+          'Como inquilino, tu panel tiene estas secciones: **Dashboard** (resumen general), **Búsqueda Avanzada** (encuentra propiedades con filtros), **Mis Contratos** (documentos legales y firmas), **Mis Pagos** (renta, métodos, historial), **Mantenimiento** (reportar problemas y seguimiento), **Servicios de Corredores** (solicitar ayuda), **Mensajes** (comunicación con propietarios/corredores), **Calificaciones** (valorar servicios), **Disputas** (reportar problemas), **Mis Tickets** (soporte), **Reportes** (estadísticas de mantenimiento), y **Configuración** (perfil y preferencias).',
+          'Navegación completa: Usa la barra lateral izquierda para acceder a todas las funciones. El dashboard muestra resumen de contratos activos, pagos pendientes, solicitudes de mantenimiento, y notificaciones importantes. Cada sección tiene herramientas específicas para gestionar tu experiencia de arriendo.',
         ],
-        suggestions: ['Ver dashboard', 'Buscar propiedades', 'Ver contratos', 'Realizar pago'],
-        links: ['/tenant/dashboard', '/properties/search', '/tenant/contracts', '/tenant/payments'],
+        suggestions: [
+          'Ver dashboard',
+          'Buscar propiedades',
+          'Ver contratos',
+          'Realizar pago',
+          'Solicitar mantenimiento',
+          'Contactar corredor',
+        ],
+        links: [
+          '/tenant/dashboard',
+          '/tenant/advanced-search',
+          '/tenant/contracts',
+          '/tenant/payments',
+          '/tenant/maintenance',
+          '/tenant/broker-services',
+        ],
       },
       owner: {
         responses: [
-          'Como propietario, gestionas: **Propiedades** (tus inmuebles), **Inquilinos** (tus arrendatarios), **Contratos** (documentos legales), **Casos Legales** (mora y disputas), **Pagos** (ingresos por arriendo), **Mantenimiento** (reparaciones), **Analytics** (reportes y métricas).',
-          'Panel de propietario: Desde tu dashboard puedes ver ingresos mensuales, contratos activos, pagos pendientes de inquilinos, y casos legales en curso. La barra lateral te da acceso rápido a todas las funciones.',
+          'Como propietario, gestionas: **Dashboard** (resumen completo), **Mis Propiedades** (tus inmuebles con detalles), **Mis Inquilinos** (arrendatarios y su historial), **Servicios de Corredores** (delegar gestión), **Runners** (visitas profesionales), **Contratos** (documentos legales y firmas), **Casos Legales** (mora y desahucios), **Pagos** (ingresos y recordatorios), **Recordatorios** (notificaciones de pago), **Mantenimiento** (reparaciones y proveedores), **Mensajes** (comunicación), **Calificaciones** (feedback), **Reportes** (financieros y estadísticas), **Analytics** (métricas y comparaciones), y **Configuración** (perfil y preferencias).',
+          'Panel completo de propietario: Dashboard con ingresos mensuales, contratos activos, pagos pendientes, casos legales, y métricas clave. Cada sección tiene herramientas avanzadas: comparación de propiedades, análisis de mercado, gestión de corredores, y más. Todo diseñado para maximizar tus ingresos y simplificar la gestión.',
         ],
-        suggestions: ['Ver propiedades', 'Gestionar contratos', 'Ver ingresos', 'Casos legales'],
-        links: ['/owner/dashboard', '/owner/properties', '/owner/contracts', '/owner/payments'],
+        suggestions: [
+          'Ver propiedades',
+          'Gestionar contratos',
+          'Ver ingresos',
+          'Casos legales',
+          'Usar corredores',
+          'Ver analytics',
+          'Comparar propiedades',
+        ],
+        links: [
+          '/owner/dashboard',
+          '/owner/properties',
+          '/owner/contracts',
+          '/owner/payments',
+          '/owner/broker-services',
+          '/owner/analytics',
+          '/owner/property-comparison',
+        ],
       },
       broker: {
         responses: [
-          'Como corredor, administras: **Propiedades** (ofertas disponibles), **Clientes** (inquilinos y propietarios), **Citas** (visitas programadas), **Contratos** (cierres de negocio), **Comisiones** (ganancias), **Casos Legales** (apoyo a clientes), **Analytics** (rendimiento comercial).',
-          'Herramientas de corredor: Publica propiedades, gestiona clientes potenciales, programa citas con Runner360, cierra contratos, cobra comisiones automáticamente, y accede a reportes detallados de tu rendimiento.',
+          'Como corredor, administras: **Dashboard** (resumen comercial), **Propiedades** (ofertas y gestión), **Clientes** (todos, potenciales, activos), **Captación de Clientes** (descubrir leads), **Potenciales** (prospects y pipeline), **Citas** (visitas programadas), **Contratos** (cierres y firmas), **Casos Legales** (apoyo a clientes), **Disputas** (resolución de conflictos), **Mantenimiento** (coordinación), **Comisiones** (ganancias y pagos), **Mensajes** (comunicación), **Reportes** (rendimiento), **Analytics** (métricas y análisis de mercado), **Calificaciones** (reputación), y **Configuración** (perfil y alertas).',
+          'Herramientas completas de corredor: Sistema CRM completo con gestión de prospects, conversión a clientes, pipeline de ventas, compartir propiedades rastreables, actividades y follow-ups, gestión de propiedades (completa/parcial), comisiones automáticas, analytics avanzados, y más. Todo diseñado para maximizar tus cierres y comisiones.',
         ],
-        suggestions: ['Ver propiedades', 'Gestionar clientes', 'Programar citas', 'Ver comisiones'],
+        suggestions: [
+          'Ver propiedades',
+          'Gestionar clientes',
+          'Gestionar prospects',
+          'Programar citas',
+          'Ver comisiones',
+          'Ver analytics',
+          'Descubrir clientes',
+        ],
         links: [
           '/broker/dashboard',
           '/broker/properties',
           '/broker/clients',
+          '/broker/prospects',
+          '/broker/appointments',
           '/broker/commissions',
+          '/broker/analytics',
+          '/broker/discover',
         ],
       },
       provider: {
         responses: [
-          'Como proveedor de servicios, manejas: **Dashboard** (trabajos disponibles), **Trabajos** (reparaciones asignadas), **Calendario** (horarios), **Ganancias** (pagos por servicios), **Perfil** (servicios ofrecidos), **Calificaciones** (reputación).',
-          'Plataforma para proveedores: Recibe trabajos automáticamente según tu especialidad, coordina horarios con clientes, recibe pagos seguros, construye tu reputación con calificaciones, y accede a estadísticas de tu rendimiento.',
+          'Como proveedor de servicios (FUENTE DE TRABAJO), manejas: **Dashboard** (resumen de trabajos), **Trabajos** (disponibles y asignados), **Servicios** (configurar ofertas), **Clientes** (historial), **Calendario** (horarios y disponibilidad), **Ganancias** (pagos y transacciones), **Estadísticas** (rendimiento), **Calificaciones** (reputación), **Documentos** (verificación), **Mensajes** (comunicación), y **Configuración** (perfil, cuenta bancaria, zona de cobertura).',
+          'Plataforma completa de trabajo: Recibe trabajos automáticamente según tus servicios y zona, acepta trabajos que te interesen, coordina con clientes, completa trabajos con evidencia fotográfica, recibe pagos automáticos en tu cuenta bancaria (después de comisión de plataforma), construye reputación con calificaciones, y accede a estadísticas para optimizar tu estrategia. Todo diseñado para maximizar tus oportunidades de trabajo.',
         ],
         suggestions: [
           'Ver trabajos disponibles',
-          'Gestionar calendario',
+          'Aceptar trabajos',
+          'Configurar servicios',
           'Ver ganancias',
-          'Actualizar perfil',
+          'Configurar cuenta bancaria',
+          'Mejorar calificaciones',
+          'Ver estadísticas',
         ],
         links: [
           '/provider/dashboard',
-          '/maintenance/jobs',
+          '/provider/jobs',
+          '/provider/services',
           '/provider/earnings',
-          '/provider/profile',
+          '/provider/settings',
+          '/provider/ratings',
         ],
       },
       runner: {
         responses: [
-          'Como Runner360, controlas: **Dashboard** (tareas pendientes), **Visitas** (propiedades que inspeccionar), **Fotos** (galería de trabajos), **Horario** (disponibilidad), **Ganancias** (pagos por visita), **Incentivos** (bonos especiales), **Reportes** (estadísticas).',
-          'Sistema Runner360: Acepta tareas de inspección, toma fotos profesionales de propiedades, genera reportes detallados, cobra por visita completada, gana incentivos por rendimiento, y administra tu disponibilidad horaria.',
+          'Como Runner360 (FUENTE DE TRABAJO), controlas: **Dashboard** (resumen de tareas), **Tareas** (disponibles y asignadas), **Visitas** (programadas y completadas), **Fotos** (galería de trabajos), **Clientes** (historial), **Horario** (disponibilidad), **Ganancias** (pagos por visita e incentivos), **Incentivos** (bonos por rendimiento), **Mensajes** (comunicación), **Reportes** (rendimiento y estadísticas), **Calificaciones** (reputación), **Perfil** (configuración), y **Configuración** (zona de trabajo, cuenta bancaria).',
+          'Sistema completo Runner360: Recibe tareas automáticamente según tu zona, acepta visitas que puedas completar, haz visitas profesionales con fotos y reportes detallados, cobra $15.000-25.000 por visita completada, gana incentivos por volumen y calidad (Super Runner, Top Earner, Perfectionist), administra tu disponibilidad, y construye tu reputación. Todo diseñado para maximizar tus ingresos como trabajo flexible.',
         ],
-        suggestions: ['Ver tareas pendientes', 'Gestionar visitas', 'Ver ganancias', 'Subir fotos'],
-        links: ['/runner/dashboard', '/runner/tasks', '/runner/earnings', '/runner/photos'],
+        suggestions: [
+          'Ver tareas disponibles',
+          'Aceptar visitas',
+          'Completar visitas',
+          'Subir fotos',
+          'Ver ganancias',
+          'Ver incentivos',
+          'Mejorar calificación',
+          'Ver rendimiento',
+        ],
+        links: [
+          '/runner/dashboard',
+          '/runner/tasks',
+          '/runner/visits',
+          '/runner/photos',
+          '/runner/earnings',
+          '/runner/incentives',
+          '/runner/reports/performance',
+        ],
       },
     },
 
@@ -967,6 +1031,80 @@ export class AIChatbotService {
         ],
         suggestions: ['Buscar en ayuda', 'Contactar soporte', 'Ver tutoriales', 'Casos legales'],
         links: ['/help', '/support', '/contact', '/legal-help'],
+      },
+    },
+
+    // Documentos y visibilidad (NUEVO)
+    documents_visibility: {
+      provider: {
+        responses: [
+          '**Visibilidad de tus documentos como proveedor:**\n\nTus documentos personales (cédula, antecedentes, certificaciones) son **PRIVADOS** y solo los ve el equipo administrativo de Rent360 para verificación.\n\nSin embargo, cuando tus documentos son **aprobados y verificados** por el administrador, los clientes pueden ver únicamente los documentos aprobados en tu perfil público (como certificado de empresa, certificaciones profesionales verificadas). Esto aumenta la confianza de los clientes.\n\n**Documentos privados (solo admin):**\n- Cédula de identidad completa\n- Antecedentes penales\n- Documentos en proceso de verificación\n\n**Documentos públicos (clientes pueden ver):**\n- Solo documentos aprobados y verificados por el administrador\n- Certificado de empresa (si aplica)\n- Certificaciones profesionales verificadas\n\nPuedes verificar qué documentos están visibles en tu perfil público desde la sección "Configuración" → "Documentos".',
+          'Como proveedor de servicios, tus documentos tienen diferentes niveles de visibilidad:\n\n🔒 **Documentos privados:** Solo el equipo administrativo de Rent360 puede ver tus documentos personales durante el proceso de verificación. Esto incluye tu cédula completa y antecedentes penales.\n\n✅ **Documentos aprobados visibles:** Una vez que el administrador aprueba y verifica tus documentos, los clientes pueden ver únicamente los documentos aprobados en tu perfil público. Esto ayuda a generar confianza.\n\n📋 **Para verificar tu estado:** Ve a "Configuración" → "Documentos" para ver qué documentos están aprobados y visibles para clientes.',
+        ],
+        suggestions: ['Ver mis documentos', 'Configuración de privacidad', 'Contactar soporte'],
+        links: ['/provider/settings', '/provider/profile'],
+      },
+      general: {
+        responses: [
+          'La visibilidad de documentos depende de tu rol:\n\n**Proveedores:** Solo documentos aprobados por el administrador son visibles para clientes. Documentos personales son privados.\n\n**Propietarios:** Información de propiedades es visible para inquilinos y corredores según configuración.\n\n**Inquilinos:** Información personal es privada, solo compartida con propietarios y corredores cuando hay contratos activos.',
+        ],
+        suggestions: ['Ver configuración de privacidad', 'Contactar soporte'],
+        links: ['/settings', '/support'],
+      },
+    },
+
+    // Documentos de proveedores (NUEVO)
+    provider_documents: {
+      provider: {
+        responses: [
+          '**Documentos requeridos para proveedores de servicios:**\n\n1. **Cédula de Identidad** (frente y reverso)\n2. **Certificado de Antecedentes** (vigente)\n3. **Certificado de Empresa** (si aplica para servicios comerciales)\n4. **Certificaciones profesionales** (plomero, electricista, etc. si aplica)\n\n**Proceso de verificación:**\n- Sube tus documentos desde "Configuración" → "Documentos"\n- El equipo administrativo revisa y verifica\n- Una vez aprobados, los documentos verificados son visibles para clientes\n- Esto aumenta tu credibilidad y atrae más trabajos\n\n**Importante:** Los documentos personales (cédula completa, antecedentes) son privados. Solo documentos aprobados son visibles para clientes.',
+          'Para registrarte como proveedor necesitas:\n\n📄 **Documentos obligatorios:**\n- Cédula de identidad (ambos lados)\n- Certificado de antecedentes penales\n\n📋 **Documentos opcionales pero recomendados:**\n- Certificado de empresa (si tienes empresa)\n- Certificaciones profesionales (plomero, electricista, etc.)\n- Comprobante de experiencia laboral\n\nUna vez que subas tus documentos, el equipo administrativo los revisará. Cuando sean aprobados, los documentos verificados aparecerán en tu perfil público para que los clientes puedan verlos y confiar en ti.',
+        ],
+        suggestions: ['Subir documentos', 'Ver estado de verificación', 'Configuración'],
+        links: ['/provider/settings', '/provider/profile'],
+      },
+      guest: {
+        responses: [
+          '**Documentos requeridos para proveedores de servicios en Rent360:**\n\nPara ofrecer servicios (mantenimiento, jardinería, plomería, electricidad, limpieza, etc.) necesitas:\n\n1. **Cédula de Identidad** (frente y reverso)\n2. **Certificado de Antecedentes Penales** (vigente)\n3. **Certificado de Empresa** (opcional, si tienes empresa registrada)\n4. **Certificaciones profesionales** (opcional pero recomendado, ej: certificado de plomero, electricista)\n\n**Proceso:**\n1. Regístrate como proveedor\n2. Sube tus documentos\n3. El equipo administrativo verifica\n4. Una vez aprobados, puedes recibir trabajos\n\n**Visibilidad:** Solo documentos aprobados por el administrador son visibles para clientes potenciales. Esto genera confianza.',
+        ],
+        suggestions: [
+          'Registrarse como proveedor',
+          'Ver requisitos completos',
+          'Contactar soporte',
+        ],
+        links: ['/auth/register?role=provider', '/help'],
+      },
+    },
+
+    // Información de comisiones (NUEVO)
+    commission_info: {
+      general: {
+        responses: [
+          '**Porcentajes de comisión en Rent360:**\n\n📊 **Corredores:** El porcentaje de comisión es configurable por el administrador y puede variar según el tipo de propiedad y valor. Generalmente oscila entre 3% y 5% del valor del contrato.\n\n🔧 **Proveedores de servicios:** La plataforma retiene un porcentaje configurable (generalmente 8%) del monto del servicio. El resto se deposita al proveedor.\n\n🏃 **Runners (Runner360):** Comisión variable según tipo de visita y zona. Se calcula automáticamente por cada visita completada.\n\n**Nota:** Los porcentajes exactos pueden variar y son configurados por el administrador. Puedes ver tus comisiones específicas en tu panel de usuario.',
+        ],
+        suggestions: ['Ver mis comisiones', 'Contactar administrador', 'Ver configuración'],
+        links: ['/broker/commissions', '/provider/earnings', '/runner/earnings'],
+      },
+      broker: {
+        responses: [
+          '**Comisiones para corredores:**\n\nEl porcentaje de comisión se calcula automáticamente según:\n- Tipo de propiedad (departamento, casa, oficina, local)\n- Valor de la propiedad\n- Tipo de contrato\n\nLos porcentajes son configurables por el administrador y generalmente oscilan entre 3% y 5%. Puedes ver el desglose completo de tus comisiones en la sección "Comisiones" de tu panel.',
+        ],
+        suggestions: ['Ver mis comisiones', 'Ver reportes', 'Contactar administrador'],
+        links: ['/broker/commissions', '/broker/reports'],
+      },
+      provider: {
+        responses: [
+          '**Comisiones para proveedores de servicios:**\n\nLa plataforma retiene un porcentaje configurable (generalmente 8%) del monto total del servicio como comisión. El resto se deposita directamente en tu cuenta bancaria registrada.\n\n**Ejemplo:** Si completas un trabajo de $100.000:\n- Comisión de plataforma (8%): $8.000\n- Tu pago neto: $92.000\n\nEl porcentaje exacto puede variar según configuración del administrador. Puedes ver el desglose completo en "Ganancias" → "Transacciones".',
+        ],
+        suggestions: ['Ver mis ganancias', 'Ver transacciones', 'Configurar cuenta bancaria'],
+        links: ['/provider/earnings', '/provider/transactions', '/provider/payments/configure'],
+      },
+      guest: {
+        responses: [
+          '**Porcentajes de comisión en Rent360:**\n\n- **Corredores:** Entre 3% y 5% del valor del contrato (configurable)\n- **Proveedores de servicios:** Generalmente 8% del monto del servicio\n- **Runners:** Variable según tipo de visita\n\nLos porcentajes exactos son configurables por el administrador y pueden variar. Para información específica sobre comisiones, contacta al soporte o consulta la documentación oficial.',
+        ],
+        suggestions: ['Registrarse', 'Ver documentación', 'Contactar soporte'],
+        links: ['/auth/register', '/help', '/contact'],
       },
     },
   };
@@ -1136,6 +1274,44 @@ export class AIChatbotService {
         context: ['tutorial', 'guide', 'help', 'instructions', 'how', 'steps'],
       },
       {
+        intent: 'documents_visibility',
+        patterns: [
+          /(?:los\s+otros\s+usuarios|otros\s+usuarios|otras\s+personas|clientes|inquilinos|propietarios)\s+(?:pueden\s+ver|ven|acceden|tienen\s+acceso|visualizan)\s+(?:mis\s+)?(?:documentos|documento|archivos|información|datos|perfil)/i,
+          /(?:quién|quiénes|quien|quienes)\s+(?:puede|pueden)\s+(?:ver|acceder|visualizar)\s+(?:mis\s+)?(?:documentos|documento|archivos|información|datos|perfil)/i,
+          /(?:mis\s+)?(?:documentos|documento|archivos|información|datos|perfil)\s+(?:son\s+)?(?:visibles|públicos|privados|accesibles)/i,
+          /(?:visibilidad|acceso|privacidad)\s+(?:de\s+)?(?:mis\s+)?(?:documentos|documento|archivos|información|datos|perfil)/i,
+          /(?:qué|que)\s+(?:documentos|documento|archivos|información|datos)\s+(?:pueden\s+ver|ven|acceden)\s+(?:los\s+)?(?:clientes|usuarios|otros)/i,
+          /(?:documentos|documento)\s+(?:aprobados|verificados)\s+(?:visibles|públicos|accesibles)/i,
+          /(?:certificado|certificación|cédula|antecedentes)\s+(?:visible|público|accesible)/i,
+        ],
+        weight: 0.95,
+        context: ['documents', 'privacy', 'visibility', 'security', 'provider'],
+      },
+      {
+        intent: 'provider_documents',
+        patterns: [
+          /(?:documentos|documento)\s+(?:de\s+)?(?:proveedor|provider|servicio)/i,
+          /(?:qué|que)\s+(?:documentos|documento)\s+(?:necesito|requiero|debo)\s+(?:como|para)\s+(?:proveedor|provider)/i,
+          /(?:certificado|certificación|cédula|antecedentes)\s+(?:proveedor|provider|servicio)/i,
+          /(?:verificar|verificación|aprobación)\s+(?:documentos|documento)\s+(?:proveedor|provider)/i,
+          /(?:subir|subir|cargar)\s+(?:documentos|documento)\s+(?:proveedor|provider)/i,
+        ],
+        weight: 0.9,
+        context: ['documents', 'provider', 'verification', 'registration'],
+      },
+      {
+        intent: 'commission_info',
+        patterns: [
+          /(?:porcentaje|porcentajes)\s+(?:de\s+)?(?:comisión|comisiones)/i,
+          /(?:cuánto|cuanto|qué|que)\s+(?:porcentaje|porcentajes)\s+(?:de\s+)?(?:comisión|comisiones)/i,
+          /(?:comisión|comisiones)\s+(?:para|de)\s+(?:corredor|broker|proveedor|provider|runner)/i,
+          /(?:cuánto|cuanto)\s+(?:cobran|cobro|gano|gana)\s+(?:por\s+)?(?:comisión|comisiones)/i,
+          /(?:retención|retenciones)\s+(?:plataforma|sistema)/i,
+        ],
+        weight: 0.9,
+        context: ['commissions', 'payments', 'fees', 'financial'],
+      },
+      {
         intent: 'support',
         patterns: [
           /(?:ayuda|ayudame|problema|soporte|duda|no entiendo)/,
@@ -1202,6 +1378,8 @@ export class AIChatbotService {
         'legal_info',
         'navigation',
         'how_to',
+        'documents_visibility',
+        'commission_info',
       ],
       owner: [
         'property_search',
@@ -1214,6 +1392,8 @@ export class AIChatbotService {
         'legal_info',
         'navigation',
         'how_to',
+        'documents_visibility',
+        'commission_info',
       ],
       broker: [
         'property_search',
@@ -1225,10 +1405,38 @@ export class AIChatbotService {
         'legal_info',
         'navigation',
         'how_to',
+        'commission_info',
       ],
-      provider: ['register', 'maintenance', 'payments', 'navigation', 'how_to'],
-      runner: ['navigation', 'how_to'],
-      admin: ['security', 'support', 'legal_cases', 'legal_info', 'navigation', 'how_to'],
+      provider: [
+        'register',
+        'maintenance',
+        'payments',
+        'navigation',
+        'how_to',
+        'documents_visibility',
+        'provider_documents',
+        'commission_info',
+      ],
+      runner: ['navigation', 'how_to', 'commission_info'],
+      admin: [
+        'security',
+        'support',
+        'legal_cases',
+        'legal_info',
+        'navigation',
+        'how_to',
+        'documents_visibility',
+        'commission_info',
+      ],
+      guest: [
+        'register',
+        'property_search',
+        'navigation',
+        'how_to',
+        'provider_documents',
+        'commission_info',
+        'support',
+      ],
     };
 
     return roleRelevance[role]?.includes(intent) || false;
@@ -2635,7 +2843,23 @@ export class AIChatbotService {
   ): Promise<{ response: string; confidence: number }> {
     const input = userMessage.toLowerCase();
 
-    // Lógica simple basada en palabras clave
+    // 🚀 MEJORADO: Usar reconocimiento de intenciones mejorado
+    const intent = this.recognizeIntent(userMessage, userRole);
+
+    // Si tenemos una intención específica con alta confianza, usar la base de conocimiento
+    if (intent.confidence > 0.7) {
+      const securityContext = this.createSecurityContext(userRole, 'anonymous');
+      const smartResponse = this.generateSmartResponse(intent, userRole, securityContext);
+
+      if (smartResponse.response && smartResponse.confidence > 0.6) {
+        return {
+          response: smartResponse.response,
+          confidence: smartResponse.confidence,
+        };
+      }
+    }
+
+    // Lógica simple basada en palabras clave (fallback mejorado)
     if (input.includes('propiedad') || input.includes('casa') || input.includes('departamento')) {
       return {
         response:
@@ -2672,10 +2896,36 @@ export class AIChatbotService {
       };
     }
 
-    // Respuesta por defecto
+    // 🚀 NUEVO: Detección específica de preguntas sobre documentos
+    if (
+      input.includes('documento') &&
+      (input.includes('ver') ||
+        input.includes('visible') ||
+        input.includes('acceso') ||
+        input.includes('otros'))
+    ) {
+      if (userRole === 'provider' || userRole === 'PROVIDER') {
+        return {
+          response:
+            '**Visibilidad de tus documentos como proveedor:**\n\nTus documentos personales (cédula, antecedentes) son **PRIVADOS** y solo los ve el equipo administrativo para verificación.\n\nCuando tus documentos son **aprobados y verificados** por el administrador, los clientes pueden ver únicamente los documentos aprobados en tu perfil público. Esto aumenta la confianza.\n\n**Documentos privados (solo admin):**\n- Cédula de identidad completa\n- Antecedentes penales\n- Documentos en proceso de verificación\n\n**Documentos públicos (clientes pueden ver):**\n- Solo documentos aprobados y verificados por el administrador\n- Certificado de empresa (si aplica)\n- Certificaciones profesionales verificadas\n\nPuedes verificar qué documentos están visibles desde "Configuración" → "Documentos".',
+          confidence: 0.95,
+        };
+      }
+    }
+
+    // 🚀 NUEVO: Detección de preguntas sobre comisiones
+    if (input.includes('comisión') || input.includes('porcentaje') || input.includes('retención')) {
+      return {
+        response:
+          '**Porcentajes de comisión en Rent360:**\n\n📊 **Corredores:** Entre 3% y 5% del valor del contrato (configurable)\n🔧 **Proveedores de servicios:** Generalmente 8% del monto del servicio\n🏃 **Runners:** Variable según tipo de visita\n\nLos porcentajes exactos son configurables por el administrador. Puedes ver tus comisiones específicas en tu panel de usuario.',
+        confidence: 0.9,
+      };
+    }
+
+    // Respuesta por defecto mejorada
     return {
       response:
-        'Entiendo tu consulta. Te puedo ayudar con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento y configuración de tu cuenta. ¿Qué te gustaría hacer?',
+        'Entiendo tu consulta. Te puedo ayudar con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento, documentos, comisiones y configuración de tu cuenta. ¿Qué te gustaría hacer?',
       confidence: 0.6,
     };
   }
