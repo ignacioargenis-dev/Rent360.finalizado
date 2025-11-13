@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId'); // Para ver calificaciones de otro usuario
     const given = searchParams.get('given') === 'true'; // Si es true, buscar calificaciones dadas por el usuario
     const contextType = searchParams.get('contextType') as RatingContextType;
-    const isPublic = searchParams.get('isPublic') === 'true';
+    const isPublicParam = searchParams.get('isPublic'); // Puede ser 'true', 'false', o null
     const limit = parseInt(searchParams.get('limit') || '10');
     const offset = parseInt(searchParams.get('offset') || '0');
 
@@ -170,8 +170,9 @@ export async function GET(request: NextRequest) {
     if (contextType) {
       filters.contextType = contextType;
     }
-    if (isPublic !== undefined) {
-      filters.isPublic = isPublic;
+    // Solo filtrar por isPublic si se especifica explícitamente en la URL
+    if (isPublicParam !== null) {
+      filters.isPublic = isPublicParam === 'true';
     }
 
     const { ratings, total } = await UserRatingService.getUserRatings(targetUserId, filters);
