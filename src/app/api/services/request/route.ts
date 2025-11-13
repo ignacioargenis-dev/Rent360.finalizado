@@ -173,6 +173,8 @@ export async function POST(request: NextRequest) {
       specialRequirements,
       attachments,
       serviceProviderId,
+      paymentMethod, // ✅ Método de pago opcional
+      paymentMethodId, // ✅ ID del método de pago guardado (opcional)
     } = body;
 
     // Validación básica
@@ -235,32 +237,20 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         scheduledDate: preferredDate ? new Date(preferredDate) : null,
         basePrice: budgetMin ? Number(budgetMin) : 0,
-        budgetMax: budgetMax ? Number(budgetMax) : null,
-        finalPrice: null,
+        finalPrice: null, // Se establecerá cuando el provider acepte o complete el trabajo
         images: null,
-        notes: preferredTimeSlot ? `Horario preferido: ${preferredTimeSlot}` : null,
-        urgency: urgency || 'medium',
-        preferredTimeSlot,
-        estimatedDuration,
-        specialRequirements: specialRequirements ? JSON.stringify(specialRequirements) : null,
-        attachments: attachments ? JSON.stringify(attachments) : null,
+        notes: [
+          `Urgencia: ${urgency || 'medium'}`,
+          preferredTimeSlot ? `Horario preferido: ${preferredTimeSlot}` : null,
+          estimatedDuration ? `Duración estimada: ${estimatedDuration}` : null,
+          specialRequirements ? `Requerimientos: ${JSON.stringify(specialRequirements)}` : null,
+          attachments ? `Adjuntos: ${JSON.stringify(attachments)}` : null,
+        ]
+          .filter(Boolean)
+          .join(', '),
         rating: null,
         feedback: null,
         completedDate: null,
-      },
-      include: {
-        requester: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-        serviceProvider: {
-          select: {
-            id: true,
-            businessName: true,
-          },
-        },
       },
     });
 
@@ -270,6 +260,54 @@ export async function POST(request: NextRequest) {
       serviceType,
       requestId: serviceRequest.id,
     });
+
+    // ✅ Autorizar pago si se proporcionó método de pago
+    let paymentAuthorization = null;
+    if (paymentMethod && user.role === 'TENANT') {
+      try {
+        const { ClientPaymentService } = await import('@/lib/client-payment-service');
+        const paymentData: {
+          serviceJobId: string;
+          clientId: string;
+          amount: number;
+          paymentMethod: 'stripe' | 'paypal' | 'khipu' | 'webpay';
+          paymentMethodId?: string;
+        } = {
+          serviceJobId: serviceRequest.id,
+          clientId: user.id,
+          amount: budgetMin ? Number(budgetMin) : 0,
+          paymentMethod,
+        };
+
+        if (paymentMethodId) {
+          paymentData.paymentMethodId = paymentMethodId;
+        }
+
+        paymentAuthorization = await ClientPaymentService.authorizePayment(paymentData);
+
+        if (!paymentAuthorization.success) {
+          logger.warn('Error autorizando pago, pero trabajo creado', {
+            serviceJobId: serviceRequest.id,
+            error: paymentAuthorization.error,
+          });
+          // El trabajo se crea igual, pero el pago queda pendiente
+          // El cliente puede autorizar el pago más tarde
+        } else {
+          logger.info('Pago autorizado exitosamente al crear trabajo', {
+            serviceJobId: serviceRequest.id,
+            paymentId: paymentAuthorization.paymentId,
+            authorizationId: paymentAuthorization.authorizationId,
+          });
+        }
+      } catch (error) {
+        logger.error('Error en autorización de pago (no crítico)', {
+          serviceJobId: serviceRequest.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // No fallar la creación del trabajo si hay error en el pago
+        // El pago se puede autorizar después
+      }
+    }
 
     // ✅ ENVIAR NOTIFICACIÓN AL PROVEEDOR
     try {
@@ -313,14 +351,33 @@ export async function POST(request: NextRequest) {
       // No fallar la creación de la solicitud si falla la notificación
     }
 
+    // Obtener datos completos del trabajo con relaciones para la respuesta
+    const fullServiceRequest = await db.serviceJob.findUnique({
+      where: { id: serviceRequest.id },
+      include: {
+        requester: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        serviceProvider: {
+          select: {
+            id: true,
+            businessName: true,
+          },
+        },
+      },
+    });
+
     return NextResponse.json({
       success: true,
       request: {
         id: serviceRequest.id,
         requesterId: serviceRequest.requesterId,
-        requesterName: serviceRequest.requester.name,
+        requesterName: fullServiceRequest?.requester.name || user.name || 'Usuario',
         serviceProviderId: serviceRequest.serviceProviderId,
-        serviceProviderName: serviceRequest.serviceProvider.businessName,
+        serviceProviderName: fullServiceRequest?.serviceProvider.businessName || 'Proveedor',
         serviceType: serviceRequest.serviceType,
         description: serviceRequest.description,
         status: serviceRequest.status,
@@ -330,6 +387,13 @@ export async function POST(request: NextRequest) {
         budgetMax: budgetMax,
         createdAt: serviceRequest.createdAt,
       },
+      payment: paymentAuthorization
+        ? {
+            paymentId: paymentAuthorization.paymentId,
+            authorizationId: paymentAuthorization.authorizationId,
+            clientSecret: paymentAuthorization.clientSecret,
+          }
+        : null,
       message: 'Solicitud de servicio enviada exitosamente. El proveedor recibirá tu solicitud.',
     });
   } catch (error) {

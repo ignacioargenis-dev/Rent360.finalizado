@@ -23,6 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             avatar: true,
           },
         },
+        documents: true, // ✅ Incluir documentos del proveedor
       },
     });
 
@@ -127,6 +128,50 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       }
     });
 
+    // ✅ Obtener documentos aprobados del proveedor
+    const approvedDocuments: Array<{
+      id: string;
+      name: string;
+      type: string;
+      fileUrl: string;
+    }> = [];
+
+    if (provider.documents && provider.documents.isVerified) {
+      // Solo mostrar documentos si el proveedor está verificado
+      if (provider.documents.businessCertificate) {
+        approvedDocuments.push({
+          id: 'business-certificate',
+          name: 'Certificado de Empresa',
+          type: 'certificate',
+          fileUrl: provider.documents.businessCertificate,
+        });
+      }
+      if (provider.documents.idFront) {
+        approvedDocuments.push({
+          id: 'id-front',
+          name: 'Cédula de Identidad (Frente)',
+          type: 'id',
+          fileUrl: provider.documents.idFront,
+        });
+      }
+      if (provider.documents.idBack) {
+        approvedDocuments.push({
+          id: 'id-back',
+          name: 'Cédula de Identidad (Reverso)',
+          type: 'id',
+          fileUrl: provider.documents.idBack,
+        });
+      }
+      if (provider.documents.criminalRecord) {
+        approvedDocuments.push({
+          id: 'criminal-record',
+          name: 'Certificado de Antecedentes',
+          type: 'certificate',
+          fileUrl: provider.documents.criminalRecord,
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -149,6 +194,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         services: services,
         images: allImages,
         reviews: reviews,
+        approvedDocuments: approvedDocuments, // ✅ Documentos aprobados visibles para clientes
       },
     });
   } catch (error) {

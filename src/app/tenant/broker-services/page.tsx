@@ -665,6 +665,30 @@ export default function TenantBrokerServicesPage() {
                               </Button>
                               <Button
                                 size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  // Crear conversación con el broker usando el sistema de mensajería
+                                  const recipientData = {
+                                    id: response.broker.id,
+                                    name: response.broker.name,
+                                    email: response.broker.email,
+                                    phone: response.broker.phone,
+                                    type: 'broker' as const,
+                                    requestId: request.id,
+                                    responseId: response.id,
+                                  };
+                                  sessionStorage.setItem(
+                                    'newMessageRecipient',
+                                    JSON.stringify(recipientData)
+                                  );
+                                  router.push('/tenant/messages?new=true');
+                                }}
+                              >
+                                <MessageSquare className="h-4 w-4 mr-1" />
+                                Contactar
+                              </Button>
+                              <Button
+                                size="sm"
                                 variant="destructive"
                                 onClick={() => handleResponse(request.id, response.id, 'reject')}
                               >

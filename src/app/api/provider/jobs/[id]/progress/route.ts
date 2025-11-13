@@ -98,7 +98,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
     console.log('🚨🚨🚨 [JOB PROGRESS] Estado final en BD:', finalJob);
 
-    // Si el trabajo se completa, enviar notificación al cliente
+    // Si el trabajo se completa, enviar notificación al cliente y procesar pago
     // Solo enviar si el estado anterior NO era COMPLETED para evitar duplicados
     if (status === 'COMPLETED' && job.status !== 'COMPLETED') {
       try {
@@ -109,6 +109,27 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           message: `El trabajo "${job.title}" ha sido completado exitosamente.`,
           link: `/tenant/jobs/${jobId}`,
         });
+
+        // ✅ Procesar el pago del cliente hacia el provider
+        try {
+          const { ClientPaymentService } = await import('@/lib/client-payment-service');
+          const chargeResult = await ClientPaymentService.chargePayment(jobId);
+          if (chargeResult.success) {
+            logger.info('Pago del cliente procesado exitosamente al completar trabajo', {
+              jobId,
+              transactionId: chargeResult.transactionId,
+            });
+          } else {
+            logger.warn('Error procesando pago del cliente al completar trabajo:', {
+              jobId,
+              error: chargeResult.error,
+            });
+          }
+        } catch (paymentError) {
+          logger.warn('Error procesando pago del cliente (no crítico):', paymentError);
+          // No fallar la actualización del trabajo si hay error en el pago
+          // El pago se puede procesar después manualmente
+        }
       } catch (notificationError) {
         logger.warn('Error enviando notificación de trabajo completado:', notificationError);
       }

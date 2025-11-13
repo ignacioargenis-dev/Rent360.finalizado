@@ -24,6 +24,9 @@ import {
   MapPin,
   Phone,
   Mail,
+  FileText,
+  Download,
+  Eye,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -83,6 +86,14 @@ export default function ProviderRatingsPage() {
   const [provider, setProvider] = useState<ProviderProfile | null>(null);
   const [summary, setSummary] = useState<ProviderRatingSummary | null>(null);
   const [ratings, setRatings] = useState<ProviderRating[]>([]);
+  const [approvedDocuments, setApprovedDocuments] = useState<
+    Array<{
+      id: string;
+      name: string;
+      type: string;
+      fileUrl: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -104,11 +115,38 @@ export default function ProviderRatingsPage() {
         setUser(userData.user);
       }
 
-      // Obtener perfil del proveedor
-      const providerResponse = await fetch(`/api/providers/${providerId}`);
+      // Obtener perfil del proveedor con documentos aprobados
+      const providerResponse = await fetch(`/api/service-providers/${providerId}`);
       if (providerResponse.ok) {
         const providerData = await providerResponse.json();
-        setProvider(providerData);
+        if (providerData.success && providerData.data) {
+          // Mapear datos del proveedor
+          setProvider({
+            id: providerData.data.id,
+            businessName: providerData.data.name,
+            specialty: providerData.data.specialty,
+            location: providerData.data.location,
+            rating: providerData.data.rating,
+            totalJobs: providerData.data.completedJobs,
+            memberSince: new Date(),
+            description: providerData.data.description,
+            avatar: providerData.data.image,
+            contactInfo: {
+              phone: providerData.data.phone,
+              email: providerData.data.email,
+            },
+            services: providerData.data.services?.map((s: any) => s.name) || [],
+            certifications: [],
+          });
+
+          // ✅ Cargar documentos aprobados
+          if (
+            providerData.data.approvedDocuments &&
+            Array.isArray(providerData.data.approvedDocuments)
+          ) {
+            setApprovedDocuments(providerData.data.approvedDocuments);
+          }
+        }
       }
 
       // Obtener calificaciones del provider desde la API principal
@@ -451,9 +489,10 @@ export default function ProviderRatingsPage() {
 
         {/* Contenido Principal con Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="ratings">Reseñas ({summary.totalRatings})</TabsTrigger>
+            <TabsTrigger value="documents">Documentos ({approvedDocuments.length})</TabsTrigger>
             <TabsTrigger value="contact">Contacto</TabsTrigger>
           </TabsList>
 
@@ -647,6 +686,100 @@ export default function ProviderRatingsPage() {
                   </Card>
                 ))}
               </div>
+            )}
+          </TabsContent>
+
+          {/* Tab de Documentos */}
+          <TabsContent value="documents" className="space-y-6">
+            {approvedDocuments.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No hay documentos disponibles
+                    </h3>
+                    <p className="text-gray-600">
+                      Este proveedor aún no tiene documentos aprobados visibles para clientes.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-green-600" />
+                    Documentos Aprobados
+                  </CardTitle>
+                  <CardDescription>
+                    Documentos verificados y aprobados por nuestro equipo administrativo. Estos
+                    documentos son visibles para clientes potenciales.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {approvedDocuments.map(document => (
+                      <div
+                        key={document.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <FileText className="w-6 h-6 text-green-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{document.name}</h4>
+                            <p className="text-sm text-gray-600">
+                              {document.type === 'certificate' ? 'Certificado' : 'Identificación'}
+                            </p>
+                            <Badge className="bg-green-100 text-green-800 mt-1">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Aprobado
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(document.fileUrl, '_blank')}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Ver
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const link = window.document.createElement('a');
+                              link.href = document.fileUrl;
+                              link.download = document.name;
+                              link.click();
+                            }}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Descargar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-blue-800">Información Importante</h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Todos los documentos son revisados por nuestro equipo administrativo. Los
+                          documentos aprobados son visibles para los clientes potenciales. Asegúrate
+                          de que todos los documentos estén vigentes.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
