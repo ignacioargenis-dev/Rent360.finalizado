@@ -649,7 +649,7 @@ export default function RealTimeNotifications() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <CardContent className="p-0 flex-1 flex flex-col min-h-0">
               {localNotifications.length === 0 ? (
                 <div className="text-center py-8 flex-shrink-0">
                   <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -760,15 +760,15 @@ export default function RealTimeNotifications() {
                     </div>
                   </ScrollArea>
 
-                  <Separator className="bg-emerald-200 dark:border-emerald-800 flex-shrink-0" />
-
-                  <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800 flex-shrink-0">
-                    <button
-                      onClick={clearAllNotifications}
-                      className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
-                    >
-                      🗑️ Limpiar todas las notificaciones
-                    </button>
+                  <div className="flex-shrink-0 border-t border-emerald-200 dark:border-emerald-800">
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50">
+                      <button
+                        onClick={clearAllNotifications}
+                        className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+                      >
+                        🗑️ Limpiar todas las notificaciones
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
