@@ -192,22 +192,26 @@ export default function CalificacionesPage() {
 
       const data = await response.json();
 
-      // La API devuelve { success: true, data: ratings, pagination: {...} }
-      const ratingsData = data.data || data.ratings || [];
+      // La API devuelve { success: true, data: { ratings: [...], total: ... }, pagination: {...} }
+      const ratingsList = data.data?.ratings || data.ratings || [];
 
       // Transform API data to match our interface
-      const transformedRatings: Rating[] = ratingsData.map((rating: any) => ({
+      const transformedRatings: Rating[] = ratingsList.map((rating: any) => ({
         id: rating.id,
-        tenantName: rating.tenantName || rating.tenant?.name || 'Usuario no identificado',
+        tenantName:
+          rating.fromUser?.name ||
+          rating.tenantName ||
+          rating.tenant?.name ||
+          'Usuario no identificado',
         propertyTitle:
-          rating.propertyTitle || rating.property?.title || 'Propiedad no identificada',
+          rating.property?.title || rating.propertyTitle || 'Propiedad no identificada',
         overallRating: rating.overallRating || rating.rating || 0,
-        punctuality: rating.punctuality || 0,
-        professionalism: rating.professionalism || 0,
-        communication: rating.communication || 0,
+        punctuality: rating.punctualityRating || rating.punctuality || 0,
+        professionalism: rating.professionalismRating || rating.professionalism || 0,
+        communication: rating.communicationRating || rating.communication || 0,
         comment: rating.comment || 'Sin comentario',
-        verified: rating.verified || rating.isVerified || false,
-        anonymous: rating.anonymous || false,
+        verified: rating.isVerified || rating.verified || false,
+        anonymous: rating.isAnonymous || rating.anonymous || false,
         date: rating.createdAt || rating.date,
       }));
 
@@ -389,9 +393,7 @@ export default function CalificacionesPage() {
   }
 
   const averageRating =
-    ratings.length > 0
-      ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length
-      : 0;
+    ratings.length > 0 ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length : 0;
 
   const verifiedRatings = ratings.filter(r => r.verified).length;
 
@@ -596,7 +598,8 @@ export default function CalificacionesPage() {
                         💡 Importante: Mantén calificaciones altas
                       </p>
                       <p className="text-xs text-blue-700">
-                        Las buenas calificaciones aumentan la confianza y te ayudan a conseguir más contratos.
+                        Las buenas calificaciones aumentan la confianza y te ayudan a conseguir más
+                        contratos.
                       </p>
                     </div>
                   </div>

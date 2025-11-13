@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,231 +34,230 @@ export async function GET(request: NextRequest) {
     });
 
     // Obtener estadísticas del dashboard
-    const [contractStats, propertyStats, commissionData, ...recentActivityData] = await Promise.all([
-      // Estadísticas de contratos
-      Promise.all([
-        // Propiedades totales gestionadas (contratos no draft)
-        db.contract.count({
-          where: {
-            brokerId: user.id,
-            status: { not: 'DRAFT' },
-          },
-        }),
-        // Contratos activos
-        db.contract.count({
-          where: {
-            brokerId: user.id,
-            status: { in: ['ACTIVE', 'PENDING'] },
-          },
-        }),
-        // Contratos totales
-        db.contract.count({
-          where: { brokerId: user.id },
-        }),
-      ]),
-
-      // Estadísticas de propiedades
-      Promise.all([
-        // Propiedades totales del broker (propias + gestionadas)
+    const [contractStats, propertyStats, commissionData, ...recentActivityData] = await Promise.all(
+      [
+        // Estadísticas de contratos
         Promise.all([
-          // Propiedades propias del broker
-          db.property.count({
-            where: { ownerId: user.id },
-          }),
-          // Propiedades gestionadas por el broker
-          db.brokerPropertyManagement.count({
+          // Propiedades totales gestionadas (contratos no draft)
+          db.contract.count({
             where: {
               brokerId: user.id,
-              status: 'ACTIVE',
+              status: { not: 'DRAFT' },
             },
           }),
-        ]).then(([ownProperties, managedProperties]) => {
-          const total = ownProperties + managedProperties;
-          logger.info('Total properties for broker', {
-            brokerId: user.id,
-            ownProperties,
-            managedProperties,
-            total,
-          });
-          return total;
-        }),
-
-        // Propiedades disponibles (propias + gestionadas con status AVAILABLE)
-        Promise.all([
-          // Propiedades propias disponibles
-          db.property.count({
-            where: { ownerId: user.id, status: 'AVAILABLE' },
-          }),
-          // Propiedades gestionadas disponibles
-          db.brokerPropertyManagement.count({
+          // Contratos activos
+          db.contract.count({
             where: {
               brokerId: user.id,
-              status: 'ACTIVE',
-              property: {
-                status: 'AVAILABLE',
-              },
+              status: { in: ['ACTIVE', 'PENDING'] },
             },
           }),
-        ]).then(([ownAvailable, managedAvailable]) => {
-          const totalAvailable = ownAvailable + managedAvailable;
-          logger.info('Available properties for broker', {
-            brokerId: user.id,
-            ownAvailable,
-            managedAvailable,
-            totalAvailable,
-          });
-          return totalAvailable;
-        }),
+          // Contratos totales
+          db.contract.count({
+            where: { brokerId: user.id },
+          }),
+        ]),
 
-        // Propiedades rentadas (con contratos activos) - propias
-        db.property.count({
-          where: {
-            ownerId: user.id,
-            contracts: {
-              some: {
+        // Estadísticas de propiedades
+        Promise.all([
+          // Propiedades totales del broker (propias + gestionadas)
+          Promise.all([
+            // Propiedades propias del broker
+            db.property.count({
+              where: { ownerId: user.id },
+            }),
+            // Propiedades gestionadas por el broker
+            db.brokerPropertyManagement.count({
+              where: {
+                brokerId: user.id,
                 status: 'ACTIVE',
               },
+            }),
+          ]).then(([ownProperties, managedProperties]) => {
+            const total = ownProperties + managedProperties;
+            logger.info('Total properties for broker', {
+              brokerId: user.id,
+              ownProperties,
+              managedProperties,
+              total,
+            });
+            return total;
+          }),
+
+          // Propiedades disponibles (propias + gestionadas con status AVAILABLE)
+          Promise.all([
+            // Propiedades propias disponibles
+            db.property.count({
+              where: { ownerId: user.id, status: 'AVAILABLE' },
+            }),
+            // Propiedades gestionadas disponibles
+            db.brokerPropertyManagement.count({
+              where: {
+                brokerId: user.id,
+                status: 'ACTIVE',
+                property: {
+                  status: 'AVAILABLE',
+                },
+              },
+            }),
+          ]).then(([ownAvailable, managedAvailable]) => {
+            const totalAvailable = ownAvailable + managedAvailable;
+            logger.info('Available properties for broker', {
+              brokerId: user.id,
+              ownAvailable,
+              managedAvailable,
+              totalAvailable,
+            });
+            return totalAvailable;
+          }),
+
+          // Propiedades rentadas (con contratos activos) - propias
+          db.property.count({
+            where: {
+              ownerId: user.id,
+              contracts: {
+                some: {
+                  status: 'ACTIVE',
+                },
+              },
             },
-          },
-        }),
+          }),
 
-        // Propiedades recientes (últimos 30 días) - propias
-        db.property.count({
-          where: {
-            ownerId: user.id,
-            createdAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          // Propiedades recientes (últimos 30 días) - propias
+          db.property.count({
+            where: {
+              ownerId: user.id,
+              createdAt: {
+                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+              },
             },
-          },
-        }),
+          }),
 
-        // Propiedades gestionadas activas
-        db.brokerPropertyManagement.count({
-          where: {
-            brokerId: user.id,
-            status: 'ACTIVE',
-          },
-        }),
-      ]),
+          // Propiedades gestionadas activas
+          db.brokerPropertyManagement.count({
+            where: {
+              brokerId: user.id,
+              status: 'ACTIVE',
+            },
+          }),
+        ]),
 
-      // Datos de comisiones calculados dinámicamente
-      Promise.all([
-        // Todos los contratos del corredor para calcular comisiones
-        db.contract.findMany({
-          where: { brokerId: user.id },
+        // Datos de comisiones calculados dinámicamente
+        Promise.all([
+          // Todos los contratos del corredor para calcular comisiones
+          db.contract.findMany({
+            where: { brokerId: user.id },
+            select: {
+              id: true,
+              monthlyRent: true,
+              status: true,
+              startDate: true,
+              createdAt: true,
+            },
+          }),
+
+          // Estadísticas de clientes
+          Promise.all([
+            // Clientes de contratos tradicionales
+            db.user.count({
+              where: {
+                OR: [
+                  {
+                    contractsAsOwner: {
+                      some: {
+                        brokerId: user.id,
+                        status: { in: ['ACTIVE', 'PENDING'] },
+                      },
+                    },
+                  },
+                  {
+                    contractsAsTenant: {
+                      some: {
+                        brokerId: user.id,
+                        status: { in: ['ACTIVE', 'PENDING'] },
+                      },
+                    },
+                  },
+                ],
+              },
+            }),
+
+            // Clientes de relaciones BrokerClient activas
+            db.brokerClient.count({
+              where: {
+                brokerId: user.id,
+                status: 'ACTIVE',
+              },
+            }),
+          ]).then(([contractClients, brokerClients]) => {
+            const totalActiveClients = contractClients + brokerClients;
+            logger.info('Active clients for broker', {
+              brokerId: user.id,
+              contractClients,
+              brokerClients,
+              totalActiveClients,
+            });
+            return totalActiveClients;
+          }),
+        ]),
+
+        // ✅ CORREGIDO: Actividad reciente - incluir múltiples fuentes
+        // Obtener actividades de auditLog
+        db.auditLog.findMany({
+          where: { userId: user.id },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
           select: {
             id: true,
-            monthlyRent: true,
-            status: true,
-            startDate: true,
+            action: true,
+            entityType: true,
+            entityId: true,
+            newValues: true,
             createdAt: true,
           },
         }),
 
-        // Estadísticas de clientes
-        Promise.all([
-          // Clientes de contratos tradicionales
-          db.user.count({
-            where: {
-              OR: [
-                {
-                  contractsAsOwner: {
-                    some: {
-                      brokerId: user.id,
-                      status: { in: ['ACTIVE', 'PENDING'] },
-                    },
-                  },
-                },
-                {
-                  contractsAsTenant: {
-                    some: {
-                      brokerId: user.id,
-                      status: { in: ['ACTIVE', 'PENDING'] },
-                    },
-                  },
-                },
-              ],
+        // Obtener propiedades creadas recientemente por el broker (últimos 30 días)
+        db.property.findMany({
+          where: {
+            OR: [{ ownerId: user.id }, { brokerId: user.id }],
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
             },
-          }),
-
-          // Clientes de relaciones BrokerClient activas
-          db.brokerClient.count({
-            where: {
-              brokerId: user.id,
-              status: 'ACTIVE',
-            },
-          }),
-        ]).then(([contractClients, brokerClients]) => {
-          const totalActiveClients = contractClients + brokerClients;
-          logger.info('Active clients for broker', {
-            brokerId: user.id,
-            contractClients,
-            brokerClients,
-            totalActiveClients,
-          });
-          return totalActiveClients;
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: {
+            id: true,
+            title: true,
+            createdAt: true,
+          },
         }),
-      ]),
 
-      // ✅ CORREGIDO: Actividad reciente - incluir múltiples fuentes
-      // Obtener actividades de auditLog
-      db.auditLog.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        select: {
-          id: true,
-          action: true,
-          entityType: true,
-          entityId: true,
-          newValues: true,
-          createdAt: true,
-        },
-      }),
-      
-      // Obtener propiedades creadas recientemente por el broker (últimos 30 días)
-      db.property.findMany({
-        where: {
-          OR: [
-            { ownerId: user.id },
-            { brokerId: user.id },
-          ],
-          createdAt: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        select: {
-          id: true,
-          title: true,
-          createdAt: true,
-        },
-      }),
-      
-      // Obtener clientes creados recientemente (conversiones de prospectos, últimos 30 días)
-      db.brokerClient.findMany({
-        where: {
-          brokerId: user.id,
-          createdAt: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        select: {
-          id: true,
-          userId: true,
-          clientType: true,
-          createdAt: true,
-          user: {
-            select: {
-              name: true,
+        // Obtener clientes creados recientemente (conversiones de prospectos, últimos 30 días)
+        db.brokerClient.findMany({
+          where: {
+            brokerId: user.id,
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
             },
           },
-        },
-      }),
-    ]);
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: {
+            id: true,
+            userId: true,
+            clientType: true,
+            createdAt: true,
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        }),
+      ]
+    );
 
     const [totalPropertiesManaged, activeContracts, totalContracts] = contractStats;
     const [
@@ -431,10 +431,14 @@ export async function GET(request: NextRequest) {
         })
     );
 
+    // Obtener calificación promedio real desde UserRatingService
+    const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
+    const averageRating = ratingSummary?.averageRating || 0;
+
     // Métricas de rendimiento calculadas
     const performanceMetrics = {
       responseTime: 2.3, // horas promedio (podría calcularse desde mensajes)
-      satisfactionRate: 4.7, // sobre 5 (desde calificaciones)
+      satisfactionRate: averageRating, // sobre 5 (desde calificaciones reales)
       repeatClients: Math.round((activeContracts / Math.max(totalContracts, 1)) * 100), // porcentaje
       marketShare: 8.5, // porcentaje (mock por ahora)
     };
@@ -578,7 +582,7 @@ export async function GET(request: NextRequest) {
         portfolioValue,
       },
     });
-    
+
     // ✅ CRÍTICO: Log adicional para debugging en producción
     console.log('🔍 [DASHBOARD] Stats calculados:', JSON.stringify(stats, null, 2));
 
@@ -590,16 +594,16 @@ export async function GET(request: NextRequest) {
     // ✅ CRÍTICO: Log detallado de errores
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     logger.error('❌ [DASHBOARD] Error obteniendo dashboard del corredor:', {
       error: errorMessage,
       stack: errorStack,
       errorType: error instanceof Error ? error.constructor.name : typeof error,
     });
-    
+
     // ✅ CRÍTICO: También usar console.error para asegurar que se vea en logs
     console.error('❌ [DASHBOARD] Error crítico:', errorMessage, errorStack);
-    
+
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

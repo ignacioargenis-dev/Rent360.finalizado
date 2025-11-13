@@ -14,10 +14,7 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (user.role !== 'RUNNER') {
-      return NextResponse.json(
-        { error: 'Acceso denegado. Solo para runners.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Acceso denegado. Solo para runners.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -30,11 +27,23 @@ export async function GET(request: NextRequest) {
     switch (reportType) {
       case 'performance':
         // Reporte de métricas de rendimiento completo
-        reportData = await RunnerReportsService.generateRunnerPerformanceMetrics(
+        const performanceMetrics = await RunnerReportsService.generateRunnerPerformanceMetrics(
           user.id,
           periodStart ? new Date(periodStart) : undefined,
           periodEnd ? new Date(periodEnd) : undefined
         );
+        // Incluir datos mensuales, feedback y achievements
+        const [monthlyPerformance, feedback, achievements] = await Promise.all([
+          RunnerReportsService.generateMonthlyPerformance(user.id, 6),
+          RunnerReportsService.getRunnerFeedback(user.id, 10),
+          RunnerReportsService.calculateRunnerAchievements(user.id, performanceMetrics),
+        ]);
+        reportData = {
+          ...performanceMetrics,
+          monthlyPerformance,
+          feedback,
+          achievements,
+        };
         break;
 
       case 'weekly':
@@ -72,11 +81,10 @@ export async function GET(request: NextRequest) {
         runnerId: user.id,
         period: {
           start: periodStart || null,
-          end: periodEnd || null
-        }
-      }
+          end: periodEnd || null,
+        },
+      },
     });
-
   } catch (error) {
     logger.error('Error generando reporte:', { error });
     const errorResponse = handleApiError(error);

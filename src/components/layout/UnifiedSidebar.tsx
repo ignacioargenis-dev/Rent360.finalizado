@@ -411,6 +411,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: BarChart3,
     },
     {
+      title: 'Calificaciones',
+      url: '/broker/ratings',
+      icon: Star,
+    },
+    {
       title: 'Mis Tickets',
       url: '/broker/tickets',
       icon: MessageSquare,
@@ -471,6 +476,11 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Reportes',
       url: '/runner/reports',
       icon: BarChart3,
+    },
+    {
+      title: 'Calificaciones',
+      url: '/runner/ratings',
+      icon: Star,
     },
     {
       title: 'Perfil',

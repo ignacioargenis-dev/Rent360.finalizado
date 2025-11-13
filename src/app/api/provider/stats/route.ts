@@ -3,6 +3,7 @@ import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 /**
  * GET /api/provider/stats
@@ -115,16 +116,8 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      // Rating promedio
-      const ratingAgg = await db.serviceJob.aggregate({
-        where: {
-          serviceProviderId,
-          status: 'COMPLETED',
-          rating: { not: null },
-        },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
+      // Obtener calificación promedio real desde UserRatingService
+      const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
 
       stats = {
         totalEarnings: totalEarningsAgg._sum.finalPrice || 0,
@@ -133,8 +126,8 @@ export async function GET(request: NextRequest) {
         pendingPayments,
         completedJobs,
         activeJobs,
-        averageRating: ratingAgg._avg.rating || 0,
-        totalRatings: ratingAgg._count.rating || 0,
+        averageRating: ratingSummary?.averageRating || 0,
+        totalRatings: ratingSummary?.totalRatings || 0,
         gracePeriodDays: 7,
         commissionPercentage: 8,
       };
@@ -197,6 +190,9 @@ export async function GET(request: NextRequest) {
         },
       });
 
+      // Obtener calificación promedio real desde UserRatingService
+      const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
+
       stats = {
         totalEarnings: totalEarningsAgg._sum.actualCost || 0,
         thisMonthEarnings: thisMonthEarningsAgg._sum.actualCost || 0,
@@ -204,8 +200,8 @@ export async function GET(request: NextRequest) {
         pendingPayments,
         completedJobs,
         activeJobs,
-        averageRating: fullUser.maintenanceProvider.rating || 0,
-        totalRatings: fullUser.maintenanceProvider.totalRatings || 0,
+        averageRating: ratingSummary?.averageRating || 0,
+        totalRatings: ratingSummary?.totalRatings || 0,
         gracePeriodDays: 15,
         commissionPercentage: 10,
       };

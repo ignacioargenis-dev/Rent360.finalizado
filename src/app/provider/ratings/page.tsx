@@ -59,61 +59,62 @@ export default function ProviderRatingsPage() {
       setLoading(true);
       setError(null);
 
-      // Cargar trabajos completados con ratings del proveedor
-      const jobsResponse = await fetch('/api/provider/jobs', {
+      // Cargar calificaciones recibidas desde la API de calificaciones
+      const ratingsResponse = await fetch('/api/ratings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
         credentials: 'include',
       });
 
-      if (jobsResponse.ok) {
-        const jobsData = await jobsResponse.json();
-        if (jobsData.success && jobsData.jobs) {
-          // Filtrar trabajos con rating y transformar a formato de calificaciones
-          const ratingsWithData = jobsData.jobs
-            .filter((job: any) => job.rating && job.rating > 0)
-            .map((job: any) => ({
-              id: job.id,
-              clientName: job.client || 'Cliente',
-              clientAvatar: undefined,
-              serviceType: job.serviceType || 'Servicio',
-              rating: job.rating || 0,
-              comment: job.feedback || '', // Usar feedback como comentario
-              createdAt: job.createdAt || new Date().toISOString(),
-              propertyAddress: '',
-              jobId: job.id,
-              hasResponse: false,
-              response: '',
-              responseDate: undefined,
-              verified: true, // Trabajos completados son verificados
-            }));
+      if (ratingsResponse.ok) {
+        const ratingsData = await ratingsResponse.json();
+        const ratingsList = ratingsData.data?.ratings || ratingsData.ratings || [];
 
-          setRatings(ratingsWithData);
+        // Transformar calificaciones al formato esperado
+        const transformedRatings = ratingsList.map((rating: any) => ({
+          id: rating.id,
+          clientName: rating.fromUser?.name || 'Usuario',
+          clientAvatar: rating.fromUser?.avatar || undefined,
+          serviceType:
+            rating.contextType === 'SERVICE'
+              ? 'Servicio'
+              : rating.contextType === 'MAINTENANCE'
+                ? 'Mantenimiento'
+                : rating.contextType === 'CONTRACT'
+                  ? 'Contrato'
+                  : 'General',
+          rating: rating.overallRating || 0,
+          comment: rating.comment || '',
+          createdAt: rating.createdAt || new Date().toISOString(),
+          propertyAddress: rating.property?.address || rating.property?.title || '',
+          jobId: rating.contextId || rating.id,
+          hasResponse: false, // Por ahora no hay sistema de respuestas
+          response: '',
+          responseDate: undefined,
+          verified: rating.isVerified || false,
+        }));
 
-          // Calcular métricas
-          const overviewData = {
-            averageRating:
-              ratingsWithData.length > 0
-                ? ratingsWithData.reduce((sum: number, r: any) => sum + r.rating, 0) /
-                  ratingsWithData.length
-                : 0,
-            totalRatings: ratingsWithData.length,
-            fiveStarRatings: ratingsWithData.filter((r: any) => r.rating === 5).length,
-            withComments: ratingsWithData.filter((r: any) => r.comment).length,
-            verifiedRatings: ratingsWithData.filter((r: any) => r.verified).length,
-            respondedRatings: ratingsWithData.filter((r: any) => r.hasResponse).length,
-          };
+        setRatings(transformedRatings);
 
-          setData(overviewData);
-        } else {
-          setRatings([]);
-          setData({
-            averageRating: 0,
-            totalRatings: 0,
-            fiveStarRatings: 0,
-            withComments: 0,
-            verifiedRatings: 0,
-            respondedRatings: 0,
-          });
-        }
+        // Calcular métricas
+        const overviewData = {
+          averageRating:
+            transformedRatings.length > 0
+              ? transformedRatings.reduce((sum: number, r: any) => sum + r.rating, 0) /
+                transformedRatings.length
+              : 0,
+          totalRatings: transformedRatings.length,
+          fiveStarRatings: transformedRatings.filter((r: any) => r.rating === 5).length,
+          withComments: transformedRatings.filter((r: any) => r.comment && r.comment.trim() !== '')
+            .length,
+          verifiedRatings: transformedRatings.filter((r: any) => r.verified).length,
+          respondedRatings: transformedRatings.filter((r: any) => r.hasResponse).length,
+        };
+
+        setData(overviewData);
       } else {
         // Si no hay datos, dejar array vacío
         setRatings([]);
@@ -130,6 +131,7 @@ export default function ProviderRatingsPage() {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setError('Error al cargar las calificaciones. Por favor, intenta de nuevo.');
       // En caso de error, mostrar datos vacíos con métricas en 0
       setRatings([]);
       setData({

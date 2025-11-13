@@ -162,12 +162,23 @@ export default function OwnerDashboard() {
         const occupancyRate =
           properties.length > 0 ? (occupiedProperties / properties.length) * 100 : 0;
 
-        // Calcular rating promedio
-        const ratings = properties.flatMap((p: any) => p.reviews || []);
-        const averageRating =
-          ratings.length > 0
-            ? ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / ratings.length
-            : 0;
+        // Obtener calificación promedio real desde la API de calificaciones
+        let averageRating = 0;
+        try {
+          const ratingsResponse = await fetch(
+            `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/ratings?summary=true`,
+            {
+              credentials: 'include',
+              headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+            }
+          );
+          if (ratingsResponse.ok) {
+            const ratingsData = await ratingsResponse.json();
+            averageRating = ratingsData.data?.averageRating || 0;
+          }
+        } catch (error) {
+          logger.error('Error obteniendo calificación promedio:', error);
+        }
 
         setStats({
           totalProperties: properties.length,

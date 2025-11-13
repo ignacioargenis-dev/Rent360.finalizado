@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,13 +71,10 @@ export async function GET(request: NextRequest) {
     const totalVisits = allVisits.length;
     const completedTasks = completedVisits.length;
     const totalEarnings = completedVisits.reduce((sum, v) => sum + (v.earnings || 0), 0);
-    
-    const ratings = completedVisits
-      .map(v => v.runnerRatings[0]?.overallRating || v.rating)
-      .filter((r): r is number => r !== null && r !== undefined && r > 0);
-    const avgRating = ratings.length > 0
-      ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
-      : 0;
+
+    // Obtener calificación promedio real desde UserRatingService
+    const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
+    const avgRating = ratingSummary?.averageRating || 0;
 
     const completionRate = totalVisits > 0 ? (completedTasks / totalVisits) * 100 : 0;
 
@@ -91,7 +89,8 @@ export async function GET(request: NextRequest) {
 
     if (userProfile.bio) {
       try {
-        const bioData = typeof userProfile.bio === 'string' ? JSON.parse(userProfile.bio) : userProfile.bio;
+        const bioData =
+          typeof userProfile.bio === 'string' ? JSON.parse(userProfile.bio) : userProfile.bio;
         if (bioData && typeof bioData === 'object') {
           skills = bioData.skills || [];
           experience = bioData.experience || [];
@@ -103,9 +102,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const location = userProfile.commune && userProfile.city
-      ? `${userProfile.commune}, ${userProfile.city}`
-      : userProfile.region || 'No disponible';
+    const location =
+      userProfile.commune && userProfile.city
+        ? `${userProfile.commune}, ${userProfile.city}`
+        : userProfile.region || 'No disponible';
 
     logger.info('Perfil de runner obtenido', {
       runnerId: user.id,
@@ -201,4 +201,3 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
-

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -53,8 +54,10 @@ export async function GET(request: NextRequest) {
     // Calcular estadísticas
     const totalVisits = allVisits.length;
     const completedVisits = allVisits.filter(v => v.status === 'COMPLETED').length;
-    const pendingVisits = allVisits.filter(v => v.status === 'SCHEDULED' || v.status === 'PENDING').length;
-    
+    const pendingVisits = allVisits.filter(
+      v => v.status === 'SCHEDULED' || v.status === 'PENDING'
+    ).length;
+
     // Ganancias mensuales (último mes)
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -62,24 +65,16 @@ export async function GET(request: NextRequest) {
       .filter(v => v.status === 'COMPLETED' && new Date(v.scheduledAt) >= monthStart)
       .reduce((sum, v) => sum + (v.earnings || 0), 0);
 
-    // Calificación promedio
-    const visitsWithRatings = allVisits.filter(v => {
-      const rating = v.runnerRatings[0]?.overallRating || v.rating;
-      return rating && rating > 0;
-    });
-    const averageRating = visitsWithRatings.length > 0
-      ? visitsWithRatings.reduce((sum, v) => {
-          const rating = v.runnerRatings[0]?.overallRating || v.rating || 0;
-          return sum + rating;
-        }, 0) / visitsWithRatings.length
-      : 0;
+    // Obtener calificación promedio real desde UserRatingService
+    const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
+    const averageRating = ratingSummary?.averageRating || 0;
 
     // Visitas de hoy
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayEnd = new Date(today);
     todayEnd.setHours(23, 59, 59, 999);
-    
+
     const todayVisits = allVisits
       .filter(v => {
         const visitDate = new Date(v.scheduledAt);
@@ -107,7 +102,7 @@ export async function GET(request: NextRequest) {
     const recentActivity = allVisits.slice(0, 10).map(v => {
       const visitDate = new Date(v.scheduledAt);
       const rating = v.runnerRatings[0]?.overallRating || v.rating;
-      
+
       return {
         id: v.id,
         type: v.status === 'COMPLETED' ? 'visit' : 'visit_scheduled',
@@ -122,11 +117,11 @@ export async function GET(request: NextRequest) {
 
     // Métricas de rendimiento
     const completionRate = totalVisits > 0 ? (completedVisits / totalVisits) * 100 : 0;
-    const avgDuration = completedVisits > 0
-      ? allVisits
-          .filter(v => v.status === 'COMPLETED')
-          .reduce((sum, v) => sum + v.duration, 0) / completedVisits
-      : 0;
+    const avgDuration =
+      completedVisits > 0
+        ? allVisits.filter(v => v.status === 'COMPLETED').reduce((sum, v) => sum + v.duration, 0) /
+          completedVisits
+        : 0;
 
     const performanceMetrics = [
       {
@@ -191,4 +186,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

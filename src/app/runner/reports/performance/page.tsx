@@ -110,160 +110,96 @@ export default function RunnerPerformanceReport() {
     // Load performance data
     const loadPerformanceData = async () => {
       try {
-        // Mock data for demonstration
-        const mockMetrics: PerformanceMetrics = {
-          overallRating: 4.7,
-          totalVisits: 156,
-          completedVisits: 142,
-          averageResponseTime: 15, // minutes
-          onTimeRate: 95.5,
-          clientSatisfaction: 92.3,
-          monthlyEarnings: 450000,
-          totalEarnings: 2850000,
-          conversionRate: 78.5,
+        // Obtener datos reales desde la API
+        const response = await fetch('/api/runner/reports?type=performance', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        const data = result.data;
+
+        if (!data) {
+          throw new Error('No se recibieron datos del servidor');
+        }
+
+        // Transformar métricas al formato esperado
+        const performanceMetrics: PerformanceMetrics = {
+          overallRating: data.averageRating || 0,
+          totalVisits: data.totalVisits || 0,
+          completedVisits: data.completedVisits || 0,
+          averageResponseTime: data.responseTimeAverage || 0,
+          onTimeRate: data.onTimeRate || 0,
+          clientSatisfaction: data.clientSatisfactionScore || 0,
+          monthlyEarnings: data.monthlyEarnings || 0,
+          totalEarnings: data.totalEarnings || 0,
+          conversionRate: data.completionRate || 0,
         };
 
-        const mockMonthlyPerformance: MonthlyPerformance[] = [
-          {
-            month: 'Ene',
-            rating: 4.5,
-            visits: 45,
-            earnings: 680000,
-            onTimeRate: 93.0,
-            responseTime: 18,
-          },
-          {
-            month: 'Feb',
-            rating: 4.6,
-            visits: 52,
-            earnings: 750000,
-            onTimeRate: 94.5,
-            responseTime: 16,
-          },
-          {
-            month: 'Mar',
-            rating: 4.7,
-            visits: 48,
-            earnings: 720000,
-            onTimeRate: 95.0,
-            responseTime: 15,
-          },
-          {
-            month: 'Abr',
-            rating: 4.8,
-            visits: 55,
-            earnings: 820000,
-            onTimeRate: 96.0,
-            responseTime: 14,
-          },
-          {
-            month: 'May',
-            rating: 4.7,
-            visits: 58,
-            earnings: 880000,
-            onTimeRate: 95.5,
-            responseTime: 15,
-          },
-          {
-            month: 'Jun',
-            rating: 4.8,
-            visits: 62,
-            earnings: 950000,
-            onTimeRate: 97.0,
-            responseTime: 13,
-          },
-        ];
+        // Transformar datos mensuales
+        const monthlyData: MonthlyPerformance[] = (data.monthlyPerformance || []).map(
+          (month: any) => ({
+            month: month.month,
+            rating: month.rating || 0,
+            visits: month.visits || 0,
+            earnings: month.earnings || 0,
+            onTimeRate: month.onTimeRate || 0,
+            responseTime: month.responseTime || 0,
+          })
+        );
 
-        const mockAchievements: Achievement[] = [
-          {
-            id: '1',
-            title: 'Primeras 50 Visitas',
-            description: 'Completaste tus primeras 50 visitas',
-            icon: '🎯',
-            achieved: true,
-            date: '2024-02-15',
-            value: 50,
-          },
-          {
-            id: '2',
-            title: 'Runner Estrella',
-            description: 'Mantén un rating de 4.5+ por 3 meses',
-            icon: '⭐',
-            achieved: true,
-            date: '2024-04-01',
-          },
-          {
-            id: '3',
-            title: 'Experto en Conversión',
-            description: 'Alcanza 80% de tasa de conversión',
-            icon: '📈',
-            achieved: true,
-            date: '2024-05-10',
-            value: 80,
-          },
-          {
-            id: '4',
-            title: 'Millonario',
-            description: 'Acumula $1,000,000 en ganancias',
-            icon: '💰',
-            achieved: true,
-            date: '2024-03-20',
-            value: 1000000,
-          },
-          {
-            id: '5',
-            title: 'Perfect Timing',
-            description: 'Alcanza 98% de puntualidad',
-            icon: '⏰',
-            achieved: false,
-            value: 98,
-          },
-          {
-            id: '6',
-            title: 'Runner Legendario',
-            description: 'Completa 200 visitas',
-            icon: '🏆',
-            achieved: false,
-            value: 200,
-          },
-        ];
+        // Transformar achievements
+        const achievementsData: Achievement[] = (data.achievements || []).map((ach: any) => ({
+          id: ach.id,
+          title: ach.title,
+          description: ach.description,
+          icon: ach.icon,
+          achieved: ach.achieved || false,
+          date: ach.date,
+          value: ach.value,
+        }));
 
-        const mockFeedback: Feedback[] = [
-          {
-            id: '1',
-            clientName: 'María González',
-            rating: 5,
-            comment:
-              'Excelente servicio, muy puntual y profesional. El departamento era exactamente como se mostraba.',
-            date: '2024-01-15',
-            propertyTitle: 'Departamento Moderno Providencia',
-          },
-          {
-            id: '2',
-            clientName: 'Juan Pérez',
-            rating: 4,
-            comment: 'Muy buena atención, conocía bien la propiedad. Solo hubo un pequeño retraso.',
-            date: '2024-01-14',
-            propertyTitle: 'Casa Familiar Las Condes',
-          },
-          {
-            id: '3',
-            clientName: 'Ana Martínez',
-            rating: 5,
-            comment: 'Increíble experiencia! Muy amable y paciente. Respondió todas mis preguntas.',
-            date: '2024-01-16',
-            propertyTitle: 'Studio Amoblado Ñuñoa',
-          },
-        ];
+        // Transformar feedback
+        const feedbackData: Feedback[] = (data.feedback || []).map((fb: any) => ({
+          id: fb.id,
+          clientName: fb.clientName || 'Usuario',
+          rating: fb.rating || 0,
+          comment: fb.comment || '',
+          date: fb.date || new Date().toISOString(),
+          propertyTitle: fb.propertyTitle || 'Propiedad',
+        }));
 
-        setMetrics(mockMetrics);
-        setMonthlyPerformance(mockMonthlyPerformance);
-        setAchievements(mockAchievements);
-        setFeedback(mockFeedback);
+        setMetrics(performanceMetrics);
+        setMonthlyPerformance(monthlyData);
+        setAchievements(achievementsData);
+        setFeedback(feedbackData);
       } catch (error) {
         logger.error('Error loading performance data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+        // En caso de error, usar valores por defecto
+        setMetrics({
+          overallRating: 0,
+          totalVisits: 0,
+          completedVisits: 0,
+          averageResponseTime: 0,
+          onTimeRate: 0,
+          clientSatisfaction: 0,
+          monthlyEarnings: 0,
+          totalEarnings: 0,
+          conversionRate: 0,
+        });
+        setMonthlyPerformance([]);
+        setAchievements([]);
+        setFeedback([]);
       } finally {
         setLoading(false);
       }

@@ -76,7 +76,7 @@ export default function MaintenanceRatingsPage() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
       });
@@ -86,16 +86,30 @@ export default function MaintenanceRatingsPage() {
       }
 
       const data = await response.json();
-      
+
+      // La API devuelve { success: true, data: { ratings: [...], total: ... }, pagination: {...} }
+      const ratingsList = data.data?.ratings || data.ratings || [];
+
       // Transform API data to match our interface
-      const transformedRatings: Rating[] = data.ratings.map((rating: any) => ({
+      const transformedRatings: Rating[] = ratingsList.map((rating: any) => ({
         id: rating.id,
-        clientName: rating.clientName || 'Cliente no identificado',
-        propertyAddress: rating.propertyAddress || 'Dirección no disponible',
-        rating: rating.rating || 0,
+        clientName: rating.fromUser?.name || rating.clientName || 'Cliente no identificado',
+        propertyAddress:
+          rating.property?.address ||
+          rating.property?.title ||
+          rating.propertyAddress ||
+          'Dirección no disponible',
+        rating: rating.overallRating || rating.rating || 0,
         comment: rating.comment || 'Sin comentario',
         date: rating.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-        jobType: rating.jobType || 'Servicio de Mantenimiento',
+        jobType:
+          rating.contextType === 'MAINTENANCE'
+            ? 'Servicio de Mantenimiento'
+            : rating.contextType === 'SERVICE'
+              ? 'Servicio'
+              : rating.contextType === 'CONTRACT'
+                ? 'Contrato'
+                : 'Servicio de Mantenimiento',
         response: rating.response,
         responseDate: rating.responseDate?.split('T')[0],
       }));
@@ -104,9 +118,10 @@ export default function MaintenanceRatingsPage() {
 
       // Calculate statistics from real data
       const totalRatings = transformedRatings.length;
-      const averageRating = totalRatings > 0
-        ? transformedRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
-        : 0;
+      const averageRating =
+        totalRatings > 0
+          ? transformedRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+          : 0;
 
       const ratingCounts = transformedRatings.reduce(
         (acc, rating) => {
@@ -325,7 +340,8 @@ export default function MaintenanceRatingsPage() {
                       💡 Importante: Mantén un buen servicio
                     </p>
                     <p className="text-xs text-blue-700">
-                      Las buenas calificaciones son clave para conseguir más trabajos de mantenimiento.
+                      Las buenas calificaciones son clave para conseguir más trabajos de
+                      mantenimiento.
                     </p>
                   </div>
                 </div>

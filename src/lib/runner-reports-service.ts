@@ -3,6 +3,7 @@ import { logger } from './logger';
 import { DatabaseError, BusinessLogicError } from './errors';
 import { RunnerPayoutService } from './payout-service';
 import { NotificationService, NotificationType } from './notification-service';
+import { UserRatingService } from './user-rating-service';
 
 export interface RunnerPerformanceMetrics {
   runnerId: string;
@@ -17,6 +18,7 @@ export interface RunnerPerformanceMetrics {
   // Métricas de ganancias
   totalEarnings: number;
   averageEarningsPerVisit: number;
+  monthlyEarnings: number;
   earningsThisWeek: number;
   earningsLastWeek: number;
   earningsGrowth: number;
@@ -190,6 +192,15 @@ export class RunnerReportsService {
       const totalEarnings = visits.reduce((sum, visit) => sum + (visit.earnings || 0), 0);
       const averageEarningsPerVisit = completedVisits > 0 ? totalEarnings / completedVisits : 0;
 
+      // Calcular ganancias mensuales (mes actual)
+      const monthStart = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+      const monthlyEarnings = visits
+        .filter(v => {
+          const visitDate = v.scheduledAt || v.createdAt;
+          return visitDate >= monthStart && v.status === 'COMPLETED';
+        })
+        .reduce((sum, v) => sum + (v.earnings || 0), 0);
+
       // Calcular ganancias semanales
       const weekAgo = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
       const twoWeeksAgo = new Date(endDate.getTime() - 14 * 24 * 60 * 60 * 1000);
@@ -219,33 +230,16 @@ export class RunnerReportsService {
             completedVisitsData.length
           : 0;
 
-      // Calcular rating promedio desde RunnerRating real
-      const ratings = await db.runnerRating.findMany({
-        where: {
-          runnerId: runnerId,
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
-        select: {
-          overallRating: true,
-        },
-      });
-
-      const averageRating =
-        ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length
-          : 0;
-
-      // Distribución de calificaciones
-      const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      ratings.forEach(rating => {
-        const ratingValue = Math.round(rating.overallRating);
-        if (ratingValue >= 1 && ratingValue <= 5) {
-          ratingDistribution[ratingValue as keyof typeof ratingDistribution]++;
-        }
-      });
+      // Obtener calificación promedio real desde UserRatingService (incluye todas las calificaciones)
+      const ratingSummary = await UserRatingService.getUserRatingSummary(runnerId);
+      const averageRating = ratingSummary?.averageRating || 0;
+      const ratingDistribution = ratingSummary?.ratingDistribution || {
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+      };
 
       // Calcular eficiencia
       const daysInPeriod = Math.max(
@@ -375,6 +369,7 @@ export class RunnerReportsService {
         // Métricas de ganancias
         totalEarnings,
         averageEarningsPerVisit,
+        monthlyEarnings,
         earningsThisWeek,
         earningsLastWeek,
         earningsGrowth,
@@ -418,6 +413,320 @@ export class RunnerReportsService {
       logger.error('Error generando métricas de rendimiento:', error as Error);
       throw error;
     }
+  }
+
+  /**
+   * Genera datos de rendimiento mensual para un runner
+   */
+  static async generateMonthlyPerformance(
+    runnerId: string,
+    months: number = 6
+  ): Promise<
+    Array<{
+      month: string;
+      rating: number;
+      visits: number;
+      earnings: number;
+      onTimeRate: number;
+      responseTime: number;
+    }>
+  > {
+    try {
+      const monthlyData = [];
+      const now = new Date();
+
+      for (let i = months - 1; i >= 0; i--) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
+
+        // Obtener visitas del mes
+        const monthVisits = await db.visit.findMany({
+          where: {
+            runnerId: runnerId,
+            scheduledAt: {
+              gte: monthStart,
+              lte: monthEnd,
+            },
+          },
+          include: {
+            runnerRatings: {
+              select: {
+                overallRating: true,
+                punctualityRating: true,
+              },
+            },
+          },
+        });
+
+        const completedVisits = monthVisits.filter(v => v.status === 'COMPLETED');
+        const visits = completedVisits.length;
+        const earnings = completedVisits.reduce((sum, v) => sum + (v.earnings || 0), 0);
+
+        // Obtener calificaciones del mes desde UserRating
+        const monthRatings = await db.userRating.findMany({
+          where: {
+            toUserId: runnerId,
+            createdAt: {
+              gte: monthStart,
+              lte: monthEnd,
+            },
+          },
+          select: {
+            overallRating: true,
+            punctualityRating: true,
+          },
+        });
+
+        const rating =
+          monthRatings.length > 0
+            ? monthRatings.reduce((sum, r) => sum + r.overallRating, 0) / monthRatings.length
+            : 0;
+
+        // Calcular puntualidad promedio
+        const punctualityRatings = monthRatings
+          .map(r => r.punctualityRating)
+          .filter((r): r is number => r !== null && r !== undefined && r > 0);
+        const onTimeRate =
+          punctualityRatings.length > 0
+            ? (punctualityRatings.reduce((sum, r) => sum + r, 0) / punctualityRatings.length) * 20
+            : 95; // Default si no hay datos
+
+        // Tiempo de respuesta (placeholder - calcular desde mensajes si es necesario)
+        const responseTime = 15;
+
+        const monthNames = [
+          'Ene',
+          'Feb',
+          'Mar',
+          'Abr',
+          'May',
+          'Jun',
+          'Jul',
+          'Ago',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dic',
+        ];
+        const monthIndex = monthStart.getMonth();
+        monthlyData.push({
+          month: monthNames[monthIndex] || `Mes ${monthIndex + 1}`,
+          rating: Math.round(rating * 10) / 10,
+          visits,
+          earnings,
+          onTimeRate: Math.round(onTimeRate * 10) / 10,
+          responseTime,
+        });
+      }
+
+      return monthlyData;
+    } catch (error) {
+      logger.error('Error generando rendimiento mensual:', error as Error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene feedback (calificaciones con comentarios) para un runner
+   */
+  static async getRunnerFeedback(
+    runnerId: string,
+    limit: number = 10
+  ): Promise<
+    Array<{
+      id: string;
+      clientName: string;
+      rating: number;
+      comment: string;
+      date: string;
+      propertyTitle: string;
+    }>
+  > {
+    try {
+      const ratings = await db.userRating.findMany({
+        where: {
+          toUserId: runnerId,
+          comment: {
+            not: null,
+          },
+        },
+        include: {
+          fromUser: {
+            select: {
+              name: true,
+            },
+          },
+          property: {
+            select: {
+              title: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+      });
+
+      return ratings.map(rating => ({
+        id: rating.id,
+        clientName: rating.fromUser?.name || 'Usuario',
+        rating: rating.overallRating,
+        comment: rating.comment || '',
+        date: rating.createdAt.toISOString(),
+        propertyTitle: rating.property?.title || 'Propiedad',
+      }));
+    } catch (error) {
+      logger.error('Error obteniendo feedback:', error as Error);
+      return [];
+    }
+  }
+
+  /**
+   * Calcula logros del runner basados en métricas reales
+   */
+  static async calculateRunnerAchievements(
+    runnerId: string,
+    metrics: RunnerPerformanceMetrics
+  ): Promise<
+    Array<{
+      id: string;
+      title: string;
+      description: string;
+      icon: string;
+      achieved: boolean;
+      date?: string;
+      value?: number;
+    }>
+  > {
+    const achievements = [];
+
+    // Logro: Primeras 50 visitas
+    if (metrics.totalVisits >= 50) {
+      achievements.push({
+        id: '1',
+        title: 'Primeras 50 Visitas',
+        description: 'Completaste tus primeras 50 visitas',
+        icon: '🎯',
+        achieved: true,
+        value: 50,
+      });
+    } else {
+      achievements.push({
+        id: '1',
+        title: 'Primeras 50 Visitas',
+        description: 'Completaste tus primeras 50 visitas',
+        icon: '🎯',
+        achieved: false,
+        value: 50,
+      });
+    }
+
+    // Logro: Runner Estrella (rating 4.5+)
+    if (metrics.averageRating >= 4.5 && metrics.totalVisits >= 10) {
+      achievements.push({
+        id: '2',
+        title: 'Runner Estrella',
+        description: 'Mantén un rating de 4.5+',
+        icon: '⭐',
+        achieved: true,
+      });
+    } else {
+      achievements.push({
+        id: '2',
+        title: 'Runner Estrella',
+        description: 'Mantén un rating de 4.5+',
+        icon: '⭐',
+        achieved: false,
+      });
+    }
+
+    // Logro: Experto en Conversión (tasa de completitud alta)
+    const conversionRate = metrics.completionRate;
+    if (conversionRate >= 80) {
+      achievements.push({
+        id: '3',
+        title: 'Experto en Conversión',
+        description: 'Alcanza 80% de tasa de completitud',
+        icon: '📈',
+        achieved: true,
+        value: 80,
+      });
+    } else {
+      achievements.push({
+        id: '3',
+        title: 'Experto en Conversión',
+        description: 'Alcanza 80% de tasa de completitud',
+        icon: '📈',
+        achieved: false,
+        value: 80,
+      });
+    }
+
+    // Logro: Millonario
+    if (metrics.totalEarnings >= 1000000) {
+      achievements.push({
+        id: '4',
+        title: 'Millonario',
+        description: 'Acumula $1,000,000 en ganancias',
+        icon: '💰',
+        achieved: true,
+        value: 1000000,
+      });
+    } else {
+      achievements.push({
+        id: '4',
+        title: 'Millonario',
+        description: 'Acumula $1,000,000 en ganancias',
+        icon: '💰',
+        achieved: false,
+        value: 1000000,
+      });
+    }
+
+    // Logro: Perfect Timing
+    if (metrics.onTimeRate >= 98) {
+      achievements.push({
+        id: '5',
+        title: 'Perfect Timing',
+        description: 'Alcanza 98% de puntualidad',
+        icon: '⏰',
+        achieved: true,
+        value: 98,
+      });
+    } else {
+      achievements.push({
+        id: '5',
+        title: 'Perfect Timing',
+        description: 'Alcanza 98% de puntualidad',
+        icon: '⏰',
+        achieved: false,
+        value: 98,
+      });
+    }
+
+    // Logro: Runner Legendario
+    if (metrics.totalVisits >= 200) {
+      achievements.push({
+        id: '6',
+        title: 'Runner Legendario',
+        description: 'Completa 200 visitas',
+        icon: '🏆',
+        achieved: true,
+        value: 200,
+      });
+    } else {
+      achievements.push({
+        id: '6',
+        title: 'Runner Legendario',
+        description: 'Completa 200 visitas',
+        icon: '🏆',
+        achieved: false,
+        value: 200,
+      });
+    }
+
+    return achievements;
   }
 
   /**
