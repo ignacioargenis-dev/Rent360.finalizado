@@ -648,7 +648,7 @@ export default function RealTimeNotifications() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex flex-col flex-1 min-h-0">
               {localNotifications.length === 0 ? (
                 <div className="text-center py-8 flex-shrink-0">
                   <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -656,7 +656,7 @@ export default function RealTimeNotifications() {
                 </div>
               ) : (
                 <>
-                  <div className="max-h-[400px] overflow-y-auto overflow-x-hidden">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <div className="p-2 space-y-3">
                       {localNotifications
                         .filter(
@@ -759,7 +759,7 @@ export default function RealTimeNotifications() {
                     </div>
                   </div>
 
-                  <div className="border-t border-emerald-200 dark:border-emerald-800">
+                  <div className="border-t border-emerald-200 dark:border-emerald-800 flex-shrink-0">
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50">
                       <button
                         onClick={clearAllNotifications}
