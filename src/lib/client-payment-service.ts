@@ -9,6 +9,53 @@ import {
 } from './api/payments';
 import { NotificationService } from './notification-service';
 
+/**
+ * Obtiene el porcentaje de comisión configurado para service providers
+ */
+async function getServiceProviderCommissionPercentage(): Promise<number> {
+  try {
+    // Intentar obtener desde platformConfig primero
+    const platformConfig = await db.platformConfig.findUnique({
+      where: { key: 'serviceProviderCommissionPercentage' },
+    });
+
+    if (platformConfig) {
+      const percentage = parseFloat(platformConfig.value);
+      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+
+    // Si no existe en platformConfig, intentar desde systemSetting
+    const systemSetting = await db.systemSetting.findFirst({
+      where: {
+        key: 'serviceProviderCommissionPercentage',
+        category: 'payouts',
+        isActive: true,
+      },
+    });
+
+    if (systemSetting) {
+      const percentage = parseFloat(systemSetting.value);
+      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+
+    // Valor por defecto: 8%
+    logger.warn(
+      'No se encontró configuración de comisión para service providers, usando 8% por defecto'
+    );
+    return 8;
+  } catch (error) {
+    logger.error('Error obteniendo porcentaje de comisión:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Valor por defecto en caso de error
+    return 8;
+  }
+}
+
 export interface ClientPaymentData {
   serviceJobId: string;
   clientId: string;
@@ -320,57 +367,112 @@ export class ClientPaymentService {
 
       // Actualizar el registro con el resultado del cobro
       if (chargeResult.success && chargeResult.transactionId) {
-        // Calcular comisión (8% para service providers)
-        const commissionPercentage = 0.08;
-        const commission = clientPayment.amount * commissionPercentage;
+        // Obtener porcentaje de comisión desde configuración del admin
+        const commissionPercentage = await getServiceProviderCommissionPercentage();
+        const commissionRate = commissionPercentage / 100;
+        const commission = clientPayment.amount * commissionRate;
         const netAmount = clientPayment.amount - commission;
 
-        await db.providerTransaction.update({
-          where: { id: clientPayment.id },
-          data: {
-            status: 'COMPLETED',
-            commission,
-            netAmount,
-            reference: chargeResult.transactionId,
-            processedAt: new Date(),
-            notes: JSON.stringify({
-              ...metadata,
-              transactionId: chargeResult.transactionId,
-              chargedAt: new Date().toISOString(),
-            }),
-          },
-        });
-
-        // Actualizar estadísticas del provider
-        await db.serviceProvider.update({
+        // Obtener información del provider y verificar cuenta bancaria
+        const provider = await db.serviceProvider.findUnique({
           where: { id: clientPayment.serviceJob.serviceProviderId },
-          data: {
-            totalEarnings: {
-              increment: netAmount,
+          include: {
+            user: {
+              include: {
+                bankAccounts: {
+                  where: { isPrimary: true },
+                  take: 1,
+                },
+              },
             },
           },
         });
 
-        // Obtener el userId del provider para enviar notificación
-        const provider = await db.serviceProvider.findUnique({
-          where: { id: clientPayment.serviceJob.serviceProviderId },
-          select: {
-            userId: true,
+        if (!provider) {
+          throw new ValidationError('Proveedor de servicio no encontrado');
+        }
+
+        // Verificar que el provider tenga cuenta bancaria configurada
+        const bankAccount = provider.user.bankAccounts?.[0];
+        if (!bankAccount) {
+          logger.warn('Provider no tiene cuenta bancaria configurada, creando payout pendiente', {
+            providerId: provider.id,
+            serviceJobId,
+          });
+
+          // Enviar notificación al provider para que configure su cuenta bancaria
+          if (provider.userId) {
+            try {
+              await NotificationService.create({
+                userId: provider.userId,
+                type: 'PAYMENT_PENDING' as any,
+                title: 'Pago pendiente - Configura tu cuenta bancaria',
+                message: `Tienes un pago pendiente de ${netAmount.toLocaleString('es-CL', {
+                  style: 'currency',
+                  currency: 'CLP',
+                })} por el trabajo "${clientPayment.serviceJob.title}". Por favor configura tu cuenta bancaria para recibir el pago.`,
+                link: '/provider/payments/configure',
+              });
+            } catch (notificationError) {
+              logger.warn('Error enviando notificación al provider:', {
+                error:
+                  notificationError instanceof Error
+                    ? notificationError.message
+                    : String(notificationError),
+              });
+            }
+          }
+        }
+
+        // Actualizar la transacción con el resultado del cobro
+        // El estado será PENDING para que el admin lo procese mediante el sistema de payouts
+        await db.providerTransaction.update({
+          where: { id: clientPayment.id },
+          data: {
+            status: bankAccount && bankAccount.isVerified ? 'PROCESSING' : 'PENDING',
+            commission,
+            netAmount,
+            reference: chargeResult.transactionId,
+            processedAt: bankAccount && bankAccount.isVerified ? new Date() : null,
+            notes: JSON.stringify({
+              ...metadata,
+              transactionId: chargeResult.transactionId,
+              chargedAt: new Date().toISOString(),
+              commissionPercentage,
+              requiresPayout: true,
+              bankAccountConfigured: !!bankAccount,
+              bankAccountVerified: bankAccount?.isVerified || false,
+            }),
           },
         });
 
-        // Enviar notificación al provider
-        if (provider?.userId) {
+        // NO actualizar directamente las estadísticas del provider aquí
+        // El sistema de payouts se encargará de actualizar las estadísticas cuando procese el payout
+
+        // Enviar notificación al provider sobre el pago recibido
+        if (provider.userId) {
           try {
             await NotificationService.create({
               userId: provider.userId,
               type: 'PAYMENT_RECEIVED' as any,
-              title: 'Pago recibido',
-              message: `Has recibido un pago de ${clientPayment.amount.toLocaleString('es-CL', {
-                style: 'currency',
-                currency: 'CLP',
-              })} por el trabajo "${clientPayment.serviceJob.title}"`,
-              link: `/provider/jobs/${serviceJobId}`,
+              title:
+                bankAccount && bankAccount.isVerified
+                  ? 'Pago procesado'
+                  : 'Pago pendiente - Configura tu cuenta bancaria',
+              message:
+                bankAccount && bankAccount.isVerified
+                  ? `Has recibido un pago de ${netAmount.toLocaleString('es-CL', {
+                      style: 'currency',
+                      currency: 'CLP',
+                    })} por el trabajo "${clientPayment.serviceJob.title}". El pago será depositado en tu cuenta bancaria.`
+                  : `Tienes un pago pendiente de ${netAmount.toLocaleString('es-CL', {
+                      style: 'currency',
+                      currency: 'CLP',
+                    })} por el trabajo "${clientPayment.serviceJob.title}". Por favor configura tu cuenta bancaria para recibir el pago.`,
+              link:
+                bankAccount && bankAccount.isVerified
+                  ? `/provider/jobs/${serviceJobId}`
+                  : '/provider/payments/configure',
             });
           } catch (notificationError) {
             logger.warn('Error enviando notificación de pago al provider:', {
@@ -388,7 +490,11 @@ export class ClientPaymentService {
           amount: clientPayment.amount,
           netAmount,
           commission,
+          commissionPercentage,
           transactionId: chargeResult.transactionId,
+          bankAccountConfigured: !!bankAccount,
+          bankAccountVerified: bankAccount?.isVerified || false,
+          status: bankAccount && bankAccount.isVerified ? 'PROCESSING' : 'PENDING',
         });
       } else {
         const currentNotes = clientPayment.notes ? JSON.parse(clientPayment.notes) : {};

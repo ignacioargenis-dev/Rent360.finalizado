@@ -440,15 +440,39 @@ export class ProviderPayoutsService {
       const paymentResult = await this.simulatePaymentProcessing(transaction);
 
       if (paymentResult.success) {
-        // Actualizar transacción como completada
-        await db.providerTransaction.update({
-          where: { id: transactionId },
-          data: {
-            status: 'COMPLETED',
-            processedAt: new Date(),
-            approvedBy: adminUserId, // Actualizar con el admin que aprobó manualmente
-            ...(paymentResult.transactionId && { reference: paymentResult.transactionId }),
-          },
+        // Actualizar transacción como completada y estadísticas del provider
+        await db.$transaction(async tx => {
+          // Actualizar transacción como completada
+          await tx.providerTransaction.update({
+            where: { id: transactionId },
+            data: {
+              status: 'COMPLETED',
+              processedAt: new Date(),
+              approvedBy: adminUserId, // Actualizar con el admin que aprobó manualmente
+              ...(paymentResult.transactionId && { reference: paymentResult.transactionId }),
+            },
+          });
+
+          // Actualizar estadísticas del provider
+          if (transaction.providerType === 'MAINTENANCE' && transaction.maintenanceProviderId) {
+            await tx.maintenanceProvider.update({
+              where: { id: transaction.maintenanceProviderId },
+              data: {
+                totalEarnings: {
+                  increment: transaction.netAmount,
+                },
+              },
+            });
+          } else if (transaction.providerType === 'SERVICE' && transaction.serviceProviderId) {
+            await tx.serviceProvider.update({
+              where: { id: transaction.serviceProviderId },
+              data: {
+                totalEarnings: {
+                  increment: transaction.netAmount,
+                },
+              },
+            });
+          }
         });
 
         // Enviar notificación al proveedor
@@ -458,6 +482,10 @@ export class ProviderPayoutsService {
           transactionId,
           providerType: transaction.providerType,
           amount: transaction.netAmount,
+          providerId:
+            transaction.providerType === 'MAINTENANCE'
+              ? transaction.maintenanceProviderId
+              : transaction.serviceProviderId,
         });
 
         return { success: true };
