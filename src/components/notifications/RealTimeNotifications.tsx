@@ -595,7 +595,7 @@ export default function RealTimeNotifications() {
 
         {/* Panel de notificaciones */}
         {showPanel && (
-          <Card className="absolute top-8 right-0 w-96 shadow-lg border border-emerald-200 dark:border-emerald-800 z-50 bg-white dark:bg-gray-900 flex flex-col max-h-[600px]">
+          <Card className="absolute top-8 right-0 w-96 shadow-lg border border-emerald-200 dark:border-emerald-800 z-50 bg-white dark:bg-gray-900 flex flex-col max-h-[600px] overflow-hidden">
             <CardHeader className="pb-4 bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950 dark:to-emerald-900 border-b border-emerald-200 dark:border-emerald-800 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -649,7 +649,7 @@ export default function RealTimeNotifications() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+            <CardContent className="p-0">
               {localNotifications.length === 0 ? (
                 <div className="text-center py-8 flex-shrink-0">
                   <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -657,7 +657,7 @@ export default function RealTimeNotifications() {
                 </div>
               ) : (
                 <>
-                  <ScrollArea className="flex-1 min-h-0">
+                  <ScrollArea className="max-h-[400px]">
                     <div className="p-2 space-y-3">
                       {localNotifications
                         .filter(
@@ -760,7 +760,7 @@ export default function RealTimeNotifications() {
                     </div>
                   </ScrollArea>
 
-                  <div className="flex-shrink-0 border-t border-emerald-200 dark:border-emerald-800">
+                  <div className="border-t border-emerald-200 dark:border-emerald-800">
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50">
                       <button
                         onClick={clearAllNotifications}
