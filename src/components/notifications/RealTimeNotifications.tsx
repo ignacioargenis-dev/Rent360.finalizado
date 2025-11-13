@@ -14,7 +14,6 @@ console.log('🎯 [REAL TIME NOTIFICATIONS] UI components imported successfully'
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   Bell,
@@ -657,7 +656,7 @@ export default function RealTimeNotifications() {
                 </div>
               ) : (
                 <>
-                  <ScrollArea className="max-h-[400px]">
+                  <div className="max-h-[400px] overflow-y-auto overflow-x-hidden">
                     <div className="p-2 space-y-3">
                       {localNotifications
                         .filter(
@@ -758,7 +757,7 @@ export default function RealTimeNotifications() {
                           </div>
                         ))}
                     </div>
-                  </ScrollArea>
+                  </div>
 
                   <div className="border-t border-emerald-200 dark:border-emerald-800">
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50">
