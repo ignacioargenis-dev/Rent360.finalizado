@@ -195,7 +195,7 @@ export class UserRatingService {
       try {
         await NotificationService.create({
           userId: ratingData.toUserId,
-          type: NotificationType.NEW_MESSAGE,
+          type: NotificationType.RUNNER_RATING_UPDATED,
           title: '⭐ Nueva Calificación Recibida',
           message: `Has recibido una calificación de ${ratingData.overallRating} estrellas de ${fromUser.name || 'un usuario'}`,
           link: '/profile/ratings',

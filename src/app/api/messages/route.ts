@@ -440,7 +440,7 @@ export async function POST(request: NextRequest) {
       await NotificationService.create({
         userId: notificationData.recipientId,
         type: NotificationType.NEW_MESSAGE,
-        title: `Nuevo mensaje: ${subject}`,
+        title: `Nuevo mensaje de ${notificationData.senderName || 'un usuario'}`,
         message: content.length > 100 ? content.substring(0, 100) + '...' : content,
         link: `/messages/${message.id}`,
         metadata: {
