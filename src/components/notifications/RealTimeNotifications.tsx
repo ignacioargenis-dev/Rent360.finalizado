@@ -208,46 +208,114 @@ export default function RealTimeNotifications() {
     if (savedNotifications) {
       try {
         const parsed = JSON.parse(savedNotifications);
-        const notificationsWithDates = parsed.map((n: any) => ({
-          ...n,
-          timestamp: new Date(n.timestamp),
-        }));
+        const notificationsWithDates = parsed
+          .map((n: any) => {
+            try {
+              // Validar y convertir timestamp de forma segura
+              const timestamp = parseTimestamp(n.timestamp);
+              return {
+                ...n,
+                timestamp,
+              };
+            } catch (error) {
+              console.error(
+                '🚨 [REAL TIME NOTIFICATIONS] Error parsing saved notification timestamp:',
+                error,
+                n
+              );
+              return null;
+            }
+          })
+          .filter((n: any) => n !== null); // Filtrar notificaciones inválidas
+
         setLocalNotifications(notificationsWithDates);
         setUnreadCount(notificationsWithDates.filter((n: NotificationItem) => !n.read).length);
-      } catch (error) {
-        logger.error('Error loading notifications:', {
-          error: error instanceof Error ? error.message : String(error),
+
+        // Marcar las notificaciones cargadas como procesadas para evitar reprocesamiento
+        setProcessedNotificationIds(prev => {
+          const newSet = new Set(prev);
+          notificationsWithDates.forEach((notif: NotificationItem) => {
+            if (notif.id) {
+              newSet.add(notif.id);
+            }
+          });
+          return newSet;
         });
+      } catch (error) {
+        console.error(
+          '🚨 [REAL TIME NOTIFICATIONS] Error loading notifications from localStorage:',
+          error
+        );
+        // Limpiar localStorage corrupto
+        localStorage.removeItem('rent360_notifications');
       }
     }
   }, []);
 
+  // Guardar notificaciones en localStorage cuando cambien
+  useEffect(() => {
+    if (localNotifications.length > 0) {
+      try {
+        localStorage.setItem('rent360_notifications', JSON.stringify(localNotifications));
+      } catch (error) {
+        console.error(
+          '🚨 [REAL TIME NOTIFICATIONS] Error saving notifications to localStorage:',
+          error
+        );
+      }
+    }
+  }, [localNotifications]);
+
+  // Estado para rastrear notificaciones procesadas y evitar duplicados
+  const [processedNotificationIds, setProcessedNotificationIds] = useState<Set<string>>(new Set());
+
   // Manejar nuevas notificaciones desde WebSocket
   useEffect(() => {
     if (wsNotifications.length > 0) {
-      const newNotifications: NotificationItem[] = wsNotifications.map(wsNotif => ({
+      // Filtrar notificaciones que ya han sido procesadas
+      const unprocessedNotifications = wsNotifications.filter(
+        wsNotif => wsNotif.id && !processedNotificationIds.has(wsNotif.id)
+      );
+
+      if (unprocessedNotifications.length === 0) {
+        console.log('🚨 [REAL TIME NOTIFICATIONS] All notifications already processed');
+        return;
+      }
+
+      console.log(
+        '🚨 [REAL TIME NOTIFICATIONS] Processing new notifications:',
+        unprocessedNotifications.length
+      );
+
+      const newNotifications: NotificationItem[] = unprocessedNotifications.map(wsNotif => ({
         id: wsNotif.id || `notif_${Date.now()}_${Math.random()}`,
         type: wsNotif.type || 'system_alert',
         title: wsNotif.title || 'Nueva Notificación',
         message: wsNotif.message || wsNotif.content || 'Tienes una nueva notificación',
         data: wsNotif.data,
         priority: wsNotif.priority || 'medium',
-        timestamp: new Date(wsNotif.timestamp || Date.now()),
+        timestamp: parseTimestamp(wsNotif.timestamp),
         read: false,
       }));
 
       setLocalNotifications(prev => {
         const updated = [...newNotifications, ...prev];
         // Limitar a 100 notificaciones
-        const limited = updated.slice(0, 100);
-
-        // Guardar en localStorage
-        localStorage.setItem('rent360_notifications', JSON.stringify(limited));
-
-        return limited;
+        return updated.slice(0, 100);
       });
 
       setUnreadCount(prev => prev + newNotifications.length);
+
+      // Marcar estas notificaciones como procesadas
+      setProcessedNotificationIds(prev => {
+        const newSet = new Set(prev);
+        newNotifications.forEach(notif => {
+          if (notif.id) {
+            newSet.add(notif.id);
+          }
+        });
+        return newSet;
+      });
 
       // Mostrar notificación del sistema si es importante
       const highPriorityNotif = newNotifications.find(n => n.priority === 'high');
@@ -462,61 +530,65 @@ export default function RealTimeNotifications() {
                 <>
                   <ScrollArea className="h-64">
                     <div className="space-y-1">
-                      {localNotifications.map(notification => (
-                        <div
-                          key={notification.id}
-                          className={`p-3 border-l-4 ${getPriorityColor(notification.priority || 'low')} ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 mt-1">
-                              {getNotificationIcon(notification.type)}
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between">
-                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                  {notification.title}
-                                </h4>
-                                {!notification.read && (
-                                  <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 ml-2" />
-                                )}
+                      {localNotifications
+                        .filter(
+                          notification => notification && notification.id && notification.timestamp
+                        )
+                        .map(notification => (
+                          <div
+                            key={notification.id}
+                            className={`p-3 border-l-4 ${getPriorityColor(notification.priority || 'low')} ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 mt-1">
+                                {getNotificationIcon(notification.type)}
                               </div>
 
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                {notification.message}
-                              </p>
-
-                              <div className="flex items-center justify-between mt-2">
-                                <span className="text-xs text-gray-500">
-                                  {formatTimestamp(notification.timestamp)}
-                                </span>
-
-                                <div className="flex items-center gap-1">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between">
+                                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    {notification.title}
+                                  </h4>
                                   {!notification.read && (
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 ml-2" />
+                                  )}
+                                </div>
+
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                  {notification.message}
+                                </p>
+
+                                <div className="flex items-center justify-between mt-2">
+                                  <span className="text-xs text-gray-500">
+                                    {formatTimestamp(notification.timestamp)}
+                                  </span>
+
+                                  <div className="flex items-center gap-1">
+                                    {!notification.read && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => markAsRead(notification.id)}
+                                        className="h-6 px-2 text-xs"
+                                      >
+                                        <CheckCircle className="h-3 w-3" />
+                                      </Button>
+                                    )}
+
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => markAsRead(notification.id)}
-                                      className="h-6 px-2 text-xs"
+                                      onClick={() => deleteNotification(notification.id)}
+                                      className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
                                     >
-                                      <CheckCircle className="h-3 w-3" />
+                                      <X className="h-3 w-3" />
                                     </Button>
-                                  )}
-
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => deleteNotification(notification.id)}
-                                    className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </ScrollArea>
 
