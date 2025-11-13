@@ -437,22 +437,13 @@ export default function ProviderJobDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Barra de progreso */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <Label className="text-sm font-medium">Progreso del Trabajo</Label>
-                    <span className="text-sm text-gray-600">{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="w-full" />
-                </div>
-
                 {/* Controles de progreso */}
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={startJob}
-                    disabled={status === 'IN_PROGRESS'}
+                    disabled={status === 'IN_PROGRESS' || status === 'COMPLETED'}
                   >
                     <Play className="w-4 h-4 mr-1" />
                     Iniciar
@@ -470,7 +461,7 @@ export default function ProviderJobDetailPage() {
                     size="sm"
                     variant="outline"
                     onClick={completeJob}
-                    disabled={progress < 100}
+                    disabled={status === 'COMPLETED'}
                   >
                     <CheckCircle className="w-4 h-4 mr-1" />
                     Completar
@@ -484,6 +475,10 @@ export default function ProviderJobDetailPage() {
                     value={status}
                     onValueChange={newStatus => {
                       setStatus(newStatus);
+                      // Si se completa, establecer progreso a 100
+                      if (newStatus === 'COMPLETED') {
+                        setProgress(100);
+                      }
                       // Guardar automáticamente cuando cambia el estado
                       setTimeout(() => saveChangesSilently(), 100);
                     }}
@@ -500,31 +495,32 @@ export default function ProviderJobDetailPage() {
                   </Select>
                 </div>
 
-                {/* Progreso */}
+                {/* Progreso - Solo una barra de progreso */}
                 <div>
-                  <Label htmlFor="progress">Progreso del Trabajo ({progress}%)</Label>
-                  <div className="space-y-3 mt-2">
-                    <Slider
-                      id="progress"
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={[progress]}
-                      onValueChange={value => {
-                        const newProgress = value[0] ?? 0;
-                        setProgress(newProgress);
-                        // Guardar automáticamente cuando cambia el progreso
-                        setTimeout(() => saveChangesSilently(), 300);
-                      }}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>0%</span>
-                      <span>{progress}%</span>
-                      <span>100%</span>
-                    </div>
-                    <Progress value={progress} className="w-full h-2" />
+                  <div className="flex justify-between items-center mb-2">
+                    <Label htmlFor="progress">Progreso del Trabajo</Label>
+                    <span className="text-sm text-gray-600 font-medium">{progress}%</span>
                   </div>
+                  <Slider
+                    id="progress"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={[progress]}
+                    onValueChange={value => {
+                      const newProgress = value[0] ?? 0;
+                      setProgress(newProgress);
+                      // Si llega a 100%, cambiar estado a COMPLETED
+                      if (newProgress === 100 && status !== 'COMPLETED') {
+                        setStatus('COMPLETED');
+                      }
+                      // Guardar automáticamente cuando cambia el progreso
+                      setTimeout(() => saveChangesSilently(), 300);
+                    }}
+                    className="w-full"
+                    disabled={status === 'COMPLETED'}
+                  />
+                  <Progress value={progress} className="w-full h-2 mt-2" />
                 </div>
 
                 {/* Notas */}

@@ -43,22 +43,64 @@ export default function ProviderServicesPage() {
   useEffect(() => {
     loadPageData();
 
-    // Escuchar eventos de actualización de servicios
+    // Escuchar eventos de actualización de servicios con recarga silenciosa
     const handleServiceUpdate = () => {
       console.log(
-        '🔄 [PROVIDER SERVICES] Evento de actualización de servicios detectado, recargando...'
+        '🔄 [PROVIDER SERVICES] Evento de actualización de servicios detectado, recargando silenciosamente...'
       );
-      loadPageData();
+      loadPageDataSilently();
     };
 
     window.addEventListener('r360-service-created', handleServiceUpdate);
-    window.addEventListener('focus', handleServiceUpdate); // Recargar al volver a la pestaña
+    // Recarga silenciosa al volver a la pestaña (sin mostrar loading)
+    window.addEventListener('focus', handleServiceUpdate);
 
     return () => {
       window.removeEventListener('r360-service-created', handleServiceUpdate);
       window.removeEventListener('focus', handleServiceUpdate);
     };
   }, []);
+
+  // Función para recarga silenciosa sin interrumpir la navegación
+  const loadPageDataSilently = async () => {
+    try {
+      // No establecer loading=true para mantener la UI fluida
+      const url = `/api/provider/services?t=${Date.now()}`;
+
+      const response = await fetch(url, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const apiData = await response.json();
+
+        if (apiData.success && apiData.services) {
+          const servicesArray = Array.isArray(apiData.services) ? apiData.services : [];
+          setServices(servicesArray);
+
+          // Actualizar estadísticas sin mostrar loading
+          const overviewData = {
+            totalServices: servicesArray.length,
+            activeServices: servicesArray.filter((s: any) => s.active).length,
+            pendingServices: servicesArray.filter((s: any) => !s.active).length,
+            totalRevenue: servicesArray.reduce(
+              (sum: number, s: any) => sum + (s.price * s.totalJobs || 0),
+              0
+            ),
+          };
+          setData(overviewData);
+        }
+      }
+    } catch (error) {
+      // Solo loggear error, no mostrar en UI para mantener fluidez
+      console.error('❌ [PROVIDER SERVICES] Error en recarga silenciosa:', error);
+    }
+  };
 
   const loadPageData = async () => {
     try {

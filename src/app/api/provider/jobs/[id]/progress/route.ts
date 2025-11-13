@@ -99,7 +99,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     console.log('🚨🚨🚨 [JOB PROGRESS] Estado final en BD:', finalJob);
 
     // Si el trabajo se completa, enviar notificación al cliente
-    if (status === 'COMPLETED') {
+    // Solo enviar si el estado anterior NO era COMPLETED para evitar duplicados
+    if (status === 'COMPLETED' && job.status !== 'COMPLETED') {
       try {
         await NotificationService.create({
           userId: job.requester.id,

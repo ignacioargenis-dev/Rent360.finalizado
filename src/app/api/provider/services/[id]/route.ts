@@ -3,6 +3,7 @@ import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -101,9 +102,25 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       });
 
       const completedJobs = serviceJobs.filter(j => j.status === 'COMPLETED');
-      const ratings = completedJobs.map(j => j.rating).filter(Boolean) as number[];
-      const avgRating =
-        ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
+      // Obtener calificación promedio real usando UserRatingService
+      let avgRating = 0;
+      let totalReviews = 0;
+      try {
+        const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
+        avgRating = ratingSummary?.averageRating || 0;
+        totalReviews = ratingSummary?.totalRatings || 0;
+      } catch (error) {
+        logger.warn('Error obteniendo calificación promedio para servicio:', {
+          serviceId,
+          userId: user.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Fallback a cálculo desde jobs si falla
+        const ratings = completedJobs.map(j => j.rating).filter(Boolean) as number[];
+        avgRating =
+          ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
+        totalReviews = ratings.length;
+      }
 
       // Parsear disponibilidad
       let availability = {
@@ -153,7 +170,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           requests: serviceJobs.length,
           conversionRate: 0,
           averageRating: avgRating,
-          totalReviews: ratings.length,
+          totalReviews: totalReviews,
           completedJobs: completedJobs.length,
         },
         createdAt: serviceObj.createdAt || new Date().toISOString(),

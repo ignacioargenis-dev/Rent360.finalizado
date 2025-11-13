@@ -40,6 +40,7 @@ import {
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import { useRouter } from 'next/navigation';
 
 interface ProviderClient {
   id: string;
@@ -69,6 +70,7 @@ interface ClientStats {
 
 export default function ProviderClientsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -253,7 +255,8 @@ export default function ProviderClientsPage() {
   };
 
   const handleViewClientDetails = (clientId: string) => {
-    // Navigate to client detail page (would be implemented when needed)
+    // Navegar a la página de detalles del cliente o mostrar modal con información
+    router.push(`/provider/clients/${clientId}`);
     logger.info('Ver detalles de cliente', { clientId });
   };
 

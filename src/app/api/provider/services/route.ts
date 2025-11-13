@@ -3,6 +3,7 @@ import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 // Forzar renderizado dinámico para evitar caché
 export const dynamic = 'force-dynamic';
@@ -101,19 +102,28 @@ export async function GET(request: NextRequest) {
         },
       });
 
+      // Obtener calificación promedio real del proveedor usando UserRatingService
+      let providerAvgRating = 0;
+      try {
+        const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
+        providerAvgRating = ratingSummary?.averageRating || 0;
+      } catch (error) {
+        logger.warn('Error obteniendo calificación promedio del proveedor:', {
+          userId: user.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
       // Agrupar estadísticas por tipo de servicio
       const statsByType: Record<string, any> = {};
       serviceTypes.forEach(type => {
         const jobsForType = serviceJobs.filter(j => j.serviceType === type);
         const completedJobs = jobsForType.filter(j => j.status === 'COMPLETED');
-        const ratings = completedJobs.map(j => j.rating).filter(Boolean) as number[];
-        const avgRating =
-          ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
 
         statsByType[type] = {
           totalJobs: jobsForType.length,
           completedJobs: completedJobs.length,
-          avgRating,
+          avgRating: providerAvgRating, // Usar calificación promedio real del proveedor
           totalRevenue: completedJobs.reduce(
             (sum, j) => sum + (j.finalPrice || j.basePrice || 0),
             0

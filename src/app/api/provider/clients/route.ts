@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAnyProvider, isServiceProvider, isMaintenanceProvider } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 // import { handleApiError } from '@/lib/api-utils';
 
 export const dynamic = 'force-dynamic';
@@ -153,25 +154,17 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Obtener ratings para calcular promedio por cliente
-      const completedJobs = serviceJobs.filter(j => j.status === 'COMPLETED');
-      const ratingsMap = new Map<string, number[]>();
-
-      for (const job of completedJobs) {
-        if (job.requester && job.rating) {
-          const clientId = job.requester.id;
-          if (!ratingsMap.has(clientId)) {
-            ratingsMap.set(clientId, []);
-          }
-          ratingsMap.get(clientId)!.push(job.rating);
-        }
-      }
-
-      // Actualizar promedio de ratings
-      for (const [clientId, ratings] of ratingsMap.entries()) {
-        const client = clientsMap.get(clientId);
-        if (client) {
-          client.averageRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+      // Obtener ratings reales usando UserRatingService para cada cliente
+      for (const [clientId, client] of clientsMap.entries()) {
+        try {
+          const ratingSummary = await UserRatingService.getUserRatingSummary(clientId);
+          client.averageRating = ratingSummary?.averageRating || 0;
+        } catch (error) {
+          logger.warn('Error obteniendo calificación promedio para cliente:', {
+            clientId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          client.averageRating = 0;
         }
       }
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
@@ -283,15 +276,23 @@ export async function GET(request: NextRequest) {
       return b.lastServiceDate.localeCompare(a.lastServiceDate);
     });
 
-    // Calcular estadísticas
+    // Calcular estadísticas - usar calificación promedio real del proveedor para el resumen
+    let providerAverageRating = 0;
+    try {
+      const providerRatingSummary = await UserRatingService.getUserRatingSummary(user.id);
+      providerAverageRating = providerRatingSummary?.averageRating || 0;
+    } catch (error) {
+      logger.warn('Error obteniendo calificación promedio del proveedor:', {
+        providerId: user.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
     const stats = {
       totalClients: clients.length,
       activeClients: clients.filter(c => c.status === 'active').length,
       totalRevenue: clients.reduce((sum, c) => sum + c.totalSpent, 0),
-      averageRating:
-        clients.length > 0
-          ? clients.reduce((sum, c) => sum + c.averageRating, 0) / clients.length
-          : 0,
+      averageRating: providerAverageRating, // Usar calificación promedio real del proveedor
       newClientsThisMonth: clients.filter(c => {
         const clientDate = new Date(c.createdAt);
         const now = new Date();
