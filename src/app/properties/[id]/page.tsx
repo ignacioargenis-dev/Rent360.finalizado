@@ -227,7 +227,7 @@ export default function PublicPropertyDetailPage() {
     }
 
     if (isAuthenticated) {
-      // Usuario autenticado - solicitar visita
+      // Usuario autenticado - solicitar visita de Runner360
       try {
         // Obtener información del usuario actual
         const userResponse = await fetch('/api/auth/me', {
@@ -245,51 +245,42 @@ export default function PublicPropertyDetailPage() {
         const userData = await userResponse.json();
         const currentUser = userData.user;
 
-        // Crear mensaje de solicitud de visita
-        const visitRequest = {
-          recipientId: property?.owner?.id,
-          propertyId: propertyId,
-          message: `Hola, estoy interesado en la propiedad "${property?.title}". Me gustaría programar una visita para conocerla mejor. ¿Podríamos coordinar una fecha conveniente?
+        // Verificar que el usuario es inquilino
+        if (currentUser.role !== 'TENANT') {
+          alert('Solo los inquilinos pueden solicitar visitas de Runner360.');
+          return;
+        }
 
-Propiedad: ${property?.title}
-Dirección: ${property?.address}, ${property?.city}
-Precio: $${property?.price?.toLocaleString()}
-
-Mis datos de contacto:
-Nombre: ${currentUser.name}
-Email: ${currentUser.email}
-Teléfono: ${currentUser.phone || 'No especificado'}
-
-Espero su respuesta. ¡Gracias!`,
-          type: 'property_inquiry',
-          priority: 'medium',
-          metadata: {
-            propertyId: propertyId,
-            inquiryType: 'visit_request',
-            propertyTitle: property?.title,
-            propertyAddress: property?.address,
-            propertyPrice: property?.price,
-          },
-        };
-
-        const messageResponse = await fetch('/api/messages', {
+        // Solicitar visita de Runner360 usando la nueva API
+        const visitResponse = await fetch('/api/tenant/visits/request', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify(visitRequest),
+          body: JSON.stringify({
+            propertyId: propertyId,
+            preferredDate: null, // Se puede agregar un selector de fecha después
+            preferredTime: null,
+            notes: `Solicitud de visita Runner360 para la propiedad "${property?.title}"`,
+          }),
         });
 
-        if (messageResponse.ok) {
+        if (visitResponse.ok) {
+          const result = await visitResponse.json();
           alert(
-            '¡Solicitud de visita enviada exitosamente! El propietario se pondrá en contacto contigo pronto.'
+            result.message ||
+              '¡Solicitud de visita Runner360 enviada exitosamente! El propietario o corredor será notificado y asignará un Runner360 para realizar la visita profesional.'
           );
-          logger.info('Visit request sent successfully', { propertyId, userId: currentUser.id });
+          logger.info('Runner360 visit request sent successfully', {
+            propertyId,
+            userId: currentUser.id,
+            visitId: result.visit?.id,
+          });
         } else {
-          const errorData = await messageResponse.json();
+          const errorData = await visitResponse.json();
           alert(`Error al enviar la solicitud: ${errorData.error || 'Error desconocido'}`);
-          logger.error('Error sending visit request', {
+          logger.error('Error sending Runner360 visit request', {
             error: errorData,
             propertyId,
             userId: currentUser.id,
@@ -301,7 +292,7 @@ Espero su respuesta. ¡Gracias!`,
       }
     } else {
       // Usuario no autenticado - redirigir a login
-      alert('Para solicitar una visita, necesitas iniciar sesión primero.');
+      alert('Para solicitar una visita Runner360, necesitas iniciar sesión como inquilino.');
       router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
     }
   };
@@ -362,7 +353,16 @@ Espero su respuesta. ¡Gracias!`,
           <Home className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Propiedad no encontrada</h1>
           <p className="text-gray-600 mb-4">{error || 'La propiedad que buscas no existe'}</p>
-          <Button onClick={() => router.push('/properties/search')}>
+          <Button
+            onClick={() => {
+              const searchState = sessionStorage.getItem('advancedSearchState');
+              if (searchState || document.referrer.includes('/tenant/advanced-search')) {
+                router.push('/tenant/advanced-search');
+              } else {
+                router.push('/properties/search');
+              }
+            }}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver a la búsqueda
           </Button>
@@ -378,7 +378,35 @@ Espero su respuesta. ¡Gracias!`,
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={() => router.push('/properties/search')}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Intentar restaurar el estado de búsqueda desde sessionStorage
+                  const searchState = sessionStorage.getItem('advancedSearchState');
+                  if (searchState) {
+                    try {
+                      const state = JSON.parse(searchState);
+                      // Redirigir a advanced-search con el estado guardado
+                      router.push('/tenant/advanced-search');
+                      // Restaurar el estado después de un pequeño delay para asegurar que la página se carga
+                      setTimeout(() => {
+                        sessionStorage.setItem('advancedSearchState', searchState);
+                      }, 100);
+                    } catch (e) {
+                      // Si hay error, simplemente ir a advanced-search
+                      router.push('/tenant/advanced-search');
+                    }
+                  } else {
+                    // Si no hay estado guardado, verificar si venimos de advanced-search
+                    const referrer = document.referrer;
+                    if (referrer.includes('/tenant/advanced-search')) {
+                      router.push('/tenant/advanced-search');
+                    } else {
+                      router.push('/properties/search');
+                    }
+                  }
+                }}
+              >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver
               </Button>

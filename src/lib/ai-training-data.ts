@@ -1040,6 +1040,42 @@ export const guestTechnicalDataset: TrainingDataset = {
       confidence: 0.9,
     },
     {
+      input: '¿Cuál es la comisión que se le paga a un corredor?',
+      output:
+        'Los corredores inmobiliarios en Rent360 reciben una comisión del 3% al 5% del valor total del contrato de arriendo celebrado. Esta comisión se calcula automáticamente cuando se firma un contrato y se paga al corredor una vez que el contrato está activo. El porcentaje exacto puede variar según el acuerdo entre el corredor y el propietario, pero típicamente está en ese rango. La plataforma facilita el cálculo y pago automático de estas comisiones.',
+      intent: 'commission_info',
+      category: 'pricing',
+      context: 'guest_asking_broker_commission',
+      confidence: 0.95,
+    },
+    {
+      input: '¿Cuánto cobra un corredor?',
+      output:
+        'Los corredores en Rent360 cobran entre el 3% y el 5% del valor total del contrato de arriendo. Por ejemplo, si un contrato es de $500.000 mensuales por 12 meses, la comisión sería entre $180.000 y $300.000 (3-5% de $6.000.000). Esta comisión se paga una vez que el contrato está firmado y activo. El porcentaje exacto se acuerda entre el corredor y el propietario al momento de asignar la gestión de la propiedad.',
+      intent: 'commission_info',
+      category: 'pricing',
+      context: 'guest_asking_broker_fee',
+      confidence: 0.94,
+    },
+    {
+      input: '¿Cuánto es la comisión de corredores?',
+      output:
+        'La comisión de corredores en Rent360 es del 3% al 5% del valor total del contrato de arriendo. Esta comisión se calcula sobre el monto total del contrato (por ejemplo, si es $500.000 mensuales por 12 meses = $6.000.000, la comisión sería entre $180.000 y $300.000). El sistema calcula y procesa el pago automáticamente cuando el contrato se activa. No hay costos adicionales ni mensualidades para corredores.',
+      intent: 'commission_info',
+      category: 'pricing',
+      context: 'guest_asking_broker_commission_rate',
+      confidence: 0.95,
+    },
+    {
+      input: 'comision corredor',
+      output:
+        'Los corredores en Rent360 reciben una comisión del 3% al 5% del valor total del contrato de arriendo. Esta comisión se paga automáticamente cuando el contrato está firmado y activo. El sistema calcula y procesa el pago sin intervención manual. El porcentaje exacto se acuerda entre el corredor y el propietario al asignar la gestión de la propiedad.',
+      intent: 'commission_info',
+      category: 'pricing',
+      context: 'guest_asking_broker_commission_short',
+      confidence: 0.93,
+    },
+    {
       input: '¿Qué documentos necesito para registrarme como proveedor?',
       output:
         'Para registrarte como proveedor necesitas: Cédula de Identidad (frente y reverso), Certificado de Antecedentes Penales (vigente), Certificado de Empresa (opcional, si tienes empresa), y Certificaciones profesionales (opcional pero recomendado, ej: plomero, electricista). Una vez aprobados, los documentos verificados son visibles para clientes.',
@@ -1102,6 +1138,517 @@ export const guestTechnicalDataset: TrainingDataset = {
       context: 'guest_asking_about_platform',
       confidence: 0.87,
     },
+    // REGISTRO Y CUENTAS
+    {
+      input: '¿Necesito pagar para registrarme?',
+      output:
+        'No, el registro en Rent360 es completamente gratuito. No hay costos de registro, mensualidades ni tarifas ocultas. Solo se cobran comisiones cuando hay transacciones exitosas (contratos firmados, servicios completados). Puedes crear tu cuenta gratis y comenzar a usar la plataforma inmediatamente.',
+      intent: 'register',
+      category: 'registration',
+      context: 'guest_asking_about_registration_cost',
+      confidence: 0.95,
+    },
+    {
+      input: '¿Qué información necesito para registrarme?',
+      output:
+        'Para registrarte necesitas: nombre completo, email válido, número de teléfono, y seleccionar tu rol (Inquilino, Propietario, Corredor, Proveedor o Runner). Dependiendo del rol, después del registro inicial podrás completar tu perfil con documentos adicionales para verificación.',
+      intent: 'register',
+      category: 'registration',
+      context: 'guest_asking_registration_info',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Puedo tener múltiples cuentas?',
+      output:
+        'No recomendamos tener múltiples cuentas. Cada usuario debe tener una sola cuenta con su información real y verificada. Si necesitas cambiar de rol o actualizar tu información, puedes hacerlo desde la configuración de tu cuenta. Esto asegura la seguridad y transparencia de la plataforma.',
+      intent: 'register',
+      category: 'registration',
+      context: 'guest_asking_multiple_accounts',
+      confidence: 0.9,
+    },
+    {
+      input: '¿Cómo recupero mi contraseña si la olvidé?',
+      output:
+        'Si olvidaste tu contraseña, ve a "Iniciar Sesión" y haz clic en "¿Olvidaste tu contraseña?". Ingresa tu email registrado y recibirás un enlace para restablecer tu contraseña. El enlace es válido por un tiempo limitado por seguridad.',
+      intent: 'register',
+      category: 'registration',
+      context: 'guest_asking_password_recovery',
+      confidence: 0.94,
+    },
+    // ROLES Y TIPOS DE USUARIOS
+    {
+      input: '¿Qué roles existen en Rent360?',
+      output:
+        'Rent360 tiene 5 roles principales: Inquilino (busca y arrienda propiedades), Propietario (gestiona propiedades y recibe pagos), Corredor (intermedia entre propietarios e inquilinos), Proveedor de Servicios (ofrece servicios de mantenimiento), y Runner360 (realiza visitas profesionales a propiedades). Cada rol tiene funcionalidades específicas diseñadas para sus necesidades.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_about_roles',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Puedo cambiar de rol después de registrarme?',
+      output:
+        'Sí, puedes actualizar tu información de rol desde la configuración de tu cuenta. Sin embargo, algunos cambios pueden requerir verificación adicional de documentos dependiendo del nuevo rol. Por ejemplo, para ser corredor necesitarás certificación profesional válida.',
+      intent: 'register',
+      category: 'registration',
+      context: 'guest_asking_role_change',
+      confidence: 0.88,
+    },
+    {
+      input: '¿Qué es un corredor certificado?',
+      output:
+        'Un corredor certificado es un profesional inmobiliario que ha completado la certificación requerida y está autorizado para ejercer como corredor de propiedades. En Rent360, los corredores certificados pueden gestionar propiedades de clientes, cerrar contratos y recibir comisiones. Deben subir su certificación vigente durante el registro.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_about_brokers',
+      confidence: 0.91,
+    },
+    // FUNCIONALIDADES DE LA PLATAFORMA
+    {
+      input: '¿Qué puedo hacer en Rent360 sin registrarme?',
+      output:
+        'Sin registrarte puedes: explorar propiedades disponibles, ver información pública de propiedades, leer sobre las funcionalidades de la plataforma, y usar el chatbot para hacer preguntas. Para acciones como contactar propietarios, agendar visitas, crear contratos o realizar pagos, necesitas crear una cuenta gratuita.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_public_features',
+      confidence: 0.89,
+    },
+    {
+      input: '¿Cómo busco propiedades en Rent360?',
+      output:
+        'Puedes buscar propiedades usando filtros avanzados: ubicación (comuna, sector), precio (rango mensual), tipo (casa, departamento, oficina, local), habitaciones, baños, y características especiales. También puedes usar Runner360 para visitas profesionales gratuitas si eres inquilino. La búsqueda está disponible sin registro, pero para contactar necesitas cuenta.',
+      intent: 'property_search',
+      category: 'properties',
+      context: 'guest_asking_how_to_search',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Cómo funciona el sistema de calificaciones?',
+      output:
+        'Rent360 tiene un sistema de calificaciones mutuas donde usuarios pueden calificarse entre sí después de transacciones. Las calificaciones van de 1 a 5 estrellas e incluyen comentarios. Esto ayuda a construir confianza en la comunidad. Solo usuarios que han tenido interacciones reales pueden calificarse.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_about_ratings',
+      confidence: 0.9,
+    },
+    {
+      input: '¿Cómo funcionan los contratos digitales?',
+      output:
+        'Los contratos en Rent360 son digitales con firma electrónica válida legalmente (TrustFactory). Incluyen todas las cláusulas legales estándar, se pueden personalizar según necesidades, y ambas partes firman electrónicamente. Los contratos se almacenan de forma segura y están disponibles 24/7. Son tan válidos como contratos en papel según la legislación chilena.',
+      intent: 'contracts',
+      category: 'contracts',
+      context: 'guest_asking_about_contracts',
+      confidence: 0.92,
+    },
+    // COMISIONES Y COSTOS (AMPLIADO)
+    {
+      input: '¿Cuánto cuesta usar Rent360?',
+      output:
+        'Rent360 es gratuito para usuarios básicos. No hay costos de registro, mensualidades ni tarifas ocultas. La plataforma cobra comisiones solo cuando hay transacciones exitosas: Corredores (3-5% del contrato), Proveedores (generalmente 8% del servicio), Runners (variable por visita). Los inquilinos y propietarios no pagan comisiones por usar la plataforma básica.',
+      intent: 'platform_fees',
+      category: 'pricing',
+      context: 'guest_asking_total_cost',
+      confidence: 0.94,
+    },
+    {
+      input: '¿Los inquilinos pagan comisiones?',
+      output:
+        'No, los inquilinos no pagan comisiones a Rent360. El sistema es gratuito para inquilinos. Solo pagas el arriendo acordado con el propietario. Las comisiones de corredores son pagadas por los propietarios, no por los inquilinos.',
+      intent: 'platform_fees',
+      category: 'pricing',
+      context: 'guest_asking_tenant_fees',
+      confidence: 0.95,
+    },
+    {
+      input: '¿Los propietarios pagan comisiones?',
+      output:
+        'Los propietarios no pagan comisiones a Rent360 por usar la plataforma básica. Si contratas un corredor para gestionar tu propiedad, pagas la comisión acordada con el corredor (típicamente 3-5% del contrato). Si usas Runner360 para visitas profesionales, pagas por cada visita realizada. Pero la plataforma en sí es gratuita para propietarios.',
+      intent: 'platform_fees',
+      category: 'pricing',
+      context: 'guest_asking_owner_fees',
+      confidence: 0.94,
+    },
+    {
+      input: '¿Cuánto gana un Runner por visita?',
+      output:
+        'Los Runners ganan entre $15.000 y $25.000 por visita completada, dependiendo de la zona y tipo de propiedad. Además, pueden ganar incentivos por volumen (completar 20+ visitas semanales), calidad (mantener alta calificación), y rendimiento. Los pagos se procesan semanalmente y se depositan en su cuenta bancaria.',
+      intent: 'runner360',
+      category: 'services',
+      context: 'guest_asking_runner_earnings',
+      confidence: 0.91,
+    },
+    // SEGURIDAD Y PRIVACIDAD
+    {
+      input: '¿Mis datos están seguros en Rent360?',
+      output:
+        'Sí, Rent360 implementa múltiples medidas de seguridad: encriptación de datos, verificación de identidad, documentos verificados por administradores, pagos seguros mediante pasarelas certificadas (Khipu, Stripe, PayPal), y cumplimiento con normativas de protección de datos. Tu información personal solo es visible para usuarios autorizados según tu configuración de privacidad.',
+      intent: 'security',
+      category: 'security',
+      context: 'guest_asking_data_security',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Quién puede ver mi información personal?',
+      output:
+        'Tu información personal está protegida. Solo información aprobada y verificada es visible para otros usuarios según tu rol y configuración. Por ejemplo: propietarios pueden ver información básica de inquilinos con contratos activos, pero no datos sensibles como números de cuenta. Los documentos personales solo los ve el equipo administrativo para verificación.',
+      intent: 'security',
+      category: 'security',
+      context: 'guest_asking_privacy',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Cómo protege Rent360 mis pagos?',
+      output:
+        'Rent360 usa pasarelas de pago certificadas y seguras: Khipu, Stripe, PayPal, y WebPay. Todas las transacciones están encriptadas, no almacenamos información de tarjetas de crédito, y cumplimos con estándares PCI DSS. Los pagos se procesan directamente entre las partes, Rent360 solo facilita la transacción de forma segura.',
+      intent: 'security',
+      category: 'security',
+      context: 'guest_asking_payment_security',
+      confidence: 0.94,
+    },
+    // DOCUMENTOS Y VERIFICACIÓN
+    {
+      input: '¿Qué documentos necesito como propietario?',
+      output:
+        'Como propietario necesitas: Cédula de Identidad (frente y reverso), Certificado de Antecedentes Penales (vigente), y documentos de propiedad (escritura, título de dominio) para verificar que eres el dueño. También puedes subir información bancaria para recibir pagos. Todos los documentos son verificados por el equipo administrativo.',
+      intent: 'provider_documents',
+      category: 'documents',
+      context: 'guest_asking_owner_documents',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Qué documentos necesito como inquilino?',
+      output:
+        'Como inquilino necesitas: Cédula de Identidad (frente y reverso) y Certificado de Antecedentes Penales (vigente). Opcionalmente puedes subir comprobantes de ingresos o referencias. Los documentos son verificados por el equipo administrativo y solo información aprobada es visible para propietarios cuando hay contratos activos.',
+      intent: 'provider_documents',
+      category: 'documents',
+      context: 'guest_asking_tenant_documents',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Cuánto tarda la verificación de documentos?',
+      output:
+        'La verificación de documentos generalmente toma entre 24 y 48 horas hábiles. El equipo administrativo revisa cada documento manualmente para asegurar autenticidad. Recibirás una notificación cuando tu verificación esté completa. Mientras tanto, puedes usar la plataforma con funcionalidades limitadas.',
+      intent: 'provider_documents',
+      category: 'documents',
+      context: 'guest_asking_verification_time',
+      confidence: 0.9,
+    },
+    {
+      input: '¿Qué pasa si mis documentos son rechazados?',
+      output:
+        'Si tus documentos son rechazados, recibirás una notificación explicando el motivo. Puedes corregir el problema y volver a subirlos. Los motivos comunes incluyen: documentos vencidos, calidad de imagen insuficiente, o información no coincidente. El equipo de soporte puede ayudarte a resolver cualquier problema.',
+      intent: 'provider_documents',
+      category: 'documents',
+      context: 'guest_asking_document_rejection',
+      confidence: 0.88,
+    },
+    // SERVICIOS ESPECÍFICOS
+    {
+      input: '¿Qué servicios ofrece Runner360?',
+      output:
+        'Runner360 ofrece visitas profesionales a propiedades: fotos de alta calidad (mínimo 15 por propiedad), videos detallados, reportes completos con medidas exactas, verificación de servicios (agua, luz, gas), y evaluación del estado general. Los inquilinos pueden usar este servicio gratis, mientras que los propietarios pagan por cada visita. Los Runners son profesionales verificados.',
+      intent: 'runner360',
+      category: 'services',
+      context: 'guest_asking_runner_services',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Cómo me convierto en Runner360?',
+      output:
+        'Para ser Runner360: 1) Regístrate seleccionando el rol "Runner360" 2) Completa tu perfil con información personal 3) Sube documentos de identidad y antecedentes 4) Define tu zona de cobertura (comunas donde trabajas) 5) Configura tu disponibilidad horaria. Una vez verificado, comenzarás a recibir tareas de visita automáticamente según tu zona.',
+      intent: 'runner360',
+      category: 'services',
+      context: 'guest_asking_become_runner',
+      confidence: 0.91,
+    },
+    {
+      input: '¿Qué tipos de servicios puedo contratar como propietario?',
+      output:
+        'Como propietario puedes contratar servicios de: mantenimiento general, plomería, electricidad, jardinería, limpieza, pintura, carpintería, seguridad, y más. Todos los proveedores están verificados por el equipo administrativo. Puedes ver calificaciones, precios y disponibilidad antes de contratar. El sistema coordina automáticamente la asignación de servicios.',
+      intent: 'provider_services',
+      category: 'services',
+      context: 'guest_asking_owner_services',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Cómo funciona el servicio de corredores?',
+      output:
+        'Los corredores en Rent360 pueden gestionar tus propiedades de forma completa o parcial. Puedes asignar propiedades específicas a un corredor, definir el tipo de gestión (completa, parcial, solo marketing, solo arriendo), y acordar la comisión (típicamente 3-5%). El corredor se encarga de publicar, mostrar, y cerrar contratos. Puedes mantener control total o delegar completamente.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_broker_service',
+      confidence: 0.9,
+    },
+    // SISTEMA DE PAGOS (AMPLIADO)
+    {
+      input: '¿Qué métodos de pago acepta Rent360?',
+      output:
+        'Rent360 acepta múltiples métodos de pago: transferencias bancarias directas, tarjetas de crédito y débito, y pasarelas de pago como Khipu, Stripe, PayPal, y WebPay. Los inquilinos pueden configurar pagos automáticos para no preocuparse por fechas de vencimiento. Todos los métodos son seguros y certificados.',
+      intent: 'payment_system',
+      category: 'payments',
+      context: 'guest_asking_payment_methods',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Cómo reciben el dinero los propietarios?',
+      output:
+        'Los propietarios reciben pagos directamente en su cuenta bancaria registrada. El sistema procesa pagos automáticamente cuando los inquilinos pagan, y transfiere el dinero directamente sin intermediarios. Puedes configurar tu cuenta bancaria en la configuración de tu perfil. Los pagos son seguros y rastreables.',
+      intent: 'payment_system',
+      category: 'payments',
+      context: 'guest_asking_owner_payments',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Puedo pagar con débito automático?',
+      output:
+        'Sí, puedes configurar débito automático para pagar tu arriendo automáticamente cada mes. Ve a "Mis Pagos" → "Métodos de Pago" y configura tu tarjeta o cuenta bancaria. El sistema te enviará recordatorios antes de cada cobro y recibirás comprobantes automáticos. Puedes cancelar el débito automático en cualquier momento.',
+      intent: 'payment_system',
+      category: 'payments',
+      context: 'guest_asking_automatic_payment',
+      confidence: 0.91,
+    },
+    {
+      input: '¿Hay algún costo adicional por usar métodos de pago?',
+      output:
+        'Rent360 no cobra comisiones adicionales por usar métodos de pago. Sin embargo, algunas pasarelas de pago (como tarjetas de crédito) pueden tener sus propias comisiones que se deducen del monto. Estas comisiones son estándar del mercado y son transparentes antes de realizar el pago.',
+      intent: 'payment_system',
+      category: 'payments',
+      context: 'guest_asking_payment_fees',
+      confidence: 0.89,
+    },
+    // PROPIEDADES Y BÚSQUEDA (AMPLIADO)
+    {
+      input: '¿Puedo publicar mi propiedad sin pagar?',
+      output:
+        'Sí, publicar propiedades es completamente gratuito. Puedes crear tu cuenta como propietario, agregar tus propiedades con fotos y detalles, y publicarlas sin costo. Solo pagas comisiones si contratas un corredor para gestionar la propiedad o si usas servicios adicionales como Runner360 para visitas profesionales.',
+      intent: 'property_search',
+      category: 'properties',
+      context: 'guest_asking_publish_property',
+      confidence: 0.94,
+    },
+    {
+      input: '¿Cuántas propiedades puedo publicar?',
+      output:
+        'No hay límite en el número de propiedades que puedes publicar como propietario. Puedes gestionar todas tus propiedades desde un solo panel, ver estadísticas de cada una, y gestionar contratos e inquilinos de forma centralizada. La plataforma está diseñada para propietarios con una o múltiples propiedades.',
+      intent: 'property_search',
+      category: 'properties',
+      context: 'guest_asking_property_limit',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Cómo contacto a un propietario o corredor?',
+      output:
+        'Para contactar a un propietario o corredor, necesitas crear una cuenta gratuita. Una vez registrado, puedes usar el sistema de mensajería integrado para comunicarte directamente, hacer preguntas sobre propiedades, agendar visitas, y negociar términos. El sistema de mensajería es seguro y mantiene un registro de todas las conversaciones.',
+      intent: 'property_search',
+      category: 'properties',
+      context: 'guest_asking_contact_owner',
+      confidence: 0.91,
+    },
+    {
+      input: '¿Puedo guardar propiedades favoritas?',
+      output:
+        'Sí, una vez que tengas una cuenta, puedes guardar propiedades como favoritas para revisarlas después. Esto te permite comparar opciones y tomar decisiones informadas. También puedes recibir notificaciones cuando propiedades favoritas cambien de precio o disponibilidad.',
+      intent: 'property_search',
+      category: 'properties',
+      context: 'guest_asking_favorites',
+      confidence: 0.9,
+    },
+    // CONTRATOS (AMPLIADO)
+    {
+      input: '¿Los contratos son legalmente válidos?',
+      output:
+        'Sí, los contratos digitales de Rent360 son completamente válidos legalmente. Usan firma electrónica certificada (TrustFactory) que cumple con la legislación chilena. Son tan válidos como contratos en papel y pueden usarse en procesos legales si es necesario. Incluyen todas las cláusulas legales estándar requeridas por la ley.',
+      intent: 'contracts',
+      category: 'contracts',
+      context: 'guest_asking_contract_validity',
+      confidence: 0.94,
+    },
+    {
+      input: '¿Puedo personalizar un contrato?',
+      output:
+        'Sí, los contratos pueden personalizarse según las necesidades específicas de ambas partes. Puedes agregar cláusulas adicionales, modificar términos estándar (con acuerdo mutuo), y definir condiciones especiales. Sin embargo, todas las modificaciones deben cumplir con la legislación chilena y ser aceptadas por ambas partes.',
+      intent: 'contracts',
+      category: 'contracts',
+      context: 'guest_asking_contract_customization',
+      confidence: 0.91,
+    },
+    {
+      input: '¿Cómo funciona el depósito de garantía?',
+      output:
+        'El depósito de garantía es un monto que el inquilino entrega al propietario como garantía del cumplimiento del contrato. En Rent360, el depósito se puede gestionar digitalmente y debe ser devuelto al finalizar el contrato, descontando daños no causados por uso normal. El monto máximo legalmente permitido es equivalente a un mes de arriendo.',
+      intent: 'contracts',
+      category: 'contracts',
+      context: 'guest_asking_security_deposit',
+      confidence: 0.92,
+    },
+    // CASOS DE USO Y BENEFICIOS
+    {
+      input: '¿Qué beneficios tiene Rent360 para propietarios?',
+      output:
+        'Rent360 ofrece a propietarios: gestión completa de propiedades desde un solo lugar, pagos automáticos y seguros, contratos digitales legales, sistema de mantenimiento integrado, analytics y reportes financieros, gestión de inquilinos centralizada, casos legales integrados, y acceso a corredores certificados. Todo diseñado para maximizar tus ingresos y simplificar la gestión.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_owner_benefits',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Qué beneficios tiene Rent360 para inquilinos?',
+      output:
+        'Rent360 ofrece a inquilinos: búsqueda avanzada de propiedades con filtros detallados, acceso a Runner360 para visitas profesionales gratis, contratos digitales seguros, sistema de pagos integrado con recordatorios, solicitud de mantenimiento fácil, comunicación directa con propietarios, y sistema de calificaciones para elegir mejor. Todo para encontrar y gestionar tu arriendo de forma fácil.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_tenant_benefits',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Por qué debería usar Rent360 en lugar de otras opciones?',
+      output:
+        'Rent360 es la única plataforma integral que combina: búsqueda de propiedades, gestión de contratos legales, sistema de pagos integrado, servicios de mantenimiento, casos legales, y visitas profesionales (Runner360), todo en un solo lugar. Está diseñada específicamente para el mercado chileno, con soporte en español y cumplimiento de legislación local.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_why_rent360',
+      confidence: 0.9,
+    },
+    // SOPORTE Y AYUDA
+    {
+      input: '¿Cómo puedo contactar soporte?',
+      output:
+        'Puedes contactar soporte de múltiples formas: usando el chatbot de la plataforma (disponible 24/7), creando un ticket de soporte desde tu panel, enviando un email al equipo de soporte, o llamando al número de contacto. El equipo responde generalmente en menos de 24 horas. También hay una base de conocimientos con respuestas a preguntas frecuentes.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_support',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Hay tutoriales o guías disponibles?',
+      output:
+        'Sí, Rent360 ofrece: tutoriales paso a paso para cada funcionalidad, guías de uso por rol, videos explicativos, base de conocimientos actualizada, y el chatbot de IA que puede responder preguntas en tiempo real. Todo está diseñado para que puedas usar la plataforma fácilmente, incluso si es tu primera vez.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_tutorials',
+      confidence: 0.91,
+    },
+    {
+      input: '¿Qué hago si tengo un problema técnico?',
+      output:
+        'Si tienes un problema técnico: 1) Intenta refrescar la página o cerrar y abrir tu navegador 2) Verifica tu conexión a internet 3) Usa el chatbot para buscar soluciones comunes 4) Crea un ticket de soporte desde tu panel describiendo el problema 5) El equipo técnico te responderá con una solución. Incluye capturas de pantalla si es posible.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_technical_help',
+      confidence: 0.89,
+    },
+    // TÉRMINOS Y POLÍTICAS
+    {
+      input: '¿Dónde puedo ver los términos y condiciones?',
+      output:
+        'Los términos y condiciones de Rent360 están disponibles en el footer del sitio web y también puedes accederlos desde la configuración de tu cuenta una vez registrado. Incluyen información sobre uso de la plataforma, responsabilidades de usuarios, políticas de privacidad, y términos de servicio. Es importante leerlos antes de usar la plataforma.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_terms',
+      confidence: 0.9,
+    },
+    {
+      input: '¿Cómo funciona la política de privacidad?',
+      output:
+        'La política de privacidad de Rent360 protege tu información personal. Solo compartimos información necesaria para el funcionamiento de la plataforma, nunca vendemos datos a terceros, y toda la información está encriptada. Puedes ver qué información es visible para otros usuarios desde la configuración de privacidad de tu cuenta.',
+      intent: 'security',
+      category: 'security',
+      context: 'guest_asking_privacy_policy',
+      confidence: 0.91,
+    },
+    // REQUISITOS TÉCNICOS
+    {
+      input: '¿Qué navegadores son compatibles?',
+      output:
+        'Rent360 es compatible con los navegadores modernos más comunes: Google Chrome (recomendado), Mozilla Firefox, Microsoft Edge, Safari, y Opera. Funciona mejor en versiones actualizadas de estos navegadores. También está optimizado para dispositivos móviles y tablets, con una aplicación web responsive que se adapta a cualquier tamaño de pantalla.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_browser_compatibility',
+      confidence: 0.9,
+    },
+    {
+      input: '¿Funciona en dispositivos móviles?',
+      output:
+        'Sí, Rent360 está completamente optimizado para dispositivos móviles y tablets. Puedes acceder desde cualquier smartphone o tablet usando el navegador móvil. La interfaz se adapta automáticamente al tamaño de tu pantalla. También puedes agregar Rent360 a la pantalla de inicio de tu móvil para acceso rápido como una app.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_mobile_support',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Necesito instalar algo para usar Rent360?',
+      output:
+        'No, Rent360 es una aplicación web que funciona directamente desde tu navegador. No necesitas instalar software adicional. Solo necesitas un navegador moderno y conexión a internet. Opcionalmente puedes agregar Rent360 a la pantalla de inicio de tu móvil para acceso rápido, pero no es necesario.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_installation',
+      confidence: 0.94,
+    },
+    // DISPONIBILIDAD GEOGRÁFICA
+    {
+      input: '¿En qué países funciona Rent360?',
+      output:
+        'Rent360 está diseñado específicamente para el mercado chileno. Funciona en todo Chile y está optimizado para la legislación y prácticas inmobiliarias locales. Si estás fuera de Chile, puedes acceder a la plataforma pero algunas funcionalidades pueden estar limitadas según tu ubicación.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_geographic_availability',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Funciona en todas las ciudades de Chile?',
+      output:
+        'Sí, Rent360 funciona en todas las ciudades y comunas de Chile. Puedes buscar propiedades en cualquier ubicación, y los servicios como Runner360 y proveedores de mantenimiento están disponibles según su zona de cobertura. La plataforma está diseñada para ser accesible en todo el territorio nacional.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_cities',
+      confidence: 0.91,
+    },
+    // PREGUNTAS FRECUENTES GENERALES
+    {
+      input: '¿Qué es Rent360?',
+      output:
+        'Rent360 es una plataforma integral de gestión inmobiliaria diseñada para el mercado chileno. Conecta propietarios, inquilinos, corredores y proveedores de servicios en un solo lugar. Ofrece herramientas completas para buscar propiedades, gestionar contratos legales, procesar pagos seguros, coordinar mantenimiento, y más. Todo diseñado para simplificar el proceso de arriendo.',
+      intent: 'platform_info',
+      category: 'general',
+      context: 'guest_asking_what_is_rent360',
+      confidence: 0.95,
+    },
+    {
+      input: '¿Rent360 es confiable?',
+      output:
+        'Sí, Rent360 es completamente confiable. Todos los usuarios son verificados, los documentos son revisados por administradores, los pagos son seguros mediante pasarelas certificadas, los contratos son legales con firma electrónica válida, y hay un sistema de calificaciones para construir confianza. La plataforma cumple con todas las normativas de seguridad y protección de datos.',
+      intent: 'security',
+      category: 'security',
+      context: 'guest_asking_reliability',
+      confidence: 0.93,
+    },
+    {
+      input: '¿Cuánto tiempo lleva registrarse?',
+      output:
+        'El registro básico toma menos de 5 minutos. Solo necesitas: nombre, email, teléfono y seleccionar tu rol. Después puedes completar tu perfil y subir documentos para verificación (esto puede tomar unos minutos más). Una vez registrado, puedes comenzar a usar la plataforma inmediatamente, aunque algunas funcionalidades requieren verificación completa.',
+      intent: 'register',
+      category: 'registration',
+      context: 'guest_asking_registration_time',
+      confidence: 0.94,
+    },
+    {
+      input: '¿Puedo cancelar mi cuenta en cualquier momento?',
+      output:
+        'Sí, puedes cancelar o desactivar tu cuenta en cualquier momento desde la configuración de tu perfil. Sin embargo, si tienes contratos activos o transacciones pendientes, deberás completarlas primero. Una vez cancelada, tu información se mantiene según nuestras políticas de retención de datos, pero ya no podrás acceder a la plataforma.',
+      intent: 'register',
+      category: 'registration',
+      context: 'guest_asking_account_cancellation',
+      confidence: 0.9,
+    },
+    {
+      input: '¿Hay una aplicación móvil?',
+      output:
+        'Rent360 es una aplicación web progresiva (PWA) que funciona como una app móvil. Puedes agregarla a la pantalla de inicio de tu móvil desde el navegador y funcionará como una app nativa. No necesitas descargar nada de tiendas de aplicaciones. Funciona en iOS y Android a través del navegador móvil.',
+      intent: 'support',
+      category: 'support',
+      context: 'guest_asking_mobile_app',
+      confidence: 0.92,
+    },
   ],
   patterns: [
     '¿Cómo creo una cuenta?',
@@ -1112,6 +1659,60 @@ export const guestTechnicalDataset: TrainingDataset = {
     '¿Cuánto cuesta?',
     '¿Es seguro?',
     '¿Qué es Runner360?',
+    '¿Necesito pagar para registrarme?',
+    '¿Qué información necesito para registrarme?',
+    '¿Puedo tener múltiples cuentas?',
+    '¿Cómo recupero mi contraseña?',
+    '¿Qué roles existen?',
+    '¿Puedo cambiar de rol?',
+    '¿Qué es un corredor certificado?',
+    '¿Qué puedo hacer sin registrarme?',
+    '¿Cómo busco propiedades?',
+    '¿Cómo funciona el sistema de calificaciones?',
+    '¿Cómo funcionan los contratos digitales?',
+    '¿Cuánto cuesta usar Rent360?',
+    '¿Los inquilinos pagan comisiones?',
+    '¿Los propietarios pagan comisiones?',
+    '¿Cuánto gana un Runner?',
+    '¿Mis datos están seguros?',
+    '¿Quién puede ver mi información?',
+    '¿Cómo protege Rent360 mis pagos?',
+    '¿Qué documentos necesito como propietario?',
+    '¿Qué documentos necesito como inquilino?',
+    '¿Cuánto tarda la verificación?',
+    '¿Qué pasa si mis documentos son rechazados?',
+    '¿Qué servicios ofrece Runner360?',
+    '¿Cómo me convierto en Runner360?',
+    '¿Qué tipos de servicios puedo contratar?',
+    '¿Cómo funciona el servicio de corredores?',
+    '¿Qué métodos de pago acepta?',
+    '¿Cómo reciben el dinero los propietarios?',
+    '¿Puedo pagar con débito automático?',
+    '¿Hay costos adicionales por métodos de pago?',
+    '¿Puedo publicar mi propiedad sin pagar?',
+    '¿Cuántas propiedades puedo publicar?',
+    '¿Cómo contacto a un propietario?',
+    '¿Puedo guardar propiedades favoritas?',
+    '¿Los contratos son legalmente válidos?',
+    '¿Puedo personalizar un contrato?',
+    '¿Cómo funciona el depósito de garantía?',
+    '¿Qué beneficios tiene para propietarios?',
+    '¿Qué beneficios tiene para inquilinos?',
+    '¿Por qué debería usar Rent360?',
+    '¿Cómo puedo contactar soporte?',
+    '¿Hay tutoriales disponibles?',
+    '¿Qué hago si tengo un problema técnico?',
+    '¿Dónde puedo ver los términos y condiciones?',
+    '¿Cómo funciona la política de privacidad?',
+    '¿Qué navegadores son compatibles?',
+    '¿Funciona en dispositivos móviles?',
+    '¿Necesito instalar algo?',
+    '¿En qué países funciona?',
+    '¿Funciona en todas las ciudades de Chile?',
+    '¿Rent360 es confiable?',
+    '¿Cuánto tiempo lleva registrarse?',
+    '¿Puedo cancelar mi cuenta?',
+    '¿Hay una aplicación móvil?',
   ],
   responses: [
     'Te explico cómo crear tu cuenta.',
@@ -1122,6 +1723,60 @@ export const guestTechnicalDataset: TrainingDataset = {
     'Te informo sobre los costos.',
     'Te explico las medidas de seguridad.',
     'Te detallo cómo funciona Runner360.',
+    'Te informo que el registro es gratuito.',
+    'Te indico qué información necesitas.',
+    'Te explico la política de cuentas.',
+    'Te guío para recuperar tu contraseña.',
+    'Te explico los roles disponibles.',
+    'Te informo sobre cambios de rol.',
+    'Te explico qué es un corredor certificado.',
+    'Te detallo las funcionalidades públicas.',
+    'Te guío para buscar propiedades.',
+    'Te explico el sistema de calificaciones.',
+    'Te detallo cómo funcionan los contratos.',
+    'Te informo sobre los costos totales.',
+    'Te explico las comisiones para inquilinos.',
+    'Te explico las comisiones para propietarios.',
+    'Te informo sobre ganancias de Runners.',
+    'Te explico las medidas de seguridad.',
+    'Te informo sobre privacidad de datos.',
+    'Te explico la seguridad de pagos.',
+    'Te indico documentos para propietarios.',
+    'Te indico documentos para inquilinos.',
+    'Te informo sobre tiempos de verificación.',
+    'Te explico qué hacer si son rechazados.',
+    'Te detallo servicios de Runner360.',
+    'Te guío para convertirte en Runner.',
+    'Te informo sobre servicios disponibles.',
+    'Te explico el servicio de corredores.',
+    'Te detallo métodos de pago aceptados.',
+    'Te explico cómo reciben pagos.',
+    'Te guío para configurar débito automático.',
+    'Te informo sobre costos de métodos de pago.',
+    'Te explico cómo publicar propiedades.',
+    'Te informo sobre límites de propiedades.',
+    'Te guío para contactar propietarios.',
+    'Te explico cómo guardar favoritos.',
+    'Te confirmo la validez legal de contratos.',
+    'Te explico la personalización de contratos.',
+    'Te detallo el depósito de garantía.',
+    'Te explico beneficios para propietarios.',
+    'Te explico beneficios para inquilinos.',
+    'Te explico las ventajas de Rent360.',
+    'Te guío para contactar soporte.',
+    'Te informo sobre tutoriales disponibles.',
+    'Te ayudo con problemas técnicos.',
+    'Te indico dónde ver términos y condiciones.',
+    'Te explico la política de privacidad.',
+    'Te informo sobre compatibilidad de navegadores.',
+    'Te explico el soporte móvil.',
+    'Te informo sobre instalación.',
+    'Te explico disponibilidad geográfica.',
+    'Te confirmo disponibilidad en Chile.',
+    'Te explico la confiabilidad de Rent360.',
+    'Te informo sobre tiempo de registro.',
+    'Te explico cómo cancelar cuenta.',
+    'Te informo sobre la aplicación móvil.',
   ],
 };
 
@@ -1221,10 +1876,43 @@ export class TrainingDataManager {
     const intentKeywords: Record<string, string[]> = {
       documents_visibility: ['documento', 'ver', 'visible', 'acceso', 'otros', 'usuarios'],
       provider_documents: ['documento', 'proveedor', 'necesito', 'requiero', 'certificado'],
-      commission_info: ['comisión', 'porcentaje', 'retención', 'cobran', 'gano'],
+      commission_info: [
+        'comisión',
+        'comision',
+        'porcentaje',
+        'retención',
+        'cobran',
+        'gano',
+        'cobra',
+        'corredor',
+        'broker',
+      ],
       register: ['registro', 'crear', 'cuenta', 'registrarme', 'darme de alta'],
       payment_system: ['pago', 'pagos', 'sistema', 'funciona', 'método'],
     };
+
+    // 🚀 MEJORADO: Buscar específicamente preguntas sobre comisiones de corredores
+    if (
+      (inputLower.includes('comisión') || inputLower.includes('comision')) &&
+      (inputLower.includes('corredor') || inputLower.includes('broker'))
+    ) {
+      const brokerCommissionExamples = roleExamples.filter(
+        ex =>
+          ex.intent === 'commission_info' &&
+          (ex.context?.includes('broker') || ex.input.toLowerCase().includes('corredor'))
+      );
+      if (brokerCommissionExamples.length > 0) {
+        // Retornar el ejemplo más específico
+        const specificExample = brokerCommissionExamples.find(
+          ex =>
+            ex.input.toLowerCase().includes('corredor') || ex.input.toLowerCase().includes('broker')
+        );
+        if (specificExample) {
+          return specificExample.output;
+        }
+        return brokerCommissionExamples[0]!.output;
+      }
+    }
 
     for (const [intent, keywords] of Object.entries(intentKeywords)) {
       if (keywords.some(k => inputLower.includes(k))) {

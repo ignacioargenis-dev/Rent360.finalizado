@@ -1,0 +1,420 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Calendar,
+  MapPin,
+  User,
+  FileText,
+  Download,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Home,
+  Mail,
+  Phone,
+  AlertCircle,
+} from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { logger } from '@/lib/logger-minimal';
+
+interface PendingVisit {
+  id: string;
+  propertyId: string;
+  property: {
+    id: string;
+    title: string;
+    address: string;
+    city: string;
+    commune: string;
+    price: number;
+  };
+  tenantId: string;
+  tenant: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    avatar: string | null;
+  };
+  scheduledAt: string;
+  duration: number;
+  status: string;
+  notes: string | null;
+  createdAt: string;
+}
+
+interface TenantDocument {
+  id: string;
+  name: string;
+  type: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  createdAt: string;
+}
+
+export default function OwnerVisitsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const propertyIdParam = searchParams?.get('propertyId');
+  const tenantIdParam = searchParams?.get('tenantId');
+
+  const [visits, setVisits] = useState<PendingVisit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedVisit, setSelectedVisit] = useState<PendingVisit | null>(null);
+  const [tenantDocuments, setTenantDocuments] = useState<TenantDocument[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
+
+  useEffect(() => {
+    loadPendingVisits();
+  }, [propertyIdParam, tenantIdParam]);
+
+  const loadPendingVisits = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+      if (propertyIdParam) {
+        params.append('propertyId', propertyIdParam);
+      }
+      if (tenantIdParam) {
+        params.append('tenantId', tenantIdParam);
+      }
+
+      const response = await fetch(`/api/owner/visits/pending?${params.toString()}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cargar las solicitudes de visita');
+      }
+
+      const data = await response.json();
+      setVisits(data.visits || []);
+    } catch (err) {
+      logger.error('Error cargando visitas pendientes:', err);
+      setError('Error al cargar las solicitudes de visita');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadTenantDocuments = async (visit: PendingVisit) => {
+    try {
+      setLoadingDocuments(true);
+      setSelectedVisit(visit);
+
+      const response = await fetch(
+        `/api/tenant/${visit.tenantId}/documents?propertyId=${visit.propertyId}`,
+        {
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Error al cargar los documentos del inquilino');
+      }
+
+      const data = await response.json();
+      setTenantDocuments(data.documents || []);
+      setShowDocumentsDialog(true);
+    } catch (err) {
+      logger.error('Error cargando documentos del inquilino:', err);
+      alert('Error al cargar los documentos del inquilino');
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-CL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) {
+      return bytes + ' B';
+    }
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    }
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
+  const getDocumentTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      IDENTIFICATION: 'Identificación',
+      INCOME_PROOF: 'Comprobante de Ingresos',
+      CREDIT_REPORT: 'Informe Crediticio',
+      REFERENCE: 'Referencia',
+      OTHER_DOCUMENT: 'Otro Documento',
+    };
+    return labels[type] || type;
+  };
+
+  if (loading) {
+    return (
+      <UnifiedDashboardLayout title="Solicitudes de Visita" subtitle="Cargando...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando solicitudes de visita...</p>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  return (
+    <UnifiedDashboardLayout
+      title="Solicitudes de Visita Runner360"
+      subtitle="Gestiona las solicitudes de visita pendientes para tus propiedades"
+    >
+      <div className="space-y-6">
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{error}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {visits.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-12">
+                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No hay solicitudes de visita pendientes
+                </h3>
+                <p className="text-gray-600">
+                  Cuando los inquilinos soliciten visitas de Runner360 para tus propiedades,
+                  aparecerán aquí.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6">
+            {visits.map(visit => (
+              <Card key={visit.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="flex items-center gap-2">
+                        <Home className="w-5 h-5 text-blue-600" />
+                        {visit.property.title}
+                      </CardTitle>
+                      <CardDescription className="mt-2 flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {visit.property.address}, {visit.property.commune}
+                        </span>
+                        <span className="text-green-600 font-semibold">
+                          ${visit.property.price.toLocaleString()}/mes
+                        </span>
+                      </CardDescription>
+                    </div>
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      <Clock className="w-3 h-3 mr-1" />
+                      Pendiente
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Información del Inquilino */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Información del Inquilino
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Nombre</p>
+                          <p className="font-medium">{visit.tenant.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Email</p>
+                          <p className="font-medium flex items-center gap-1">
+                            <Mail className="w-4 h-4" />
+                            {visit.tenant.email}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Teléfono</p>
+                          <p className="font-medium flex items-center gap-1">
+                            <Phone className="w-4 h-4" />
+                            {visit.tenant.phone || 'No especificado'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Fecha de Solicitud</p>
+                          <p className="font-medium">{formatDate(visit.createdAt)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detalles de la Visita */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Detalles de la Visita
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Fecha Programada</p>
+                          <p className="font-medium">{formatDate(visit.scheduledAt)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Duración Estimada</p>
+                          <p className="font-medium">{visit.duration} minutos</p>
+                        </div>
+                        {visit.notes && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-600">Notas</p>
+                            <p className="font-medium">{visit.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="border-t pt-4 flex gap-2">
+                      <Button
+                        onClick={() => loadTenantDocuments(visit)}
+                        disabled={loadingDocuments}
+                        className="flex-1"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Ver Documentos del Inquilino
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => router.push(`/owner/runners?propertyId=${visit.propertyId}`)}
+                      >
+                        Asignar Runner360
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Dialog para ver documentos del inquilino */}
+        <Dialog open={showDocumentsDialog} onOpenChange={setShowDocumentsDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Documentos del Inquilino
+              </DialogTitle>
+              <DialogDescription>
+                Documentos disponibles para evaluación de {selectedVisit?.tenant.name}
+              </DialogDescription>
+            </DialogHeader>
+
+            {loadingDocuments ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Cargando documentos...</p>
+                </div>
+              </div>
+            ) : tenantDocuments.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No hay documentos disponibles
+                </h3>
+                <p className="text-gray-600">
+                  Este inquilino aún no ha subido documentos para evaluación.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {tenantDocuments.map(doc => (
+                  <Card key={doc.id} className="hover:bg-gray-50 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <FileText className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium">{doc.name}</h4>
+                            <div className="flex items-center gap-4 mt-1">
+                              <Badge variant="outline">{getDocumentTypeLabel(doc.type)}</Badge>
+                              <span className="text-sm text-gray-600">
+                                {formatFileSize(doc.fileSize)}
+                              </span>
+                              <span className="text-sm text-gray-600">
+                                {formatDate(doc.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/api/documents/${doc.id}/access`, '_blank')}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Ver
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = `/api/documents/${doc.id}/access`;
+                              link.download = doc.fileName;
+                              link.click();
+                            }}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Descargar
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </UnifiedDashboardLayout>
+  );
+}

@@ -291,11 +291,16 @@ export default function Home() {
                 </p>
               </div>
 
-              <Button asChild size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
-                <Link href="/chat">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Chatear con el Asistente IA
-                </Link>
+              <Button
+                size="lg"
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  // Disparar evento personalizado para abrir el chatbot
+                  window.dispatchEvent(new CustomEvent('openChatbot'));
+                }}
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Chatear con el Asistente IA
               </Button>
             </div>
           </div>

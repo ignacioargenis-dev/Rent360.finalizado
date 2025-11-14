@@ -150,6 +150,23 @@ export default function BúsquedaAvanzadaPage() {
 
   useEffect(() => {
     loadPageData();
+
+    // Restaurar estado de búsqueda si existe
+    const savedState = sessionStorage.getItem('advancedSearchState');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        setFilters(state.filters || filters);
+        setSearchTerm(state.searchTerm || '');
+        setActiveTab(state.activeTab || 'search');
+        setFavoriteProperties(state.favoriteProperties || []);
+        setCompareProperties(state.compareProperties || []);
+        // Limpiar el estado guardado después de restaurarlo
+        sessionStorage.removeItem('advancedSearchState');
+      } catch (e) {
+        logger.warn('Error restaurando estado de búsqueda:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -404,9 +421,18 @@ export default function BúsquedaAvanzadaPage() {
 
   const handleViewProperty = useCallback(
     (propertyId: string) => {
+      // Guardar el estado de búsqueda actual antes de navegar
+      const searchState = {
+        filters,
+        searchTerm,
+        activeTab,
+        favoriteProperties,
+        compareProperties,
+      };
+      sessionStorage.setItem('advancedSearchState', JSON.stringify(searchState));
       router.push(`/properties/${propertyId}`);
     },
-    [router]
+    [router, filters, searchTerm, activeTab, favoriteProperties, compareProperties]
   );
 
   const handleContactOwner = useCallback(

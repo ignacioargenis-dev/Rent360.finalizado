@@ -1306,6 +1306,10 @@ export class AIChatbotService {
           /(?:cuánto|cuanto|qué|que)\s+(?:porcentaje|porcentajes)\s+(?:de\s+)?(?:comisión|comisiones)/i,
           /(?:comisión|comisiones)\s+(?:para|de)\s+(?:corredor|broker|proveedor|provider|runner)/i,
           /(?:cuánto|cuanto)\s+(?:cobran|cobro|gano|gana)\s+(?:por\s+)?(?:comisión|comisiones)/i,
+          /(?:cuál|cuál|que|qué)\s+(?:es\s+)?(?:la\s+)?(?:comisión|comisiones)\s+(?:que\s+)?(?:se\s+)?(?:le\s+)?(?:paga|pagan)\s+(?:a\s+)?(?:un\s+)?(?:corredor|broker)/i,
+          /(?:cuánto|cuanto)\s+(?:cobra|cobran)\s+(?:un\s+)?(?:corredor|broker)/i,
+          /(?:cuánto|cuanto)\s+(?:es\s+)?(?:la\s+)?(?:comisión|comisiones)\s+(?:de\s+)?(?:corredor|corredores|broker)/i,
+          /(?:comision|comisión)\s+(?:corredor|broker)/i,
           /(?:retención|retenciones)\s+(?:plataforma|sistema)/i,
         ],
         weight: 0.9,
@@ -1433,9 +1437,17 @@ export class AIChatbotService {
         'property_search',
         'navigation',
         'how_to',
+        'platform_info',
         'provider_documents',
         'commission_info',
+        'platform_fees',
+        'payment_system',
+        'contracts',
+        'runner360',
+        'provider_services',
+        'security',
         'support',
+        'legal_info',
       ],
     };
 
@@ -2913,16 +2925,42 @@ export class AIChatbotService {
       }
     }
 
-    // 🚀 NUEVO: Detección de preguntas sobre comisiones
-    if (input.includes('comisión') || input.includes('porcentaje') || input.includes('retención')) {
+    // 🚀 MEJORADO: Detección de preguntas sobre comisiones (específica para corredores)
+    if (
+      (input.includes('comisión') || input.includes('comision')) &&
+      (input.includes('corredor') || input.includes('broker'))
+    ) {
       return {
         response:
-          '**Porcentajes de comisión en Rent360:**\n\n📊 **Corredores:** Entre 3% y 5% del valor del contrato (configurable)\n🔧 **Proveedores de servicios:** Generalmente 8% del monto del servicio\n🏃 **Runners:** Variable según tipo de visita\n\nLos porcentajes exactos son configurables por el administrador. Puedes ver tus comisiones específicas en tu panel de usuario.',
+          'Los corredores inmobiliarios en Rent360 reciben una comisión del 3% al 5% del valor total del contrato de arriendo celebrado. Esta comisión se calcula automáticamente cuando se firma un contrato y se paga al corredor una vez que el contrato está activo. El porcentaje exacto puede variar según el acuerdo entre el corredor y el propietario, pero típicamente está en ese rango.',
+        confidence: 0.95,
+      };
+    }
+
+    // Detección general de comisiones
+    if (
+      input.includes('comisión') ||
+      input.includes('comision') ||
+      input.includes('porcentaje') ||
+      input.includes('retención')
+    ) {
+      return {
+        response:
+          '**Porcentajes de comisión en Rent360:**\n\n📊 **Corredores:** Entre 3% y 5% del valor del contrato (configurable)\n🔧 **Proveedores de servicios:** Generalmente 8% del monto del servicio\n🏃 **Runners:** Variable según tipo de visita ($15.000-$25.000 por visita)\n\nLos porcentajes exactos son configurables por el administrador. Rent360 es gratuito para usuarios básicos, solo se cobran comisiones cuando hay transacciones exitosas.',
         confidence: 0.9,
       };
     }
 
-    // Respuesta por defecto mejorada
+    // Respuesta por defecto mejorada para usuarios guest
+    if (userRole === 'guest' || userRole === 'GUEST') {
+      return {
+        response:
+          'Hola, soy el asistente de Rent360. Puedo ayudarte con información sobre: registro y creación de cuenta, tipos de usuarios y roles, funcionalidades de la plataforma, comisiones y costos, seguridad y privacidad, documentos requeridos, servicios disponibles (Runner360, proveedores, corredores), sistema de pagos, búsqueda de propiedades, contratos digitales, y mucho más. ¿Sobre qué te gustaría saber?',
+        confidence: 0.6,
+      };
+    }
+
+    // Respuesta por defecto para usuarios registrados
     return {
       response:
         'Entiendo tu consulta. Te puedo ayudar con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento, documentos, comisiones y configuración de tu cuenta. ¿Qué te gustaría hacer?',

@@ -166,6 +166,19 @@ export default function Chatbot({
     }
   }, [isOpen, isMinimized]);
 
+  // Escuchar evento personalizado para abrir el chatbot desde cualquier lugar
+  useEffect(() => {
+    const handleOpenChatbot = () => {
+      setIsOpen(true);
+      setIsMinimized(false);
+    };
+
+    window.addEventListener('openChatbot', handleOpenChatbot);
+    return () => {
+      window.removeEventListener('openChatbot', handleOpenChatbot);
+    };
+  }, []);
+
   const simulateTyping = async (response: string) => {
     setIsTyping(true);
     const words = response.split(' ');
@@ -302,37 +315,50 @@ export default function Chatbot({
 
       const responseTime = Date.now() - startTime;
 
-      // 🚀 FASE 1: Registrar interacción para aprendizaje
-      if (userId !== 'anonymous') {
-        try {
-          await aiLearningSystem.recordInteraction({
-            userId,
-            userRole,
-            userMessage: userInput,
-            botResponse: result.response,
-            intent: result.intent || 'unknown',
-            confidence: result.confidence,
-            context: {
-              userData,
-              responseTime,
-              conversationLength: messages.length,
-              hasRealData: !!userData,
-            },
-          });
+      // 🚀 FASE 1: Registrar interacción para aprendizaje (incluyendo usuarios guest)
+      // Para usuarios guest, usar un ID de sesión único para aprendizaje
+      const learningUserId =
+        userId === 'anonymous'
+          ? `guest_session_${typeof window !== 'undefined' ? sessionStorage.getItem('guestSessionId') || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `guest_${Date.now()}`}`
+          : userId;
 
-          // 🚀 FASE 2: Actualizar memoria conversacional
-          ChatbotMemoryService.updateMemory(userId, {
-            intent: result.intent || 'unknown',
-            confidence: result.confidence,
-            userMessage: userInput,
-            botResponse: result.response,
-            responseTime,
-            success: result.confidence > 0.7,
-            userRole,
-          });
-        } catch (learningError) {
-          logger.warn('Error registrando aprendizaje:', learningError);
+      // Guardar ID de sesión para usuarios guest
+      if (userId === 'anonymous' && typeof window !== 'undefined') {
+        const sessionId = learningUserId.replace('guest_session_', '');
+        if (!sessionStorage.getItem('guestSessionId')) {
+          sessionStorage.setItem('guestSessionId', sessionId);
         }
+      }
+
+      try {
+        aiLearningSystem.recordInteraction({
+          userId: learningUserId,
+          userRole,
+          userMessage: userInput,
+          botResponse: result.response,
+          intent: result.intent || 'unknown',
+          confidence: result.confidence,
+          context: {
+            userData,
+            responseTime,
+            conversationLength: messages.length,
+            hasRealData: !!userData,
+            isGuest: userId === 'anonymous',
+          },
+        });
+
+        // 🚀 FASE 2: Actualizar memoria conversacional (también para guest)
+        ChatbotMemoryService.updateMemory(learningUserId, {
+          intent: result.intent || 'unknown',
+          confidence: result.confidence,
+          userMessage: userInput,
+          botResponse: result.response,
+          responseTime,
+          success: result.confidence > 0.7,
+          userRole,
+        });
+      } catch (learningError) {
+        logger.warn('Error registrando aprendizaje:', learningError);
       }
 
       // 🚀 FASE 2: Generar recomendaciones inteligentes basadas en datos reales
