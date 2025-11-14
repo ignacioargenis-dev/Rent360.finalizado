@@ -62,6 +62,7 @@ export default function RealTimeNotifications() {
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const panelRef = React.useRef<HTMLDivElement>(null);
   console.log('🎯 [REAL TIME NOTIFICATIONS] useState hooks executed successfully');
 
   console.log('🎯 [REAL TIME NOTIFICATIONS] About to execute useWebSocket hook...');
@@ -550,6 +551,44 @@ export default function RealTimeNotifications() {
     }
   };
 
+  // Cerrar panel al hacer clic fuera
+  useEffect(() => {
+    if (!showPanel) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        // Verificar que el clic no sea en el botón de notificaciones
+        const target = event.target as HTMLElement;
+        const button = target.closest('button');
+        if (button) {
+          // Verificar si el botón contiene el icono de campana
+          const bellIcon = button.querySelector('svg');
+          if (bellIcon) {
+            // Verificar si es el botón de notificaciones específicamente
+            const isNotificationButton =
+              button.classList.contains('relative') || button.querySelector('.absolute') !== null;
+            if (isNotificationButton) {
+              return; // No cerrar si se hace clic en el botón de notificaciones
+            }
+          }
+        }
+        setShowPanel(false);
+      }
+    };
+
+    // Usar un pequeño delay para evitar que se cierre inmediatamente al abrir
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPanel]);
+
   // Calcular total de notificaciones no leídas
   const totalUnreadNotifications =
     unreadMessagesCount + unreadRequestsCount + unreadTicketsCount + unreadRatingsCount;
@@ -594,185 +633,188 @@ export default function RealTimeNotifications() {
 
         {/* Panel de notificaciones */}
         {showPanel && (
-          <Card className="absolute top-8 right-0 w-96 shadow-lg border border-emerald-200 dark:border-emerald-800 z-50 bg-white dark:bg-gray-900 flex flex-col max-h-[600px] overflow-hidden">
-            <CardHeader className="pb-4 bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950 dark:to-emerald-900 border-b border-emerald-200 dark:border-emerald-800 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
-                    <Bell className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
+          <div ref={panelRef} className="absolute top-8 right-0 w-96 z-50">
+            <Card className="shadow-lg border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 flex flex-col max-h-[600px] overflow-hidden">
+              <CardHeader className="pb-4 bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950 dark:to-emerald-900 border-b border-emerald-200 dark:border-emerald-800 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
+                      <Bell className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Notificaciones
+                      </CardTitle>
+                      {totalUnreadNotifications > 0 && (
+                        <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">
+                          {totalUnreadNotifications} sin leer
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Notificaciones
-                    </CardTitle>
+                  <div className="flex items-center gap-2">
                     {totalUnreadNotifications > 0 && (
-                      <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">
-                        {totalUnreadNotifications} sin leer
-                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={markAllAsRead}
+                        className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 dark:text-emerald-400"
+                      >
+                        Marcar todas
+                      </Button>
                     )}
+                    <button
+                      onClick={() => setShowPanel(false)}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {totalUnreadNotifications > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={markAllAsRead}
-                      className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 dark:text-emerald-400"
-                    >
-                      Marcar todas
-                    </Button>
-                  )}
-                  <button
-                    onClick={() => setShowPanel(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-2 mt-3">
-                <div
-                  className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-                    isConnected
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  }`}
-                >
+                <div className="flex items-center gap-2 mt-3">
                   <div
-                    className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}
-                  />
-                  {isConnected ? 'Conectado' : 'Desconectado'}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+                      isConnected
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    }`}
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}
+                    />
+                    {isConnected ? 'Conectado' : 'Desconectado'}
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
+              </CardHeader>
 
-            <CardContent className="p-0 flex flex-col flex-1 min-h-0">
-              {localNotifications.length === 0 ? (
-                <div className="text-center py-8 flex-shrink-0">
-                  <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 text-sm">No tienes notificaciones</p>
-                </div>
-              ) : (
-                <>
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    <div className="p-2 space-y-3">
-                      {localNotifications
-                        .filter(
-                          notification => notification && notification.id && notification.timestamp
-                        )
-                        .map(notification => (
-                          <div
-                            key={notification.id}
-                            className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-200 dark:border-emerald-800 overflow-hidden transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                              !notification.read
-                                ? 'ring-2 ring-emerald-500/20 bg-gradient-to-r from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-gray-800'
-                                : 'hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20'
-                            }`}
-                          >
-                            {/* Indicador de no leído */}
-                            {!notification.read && (
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600" />
-                            )}
+              <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+                {localNotifications.length === 0 ? (
+                  <div className="text-center py-8 flex-shrink-0">
+                    <BellOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 text-sm">No tienes notificaciones</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      <div className="p-2 space-y-3">
+                        {localNotifications
+                          .filter(
+                            notification =>
+                              notification && notification.id && notification.timestamp
+                          )
+                          .map(notification => (
+                            <div
+                              key={notification.id}
+                              className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-200 dark:border-emerald-800 overflow-hidden transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
+                                !notification.read
+                                  ? 'ring-2 ring-emerald-500/20 bg-gradient-to-r from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-gray-800'
+                                  : 'hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20'
+                              }`}
+                            >
+                              {/* Indicador de no leído */}
+                              {!notification.read && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600" />
+                              )}
 
-                            <div className="p-4">
-                              <div className="flex items-start gap-3">
-                                {/* Icono con fondo circular */}
-                                <div
-                                  className={`flex-shrink-0 p-2 rounded-full ${
-                                    !notification.read
-                                      ? 'bg-emerald-100 dark:bg-emerald-900/40'
-                                      : 'bg-emerald-50 dark:bg-emerald-900/20'
-                                  }`}
-                                >
+                              <div className="p-4">
+                                <div className="flex items-start gap-3">
+                                  {/* Icono con fondo circular */}
                                   <div
-                                    className={`${
+                                    className={`flex-shrink-0 p-2 rounded-full ${
                                       !notification.read
-                                        ? 'text-emerald-700 dark:text-emerald-400'
-                                        : 'text-emerald-600 dark:text-emerald-500'
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                                        : 'bg-emerald-50 dark:bg-emerald-900/20'
                                     }`}
                                   >
-                                    {getNotificationIcon(notification.type)}
-                                  </div>
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                  {/* Header con título y punto de no leído */}
-                                  <div className="flex items-start justify-between mb-2">
-                                    <h4
-                                      className={`text-sm font-semibold truncate pr-2 ${
+                                    <div
+                                      className={`${
                                         !notification.read
-                                          ? 'text-gray-900 dark:text-white'
-                                          : 'text-gray-700 dark:text-gray-300'
+                                          ? 'text-emerald-700 dark:text-emerald-400'
+                                          : 'text-emerald-600 dark:text-emerald-500'
                                       }`}
                                     >
-                                      {notification.title}
-                                    </h4>
-                                    {!notification.read && (
-                                      <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0 mt-1 animate-pulse" />
-                                    )}
+                                      {getNotificationIcon(notification.type)}
+                                    </div>
                                   </div>
 
-                                  {/* Mensaje */}
-                                  <p
-                                    className={`text-sm leading-relaxed mb-3 ${
-                                      !notification.read
-                                        ? 'text-gray-700 dark:text-gray-200'
-                                        : 'text-gray-600 dark:text-gray-400'
-                                    }`}
-                                  >
-                                    {notification.message}
-                                  </p>
-
-                                  {/* Footer con timestamp y acciones */}
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                      {formatTimestamp(notification.timestamp)}
-                                    </span>
-
-                                    <div className="flex items-center gap-1">
-                                      {!notification.read && (
-                                        <button
-                                          onClick={() => markAsRead(notification.id)}
-                                          className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 dark:text-emerald-400 rounded-full transition-colors"
-                                          title="Marcar como leída"
-                                        >
-                                          <CheckCircle className="h-4 w-4" />
-                                        </button>
-                                      )}
-
-                                      <button
-                                        onClick={() => deleteNotification(notification.id)}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
-                                        title="Eliminar notificación"
+                                  <div className="flex-1 min-w-0">
+                                    {/* Header con título y punto de no leído */}
+                                    <div className="flex items-start justify-between mb-2">
+                                      <h4
+                                        className={`text-sm font-semibold truncate pr-2 ${
+                                          !notification.read
+                                            ? 'text-gray-900 dark:text-white'
+                                            : 'text-gray-700 dark:text-gray-300'
+                                        }`}
                                       >
-                                        <X className="h-4 w-4" />
-                                      </button>
+                                        {notification.title}
+                                      </h4>
+                                      {!notification.read && (
+                                        <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0 mt-1 animate-pulse" />
+                                      )}
+                                    </div>
+
+                                    {/* Mensaje */}
+                                    <p
+                                      className={`text-sm leading-relaxed mb-3 ${
+                                        !notification.read
+                                          ? 'text-gray-700 dark:text-gray-200'
+                                          : 'text-gray-600 dark:text-gray-400'
+                                      }`}
+                                    >
+                                      {notification.message}
+                                    </p>
+
+                                    {/* Footer con timestamp y acciones */}
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                        {formatTimestamp(notification.timestamp)}
+                                      </span>
+
+                                      <div className="flex items-center gap-1">
+                                        {!notification.read && (
+                                          <button
+                                            onClick={() => markAsRead(notification.id)}
+                                            className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 dark:text-emerald-400 rounded-full transition-colors"
+                                            title="Marcar como leída"
+                                          >
+                                            <CheckCircle className="h-4 w-4" />
+                                          </button>
+                                        )}
+
+                                        <button
+                                          onClick={() => deleteNotification(notification.id)}
+                                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                                          title="Eliminar notificación"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="border-t border-emerald-200 dark:border-emerald-800 flex-shrink-0">
-                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50">
-                      <button
-                        onClick={clearAllNotifications}
-                        className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
-                      >
-                        🗑️ Limpiar todas las notificaciones
-                      </button>
+                    <div className="border-t border-emerald-200 dark:border-emerald-800 flex-shrink-0">
+                      <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50">
+                        <button
+                          onClick={clearAllNotifications}
+                          className="w-full py-3 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+                        >
+                          🗑️ Limpiar todas las notificaciones
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
       </>
     );
