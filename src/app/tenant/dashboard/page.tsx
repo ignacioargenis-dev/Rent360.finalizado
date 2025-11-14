@@ -29,9 +29,10 @@ import {
   TrendingUp,
   Eye,
   Plus,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { User } from '@/types';
+import { User as UserType } from '@/types';
 
 interface RentalContract {
   id: string;
@@ -82,11 +83,12 @@ interface TenantStats {
 
 export default function TenantDashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [contracts, setContracts] = useState<RentalContract[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [scheduledVisits, setScheduledVisits] = useState<any[]>([]);
   const [stats, setStats] = useState<TenantStats>({
     activeContracts: 0,
     pendingPayments: 0,
@@ -243,6 +245,16 @@ export default function TenantDashboardPage() {
             setRecentActivity(data.recentActivity);
           } else {
             setRecentActivity([]);
+          }
+
+          // Cargar visitas programadas
+          const visitsResponse = await fetch('/api/tenant/visits/scheduled', {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          });
+          if (visitsResponse.ok) {
+            const visitsData = await visitsResponse.json();
+            setScheduledVisits(visitsData.visits || []);
           }
         } else {
           // Si falla la API, mostrar dashboard vacío
@@ -716,6 +728,83 @@ export default function TenantDashboardPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Visitas Programadas - Card Dinámico */}
+            {scheduledVisits.length > 0 && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                    Visitas Programadas
+                  </CardTitle>
+                  <CardDescription>
+                    Próximas visitas a propiedades que has solicitado
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {scheduledVisits.map(visit => {
+                      const scheduledDate = new Date(visit.scheduledAt);
+                      const formattedDate = scheduledDate.toLocaleDateString('es-CL', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      });
+                      const formattedTime = scheduledDate.toLocaleTimeString('es-CL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+
+                      return (
+                        <div
+                          key={visit.id}
+                          className="bg-white rounded-lg p-4 border border-blue-200 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 mb-1">
+                                {visit.property.title}
+                              </h4>
+                              <p className="text-sm text-gray-600 flex items-center gap-1 mb-2">
+                                <MapPin className="w-3 h-3" />
+                                {visit.property.address}, {visit.property.commune}
+                              </p>
+                              <div className="flex items-center gap-4 text-sm text-gray-700">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {formattedDate}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {formattedTime}
+                                </span>
+                                {visit.runner && (
+                                  <span className="flex items-center gap-1">
+                                    <User className="w-4 h-4" />
+                                    {visit.runner.name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <Badge
+                              className={
+                                visit.status === 'SCHEDULED' || visit.status === 'CONFIRMED'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }
+                            >
+                              {visit.status === 'SCHEDULED' || visit.status === 'CONFIRMED'
+                                ? 'Programada'
+                                : 'Pendiente'}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Quick Actions */}
             <Card>

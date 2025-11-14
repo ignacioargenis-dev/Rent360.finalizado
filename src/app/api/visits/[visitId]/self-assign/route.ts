@@ -120,12 +120,23 @@ export async function POST(request: NextRequest, { params }: { params: { visitId
     // Notificar al inquilino
     if (visit.tenantId) {
       try {
+        const scheduledDate = new Date(updatedVisit.scheduledAt);
+        const formattedDate = scheduledDate.toLocaleDateString('es-CL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
+        const formattedTime = scheduledDate.toLocaleTimeString('es-CL', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+
         let message = '';
         if (user.role === 'OWNER') {
-          message = `Tu solicitud de visita para "${visit.property.title}" ha sido programada. El propietario realizará la visita el ${new Date(updatedVisit.scheduledAt).toLocaleDateString('es-CL')}.`;
+          message = `Tu solicitud de visita para "${visit.property.title}" ha sido programada. El propietario realizará la visita el ${formattedDate} a las ${formattedTime}.`;
         } else {
           // Para brokers, pueden hacerla ellos o su equipo
-          message = `Tu solicitud de visita para "${visit.property.title}" ha sido programada. El corredor o alguien de su equipo realizará la visita el ${new Date(updatedVisit.scheduledAt).toLocaleDateString('es-CL')}.`;
+          message = `Tu solicitud de visita para "${visit.property.title}" ha sido programada. El corredor o alguien de su equipo realizará la visita el ${formattedDate} a las ${formattedTime}.`;
         }
 
         await NotificationService.create({

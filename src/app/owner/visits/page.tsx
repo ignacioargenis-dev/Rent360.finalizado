@@ -103,6 +103,8 @@ export default function OwnerVisitsPage() {
   const tenantIdParam = searchParams?.get('tenantId');
 
   const [visits, setVisits] = useState<PendingVisit[]>([]);
+  const [historyVisits, setHistoryVisits] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -141,6 +143,7 @@ export default function OwnerVisitsPage() {
 
   useEffect(() => {
     loadPendingVisits();
+    loadHistoryVisits();
   }, [propertyIdParam, tenantIdParam]);
 
   const loadPendingVisits = async () => {
@@ -171,6 +174,29 @@ export default function OwnerVisitsPage() {
       setError('Error al cargar las solicitudes de visita');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadHistoryVisits = async () => {
+    try {
+      setLoadingHistory(true);
+      const params = new URLSearchParams();
+      if (propertyIdParam) {
+        params.append('propertyId', propertyIdParam);
+      }
+
+      const response = await fetch(`/api/owner/visits/history?${params.toString()}`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHistoryVisits(data.visits || []);
+      }
+    } catch (err) {
+      logger.error('Error cargando historial de visitas:', err);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -270,6 +296,7 @@ export default function OwnerVisitsPage() {
       setSuccessMessage('Runner asignado exitosamente');
       setShowAssignRunnerDialog(false);
       await loadPendingVisits();
+      await loadHistoryVisits();
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
       logger.error('Error asignando runner:', err);
@@ -320,6 +347,7 @@ export default function OwnerVisitsPage() {
       setSuccessMessage('Visita programada exitosamente. Realizarás la visita tú mismo.');
       setShowSelfAssignDialog(false);
       await loadPendingVisits();
+      await loadHistoryVisits();
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
       logger.error('Error auto-asignando visita:', err);
@@ -359,6 +387,7 @@ export default function OwnerVisitsPage() {
       setSuccessMessage('Solicitud de visita rechazada exitosamente');
       setShowRejectDialog(false);
       await loadPendingVisits();
+      await loadHistoryVisits();
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
       logger.error('Error rechazando visita:', err);
@@ -602,6 +631,83 @@ export default function OwnerVisitsPage() {
           </div>
         )}
 
+        {/* Historial de Visitas */}
+        {historyVisits.length > 0 && (
+          <div className="mt-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Historial de Visitas</h2>
+              <div className="h-1 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex-1 mx-4"></div>
+            </div>
+            <div className="grid gap-4">
+              {historyVisits.map(visit => {
+                const scheduledDate = new Date(visit.scheduledAt);
+                const formattedDate = scheduledDate.toLocaleDateString('es-CL', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+
+                const getStatusBadge = (status: string) => {
+                  switch (status) {
+                    case 'COMPLETED':
+                      return <Badge className="bg-green-100 text-green-800">Completada</Badge>;
+                    case 'CANCELLED':
+                      return <Badge className="bg-gray-100 text-gray-800">Cancelada</Badge>;
+                    case 'REJECTED':
+                      return <Badge className="bg-red-100 text-red-800">Rechazada</Badge>;
+                    case 'NO_SHOW':
+                      return <Badge className="bg-orange-100 text-orange-800">No asistió</Badge>;
+                    default:
+                      return <Badge>{status}</Badge>;
+                  }
+                };
+
+                return (
+                  <Card key={visit.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Home className="w-5 h-5 text-gray-600" />
+                            <h3 className="font-semibold text-gray-900">{visit.property.title}</h3>
+                          </div>
+                          <p className="text-sm text-gray-600 flex items-center gap-1 mb-3">
+                            <MapPin className="w-4 h-4" />
+                            {visit.property.address}, {visit.property.commune}
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-gray-600">Inquilino</p>
+                              <p className="font-medium">{visit.tenant?.name || 'N/A'}</p>
+                            </div>
+                            {visit.runner && (
+                              <div>
+                                <p className="text-gray-600">Runner360</p>
+                                <p className="font-medium">{visit.runner.name}</p>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-gray-600">Fecha y Hora</p>
+                              <p className="font-medium">{formattedDate}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600">Duración</p>
+                              <p className="font-medium">{visit.duration} minutos</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="ml-4">{getStatusBadge(visit.status)}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Dialog para ver documentos del inquilino */}
         <Dialog open={showDocumentsDialog} onOpenChange={setShowDocumentsDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -659,7 +765,25 @@ export default function OwnerVisitsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(`/api/documents/${doc.id}/access`, '_blank')}
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/documents/${doc.id}/access`, {
+                                  credentials: 'include',
+                                  method: 'GET',
+                                });
+                                if (!response.ok) {
+                                  throw new Error('Error al acceder al documento');
+                                }
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                window.open(url, '_blank');
+                              } catch (error) {
+                                alert(
+                                  'Error al abrir el documento. Por favor, verifica tus permisos.'
+                                );
+                                logger.error('Error abriendo documento:', error);
+                              }
+                            }}
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             Ver
@@ -667,11 +791,28 @@ export default function OwnerVisitsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = `/api/documents/${doc.id}/access`;
-                              link.download = doc.fileName;
-                              link.click();
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/documents/${doc.id}/access`, {
+                                  credentials: 'include',
+                                  method: 'GET',
+                                });
+                                if (!response.ok) {
+                                  throw new Error('Error al descargar el documento');
+                                }
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = doc.fileName;
+                                link.click();
+                                window.URL.revokeObjectURL(url);
+                              } catch (error) {
+                                alert(
+                                  'Error al descargar el documento. Por favor, verifica tus permisos.'
+                                );
+                                logger.error('Error descargando documento:', error);
+                              }
                             }}
                           >
                             <Download className="w-4 h-4 mr-2" />
@@ -741,31 +882,23 @@ export default function OwnerVisitsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Fecha y Hora</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
-                    <Input
-                      type="datetime-local"
-                      value={assignData.scheduledAt}
-                      onChange={e => setAssignData({ ...assignData, scheduledAt: e.target.value })}
-                      className="pl-10"
-                    />
-                  </div>
+                  <Input
+                    type="datetime-local"
+                    value={assignData.scheduledAt}
+                    onChange={e => setAssignData({ ...assignData, scheduledAt: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label>Duración (minutos)</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
-                    <Input
-                      type="number"
-                      value={assignData.duration}
-                      onChange={e =>
-                        setAssignData({ ...assignData, duration: parseInt(e.target.value) || 60 })
-                      }
-                      min={15}
-                      max={240}
-                      className="pl-10"
-                    />
-                  </div>
+                  <Input
+                    type="number"
+                    value={assignData.duration}
+                    onChange={e =>
+                      setAssignData({ ...assignData, duration: parseInt(e.target.value) || 60 })
+                    }
+                    min={15}
+                    max={240}
+                  />
                 </div>
               </div>
 
@@ -831,36 +964,28 @@ export default function OwnerVisitsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Fecha y Hora</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
-                    <Input
-                      type="datetime-local"
-                      value={selfAssignData.scheduledAt}
-                      onChange={e =>
-                        setSelfAssignData({ ...selfAssignData, scheduledAt: e.target.value })
-                      }
-                      className="pl-10"
-                    />
-                  </div>
+                  <Input
+                    type="datetime-local"
+                    value={selfAssignData.scheduledAt}
+                    onChange={e =>
+                      setSelfAssignData({ ...selfAssignData, scheduledAt: e.target.value })
+                    }
+                  />
                 </div>
                 <div>
                   <Label>Duración (minutos)</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
-                    <Input
-                      type="number"
-                      value={selfAssignData.duration}
-                      onChange={e =>
-                        setSelfAssignData({
-                          ...selfAssignData,
-                          duration: parseInt(e.target.value) || 60,
-                        })
-                      }
-                      min={15}
-                      max={240}
-                      className="pl-10"
-                    />
-                  </div>
+                  <Input
+                    type="number"
+                    value={selfAssignData.duration}
+                    onChange={e =>
+                      setSelfAssignData({
+                        ...selfAssignData,
+                        duration: parseInt(e.target.value) || 60,
+                      })
+                    }
+                    min={15}
+                    max={240}
+                  />
                 </div>
               </div>
 
