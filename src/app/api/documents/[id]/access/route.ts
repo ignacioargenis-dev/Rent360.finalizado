@@ -150,7 +150,11 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
     }
 
     // Verificar si hay una solicitud de visita pendiente que permite acceso a documentos del inquilino
-    if ((user.role === 'OWNER' || user.role === 'BROKER') && document.uploadedById) {
+    if (
+      (user.role === 'OWNER' || user.role === 'BROKER') &&
+      document.uploadedById &&
+      document.propertyId
+    ) {
       // Verificar si el documento pertenece a un inquilino y hay una visita pendiente
       const tenantUser = await db.user.findUnique({
         where: { id: document.uploadedById },
@@ -158,18 +162,47 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
       });
 
       if (tenantUser?.role === 'TENANT') {
-        // Verificar si hay una visita pendiente para esta propiedad e inquilino
-        const pendingVisit = await db.visit.findFirst({
-          where: {
-            propertyId: document.propertyId,
-            tenantId: document.uploadedById,
-            status: 'PENDING',
-            runnerId: user.id, // El runnerId temporal es el propietario/corredor
-          },
-        });
+        // Verificar si el usuario es propietario o corredor de la propiedad
+        const property = document.property;
+        let hasPropertyAccess = false;
 
-        if (pendingVisit) {
-          return true;
+        if (user.role === 'OWNER' && property.ownerId === user.id) {
+          hasPropertyAccess = true;
+        } else if (user.role === 'BROKER') {
+          // Verificar si el broker gestiona la propiedad directamente
+          if (property.brokerId === user.id) {
+            hasPropertyAccess = true;
+          } else {
+            // Verificar si el broker gestiona la propiedad a través de BrokerPropertyManagement
+            const brokerManagement = await db.brokerPropertyManagement.findFirst({
+              where: {
+                brokerId: user.id,
+                propertyId: document.propertyId,
+                status: 'ACTIVE',
+              },
+            });
+            if (brokerManagement) {
+              hasPropertyAccess = true;
+            }
+          }
+        }
+
+        if (hasPropertyAccess) {
+          // Verificar si hay una visita pendiente para esta propiedad e inquilino
+          // Cuando se crea una visita pendiente, el runnerId se asigna temporalmente al propietario/corredor
+          // Por lo tanto, buscamos visitas donde el runnerId es igual al usuario y el status es PENDING
+          const pendingVisit = await db.visit.findFirst({
+            where: {
+              propertyId: document.propertyId,
+              tenantId: document.uploadedById,
+              status: 'PENDING',
+              runnerId: user.id, // El runnerId temporal es el propietario/corredor
+            },
+          });
+
+          if (pendingVisit) {
+            return true;
+          }
         }
       }
     }

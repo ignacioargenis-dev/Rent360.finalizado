@@ -66,6 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: { tenantId
     }
 
     // Verificar que existe una visita pendiente para esta propiedad e inquilino
+    // Cuando se crea una visita pendiente, el runnerId se asigna temporalmente al propietario/corredor
+    // Por lo tanto, buscamos visitas donde el runnerId es igual al usuario y el status es PENDING
     const pendingVisit = await db.visit.findFirst({
       where: {
         propertyId,

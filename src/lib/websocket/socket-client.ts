@@ -525,7 +525,7 @@ function getNotificationSection(
     return 'messages';
   }
 
-  // Solicitudes/Cotizaciones - Service requests, quotes, invitations, prospects, recomendaciones
+  // Solicitudes/Cotizaciones - Service requests, quotes, invitations, prospects, recomendaciones, visitas
   if (
     normalizedType.includes('SERVICE_REQUEST') ||
     normalizedType.includes('QUOTE') ||
@@ -541,6 +541,9 @@ function getNotificationSection(
     normalizedType === 'PROSPECT_CONVERTED' ||
     normalizedType === 'PROSPECT_ACTIVITY' ||
     normalizedType === 'NEW_RECOMMENDATIONS' ||
+    normalizedType === 'VISIT_REJECTED' ||
+    normalizedType === 'VISIT_SCHEDULED' ||
+    normalizedType.includes('VISIT') ||
     normalizedType.includes('SERVICE') ||
     normalizedType.includes('REQUEST') ||
     normalizedType.includes('PROSPECT') ||

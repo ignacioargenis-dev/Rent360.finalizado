@@ -39,6 +39,7 @@ import {
   X,
   Loader2,
   CheckCircle,
+  MessageCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { logger } from '@/lib/logger-minimal';
@@ -558,6 +559,29 @@ export default function OwnerVisitsPage() {
                         <FileText className="w-4 h-4 mr-2" />
                         Ver Documentos
                       </Button>
+                      <Button
+                        onClick={() => {
+                          // Crear conversación con el inquilino usando el sistema de mensajería
+                          const recipientData = {
+                            id: visit.tenant.id,
+                            name: visit.tenant.name,
+                            email: visit.tenant.email,
+                            phone: visit.tenant.phone,
+                            type: 'tenant' as const,
+                            propertyId: visit.propertyId,
+                            visitId: visit.id,
+                          };
+                          sessionStorage.setItem(
+                            'newMessageRecipient',
+                            JSON.stringify(recipientData)
+                          );
+                          router.push('/owner/messages?new=true');
+                        }}
+                        variant="outline"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Enviar Mensaje
+                      </Button>
                       <Button onClick={() => handleOpenAssignRunner(visit)} variant="default">
                         <Users className="w-4 h-4 mr-2" />
                         Asignar Runner360
@@ -717,23 +741,31 @@ export default function OwnerVisitsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Fecha y Hora</Label>
-                  <Input
-                    type="datetime-local"
-                    value={assignData.scheduledAt}
-                    onChange={e => setAssignData({ ...assignData, scheduledAt: e.target.value })}
-                  />
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
+                    <Input
+                      type="datetime-local"
+                      value={assignData.scheduledAt}
+                      onChange={e => setAssignData({ ...assignData, scheduledAt: e.target.value })}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label>Duración (minutos)</Label>
-                  <Input
-                    type="number"
-                    value={assignData.duration}
-                    onChange={e =>
-                      setAssignData({ ...assignData, duration: parseInt(e.target.value) || 60 })
-                    }
-                    min={15}
-                    max={240}
-                  />
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
+                    <Input
+                      type="number"
+                      value={assignData.duration}
+                      onChange={e =>
+                        setAssignData({ ...assignData, duration: parseInt(e.target.value) || 60 })
+                      }
+                      min={15}
+                      max={240}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -799,28 +831,36 @@ export default function OwnerVisitsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Fecha y Hora</Label>
-                  <Input
-                    type="datetime-local"
-                    value={selfAssignData.scheduledAt}
-                    onChange={e =>
-                      setSelfAssignData({ ...selfAssignData, scheduledAt: e.target.value })
-                    }
-                  />
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
+                    <Input
+                      type="datetime-local"
+                      value={selfAssignData.scheduledAt}
+                      onChange={e =>
+                        setSelfAssignData({ ...selfAssignData, scheduledAt: e.target.value })
+                      }
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label>Duración (minutos)</Label>
-                  <Input
-                    type="number"
-                    value={selfAssignData.duration}
-                    onChange={e =>
-                      setSelfAssignData({
-                        ...selfAssignData,
-                        duration: parseInt(e.target.value) || 60,
-                      })
-                    }
-                    min={15}
-                    max={240}
-                  />
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
+                    <Input
+                      type="number"
+                      value={selfAssignData.duration}
+                      onChange={e =>
+                        setSelfAssignData({
+                          ...selfAssignData,
+                          duration: parseInt(e.target.value) || 60,
+                        })
+                      }
+                      min={15}
+                      max={240}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
               </div>
 
