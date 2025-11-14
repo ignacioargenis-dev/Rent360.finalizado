@@ -283,6 +283,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: Users,
     },
     {
+      title: 'Solicitudes de Visita',
+      url: '/owner/visits',
+      icon: Calendar,
+    },
+    {
       title: 'Mis Tickets',
       url: '/owner/tickets',
       icon: MessageSquare,
@@ -368,6 +373,11 @@ const getMenuItems = (): RoleMenuItems => ({
     {
       title: 'Citas',
       url: '/broker/appointments',
+      icon: Calendar,
+    },
+    {
+      title: 'Solicitudes de Visita',
+      url: '/broker/visits',
       icon: Calendar,
     },
     {

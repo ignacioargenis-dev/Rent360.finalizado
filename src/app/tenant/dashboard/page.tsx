@@ -86,6 +86,7 @@ export default function TenantDashboardPage() {
   const [contracts, setContracts] = useState<RentalContract[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [stats, setStats] = useState<TenantStats>({
     activeContracts: 0,
     pendingPayments: 0,
@@ -133,17 +134,122 @@ export default function TenantDashboardPage() {
 
     const loadTenantData = async () => {
       try {
-        // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
-        const isNewUser =
-          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000; // 1 hora
+        // Cargar datos reales desde la API
+        const dashboardResponse = await fetch('/api/tenant/dashboard', {
+          credentials: 'include',
+          headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+        });
 
-        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
-        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
-        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
-          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío con bienvenida
+        if (dashboardResponse.ok) {
+          const dashboardData = await dashboardResponse.json();
+          const data = dashboardData.data || dashboardData;
+
+          // Actualizar estadísticas
+          setStats({
+            activeContracts: data.stats?.activeContracts || 0,
+            pendingPayments: data.stats?.pendingPayments || 0,
+            overduePayments: 0, // Calcular desde pagos
+            maintenanceRequests: data.stats?.openMaintenance || 0,
+            unreadMessages: data.stats?.unreadNotifications || 0,
+            totalMonthlyRent: 0, // Calcular desde contratos
+          });
+
+          // Cargar contratos reales
+          const contractsResponse = await fetch('/api/contracts?status=ACTIVE&limit=10', {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          });
+          if (contractsResponse.ok) {
+            const contractsData = await contractsResponse.json();
+            const activeContracts = (contractsData.contracts || []).map((c: any) => ({
+              id: c.id,
+              propertyTitle: c.property?.title || 'Propiedad',
+              propertyAddress: c.property?.address || '',
+              landlordName: c.property?.owner?.name || 'Propietario',
+              landlordEmail: c.property?.owner?.email || '',
+              landlordPhone: c.property?.owner?.phone || '',
+              monthlyRent: c.monthlyRent || 0,
+              startDate: c.startDate || c.createdAt,
+              endDate: c.endDate || '',
+              status: c.status?.toLowerCase() || 'active',
+              nextPaymentDate: c.nextPaymentDate || '',
+              securityDeposit: c.securityDeposit || 0,
+            }));
+            setContracts(activeContracts);
+
+            // Calcular total mensual
+            const totalRent = activeContracts.reduce(
+              (sum: number, c: any) => sum + (c.monthlyRent || 0),
+              0
+            );
+            setStats(prev => ({ ...prev, totalMonthlyRent: totalRent }));
+          }
+
+          // Cargar pagos reales
+          const paymentsResponse = await fetch('/api/payments?limit=10', {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          });
+          if (paymentsResponse.ok) {
+            const paymentsData = await paymentsResponse.json();
+            const allPayments = (paymentsData.payments || []).map((p: any) => ({
+              id: p.id,
+              contractId: p.contractId,
+              amount: p.amount || 0,
+              dueDate: p.dueDate || p.createdAt,
+              status: p.status?.toLowerCase() || 'pending',
+              description:
+                p.description ||
+                `Pago ${new Date(p.dueDate || p.createdAt).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })}`,
+              paymentDate: p.paymentDate || null,
+            }));
+            setPayments(allPayments);
+
+            // Calcular pagos vencidos
+            const overdue = allPayments.filter(
+              (p: any) => p.status === 'pending' && new Date(p.dueDate) < new Date()
+            ).length;
+            setStats(prev => ({ ...prev, overduePayments: overdue }));
+          }
+
+          // Cargar solicitudes de mantenimiento reales
+          const maintenanceResponse = await fetch('/api/maintenance?limit=10', {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          });
+          if (maintenanceResponse.ok) {
+            const maintenanceData = await maintenanceResponse.json();
+            const allMaintenance = (
+              maintenanceData.requests ||
+              maintenanceData.maintenance ||
+              []
+            ).map((m: any) => ({
+              id: m.id,
+              contractId: m.contractId || '',
+              propertyTitle: m.property?.title || 'Propiedad',
+              title: m.title || m.description?.substring(0, 50) || 'Solicitud de mantenimiento',
+              description: m.description || '',
+              status: m.status?.toLowerCase() || 'pending',
+              priority: m.priority?.toLowerCase() || 'medium',
+              createdAt: m.createdAt || new Date().toISOString(),
+              resolvedAt: m.resolvedAt || null,
+              estimatedCost: m.estimatedCost || null,
+            }));
+            setMaintenanceRequests(allMaintenance);
+          }
+
+          // Cargar actividad reciente desde la API
+          if (data.recentActivity && Array.isArray(data.recentActivity)) {
+            setRecentActivity(data.recentActivity);
+          } else {
+            setRecentActivity([]);
+          }
+        } else {
+          // Si falla la API, mostrar dashboard vacío
           setContracts([]);
           setPayments([]);
           setMaintenanceRequests([]);
+          setRecentActivity([]);
           setStats({
             activeContracts: 0,
             pendingPayments: 0,
@@ -152,6 +258,14 @@ export default function TenantDashboardPage() {
             unreadMessages: 0,
             totalMonthlyRent: 0,
           });
+        }
+
+        // Código legacy para usuarios seed (mantener por compatibilidad)
+        const isNewUser =
+          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000; // 1 hora
+
+        if (false && (isNewUser || !user?.email?.includes('@rent360.cl'))) {
+          // Código legacy deshabilitado - ahora siempre usamos datos reales
         } else {
           // Solo usuarios seed con @rent360.cl ven datos mock (para testing/marketing)
           const mockContracts: RentalContract[] = [
@@ -738,35 +852,89 @@ export default function TenantDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Pago realizado</p>
-                      <p className="text-xs text-gray-600">Arriendo Diciembre 2024</p>
-                    </div>
-                  </div>
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 5).map((activity: any) => {
+                      const getIcon = () => {
+                        if (activity.icon === 'checkCircle' || activity.type === 'payment') {
+                          return <CheckCircle className="w-4 h-4 text-green-600" />;
+                        }
+                        if (activity.icon === 'wrench' || activity.type === 'maintenance') {
+                          return <Wrench className="w-4 h-4 text-blue-600" />;
+                        }
+                        if (activity.icon === 'fileText' || activity.type === 'contract') {
+                          return <FileText className="w-4 h-4 text-blue-600" />;
+                        }
+                        return <Bell className="w-4 h-4 text-yellow-600" />;
+                      };
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Wrench className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Solicitud enviada</p>
-                      <p className="text-xs text-gray-600">Fuga en grifería de cocina</p>
-                    </div>
-                  </div>
+                      const getBgColor = () => {
+                        if (activity.color === 'green') {
+                          return 'bg-green-100';
+                        }
+                        if (activity.color === 'blue') {
+                          return 'bg-blue-100';
+                        }
+                        if (activity.color === 'yellow') {
+                          return 'bg-yellow-100';
+                        }
+                        if (activity.color === 'red') {
+                          return 'bg-red-100';
+                        }
+                        return 'bg-gray-100';
+                      };
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <Bell className="w-4 h-4 text-yellow-600" />
+                      const formatDate = (dateString: string) => {
+                        try {
+                          const date = new Date(dateString);
+                          const now = new Date();
+                          const diffMs = now.getTime() - date.getTime();
+                          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                          if (diffDays === 0) {
+                            return 'Hoy';
+                          }
+                          if (diffDays === 1) {
+                            return 'Ayer';
+                          }
+                          if (diffDays < 7) {
+                            return `Hace ${diffDays} días`;
+                          }
+                          return date.toLocaleDateString('es-CL', {
+                            day: 'numeric',
+                            month: 'short',
+                          });
+                        } catch {
+                          return '';
+                        }
+                      };
+
+                      return (
+                        <div key={activity.id} className="flex items-start gap-3">
+                          <div
+                            className={`w-8 h-8 ${getBgColor()} rounded-full flex items-center justify-center flex-shrink-0`}
+                          >
+                            {getIcon()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {activity.title}
+                            </p>
+                            <p className="text-xs text-gray-600 truncate">{activity.description}</p>
+                            {activity.date && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatDate(activity.date)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs">No hay actividad reciente</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Recordatorio</p>
-                      <p className="text-xs text-gray-600">Pago vence en 5 días</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

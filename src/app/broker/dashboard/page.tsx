@@ -67,6 +67,7 @@ interface BrokerStats {
   conversionRate: number;
   averageCommission: number;
   portfolioValue: number;
+  pendingVisits: number; // ✅ AGREGADO: Visitas pendientes
 }
 
 interface RecentActivity {
@@ -93,6 +94,7 @@ export default function BrokerDashboardPage() {
     conversionRate: 0,
     averageCommission: 0,
     portfolioValue: 0,
+    pendingVisits: 0, // ✅ AGREGADO: Visitas pendientes inicial
   });
   const [loading, setLoading] = useState(true);
   const [performanceMetrics, setPerformanceMetrics] = useState({
@@ -198,6 +200,21 @@ export default function BrokerDashboardPage() {
           setClients(transformedClients);
           setRecentActivities(transformedActivities);
 
+          // Obtener visitas pendientes
+          let pendingVisits = 0;
+          try {
+            const visitsResponse = await fetch('/api/owner/visits/pending', {
+              credentials: 'include',
+              headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+            });
+            if (visitsResponse.ok) {
+              const visitsData = await visitsResponse.json();
+              pendingVisits = visitsData.visits?.length || 0;
+            }
+          } catch (error) {
+            logger.error('Error obteniendo visitas pendientes:', error);
+          }
+
           // Usar estadísticas reales de la API
           const newStats = {
             totalProperties: data.stats?.totalProperties ?? 0, // ✅ Total (propias + gestionadas)
@@ -209,6 +226,7 @@ export default function BrokerDashboardPage() {
             conversionRate: data.stats?.conversionRate ?? 0,
             averageCommission: data.stats?.averageCommission ?? 0,
             portfolioValue: data.stats?.portfolioValue ?? 0,
+            pendingVisits,
           };
 
           console.log('✅ [DASHBOARD] Estableciendo estadísticas:', newStats);
@@ -251,6 +269,7 @@ export default function BrokerDashboardPage() {
             conversionRate: 0,
             averageCommission: 0,
             portfolioValue: 0,
+            pendingVisits: 0,
           });
         }
 
@@ -277,6 +296,7 @@ export default function BrokerDashboardPage() {
           conversionRate: 0,
           averageCommission: 0,
           portfolioValue: 0,
+          pendingVisits: 0,
         });
         setLoading(false);
       }
@@ -540,6 +560,24 @@ export default function BrokerDashboardPage() {
                     description="Agenda y visitas"
                     onClick={() => router.push('/broker/appointments')}
                   />
+
+                  <div className="relative">
+                    <QuickActionButton
+                      icon={Calendar}
+                      label="Solicitudes de Visita"
+                      description={
+                        stats.pendingVisits > 0
+                          ? `${stats.pendingVisits} pendiente${stats.pendingVisits > 1 ? 's' : ''}`
+                          : 'Gestionar visitas'
+                      }
+                      onClick={() => router.push('/broker/visits')}
+                    />
+                    {stats.pendingVisits > 0 && (
+                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
+                        {stats.pendingVisits}
+                      </Badge>
+                    )}
+                  </div>
 
                   <QuickActionButton
                     icon={DollarSign}

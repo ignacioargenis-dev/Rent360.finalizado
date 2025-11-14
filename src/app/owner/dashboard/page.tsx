@@ -45,6 +45,7 @@ interface DashboardStats {
   averageRating: number;
   totalTenants: number;
   occupancyRate: number; // ✅ AGREGADO: Tasa de ocupación
+  pendingVisits: number; // ✅ AGREGADO: Visitas pendientes
 }
 
 interface RecentActivity {
@@ -78,6 +79,7 @@ export default function OwnerDashboard() {
     averageRating: 0,
     totalTenants: 0,
     occupancyRate: 0, // ✅ AGREGADO: Tasa de ocupación inicial
+    pendingVisits: 0, // ✅ AGREGADO: Visitas pendientes inicial
   });
   const [recentProperties, setRecentProperties] = useState<PropertySummary[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -180,6 +182,24 @@ export default function OwnerDashboard() {
           logger.error('Error obteniendo calificación promedio:', error);
         }
 
+        // Obtener visitas pendientes
+        let pendingVisits = 0;
+        try {
+          const visitsResponse = await fetch(
+            `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/owner/visits/pending`,
+            {
+              credentials: 'include',
+              headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+            }
+          );
+          if (visitsResponse.ok) {
+            const visitsData = await visitsResponse.json();
+            pendingVisits = visitsData.visits?.length || 0;
+          }
+        } catch (error) {
+          logger.error('Error obteniendo visitas pendientes:', error);
+        }
+
         setStats({
           totalProperties: properties.length,
           activeContracts: contracts.length,
@@ -188,6 +208,7 @@ export default function OwnerDashboard() {
           averageRating: Math.round(averageRating * 10) / 10,
           totalTenants,
           occupancyRate: Math.round(occupancyRate * 10) / 10, // ✅ AGREGADO: Tasa de ocupación calculada
+          pendingVisits,
         });
 
         // Formatear propiedades recientes
@@ -278,6 +299,7 @@ export default function OwnerDashboard() {
           averageRating: 0,
           totalTenants: 0,
           occupancyRate: 0, // ✅ AGREGADO: Campo occupancyRate faltante
+          pendingVisits: 0, // ✅ AGREGADO: Campo pendingVisits faltante
         });
         setRecentProperties([]);
         setRecentActivity([
@@ -308,6 +330,7 @@ export default function OwnerDashboard() {
         averageRating: 0,
         totalTenants: 0,
         occupancyRate: 0, // ✅ AGREGADO: Campo occupancyRate faltante
+        pendingVisits: 0, // ✅ AGREGADO: Campo pendingVisits faltante
       });
       setRecentProperties([]);
       setRecentActivity([
@@ -641,6 +664,30 @@ export default function OwnerDashboard() {
                   className="text-orange-600 hover:text-orange-800 font-medium text-sm flex items-center"
                 >
                   Ver reportes
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-teal-200 group">
+                <div className="bg-gradient-to-br from-teal-500 to-teal-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Solicitudes de Visita</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  {stats.pendingVisits > 0
+                    ? `${stats.pendingVisits} solicitud${stats.pendingVisits > 1 ? 'es' : ''} pendiente${stats.pendingVisits > 1 ? 's' : ''}`
+                    : 'No hay solicitudes pendientes'}
+                </p>
+                {stats.pendingVisits > 0 && (
+                  <Badge className="mb-4 bg-teal-100 text-teal-800">
+                    {stats.pendingVisits} nueva{stats.pendingVisits > 1 ? 's' : ''}
+                  </Badge>
+                )}
+                <Link
+                  href="/owner/visits"
+                  className="text-teal-600 hover:text-teal-800 font-medium text-sm flex items-center"
+                >
+                  {stats.pendingVisits > 0 ? 'Gestionar visitas' : 'Ver visitas'}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>
