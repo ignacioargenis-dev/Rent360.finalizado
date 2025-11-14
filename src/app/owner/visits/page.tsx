@@ -524,7 +524,16 @@ export default function OwnerVisitsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-600">Fecha Programada</p>
-                          <p className="font-medium">{formatDate(visit.scheduledAt)}</p>
+                          <p className="font-medium text-gray-500 italic">
+                            {visit.status === 'PENDING'
+                              ? 'Pendiente de asignación'
+                              : formatDate(visit.scheduledAt)}
+                          </p>
+                          {visit.status === 'PENDING' && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Se programará al asignar runner
+                            </p>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Duración Estimada</p>

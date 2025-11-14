@@ -33,11 +33,36 @@ export async function GET(request: NextRequest, { params }: { params: { tenantId
     }
 
     // Construir filtro de propiedad según el rol
-    const propertyFilter: any = {};
+    let propertyFilter: any = {};
     if (user.role === 'OWNER') {
       propertyFilter.ownerId = user.id;
     } else if (user.role === 'BROKER') {
-      propertyFilter.brokerId = user.id;
+      // Para brokers, verificar si gestiona la propiedad directamente o a través de BrokerPropertyManagement
+      const managedProperties = await db.brokerPropertyManagement.findMany({
+        where: {
+          brokerId: user.id,
+          status: 'ACTIVE',
+        },
+        select: {
+          propertyId: true,
+        },
+      });
+
+      const managedPropertyIds = managedProperties.map(mp => mp.propertyId);
+
+      // Construir filtro OR para propiedades gestionadas directamente o a través de BrokerPropertyManagement
+      propertyFilter.OR = [
+        { brokerId: user.id },
+        ...(managedPropertyIds.length > 0
+          ? [
+              {
+                id: {
+                  in: managedPropertyIds,
+                },
+              },
+            ]
+          : []),
+      ];
     }
 
     // Verificar que existe una visita pendiente para esta propiedad e inquilino
@@ -46,6 +71,7 @@ export async function GET(request: NextRequest, { params }: { params: { tenantId
         propertyId,
         tenantId,
         status: 'PENDING',
+        runnerId: user.id, // El runnerId temporal es el propietario/corredor
         property: propertyFilter,
       },
     });

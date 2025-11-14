@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que la propiedad existe y está disponible
+    // Incluir propiedades gestionadas por broker a través de BrokerPropertyManagement
     const property = await db.property.findUnique({
       where: { id: propertyId },
       include: {
@@ -43,6 +44,21 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        managedByBroker: {
+          where: {
+            status: 'ACTIVE',
+          },
+          select: {
+            brokerId: true,
+            broker: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },
@@ -79,9 +95,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear la solicitud de visita (sin runner asignado aún)
-    // Nota: El modelo Visit requiere runnerId, así que usamos el ID del propietario como valor temporal
-    // que será actualizado cuando se asigne un runner real desde /owner/visits
-    const temporaryRunnerId = property.brokerId || property.ownerId;
+    // Nota: El modelo Visit requiere runnerId, así que usamos el ID del propietario/corredor como valor temporal
+    // que será actualizado cuando se asigne un runner real desde /owner/visits o /broker/visits
+    // Priorizar broker directo, luego broker de BrokerPropertyManagement, luego owner
+    const managedByBroker = property.managedByBroker || [];
+    const temporaryRunnerId =
+      property.brokerId ||
+      (managedByBroker.length > 0 ? managedByBroker[0]?.brokerId : null) ||
+      property.ownerId;
 
     if (!temporaryRunnerId) {
       return NextResponse.json(
@@ -97,7 +118,7 @@ export async function POST(request: NextRequest) {
         tenantId: user.id,
         scheduledAt: preferredDate
           ? new Date(preferredDate)
-          : new Date(Date.now() + 24 * 60 * 60 * 1000), // Por defecto mañana
+          : new Date(Date.now() + 24 * 60 * 60 * 1000), // Por defecto mañana (será actualizado cuando se asigne el runner)
         duration: 60, // Duración por defecto de 60 minutos
         status: 'PENDING', // Pendiente de asignación de runner
         notes: notes || `Solicitud de visita de Runner360 para la propiedad "${property.title}"`,
@@ -122,17 +143,35 @@ export async function POST(request: NextRequest) {
     });
 
     // Notificar al propietario o corredor sobre la solicitud de visita
-    const recipientId = property.brokerId || property.ownerId;
-    const recipientName = property.broker?.name || property.owner?.name || 'Propietario';
+    // Usar la misma lógica que para temporaryRunnerId
+    const recipientId =
+      property.brokerId ||
+      (managedByBroker.length > 0 ? managedByBroker[0]?.brokerId : null) ||
+      property.ownerId;
+
+    const recipientRole = property.brokerId
+      ? 'BROKER'
+      : managedByBroker.length > 0
+        ? 'BROKER'
+        : 'OWNER';
+
+    const recipientName =
+      property.broker?.name ||
+      (managedByBroker.length > 0 ? managedByBroker[0]?.broker?.name : null) ||
+      property.owner?.name ||
+      'Propietario';
 
     if (recipientId) {
       try {
+        // Determinar la ruta correcta según el rol del destinatario
+        const visitsRoute = recipientRole === 'BROKER' ? '/broker/visits' : '/owner/visits';
+
         await NotificationService.create({
           userId: recipientId,
           type: 'SERVICE_REQUEST_RECEIVED',
           title: 'Nueva solicitud de visita Runner360',
           message: `${user.name} ha solicitado una visita de Runner360 para la propiedad "${property.title}". Puedes revisar los documentos del inquilino y asignar un runner.`,
-          link: `/owner/visits?propertyId=${propertyId}&tenantId=${user.id}`,
+          link: `${visitsRoute}?propertyId=${propertyId}&tenantId=${user.id}`,
         });
       } catch (notificationError) {
         logger.warn('Error enviando notificación de solicitud de visita:', {

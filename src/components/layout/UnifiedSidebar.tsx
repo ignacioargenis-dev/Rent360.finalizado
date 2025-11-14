@@ -678,6 +678,7 @@ export default function UnifiedSidebar({
 }: UnifiedSidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<{ [key: string]: boolean }>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pendingVisitsCount, setPendingVisitsCount] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
   const {
@@ -686,6 +687,31 @@ export default function UnifiedSidebar({
     unreadTicketsCount: wsUnreadTicketsCount,
     unreadRatingsCount: wsUnreadRatingsCount,
   } = useWebSocket();
+
+  // Cargar conteo de visitas pendientes para owners y brokers
+  useEffect(() => {
+    const loadPendingVisitsCount = async () => {
+      if (user && (user.role === 'OWNER' || user.role === 'BROKER')) {
+        try {
+          const response = await fetch('/api/owner/visits/pending', {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setPendingVisitsCount(data.visits?.length || 0);
+          }
+        } catch (error) {
+          logger.error('Error loading pending visits count:', error);
+        }
+      }
+    };
+
+    loadPendingVisitsCount();
+    // Actualizar cada 30 segundos
+    const interval = setInterval(loadPendingVisitsCount, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // LOG MUY VISIBLE PARA COMPONENTE INICIALIZADO
   console.log('🏠 [SIDEBAR] UnifiedSidebar initialized, user:', user?.id, 'role:', user?.role);
@@ -820,6 +846,10 @@ export default function UnifiedSidebar({
     } else if (item.title === 'Calificaciones' && wsUnreadRatingsCount > 0) {
       showUnreadBadge = true;
       badgeText = String(wsUnreadRatingsCount);
+      badgeVariant = 'destructive';
+    } else if (item.title === 'Solicitudes de Visita' && pendingVisitsCount > 0) {
+      showUnreadBadge = true;
+      badgeText = String(pendingVisitsCount);
       badgeVariant = 'destructive';
     }
 

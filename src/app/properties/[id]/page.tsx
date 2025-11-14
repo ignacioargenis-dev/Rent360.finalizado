@@ -251,6 +251,13 @@ export default function PublicPropertyDetailPage() {
           return;
         }
 
+        // Mostrar confirmación informativa sobre visibilidad de documentos
+        const confirmMessage = `Al solicitar una visita Runner360, el administrador de la propiedad (propietario o corredor) podrá revisar tus documentos personales para evaluar tu solicitud. Esto incluye documentos de identificación, comprobantes de ingresos y referencias que hayas subido a la plataforma.\n\n¿Deseas continuar con la solicitud?`;
+
+        if (!confirm(confirmMessage)) {
+          return; // Usuario canceló
+        }
+
         // Solicitar visita de Runner360 usando la nueva API
         const visitResponse = await fetch('/api/tenant/visits/request', {
           method: 'POST',

@@ -124,13 +124,54 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
     const property = document.property;
 
     // Propietarios tienen acceso a documentos de sus propiedades
-    if (user.role === 'owner' && property.ownerId === user.id) {
+    if ((user.role === 'OWNER' || user.role === 'owner') && property.ownerId === user.id) {
       return true;
     }
 
-    // Corredores tienen acceso a documentos de propiedades que manejan
-    if (user.role === 'broker' && property.brokerId === user.id) {
-      return true;
+    // Corredores tienen acceso a documentos de propiedades que manejan directamente o a través de BrokerPropertyManagement
+    if (user.role === 'BROKER' || user.role === 'broker') {
+      // Verificar si el broker gestiona la propiedad directamente
+      if (property.brokerId === user.id) {
+        return true;
+      }
+
+      // Verificar si el broker gestiona la propiedad a través de BrokerPropertyManagement
+      const brokerManagement = await db.brokerPropertyManagement.findFirst({
+        where: {
+          brokerId: user.id,
+          propertyId: document.propertyId,
+          status: 'ACTIVE',
+        },
+      });
+
+      if (brokerManagement) {
+        return true;
+      }
+    }
+
+    // Verificar si hay una solicitud de visita pendiente que permite acceso a documentos del inquilino
+    if ((user.role === 'OWNER' || user.role === 'BROKER') && document.uploadedById) {
+      // Verificar si el documento pertenece a un inquilino y hay una visita pendiente
+      const tenantUser = await db.user.findUnique({
+        where: { id: document.uploadedById },
+        select: { role: true },
+      });
+
+      if (tenantUser?.role === 'TENANT') {
+        // Verificar si hay una visita pendiente para esta propiedad e inquilino
+        const pendingVisit = await db.visit.findFirst({
+          where: {
+            propertyId: document.propertyId,
+            tenantId: document.uploadedById,
+            status: 'PENDING',
+            runnerId: user.id, // El runnerId temporal es el propietario/corredor
+          },
+        });
+
+        if (pendingVisit) {
+          return true;
+        }
+      }
     }
 
     // Inquilinos tienen acceso limitado a documentos relacionados con contratos activos
