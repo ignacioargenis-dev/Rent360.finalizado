@@ -55,11 +55,11 @@ export async function GET(request: NextRequest) {
       propertyFilter.id = propertyId;
     }
 
-    // Obtener visitas completadas, canceladas o rechazadas
+    // Obtener visitas completadas, canceladas, rechazadas y programadas
     const historyVisits = await db.visit.findMany({
       where: {
         property: propertyFilter,
-        status: { in: ['COMPLETED', 'CANCELLED', 'REJECTED', 'NO_SHOW'] },
+        status: { in: ['COMPLETED', 'CANCELLED', 'REJECTED', 'NO_SHOW', 'SCHEDULED', 'CONFIRMED'] },
       },
       include: {
         property: {

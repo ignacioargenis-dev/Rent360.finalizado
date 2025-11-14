@@ -295,6 +295,33 @@ export default function TenantDashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Recarga silenciosa de visitas programadas cada 30 segundos
+  useEffect(() => {
+    const loadScheduledVisits = async () => {
+      try {
+        const visitsResponse = await fetch('/api/tenant/visits/scheduled', {
+          credentials: 'include',
+          headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+        });
+        if (visitsResponse.ok) {
+          const visitsData = await visitsResponse.json();
+          setScheduledVisits(visitsData.visits || []);
+        }
+      } catch (error) {
+        // Silenciosamente ignorar errores en refresh automático
+        logger.debug('Error en refresh silencioso de visitas:', error);
+      }
+    };
+
+    // Cargar inmediatamente
+    loadScheduledVisits();
+
+    // Recargar cada 30 segundos
+    const interval = setInterval(loadScheduledVisits, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',

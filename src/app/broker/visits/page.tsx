@@ -514,6 +514,9 @@ export default function BrokerVisitsPage() {
                       return <Badge className="bg-red-100 text-red-800">Rechazada</Badge>;
                     case 'NO_SHOW':
                       return <Badge className="bg-orange-100 text-orange-800">No asistió</Badge>;
+                    case 'SCHEDULED':
+                    case 'CONFIRMED':
+                      return <Badge className="bg-blue-100 text-blue-800">Programada</Badge>;
                     default:
                       return <Badge>{status}</Badge>;
                   }
