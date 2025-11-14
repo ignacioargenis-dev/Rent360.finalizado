@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Calendar,
   MapPin,
   User,
@@ -34,7 +27,6 @@ import {
   Mail,
   Phone,
   AlertCircle,
-  Users,
   UserCheck,
   X,
   Loader2,
@@ -80,23 +72,7 @@ interface TenantDocument {
   createdAt: string;
 }
 
-interface Runner {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  avatar: string | null;
-  city: string;
-  commune: string;
-  stats: {
-    totalVisits: number;
-    averageRating: number;
-    totalRatings: number;
-  };
-}
-
-export default function OwnerVisitsPage() {
-  const router = useRouter();
+export default function BrokerVisitsPage() {
   const searchParams = useSearchParams();
   const propertyIdParam = searchParams?.get('propertyId');
   const tenantIdParam = searchParams?.get('tenantId');
@@ -109,20 +85,6 @@ export default function OwnerVisitsPage() {
   const [tenantDocuments, setTenantDocuments] = useState<TenantDocument[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
-
-  // Estados para asignar runner
-  const [showAssignRunnerDialog, setShowAssignRunnerDialog] = useState(false);
-  const [runners, setRunners] = useState<Runner[]>([]);
-  const [loadingRunners, setLoadingRunners] = useState(false);
-  const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null);
-  const [assignData, setAssignData] = useState({
-    scheduledAt: '',
-    duration: 60,
-    estimatedEarnings: 0,
-    notes: '',
-    paymentMethod: '',
-  });
-  const [assigningRunner, setAssigningRunner] = useState(false);
 
   // Estados para auto-asignación
   const [showSelfAssignDialog, setShowSelfAssignDialog] = useState(false);
@@ -173,27 +135,6 @@ export default function OwnerVisitsPage() {
     }
   };
 
-  const loadRunners = async (search: string = '') => {
-    try {
-      setLoadingRunners(true);
-      const response = await fetch(`/api/owner/runners?search=${search}&limit=50`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cargar runners');
-      }
-
-      const data = await response.json();
-      setRunners(data.runners || []);
-    } catch (err) {
-      logger.error('Error cargando runners:', err);
-      alert('Error al cargar runners disponibles');
-    } finally {
-      setLoadingRunners(false);
-    }
-  };
-
   const loadTenantDocuments = async (visit: PendingVisit) => {
     try {
       setLoadingDocuments(true);
@@ -218,63 +159,6 @@ export default function OwnerVisitsPage() {
       alert('Error al cargar los documentos del inquilino');
     } finally {
       setLoadingDocuments(false);
-    }
-  };
-
-  const handleOpenAssignRunner = async (visit: PendingVisit) => {
-    setSelectedVisit(visit);
-    const dateTimeParts = visit.scheduledAt.split('T');
-    const datePart = dateTimeParts[0] || '';
-    const timePart = dateTimeParts[1] ? dateTimeParts[1].substring(0, 5) : '00:00';
-    setAssignData({
-      scheduledAt: datePart + 'T' + timePart,
-      duration: visit.duration,
-      estimatedEarnings: 20000,
-      notes: visit.notes || '',
-      paymentMethod: '',
-    });
-    setShowAssignRunnerDialog(true);
-    await loadRunners();
-  };
-
-  const handleAssignRunner = async () => {
-    if (!selectedVisit || !selectedRunner) {
-      alert('Por favor selecciona un runner');
-      return;
-    }
-
-    try {
-      setAssigningRunner(true);
-      const scheduledAtISO = new Date(assignData.scheduledAt).toISOString();
-
-      const response = await fetch(`/api/visits/${selectedVisit.id}/assign-runner`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          runnerId: selectedRunner.id,
-          scheduledAt: scheduledAtISO,
-          duration: assignData.duration,
-          estimatedEarnings: assignData.estimatedEarnings,
-          notes: assignData.notes,
-          paymentMethod: assignData.paymentMethod || undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al asignar runner');
-      }
-
-      setSuccessMessage('Runner asignado exitosamente');
-      setShowAssignRunnerDialog(false);
-      await loadPendingVisits();
-      setTimeout(() => setSuccessMessage(null), 5000);
-    } catch (err) {
-      logger.error('Error asignando runner:', err);
-      alert(err instanceof Error ? err.message : 'Error al asignar runner');
-    } finally {
-      setAssigningRunner(false);
     }
   };
 
@@ -414,7 +298,7 @@ export default function OwnerVisitsPage() {
   return (
     <UnifiedDashboardLayout
       title="Solicitudes de Visita Runner360"
-      subtitle="Gestiona las solicitudes de visita pendientes para tus propiedades"
+      subtitle="Gestiona las solicitudes de visita pendientes para las propiedades que administras"
     >
       <div className="space-y-6">
         {successMessage && (
@@ -448,8 +332,8 @@ export default function OwnerVisitsPage() {
                   No hay solicitudes de visita pendientes
                 </h3>
                 <p className="text-gray-600">
-                  Cuando los inquilinos soliciten visitas de Runner360 para tus propiedades,
-                  aparecerán aquí.
+                  Cuando los inquilinos soliciten visitas de Runner360 para las propiedades que
+                  administras, aparecerán aquí.
                 </p>
               </div>
             </CardContent>
@@ -549,13 +433,9 @@ export default function OwnerVisitsPage() {
                         <FileText className="w-4 h-4 mr-2" />
                         Ver Documentos
                       </Button>
-                      <Button onClick={() => handleOpenAssignRunner(visit)} variant="default">
-                        <Users className="w-4 h-4 mr-2" />
-                        Asignar Runner360
-                      </Button>
                       <Button onClick={() => handleOpenSelfAssign(visit)} variant="default">
                         <UserCheck className="w-4 h-4 mr-2" />
-                        Hacer Visita Yo
+                        Gestionar Visita
                       </Button>
                       <Button onClick={() => handleOpenReject(visit)} variant="destructive">
                         <X className="w-4 h-4 mr-2" />
@@ -654,135 +534,14 @@ export default function OwnerVisitsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog para asignar runner */}
-        <Dialog open={showAssignRunnerDialog} onOpenChange={setShowAssignRunnerDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Asignar Runner360</DialogTitle>
-              <DialogDescription>
-                Selecciona un runner para realizar la visita a la propiedad{' '}
-                {selectedVisit?.property.title}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label>Runner</Label>
-                <Select
-                  value={selectedRunner?.id || ''}
-                  onValueChange={value => {
-                    const runner = runners.find(r => r.id === value);
-                    setSelectedRunner(runner || null);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un runner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingRunners ? (
-                      <div className="p-4 text-center">
-                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                        <p className="text-sm text-gray-600 mt-2">Cargando runners...</p>
-                      </div>
-                    ) : runners.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-gray-600">
-                        No hay runners disponibles
-                      </div>
-                    ) : (
-                      runners.map(runner => (
-                        <SelectItem key={runner.id} value={runner.id}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>{runner.name}</span>
-                            <span className="text-xs text-gray-500 ml-4">
-                              ⭐ {runner.stats.averageRating.toFixed(1)} (
-                              {runner.stats.totalRatings})
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Fecha y Hora</Label>
-                  <Input
-                    type="datetime-local"
-                    value={assignData.scheduledAt}
-                    onChange={e => setAssignData({ ...assignData, scheduledAt: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Duración (minutos)</Label>
-                  <Input
-                    type="number"
-                    value={assignData.duration}
-                    onChange={e =>
-                      setAssignData({ ...assignData, duration: parseInt(e.target.value) || 60 })
-                    }
-                    min={15}
-                    max={240}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Ganancia Estimada (CLP)</Label>
-                <Input
-                  type="number"
-                  value={assignData.estimatedEarnings}
-                  onChange={e =>
-                    setAssignData({
-                      ...assignData,
-                      estimatedEarnings: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  min={0}
-                />
-              </div>
-
-              <div>
-                <Label>Notas adicionales</Label>
-                <Textarea
-                  value={assignData.notes}
-                  onChange={e => setAssignData({ ...assignData, notes: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAssignRunnerDialog(false)}
-                  disabled={assigningRunner}
-                >
-                  Cancelar
-                </Button>
-                <Button onClick={handleAssignRunner} disabled={assigningRunner || !selectedRunner}>
-                  {assigningRunner ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Asignando...
-                    </>
-                  ) : (
-                    'Asignar Runner'
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog para auto-asignación */}
+        {/* Dialog para gestionar visita */}
         <Dialog open={showSelfAssignDialog} onOpenChange={setShowSelfAssignDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Hacer Visita Yo Mismo</DialogTitle>
+              <DialogTitle>Gestionar Visita</DialogTitle>
               <DialogDescription>
-                Programar la visita para realizarla tú mismo a la propiedad{' '}
-                {selectedVisit?.property.title}
+                Programa la visita para la propiedad {selectedVisit?.property.title}. Puedes
+                realizarla tú mismo o enviar a alguien de tu equipo.
               </DialogDescription>
             </DialogHeader>
 
@@ -820,8 +579,13 @@ export default function OwnerVisitsPage() {
                 <Textarea
                   value={selfAssignData.notes}
                   onChange={e => setSelfAssignData({ ...selfAssignData, notes: e.target.value })}
-                  rows={3}
+                  rows={4}
+                  placeholder="Indica si realizarás la visita tú mismo o si enviarás a alguien de tu equipo. Incluye cualquier información relevante..."
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Puedes especificar si realizarás la visita tú mismo o si enviarás a alguien de tu
+                  equipo.
+                </p>
               </div>
 
               <div className="flex gap-2 justify-end">

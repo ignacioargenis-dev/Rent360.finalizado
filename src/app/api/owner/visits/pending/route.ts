@@ -46,11 +46,42 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Si es corredor, solo propiedades que gestiona
+    // Si es corredor, propiedades que gestiona directamente o a través de BrokerPropertyManagement
     if (user.role === 'BROKER') {
-      whereClause.property = {
-        brokerId: user.id,
-      };
+      // Obtener IDs de propiedades gestionadas a través de BrokerPropertyManagement
+      const managedProperties = await db.brokerPropertyManagement.findMany({
+        where: {
+          brokerId: user.id,
+          status: 'ACTIVE',
+        },
+        select: {
+          propertyId: true,
+        },
+      });
+
+      const managedPropertyIds = managedProperties.map(mp => mp.propertyId);
+
+      // Buscar visitas en propiedades donde:
+      // 1. brokerId directo es el usuario, O
+      // 2. propertyId está en las propiedades gestionadas
+      whereClause.OR = [
+        {
+          property: {
+            brokerId: user.id,
+          },
+        },
+        ...(managedPropertyIds.length > 0
+          ? [
+              {
+                propertyId: {
+                  in: managedPropertyIds,
+                },
+              },
+            ]
+          : []),
+      ];
+      // Remover la condición property del whereClause principal ya que usamos OR
+      delete whereClause.property;
     }
 
     // Obtener visitas pendientes con información completa
