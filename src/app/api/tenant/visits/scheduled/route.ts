@@ -18,12 +18,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener visitas programadas del inquilino (SCHEDULED o CONFIRMED)
+    // Obtener solo visitas activas del inquilino:
+    // - PENDING: Esperando respuesta del propietario/corredor (mostrar todas)
+    // - SCHEDULED/CONFIRMED: Aceptadas pero que aún no han pasado su fecha/hora
+    // Excluir: COMPLETED, CANCELLED, REJECTED, NO_SHOW
+    const now = new Date();
     const scheduledVisits = await db.visit.findMany({
       where: {
         tenantId: user.id,
-        status: { in: ['SCHEDULED', 'CONFIRMED', 'PENDING'] },
-        scheduledAt: { gte: new Date() }, // Solo visitas futuras
+        // Para visitas PENDING, no importa la fecha (aún no está programada)
+        // Para visitas SCHEDULED/CONFIRMED, solo mostrar si la fecha/hora aún no ha pasado
+        OR: [
+          { status: 'PENDING' }, // Incluir todas las pendientes sin importar fecha
+          {
+            status: { in: ['SCHEDULED', 'CONFIRMED'] },
+            scheduledAt: { gte: now }, // Solo las que aún no han pasado
+          },
+        ],
       },
       include: {
         property: {
