@@ -102,6 +102,64 @@ export async function PATCH(
           },
         });
 
+        // Crear relación BrokerClient si no existe (para propietarios e inquilinos)
+        if (user.role === 'OWNER' || user.role === 'TENANT') {
+          const existingClient = await db.brokerClient.findUnique({
+            where: {
+              brokerId_userId: {
+                brokerId: response.brokerId,
+                userId: user.id,
+              },
+            },
+          });
+
+          if (!existingClient) {
+            // Determinar el tipo de cliente según el rol
+            const clientType = user.role === 'OWNER' ? 'OWNER' : 'TENANT';
+
+            // Obtener la tasa de comisión propuesta de la respuesta
+            const proposedRate = response.proposedRate || 5.0;
+
+            // Crear relación BrokerClient
+            await db.brokerClient.create({
+              data: {
+                brokerId: response.brokerId,
+                userId: user.id,
+                clientType: clientType,
+                status: 'ACTIVE',
+                relationshipType: 'standard',
+                servicesOffered: response.proposedServices
+                  ? JSON.stringify(response.proposedServices)
+                  : JSON.stringify(['PROPERTY_SEARCH', 'CONSULTATION']),
+                commissionRate: proposedRate,
+                exclusiveAgreement: false,
+                propertyManagementType: user.role === 'OWNER' ? 'none' : null,
+                startDate: new Date(),
+                lastInteraction: new Date(),
+                notes: `Relación establecida desde aceptación de respuesta en marketplace. Solicitud: ${serviceRequest.title}`,
+              },
+            });
+
+            logger.info('✅ BrokerClient relationship created', {
+              brokerId: response.brokerId,
+              userId: user.id,
+              clientType: clientType,
+              requestId: requestId,
+            });
+          } else {
+            // Si ya existe, actualizar estado a ACTIVE si estaba inactivo
+            if (existingClient.status !== 'ACTIVE') {
+              await db.brokerClient.update({
+                where: { id: existingClient.id },
+                data: {
+                  status: 'ACTIVE',
+                  lastInteraction: new Date(),
+                },
+              });
+            }
+          }
+        }
+
         // Notificar al corredor
         await NotificationService.notifyResponseAccepted({
           brokerId: response.brokerId,

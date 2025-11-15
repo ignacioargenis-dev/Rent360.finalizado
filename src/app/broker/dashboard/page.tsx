@@ -157,18 +157,35 @@ export default function BrokerDashboardPage() {
           const data = result.data;
 
           // Transformar datos para el formato esperado por el componente
-          const transformedProperties: Property[] = data.recentProperties.map((prop: any) => ({
-            id: prop.id,
-            title: prop.title,
-            address: prop.address,
-            price: prop.price,
-            status: prop.status.toLowerCase(),
-            type: 'propiedad', // Default type
-            owner: 'Propietario',
-            createdAt: prop.createdAt,
-            views: prop.inquiriesCount || 0,
-            inquiries: prop.inquiriesCount || 0,
-          }));
+          const transformedProperties: Property[] = data.recentProperties.map((prop: any) => {
+            // Normalizar el estado
+            let normalizedStatus = prop.status?.toLowerCase() || 'available';
+            if (normalizedStatus === 'available' || normalizedStatus === 'AVAILABLE') {
+              normalizedStatus = 'available';
+            } else if (normalizedStatus === 'rented' || normalizedStatus === 'OCCUPIED') {
+              normalizedStatus = 'rented';
+            } else if (normalizedStatus === 'pending' || normalizedStatus === 'PENDING') {
+              normalizedStatus = 'pending';
+            } else {
+              normalizedStatus = 'available'; // Default
+            }
+
+            // Obtener nombre del propietario
+            const ownerName = prop.owner?.name || prop.ownerName || 'No asignado';
+
+            return {
+              id: prop.id,
+              title: prop.title,
+              address: prop.address,
+              price: prop.price,
+              status: normalizedStatus,
+              type: prop.type || 'propiedad',
+              owner: ownerName,
+              createdAt: prop.createdAt,
+              views: prop.views || prop.viewCount || 0,
+              inquiries: prop.inquiries || prop.inquiriesCount || 0,
+            };
+          });
 
           const transformedClients: Client[] = data.recentContracts.map((contract: any) => ({
             id: contract.id,
@@ -233,19 +250,14 @@ export default function BrokerDashboardPage() {
           logger.info('Setting dashboard stats', { stats: data.stats });
           setStats(newStats);
 
-          // Cargar métricas de rendimiento reales
-          try {
-            const performanceResponse = await fetch('/api/broker/performance-metrics');
-            if (performanceResponse.ok) {
-              const performanceData = await performanceResponse.json();
-              setPerformanceMetrics({
-                averageResponseTime: performanceData.averageResponseTime || '0 horas',
-                clientSatisfaction: performanceData.clientSatisfaction || '0/5 ⭐',
-                clientRetention: performanceData.clientRetention || '0%',
-              });
-            }
-          } catch (error) {
-            logger.warn('Could not load performance metrics, using defaults');
+          // Usar métricas de rendimiento reales del dashboard
+          if (data.performanceMetrics) {
+            const pm = data.performanceMetrics;
+            setPerformanceMetrics({
+              averageResponseTime: `${pm.responseTime || 0} horas`,
+              clientSatisfaction: `${pm.satisfactionRate || 0}/5 ⭐`,
+              clientRetention: `${pm.repeatClients || 0}%`,
+            });
           }
         } else {
           // Si la API falla, mostrar datos vacíos en lugar de mock
@@ -539,7 +551,7 @@ export default function BrokerDashboardPage() {
                 <CardDescription>Herramientas para gestionar tu negocio</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   <QuickActionButton
                     icon={Plus}
                     label="Nueva Propiedad"
@@ -691,10 +703,22 @@ export default function BrokerDashboardPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/broker/properties/${property.id}`)}
+                              title="Ver detalles de la propiedad"
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                router.push(`/broker/properties/${property.id}?tab=documents`)
+                              }
+                              title="Ver documentos de la propiedad"
+                            >
                               <FileText className="w-4 h-4" />
                             </Button>
                           </div>

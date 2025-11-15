@@ -169,6 +169,18 @@ export default function TenantBrokerServicesPage() {
     loadInvitations();
   }, []);
 
+  // Recarga silenciosa cada 30 segundos para actualizar respuestas
+  useEffect(() => {
+    if (activeTab === 'my-requests') {
+      const interval = setInterval(() => {
+        loadMyRequests();
+      }, 30000); // 30 segundos
+
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [activeTab]);
+
   // Crear nueva solicitud
   const createRequest = async () => {
     if (newRequest.title.length < 10) {

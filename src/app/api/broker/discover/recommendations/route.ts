@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
         },
         properties: {
           where: { status: 'AVAILABLE' },
-          take: 5,
+          take: 10,
           select: {
             id: true,
             title: true,
@@ -181,6 +181,16 @@ export async function POST(request: NextRequest) {
             commune: true,
             price: true,
             status: true,
+            managedByBroker: {
+              where: {
+                status: 'ACTIVE',
+              },
+              select: {
+                id: true,
+                brokerId: true,
+                status: true,
+              },
+            },
           },
         },
       },
@@ -269,8 +279,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Bonus por propiedades sin gestión activa
+      // Verificar que las propiedades no tengan gestión activa con ningún broker
       const unmanaged = owner.properties.filter(
-        p => p.status === 'AVAILABLE' || p.status === 'PENDING'
+        p =>
+          (p.status === 'AVAILABLE' || p.status === 'PENDING') &&
+          (!p.managedByBroker || p.managedByBroker.length === 0)
       );
       if (unmanaged.length > 0) {
         matchScore += 15;

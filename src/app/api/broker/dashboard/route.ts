@@ -371,7 +371,12 @@ export async function GET(request: NextRequest) {
       price: record.property.price,
       type: record.property.type,
       owner: { name: record.property.owner?.name || 'Gestionada' },
+      ownerName: record.property.owner?.name || 'Gestionada', // Para compatibilidad
       createdAt: record.startDate,
+      views: record.property.views || 0,
+      inquiries: record.property.inquiries || 0,
+      viewCount: record.property.views || 0,
+      inquiriesCount: record.property.inquiries || 0,
       _count: record.property._count,
     }));
 
@@ -490,18 +495,61 @@ export async function GET(request: NextRequest) {
     const dashboardData = {
       stats,
       performanceMetrics,
-      recentProperties: recentProperties.map(property => ({
-        id: property.id,
-        title: property.title,
-        address: property.address,
-        status: property.status?.toLowerCase() || 'unknown',
-        price: property.price,
-        type: property.type,
-        owner: property.owner?.name || 'Sin propietario',
-        createdAt: property.createdAt?.toISOString() || new Date().toISOString(),
-        inquiriesCount: Math.floor(Math.random() * 10) + 1, // Mock data por ahora
-        contractsCount: property._count?.contracts || 0,
-      })),
+      recentProperties: recentProperties.map((property: any) => {
+        // Determinar si es propiedad propia o gestionada
+        const isOwnProperty =
+          'owner' in property &&
+          property.owner &&
+          typeof property.owner === 'object' &&
+          'name' in property.owner;
+        const isManagedProperty =
+          'ownerName' in property || ('views' in property && property.views !== undefined);
+
+        // Obtener datos según el tipo - usar type assertion para acceder a campos opcionales
+        const propertyAny = property as any;
+        const views = propertyAny.views || propertyAny.viewCount || 0;
+        const inquiries = propertyAny.inquiries || propertyAny.inquiriesCount || 0;
+        const ownerName = isManagedProperty
+          ? propertyAny.ownerName ||
+            (property.owner && typeof property.owner === 'object' && 'name' in property.owner
+              ? property.owner.name
+              : 'Sin propietario')
+          : isOwnProperty &&
+              property.owner &&
+              typeof property.owner === 'object' &&
+              'name' in property.owner
+            ? property.owner.name
+            : 'Sin propietario';
+
+        // Normalizar estado
+        let normalizedStatus = property.status?.toLowerCase() || 'available';
+        if (normalizedStatus === 'available' || normalizedStatus === 'AVAILABLE') {
+          normalizedStatus = 'available';
+        } else if (normalizedStatus === 'rented' || normalizedStatus === 'OCCUPIED') {
+          normalizedStatus = 'rented';
+        } else if (normalizedStatus === 'pending' || normalizedStatus === 'PENDING') {
+          normalizedStatus = 'pending';
+        } else {
+          normalizedStatus = 'available';
+        }
+
+        return {
+          id: property.id,
+          title: property.title,
+          address: property.address,
+          status: normalizedStatus,
+          price: property.price,
+          type: property.type,
+          owner: { name: ownerName },
+          ownerName: ownerName,
+          createdAt: property.createdAt?.toISOString() || new Date().toISOString(),
+          views: views,
+          inquiries: inquiries,
+          viewCount: views,
+          inquiriesCount: inquiries,
+          contractsCount: property._count?.contracts || 0,
+        };
+      }),
       recentContracts: recentContracts.map(contract => ({
         id: contract.id,
         propertyTitle: contract.property.title,

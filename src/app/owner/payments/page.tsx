@@ -30,7 +30,6 @@ import {
 } from 'lucide-react';
 import { Payment, Property, Contract } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import {
   Dialog,
@@ -696,16 +695,12 @@ Rent360 - Sistema de Gestión Inmobiliaria
   }
 
   return (
-    <UnifiedDashboardLayout>
-      <DashboardHeader
-        user={user}
-        title="Gestión de Pagos"
-        subtitle="Monitorea y gestiona todos los pagos de arriendo"
-      />
-
+    <UnifiedDashboardLayout
+      title="Gestión de Pagos"
+      subtitle="Monitorea y gestiona todos los pagos de arriendo"
+    >
       <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div></div>
+        <div className="flex items-center justify-end mb-6">
           <Button
             variant="outline"
             onClick={() => setShowConfigModal(true)}
@@ -1645,13 +1640,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="gracePeriod">Período de Gracia (días)</Label>
-                    <Input
-                      id="gracePeriod"
-                      type="number"
-                      defaultValue="3"
-                      min="0"
-                      max="30"
-                    />
+                    <Input id="gracePeriod" type="number" defaultValue="3" min="0" max="30" />
                   </div>
                   <div>
                     <Label htmlFor="lateFee">Multa por Atraso (%)</Label>
@@ -1706,33 +1695,15 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="firstReminder">Primer Recordatorio (días antes)</Label>
-                    <Input
-                      id="firstReminder"
-                      type="number"
-                      defaultValue="7"
-                      min="1"
-                      max="30"
-                    />
+                    <Input id="firstReminder" type="number" defaultValue="7" min="1" max="30" />
                   </div>
                   <div>
                     <Label htmlFor="secondReminder">Segundo Recordatorio (días antes)</Label>
-                    <Input
-                      id="secondReminder"
-                      type="number"
-                      defaultValue="3"
-                      min="1"
-                      max="30"
-                    />
+                    <Input id="secondReminder" type="number" defaultValue="3" min="1" max="30" />
                   </div>
                   <div>
                     <Label htmlFor="urgentReminder">Recordatorio Urgente (días antes)</Label>
-                    <Input
-                      id="urgentReminder"
-                      type="number"
-                      defaultValue="1"
-                      min="0"
-                      max="7"
-                    />
+                    <Input id="urgentReminder" type="number" defaultValue="1" min="0" max="7" />
                   </div>
                 </div>
               </CardContent>
@@ -1743,11 +1714,13 @@ Rent360 - Sistema de Gestión Inmobiliaria
             <Button variant="outline" onClick={() => setShowConfigModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={() => {
-              setSuccessMessage('Configuración de pagos guardada correctamente');
-              setShowConfigModal(false);
-              setTimeout(() => setSuccessMessage(''), 3000);
-            }}>
+            <Button
+              onClick={() => {
+                setSuccessMessage('Configuración de pagos guardada correctamente');
+                setShowConfigModal(false);
+                setTimeout(() => setSuccessMessage(''), 3000);
+              }}
+            >
               Guardar Configuración
             </Button>
           </DialogFooter>

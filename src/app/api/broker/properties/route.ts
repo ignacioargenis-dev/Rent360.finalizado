@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'all';
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
-    
+
     logger.info('📋 [PROPERTIES] Parámetros de consulta', { status, limit, offset });
 
     // Construir filtros para propiedades gestionadas
@@ -132,6 +132,8 @@ export async function GET(request: NextRequest) {
         description: property.description,
         features,
         images,
+        views: property.views || 0,
+        inquiries: property.inquiries || 0,
         managementType: record.managementType,
         commissionRate: record.commissionRate,
         exclusivity: record.exclusivity,
@@ -217,9 +219,7 @@ export async function GET(request: NextRequest) {
     let filteredOwnProperties = allOwnProperties;
     if (status !== 'all') {
       const statusFilter = status.toUpperCase();
-      filteredOwnProperties = allOwnProperties.filter(
-        property => property.status === statusFilter
-      );
+      filteredOwnProperties = allOwnProperties.filter(property => property.status === statusFilter);
     }
 
     // Transformar propiedades gestionadas y propias a un formato común para ordenar
@@ -238,8 +238,9 @@ export async function GET(request: NextRequest) {
     }));
 
     // Combinar, ordenar por fecha y paginar
-    const allCombinedForSort = [...transformedManagedForSort, ...transformedOwnForSort]
-      .sort((a, b) => b.sortDate.getTime() - a.sortDate.getTime());
+    const allCombinedForSort = [...transformedManagedForSort, ...transformedOwnForSort].sort(
+      (a, b) => b.sortDate.getTime() - a.sortDate.getTime()
+    );
 
     // Aplicar paginación
     const paginatedCombined = allCombinedForSort.slice(offset, offset + limit);
@@ -291,6 +292,8 @@ export async function GET(request: NextRequest) {
         description: property.description,
         features,
         images,
+        views: property.views || 0,
+        inquiries: property.inquiries || 0,
         managementType: 'owner', // Propiedad propia
         commissionRate: 0,
         exclusivity: false,
@@ -351,6 +354,8 @@ export async function GET(request: NextRequest) {
         description: property.description,
         features,
         images,
+        views: property.views || 0,
+        inquiries: property.inquiries || 0,
         managementType: record.managementType,
         commissionRate: record.commissionRate,
         exclusivity: record.exclusivity,
@@ -411,7 +416,7 @@ export async function GET(request: NextRequest) {
       offset,
       limit,
     });
-    
+
     // ✅ CRÍTICO: Log adicional para debugging en producción
     console.log('🔍 [PROPERTIES] Resumen:', {
       totalRetornado: allProperties.length,
@@ -433,13 +438,13 @@ export async function GET(request: NextRequest) {
     // ✅ CRÍTICO: Log detallado de errores
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     logger.error('❌ [PROPERTIES] Error obteniendo propiedades de broker:', {
       error: errorMessage,
       stack: errorStack,
       errorType: error instanceof Error ? error.constructor.name : typeof error,
     });
-    
+
     // ✅ CRÍTICO: También usar console.error para asegurar que se vea en logs
     console.error('❌ [PROPERTIES] Error crítico:', errorMessage, errorStack);
 
