@@ -133,9 +133,16 @@ export default function BrokerClientsPage() {
           );
           const totalPortfolioValue = transformedClients.reduce((sum, c) => sum + c.totalValue, 0);
           const averageClientValue = activeClients > 0 ? totalPortfolioValue / activeClients : 0;
-          const newClientsThisMonth = transformedClients.filter(
-            c => new Date(c.createdAt).getMonth() === new Date().getMonth()
-          ).length;
+          // Calcular nuevos clientes este mes (comparar mes Y año)
+          const now = new Date();
+          const currentMonth = now.getMonth();
+          const currentYear = now.getFullYear();
+          const newClientsThisMonth = transformedClients.filter(c => {
+            const clientDate = new Date(c.createdAt);
+            return (
+              clientDate.getMonth() === currentMonth && clientDate.getFullYear() === currentYear
+            );
+          }).length;
 
           const clientStats: ClientStats = {
             totalClients: transformedClients.length,
@@ -267,13 +274,18 @@ export default function BrokerClientsPage() {
   };
 
   const handleContactClient = (clientId: string) => {
-    // Open contact modal or redirect to messaging
+    // Abrir chat con el cliente usando el sistema de mensajería
     const client = clients.find(c => c.id === clientId);
     if (client) {
-      alert(
-        `Iniciando contacto con ${client.name}\nEmail: ${client.email}\nTeléfono: ${client.phone}`
-      );
-      window.open(`/broker/messages/new?to=${client.email}`, '_blank');
+      // Usar sessionStorage para pasar datos del destinatario al sistema de mensajería
+      const recipientData = {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        type: client.type === 'owner' ? 'owner' : 'tenant',
+      };
+      sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+      router.push('/broker/messages?new=true');
     }
   };
 

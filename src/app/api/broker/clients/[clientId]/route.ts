@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     }
 
     const clientId = params.clientId;
-    
+
     logger.info('✅ [CLIENT_DETAIL] Usuario autenticado como BROKER', {
       userId: user.id,
       clientId,
@@ -195,7 +195,10 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         },
       });
 
-      if (clientUser && (clientUser.contractsAsOwner.length > 0 || clientUser.contractsAsTenant.length > 0)) {
+      if (
+        clientUser &&
+        (clientUser.contractsAsOwner.length > 0 || clientUser.contractsAsTenant.length > 0)
+      ) {
         // Crear un objeto similar a brokerClient para mantener compatibilidad
         brokerClient = {
           id: `temp_${clientUser.id}`,
@@ -302,17 +305,19 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     // Determinar el tipo de cliente - mantener mayúsculas para consistencia con el sistema
     // OWNER, TENANT, BOTH (en mayúsculas como el schema de Prisma)
     const clientTypeValue = brokerClient.clientType; // OWNER, TENANT, o BOTH
-    
+
     // Obtener propiedades del cliente
     const clientPropertiesData = brokerClient.user.properties || [];
-    
+
     // Calcular datos financieros
     const totalSpent = contracts.reduce((sum, c) => sum + (c.monthlyRent || 0), 0);
-    const satisfactionScore = brokerClient.satisfactionRating ? Math.round(brokerClient.satisfactionRating * 20) : 95;
-    
+    const satisfactionScore = brokerClient.satisfactionRating
+      ? Math.round(brokerClient.satisfactionRating * 20)
+      : 95;
+
     // Obtener fecha de último contacto
     const lastContactDate = brokerClient.lastInteraction || brokerClient.startDate;
-    
+
     // Parsear servicios ofrecidos si existe
     let servicesOfferedArray: string[] = [];
     if (brokerClient.servicesOffered) {
@@ -322,7 +327,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         servicesOfferedArray = [];
       }
     }
-    
+
     // Formatear respuesta en el formato que espera el frontend
     // Nota: El frontend espera minúsculas en getTypeBadge, pero mantenemos mayúsculas aquí
     // El frontend deberá hacer toLowerCase() al usarlo en getTypeBadge si es necesario
@@ -338,14 +343,17 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       registrationDate: brokerClient.startDate.toISOString(),
       lastContact: lastContactDate.toISOString(),
       preferredContactMethod: 'email' as const, // Default, puede mejorarse
-      
+
       // Budget y preferencias (para inquilinos)
-      budget: clientTypeValue === 'TENANT' || clientTypeValue === 'BOTH' ? {
-        min: 0,
-        max: 0,
-        currency: 'CLP',
-      } : undefined,
-      
+      budget:
+        clientTypeValue === 'TENANT' || clientTypeValue === 'BOTH'
+          ? {
+              min: 0,
+              max: 0,
+              currency: 'CLP',
+            }
+          : undefined,
+
       preferences: {
         propertyType: [],
         bedrooms: 0,
@@ -353,13 +361,64 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         location: [],
         features: [],
       },
-      
-      // Documentos (vacío por ahora, se puede implementar después)
-      documents: [],
-      
+
+      // Documentos del cliente/usuario
+      documents: await db.document
+        .findMany({
+          where: {
+            OR: [
+              { uploadedById: brokerClient.userId },
+              {
+                property: {
+                  OR: [
+                    { ownerId: brokerClient.userId },
+                    {
+                      contracts: {
+                        some: {
+                          OR: [{ ownerId: brokerClient.userId }, { tenantId: brokerClient.userId }],
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            fileName: true,
+            fileSize: true,
+            mimeType: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 50,
+        })
+        .then(docs =>
+          docs.map(doc => ({
+            id: doc.id,
+            name: doc.name || doc.fileName || 'Documento sin nombre',
+            type: doc.mimeType || 'application/pdf',
+            uploadDate: doc.createdAt.toISOString(),
+            size: `${(doc.fileSize / 1024 / 1024).toFixed(2)} MB`,
+            category:
+              doc.type === 'IDENTIFICATION'
+                ? ('identification' as const)
+                : doc.type === 'FINANCIAL' || doc.type === 'INVOICE' || doc.type === 'RECEIPT'
+                  ? ('financial' as const)
+                  : doc.type === 'CONTRACT'
+                    ? ('contract' as const)
+                    : ('other' as const),
+          }))
+        ),
+
       // Interacciones (vacío por ahora, se puede implementar después)
       interactions: [],
-      
+
       // Propiedades del cliente
       properties: clientPropertiesData.map(prop => ({
         id: prop.id,
@@ -368,7 +427,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         status: 'interested' as const,
         notes: '',
       })),
-      
+
       // Contratos
       contracts: contracts.map(contract => ({
         id: contract.id,
@@ -377,10 +436,10 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         startDate: contract.startDate.toISOString(),
         endDate: contract.endDate?.toISOString() || '',
         monthlyRent: contract.monthlyRent || 0,
-        status: contract.status === 'ACTIVE' ? 'active' as const : 'completed' as const,
+        status: contract.status === 'ACTIVE' ? ('active' as const) : ('completed' as const),
         commission: Math.round((contract.monthlyRent || 0) * (brokerClient.commissionRate / 100)),
       })),
-      
+
       // Datos financieros
       financialData: {
         totalSpent,
@@ -388,7 +447,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         contractCount: totalContracts,
         satisfactionScore,
       },
-      
+
       // Información adicional (no usada por el frontend pero útil)
       stats: {
         totalPropertiesManaged,
@@ -396,7 +455,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         activeContracts,
         estimatedMonthlyIncome,
       },
-      
+
       // Propiedades gestionadas
       managedProperties: brokerClient.managedProperties.map(mp => ({
         id: mp.property.id,
@@ -407,7 +466,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         status: mp.property.status,
         images: mp.property.images ? JSON.parse(mp.property.images) : [],
       })),
-      
+
       // Información del prospect si existe
       prospectInfo: brokerClient.prospect
         ? {
@@ -436,13 +495,13 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     // ✅ CRÍTICO: Log detallado de errores
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     logger.error('❌ [CLIENT_DETAIL] Error obteniendo detalles del cliente:', {
       error: errorMessage,
       stack: errorStack,
       errorType: error instanceof Error ? error.constructor.name : typeof error,
     });
-    
+
     // ✅ CRÍTICO: También usar console.error para asegurar que se vea en logs
     console.error('❌ [CLIENT_DETAIL] Error crítico:', errorMessage, errorStack);
 

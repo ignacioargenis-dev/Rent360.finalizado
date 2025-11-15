@@ -440,12 +440,73 @@ export async function GET(request: NextRequest) {
     const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
     const averageRating = ratingSummary?.averageRating || 0;
 
-    // Métricas de rendimiento calculadas
+    // Calcular tiempo de respuesta promedio desde mensajes reales
+    const recentMessages = await db.message.findMany({
+      where: {
+        OR: [{ senderId: user.id }, { receiverId: user.id }],
+        createdAt: {
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Últimos 30 días
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        readAt: true,
+        senderId: true,
+        receiverId: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 100,
+    });
+
+    // Calcular tiempo promedio de respuesta (solo para mensajes recibidos y respondidos)
+    let averageResponseTimeHours = 2.3; // Default
+    const responseTimes: number[] = [];
+    for (let i = 0; i < recentMessages.length - 1; i++) {
+      const msg = recentMessages[i];
+      if (msg && msg.receiverId === user.id && msg.readAt) {
+        // Buscar siguiente mensaje del broker como respuesta
+        const nextMsg = recentMessages.find(
+          m =>
+            m &&
+            m.senderId === user.id &&
+            m.createdAt > msg.readAt! &&
+            m.receiverId === msg.senderId
+        );
+        if (nextMsg) {
+          const responseTimeMs = nextMsg.createdAt.getTime() - msg.readAt.getTime();
+          const responseTimeHours = responseTimeMs / (1000 * 60 * 60);
+          responseTimes.push(responseTimeHours);
+        }
+      }
+    }
+    if (responseTimes.length > 0) {
+      averageResponseTimeHours = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+    }
+
+    // Calcular tasa de conversión real (clientes activos / total clientes)
+    const totalBrokerClients = await db.brokerClient.count({
+      where: {
+        brokerId: user.id,
+        status: 'ACTIVE',
+      },
+    });
+    const totalProspects = await db.brokerProspect.count({
+      where: {
+        brokerId: user.id,
+      },
+    });
+    const conversionRateReal =
+      totalProspects > 0 ? (totalBrokerClients / (totalBrokerClients + totalProspects)) * 100 : 0;
+
+    // Métricas de rendimiento calculadas con datos reales
     const performanceMetrics = {
-      responseTime: 2.3, // horas promedio (podría calcularse desde mensajes)
+      responseTime: Math.round(averageResponseTimeHours * 10) / 10, // Redondear a 1 decimal
       satisfactionRate: averageRating, // sobre 5 (desde calificaciones reales)
       repeatClients: Math.round((activeContracts / Math.max(totalContracts, 1)) * 100), // porcentaje
-      marketShare: 8.5, // porcentaje (mock por ahora)
+      marketShare: Math.round(conversionRateReal * 10) / 10, // Usar tasa de conversión como proxy de market share
     };
 
     // Calcular valor total del portafolio (propias + gestionadas)
