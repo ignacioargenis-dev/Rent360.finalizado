@@ -543,8 +543,6 @@ export default function OwnerPropertiesPage() {
         {/* Header with actions */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mis Propiedades</h1>
-            <p className="text-gray-600">Gestiona y monitorea todas tus propiedades</p>
             <p className="text-sm text-gray-500 mt-1">
               💡 Las nuevas propiedades aparecen automáticamente cada 30 segundos
             </p>

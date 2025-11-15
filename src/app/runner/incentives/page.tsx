@@ -332,12 +332,7 @@ export default function RunnerIncentivesPage() {
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mis Recompensas</h1>
-            <p className="text-gray-600">
-              Bonificaciones monetarias y reconocimientos por tu excelente rendimiento
-            </p>
-          </div>
+          <div></div>
           <div className="flex gap-2">
             <Button
               variant="outline"

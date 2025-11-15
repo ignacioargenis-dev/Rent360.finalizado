@@ -91,7 +91,7 @@ export default function BrokerPropertiesPage() {
   const loadPropertiesData = async (statusFilter = filterStatus) => {
     try {
       console.log('🔍 [PROPERTIES] Iniciando carga de propiedades...', { statusFilter });
-      
+
       // ✅ CORREGIDO: Usar la API específica de broker que incluye propiedades gestionadas
       const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
       const url = `${baseUrl}/api/broker/properties?status=${statusFilter}&limit=50`;
@@ -107,21 +107,21 @@ export default function BrokerPropertiesPage() {
       console.log('📡 [PROPERTIES] Respuesta recibida:', {
         ok: response.ok,
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
       });
 
       if (response.ok) {
         const data = await response.json();
         const propertiesData = data.data || [];
-        
+
         console.log('📊 [PROPERTIES] Propiedades recibidas:', {
           count: propertiesData.length,
           propiedades: propertiesData.map((p: any) => ({
             id: p.id,
             title: p.title,
             ownerName: p.ownerName,
-            managementType: p.managementType
-          }))
+            managementType: p.managementType,
+          })),
         });
 
         // Transformar datos de la API al formato esperado por el componente
@@ -156,7 +156,10 @@ export default function BrokerPropertiesPage() {
         const rentedProperties = transformedProperties.filter(
           p => p.status?.toLowerCase() === 'rented'
         ).length;
-        const totalPortfolioValue = transformedProperties.reduce((sum, p) => sum + (p.price || 0), 0);
+        const totalPortfolioValue = transformedProperties.reduce(
+          (sum, p) => sum + (p.price || 0),
+          0
+        );
         const totalViews = transformedProperties.reduce((sum, p) => sum + p.views, 0);
         const totalInquiries = transformedProperties.reduce((sum, p) => sum + p.inquiries, 0);
         const averageRent = rentedProperties > 0 ? totalPortfolioValue / rentedProperties : 0;
@@ -183,7 +186,7 @@ export default function BrokerPropertiesPage() {
         console.error('❌ [PROPERTIES] Error al cargar propiedades:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorText
+          error: errorText,
         });
         logger.error('Error loading properties from API:', {
           status: response.status,
@@ -356,10 +359,7 @@ export default function BrokerPropertiesPage() {
       <div className="container mx-auto px-4 py-6">
         {/* Header with actions */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Propiedades Gestionadas</h1>
-            <p className="text-gray-600">Administra tu portafolio inmobiliario</p>
-          </div>
+          <div></div>
           <div className="flex gap-2">
             <Button onClick={handleAddProperty}>
               <Plus className="w-4 h-4 mr-2" />
@@ -555,7 +555,11 @@ export default function BrokerPropertiesPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleEditProperty(property.id, property)}
-                      title={property.ownerName === 'Propia' ? 'Editar propiedad' : 'Ver detalles (propiedad gestionada)'}
+                      title={
+                        property.ownerName === 'Propia'
+                          ? 'Editar propiedad'
+                          : 'Ver detalles (propiedad gestionada)'
+                      }
                     >
                       <Edit className="w-4 h-4" />
                     </Button>

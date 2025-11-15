@@ -371,10 +371,10 @@ export default function BrokerDashboardPage() {
       <div className="container mx-auto px-4 py-6">
         {/* Welcome Section */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            ¡Bienvenido de vuelta, {user?.name?.split(' ')[0] || 'Corredor'}!
-          </h1>
-          <p className="text-gray-600">Aquí tienes un resumen de tu actividad reciente</p>
+          <p className="text-gray-600">
+            ¡Bienvenido de vuelta, {user?.name?.split(' ')[0] || 'Corredor'}! Aquí tienes un resumen
+            de tu actividad reciente
+          </p>
         </div>
 
         {/* Stats Cards */}

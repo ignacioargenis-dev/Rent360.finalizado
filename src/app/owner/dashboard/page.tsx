@@ -488,10 +488,6 @@ export default function OwnerDashboard() {
     >
       <div className="bg-gray-50">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Panel de Control de Propietario</h1>
-            <p className="text-gray-600">Gestiona tus propiedades e ingresos</p>
-          </div>
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
