@@ -433,7 +433,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       });
     }
 
-    return NextResponse.json({
+    // Incluir información de diagnóstico en la respuesta si no hay proveedores
+    const response: any = {
       maintenance: {
         id: maintenance.id,
         title: maintenance.title,
@@ -444,7 +445,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         },
       },
       availableProviders: providersWithDistance,
-    });
+    };
+
+    // Agregar información de diagnóstico si no hay proveedores
+    if (availableProviders.length === 0) {
+      response.diagnostic = {
+        totalProvidersInDB: totalProvidersCount,
+        verifiedProvidersInDB: verifiedProvidersCount,
+        activeVerifiedProvidersInDB: activeVerifiedCount,
+        message:
+          verifiedProvidersCount === 0
+            ? 'No hay proveedores verificados en el sistema. Un administrador debe aprobar los proveedores pendientes.'
+            : activeVerifiedCount === 0
+              ? 'Hay proveedores verificados pero ninguno está activo. Verifica el estado de los proveedores.'
+              : 'No se encontraron proveedores que cumplan los criterios de búsqueda.',
+        suggestion:
+          totalProvidersCount > 0 && verifiedProvidersCount === 0
+            ? 'Contacta a un administrador para aprobar los proveedores pendientes de verificación.'
+            : 'Verifica los filtros aplicados o contacta a soporte.',
+      };
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     logger.error('Error obteniendo prestadores disponibles:', {
       maintenanceId: params.id,

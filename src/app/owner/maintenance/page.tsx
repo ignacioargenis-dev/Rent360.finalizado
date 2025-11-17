@@ -123,6 +123,7 @@ export default function MantenimientoPage() {
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [availableProviders, setAvailableProviders] = useState<any[]>([]);
+  const [providerDiagnostic, setProviderDiagnostic] = useState<any>(null);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [providerFilters, setProviderFilters] = useState({
     specialty: 'all',
@@ -481,10 +482,17 @@ export default function MantenimientoPage() {
 
       const data = await response.json();
       setAvailableProviders(data.availableProviders || []);
+      // Guardar información de diagnóstico si está disponible
+      if (data.diagnostic) {
+        setProviderDiagnostic(data.diagnostic);
+      } else {
+        setProviderDiagnostic(null);
+      }
     } catch (error) {
       logger.error('Error cargando proveedores:', { error });
       // Fallback to empty array if API fails
       setAvailableProviders([]);
+      setProviderDiagnostic(null);
     }
   };
 
@@ -1199,7 +1207,42 @@ export default function MantenimientoPage() {
                 <h3 className="text-lg font-semibold mb-4">
                   Proveedores Disponibles ({getFilteredAndSortedProviders().length})
                 </h3>
+                {getFilteredAndSortedProviders().length === 0 && providerDiagnostic && (
+                  <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-yellow-800 mb-1">
+                          No hay proveedores disponibles
+                        </h4>
+                        <p className="text-sm text-yellow-700 mb-2">{providerDiagnostic.message}</p>
+                        {providerDiagnostic.suggestion && (
+                          <p className="text-xs text-yellow-600 italic">
+                            💡 {providerDiagnostic.suggestion}
+                          </p>
+                        )}
+                        {providerDiagnostic.totalProvidersInDB > 0 &&
+                          providerDiagnostic.verifiedProvidersInDB === 0 && (
+                            <div className="mt-3 text-xs text-yellow-700">
+                              <p>
+                                <strong>Diagnóstico:</strong> Hay{' '}
+                                {providerDiagnostic.totalProvidersInDB} proveedor(es) en el sistema,
+                                pero ninguno está verificado. Un administrador debe aprobar los
+                                proveedores pendientes.
+                              </p>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="grid gap-4 max-h-96 overflow-y-auto">
+                  {getFilteredAndSortedProviders().length === 0 && !providerDiagnostic && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                      <p>No hay proveedores disponibles en este momento.</p>
+                    </div>
+                  )}
                   {getFilteredAndSortedProviders().map(provider => (
                     <Card
                       key={provider.id}
