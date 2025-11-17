@@ -4,6 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ import {
   FileText,
   Eye,
   ExternalLink,
+  Info,
 } from 'lucide-react';
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -52,6 +54,8 @@ import { Label } from '@/components/ui/label';
 export default function AdminUsersPage() {
   // ⚠️ NOTA: Los console.log aquí se ejecutan en SSR (servidor), no aparecen en el navegador
   // Todos los logs de depuración deben estar dentro de useEffect para ejecutarse en el cliente
+
+  const router = useRouter();
 
   // CRÍTICO: Usar useAuth directamente para asegurar re-renders cuando el usuario cambia
   const { user, loading: authLoading } = useAuth();
@@ -432,8 +436,29 @@ export default function AdminUsersPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-        throw new Error(errorData.error || 'Error al aprobar proveedor');
+        let errorMessage = 'Error al aprobar proveedor';
+        try {
+          const errorData = await response.json();
+          // Manejar diferentes formatos de error
+          if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else if (errorData?.error) {
+            errorMessage =
+              typeof errorData.error === 'string'
+                ? errorData.error
+                : JSON.stringify(errorData.error);
+          } else if (errorData?.message) {
+            errorMessage =
+              typeof errorData.message === 'string'
+                ? errorData.message
+                : JSON.stringify(errorData.message);
+          } else {
+            errorMessage = JSON.stringify(errorData);
+          }
+        } catch (parseError) {
+          errorMessage = `Error ${response.status}: ${response.statusText || 'Error desconocido'}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Recargar usuarios después de aprobar
@@ -442,7 +467,17 @@ export default function AdminUsersPage() {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       logger.error('Error aprobando proveedor:', { error: err });
-      setErrorMessage(err instanceof Error ? err.message : 'Error al aprobar proveedor');
+      // Extraer mensaje de error de forma segura
+      let errorMsg = 'Error al aprobar proveedor';
+      if (err instanceof Error) {
+        errorMsg = err.message;
+      } else if (typeof err === 'string') {
+        errorMsg = err;
+      } else if (err && typeof err === 'object') {
+        const errObj = err as any;
+        errorMsg = errObj.message || errObj.error || JSON.stringify(err);
+      }
+      setErrorMessage(errorMsg);
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setApprovingProvider(null);
@@ -1109,6 +1144,15 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
+                          {/* Botón para ver detalles completos del usuario */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/admin/users/${user.id}`)}
+                            title="Ver detalles completos del usuario"
+                          >
+                            <Info className="w-4 h-4" />
+                          </Button>
                           {/* Botón de aprobación para proveedores no verificados */}
                           {((user as any).maintenanceProvider &&
                             !(user as any).maintenanceProvider.isVerified) ||
@@ -1125,6 +1169,7 @@ export default function AdminUsersPage() {
                                 )
                               }
                               disabled={approvingProvider === user.id}
+                              title="Aprobar proveedor"
                             >
                               {approvingProvider === user.id ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1140,6 +1185,7 @@ export default function AdminUsersPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => toggleUserStatus(user.id, user.isActive)}
+                            title={user.isActive ? 'Desactivar usuario' : 'Activar usuario'}
                           >
                             {user.isActive ? (
                               <XCircle className="w-4 h-4" />
@@ -1147,7 +1193,12 @@ export default function AdminUsersPage() {
                               <CheckCircle className="w-4 h-4" />
                             )}
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => openEditModal(user)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditModal(user)}
+                            title="Editar usuario"
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
@@ -1155,6 +1206,7 @@ export default function AdminUsersPage() {
                             size="sm"
                             onClick={() => deleteUser(user.id)}
                             className="text-red-600 hover:text-red-700"
+                            title="Eliminar usuario"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
