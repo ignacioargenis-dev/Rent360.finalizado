@@ -4,6 +4,144 @@ import { DatabaseError, BusinessLogicError } from './errors';
 import { NotificationService } from './notification-service';
 import { BankAccountService } from './bank-account-service';
 
+/**
+ * Obtiene la configuración de comisión para proveedores de mantenimiento
+ * Busca primero en SystemSetting (donde el admin guarda) y luego en PlatformConfig como fallback
+ */
+async function getMaintenanceProviderConfig(): Promise<{
+  commissionPercentage: number;
+  gracePeriodDays: number;
+  minimumPayout: number;
+}> {
+  try {
+    // Buscar primero en SystemSetting (donde el admin guarda las configuraciones)
+    const [commissionSetting, gracePeriodSetting, minimumPayoutSetting] = await Promise.all([
+      db.systemSetting.findUnique({
+        where: { key: 'maintenanceProviderCommissionPercentage' },
+      }),
+      db.systemSetting.findUnique({
+        where: { key: 'maintenanceProviderGracePeriodDays' },
+      }),
+      db.systemSetting.findUnique({
+        where: { key: 'maintenanceProviderMinimumPayout' },
+      }),
+    ]);
+
+    // Si no están en SystemSetting, buscar en PlatformConfig como fallback
+    const [commissionConfig, gracePeriodConfig, minimumPayoutConfig] = await Promise.all([
+      commissionSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'maintenanceProviderCommissionPercentage' },
+          }),
+      gracePeriodSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'maintenanceProviderGracePeriodDays' },
+          }),
+      minimumPayoutSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'maintenanceProviderMinimumPayout' },
+          }),
+    ]);
+
+    return {
+      commissionPercentage: commissionSetting
+        ? parseFloat(commissionSetting.value) || 8
+        : commissionConfig
+          ? parseFloat(commissionConfig.value) || 8
+          : 8,
+      gracePeriodDays: gracePeriodSetting
+        ? parseFloat(gracePeriodSetting.value) || 15
+        : gracePeriodConfig
+          ? parseFloat(gracePeriodConfig.value) || 15
+          : 15,
+      minimumPayout: minimumPayoutSetting
+        ? parseFloat(minimumPayoutSetting.value) || 10000
+        : minimumPayoutConfig
+          ? parseFloat(minimumPayoutConfig.value) || 10000
+          : 10000,
+    };
+  } catch (error) {
+    logger.error('Error obteniendo configuración de mantenimiento:', error);
+    return {
+      commissionPercentage: 8,
+      gracePeriodDays: 15,
+      minimumPayout: 10000,
+    };
+  }
+}
+
+/**
+ * Obtiene la configuración de comisión para proveedores de servicios
+ * Busca primero en SystemSetting (donde el admin guarda) y luego en PlatformConfig como fallback
+ */
+async function getServiceProviderConfig(): Promise<{
+  commissionPercentage: number;
+  gracePeriodDays: number;
+  minimumPayout: number;
+}> {
+  try {
+    // Buscar primero en SystemSetting (donde el admin guarda las configuraciones)
+    const [commissionSetting, gracePeriodSetting, minimumPayoutSetting] = await Promise.all([
+      db.systemSetting.findUnique({
+        where: { key: 'serviceProviderCommissionPercentage' },
+      }),
+      db.systemSetting.findUnique({
+        where: { key: 'serviceProviderGracePeriodDays' },
+      }),
+      db.systemSetting.findUnique({
+        where: { key: 'serviceProviderMinimumPayout' },
+      }),
+    ]);
+
+    // Si no están en SystemSetting, buscar en PlatformConfig como fallback
+    const [commissionConfig, gracePeriodConfig, minimumPayoutConfig] = await Promise.all([
+      commissionSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'serviceProviderCommissionPercentage' },
+          }),
+      gracePeriodSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'serviceProviderGracePeriodDays' },
+          }),
+      minimumPayoutSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'serviceProviderMinimumPayout' },
+          }),
+    ]);
+
+    return {
+      commissionPercentage: commissionSetting
+        ? parseFloat(commissionSetting.value) || 8
+        : commissionConfig
+          ? parseFloat(commissionConfig.value) || 8
+          : 8,
+      gracePeriodDays: gracePeriodSetting
+        ? parseFloat(gracePeriodSetting.value) || 7
+        : gracePeriodConfig
+          ? parseFloat(gracePeriodConfig.value) || 7
+          : 7,
+      minimumPayout: minimumPayoutSetting
+        ? parseFloat(minimumPayoutSetting.value) || 5000
+        : minimumPayoutConfig
+          ? parseFloat(minimumPayoutConfig.value) || 5000
+          : 5000,
+    };
+  } catch (error) {
+    logger.error('Error obteniendo configuración de servicios:', error);
+    return {
+      commissionPercentage: 8,
+      gracePeriodDays: 7,
+      minimumPayout: 5000,
+    };
+  }
+}
+
 export interface ProviderPayoutCalculation {
   recipientId: string;
   recipientType: 'maintenance_provider' | 'service_provider';
@@ -89,6 +227,9 @@ export class ProviderPayoutsService {
         },
       });
 
+      // Obtener configuración desde PlatformConfig
+      const config = await getMaintenanceProviderConfig();
+
       const payouts: ProviderPayoutCalculation[] = [];
 
       for (const provider of maintenanceProviders) {
@@ -101,22 +242,20 @@ export class ProviderPayoutsService {
           0
         );
 
-        // Verificar período de gracia
-        const gracePeriodDays = 15; // Configurable desde admin
+        // Verificar período de gracia usando configuración del admin
         const daysSinceRegistration = Math.floor(
           (end.getTime() - provider.user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        const inGracePeriod = daysSinceRegistration <= gracePeriodDays;
+        const inGracePeriod = daysSinceRegistration <= config.gracePeriodDays;
 
-        // Calcular comisión
-        const commissionRate = inGracePeriod ? 0 : 10; // 10% normal, 0% en período de gracia
+        // Calcular comisión usando configuración del admin
+        const commissionRate = inGracePeriod ? 0 : config.commissionPercentage;
         const commission = (totalAmount * commissionRate) / 100;
         const netAmount = totalAmount - commission;
 
-        // Solo crear payout si supera el mínimo
-        const minimumPayout = 10000; // Configurable
-        if (netAmount < minimumPayout) {
+        // Solo crear payout si supera el mínimo usando configuración del admin
+        if (netAmount < config.minimumPayout) {
           continue;
         }
 
@@ -206,6 +345,9 @@ export class ProviderPayoutsService {
         },
       });
 
+      // Obtener configuración desde PlatformConfig
+      const config = await getServiceProviderConfig();
+
       const payouts: ProviderPayoutCalculation[] = [];
 
       for (const provider of serviceProviders) {
@@ -218,22 +360,20 @@ export class ProviderPayoutsService {
           0
         );
 
-        // Verificar período de gracia
-        const gracePeriodDays = 7; // Configurable desde admin
+        // Verificar período de gracia usando configuración del admin
         const daysSinceRegistration = Math.floor(
           (end.getTime() - provider.user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        const inGracePeriod = daysSinceRegistration <= gracePeriodDays;
+        const inGracePeriod = daysSinceRegistration <= config.gracePeriodDays;
 
-        // Calcular comisión
-        const commissionRate = inGracePeriod ? 0 : 8; // 8% normal, 0% en período de gracia
+        // Calcular comisión usando configuración del admin
+        const commissionRate = inGracePeriod ? 0 : config.commissionPercentage;
         const commission = (totalAmount * commissionRate) / 100;
         const netAmount = totalAmount - commission;
 
-        // Solo crear payout si supera el mínimo
-        const minimumPayout = 5000; // Configurable
-        if (netAmount < minimumPayout) {
+        // Solo crear payout si supera el mínimo usando configuración del admin
+        if (netAmount < config.minimumPayout) {
           continue;
         }
 
