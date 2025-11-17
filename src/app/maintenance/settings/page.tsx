@@ -1342,8 +1342,8 @@ export default function MaintenanceSettingsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            // Abrir modal para editar cuenta bancaria
-                            window.location.href = '/provider/payments/configure';
+                            // Abrir página para editar cuenta bancaria
+                            window.location.href = '/maintenance/payments/configure';
                           }}
                         >
                           Editar
@@ -1364,7 +1364,7 @@ export default function MaintenanceSettingsPage() {
                         </div>
                         <Button
                           onClick={() => {
-                            window.location.href = '/provider/payments/configure';
+                            window.location.href = '/maintenance/payments/configure';
                           }}
                         >
                           Configurar Cuenta
