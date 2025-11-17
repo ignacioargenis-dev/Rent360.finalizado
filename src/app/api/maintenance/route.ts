@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { handleApiError } from '@/lib/api-error-handler';
+import { logger } from '@/lib/logger-minimal';
+import { getCloudStorageService, generateFileKey } from '@/lib/cloud-storage';
 import { z } from 'zod';
 
 // Schema de validación para crear solicitud de mantenimiento
@@ -146,9 +148,106 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    // Verificar permisos: inquilinos, corredores (para propiedades que administran), o propietarios
+    // Detectar si el request es FormData o JSON
+    const contentType = request.headers.get('content-type') || '';
+    let body: any = {};
+    let uploadedImages: string[] = [];
 
-    const body = await request.json();
+    if (contentType.includes('multipart/form-data')) {
+      // Manejar FormData
+      const formData = await request.formData();
+
+      // Extraer campos del formulario
+      body = {
+        propertyId: formData.get('propertyId') as string,
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        category: formData.get('category') as string,
+        priority: formData.get('priority') as string,
+        estimatedCost: formData.get('estimatedCost')
+          ? parseFloat(formData.get('estimatedCost') as string)
+          : undefined,
+      };
+
+      // Manejar archivos adjuntos
+      const attachments = formData.getAll('attachments') as File[];
+      if (attachments && attachments.length > 0) {
+        const maxFileSize = 10 * 1024 * 1024; // 10MB
+        const allowedTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/webp',
+          'image/svg+xml',
+        ];
+        const cloudStorage = getCloudStorageService();
+
+        for (let i = 0; i < attachments.length; i++) {
+          const file = attachments[i];
+          if (!file || !(file instanceof File)) {
+            continue;
+          }
+
+          // Validar archivo
+          if (file.size > maxFileSize) {
+            logger.warn('Image file too large, skipping', {
+              fileName: file.name,
+              fileSize: file.size,
+            });
+            continue;
+          }
+
+          if (!allowedTypes.includes(file.type)) {
+            logger.warn('Invalid image type, skipping', {
+              fileName: file.name,
+              fileType: file.type,
+            });
+            continue;
+          }
+
+          try {
+            // Generar nombre único para el archivo
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2, 15);
+            const fileNameParts = file.name.split('.');
+            const extension = fileNameParts.length > 1 ? fileNameParts.pop() : 'jpg';
+            const filename = `maintenance_${i + 1}_${timestamp}_${randomId}.${extension}`;
+
+            // Generar key para cloud storage
+            const cloudKey = generateFileKey(`maintenance/${body.propertyId}`, filename);
+
+            logger.info('Uploading maintenance image to cloud storage', {
+              propertyId: body.propertyId,
+              cloudKey,
+              originalName: file.name,
+              fileSize: file.size,
+            });
+
+            // Subir a cloud storage
+            const result = await cloudStorage.uploadFile(file, cloudKey, file.type);
+            uploadedImages.push(result.url);
+
+            logger.info('Maintenance image uploaded successfully', {
+              propertyId: body.propertyId,
+              cloudKey,
+              url: result.url,
+            });
+          } catch (fileError) {
+            logger.error('Error uploading maintenance image', {
+              error: fileError,
+              fileName: file.name,
+            });
+            // Continuar con otros archivos
+          }
+        }
+      }
+
+      body.images = uploadedImages;
+    } else {
+      // Manejar JSON
+      body = await request.json();
+    }
+
     const validatedData = maintenanceSchema.parse(body);
 
     // Verificar que la propiedad existe y el usuario tiene permisos
@@ -175,13 +274,25 @@ export async function POST(request: NextRequest) {
     if (user.role === 'ADMIN') {
       hasPermission = true;
       requesterRole = 'admin';
-    } else if (user.role === 'owner' && property.ownerId === user.id) {
+    } else if ((user.role === 'OWNER' || user.role === 'owner') && property.ownerId === user.id) {
       hasPermission = true;
       requesterRole = 'owner';
-    } else if (user.role === 'broker' && property.brokerId === user.id) {
-      hasPermission = true;
-      requesterRole = 'broker';
-    } else if (user.role === 'tenant') {
+    } else if (user.role === 'BROKER' || user.role === 'broker') {
+      // Verificar si el broker gestiona la propiedad (propia o gestionada)
+      const isOwnProperty = property.brokerId === user.id && property.ownerId === user.id;
+      const isManagedProperty = await db.brokerPropertyManagement.findFirst({
+        where: {
+          brokerId: user.id,
+          propertyId: validatedData.propertyId,
+          status: 'ACTIVE',
+        },
+      });
+
+      if (isOwnProperty || isManagedProperty) {
+        hasPermission = true;
+        requesterRole = 'broker';
+      }
+    } else if (user.role === 'TENANT' || user.role === 'tenant') {
       // Verificar si el inquilino tiene un contrato activo con esta propiedad
       const activeContract = await db.contract.findFirst({
         where: {
