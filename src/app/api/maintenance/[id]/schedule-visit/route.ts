@@ -83,6 +83,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       );
     }
 
+    // Verificar que la cotización esté aprobada o que el estado permita programar
+    if (maintenance.status !== 'QUOTE_APPROVED' && maintenance.status !== 'ASSIGNED') {
+      return NextResponse.json(
+        { error: 'Debe aprobar la cotización antes de programar la visita' },
+        { status: 400 }
+      );
+    }
+
     if (maintenance.maintenanceProvider.id !== providerId) {
       return NextResponse.json(
         { error: 'El prestador especificado no coincide con el asignado' },

@@ -73,7 +73,18 @@ interface MaintenanceRequest {
   type: 'REPAIR' | 'MAINTENANCE' | 'EMERGENCY' | 'INSPECTION';
   description: string;
   urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  status: 'PENDING' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED';
+  status:
+    | 'OPEN'
+    | 'PENDING'
+    | 'ASSIGNED'
+    | 'QUOTE_PENDING'
+    | 'QUOTE_APPROVED'
+    | 'APPROVED'
+    | 'SCHEDULED'
+    | 'IN_PROGRESS'
+    | 'COMPLETED'
+    | 'REJECTED'
+    | 'CANCELLED';
   estimatedCost: number;
   createdAt: string;
   scheduledDate?: string;
@@ -205,7 +216,9 @@ export default function MantenimientoPage() {
   const handleNewRequest = () => {
     logger.info('Abriendo creación de nueva solicitud de mantenimiento');
     // Las solicitudes de mantenimiento se crean desde las propiedades
-    alert('Para crear una nueva solicitud de mantenimiento, ve a la página de Propiedades y selecciona la propiedad correspondiente.');
+    alert(
+      'Para crear una nueva solicitud de mantenimiento, ve a la página de Propiedades y selecciona la propiedad correspondiente.'
+    );
     window.location.href = '/owner/properties';
   };
 
@@ -335,6 +348,98 @@ export default function MantenimientoPage() {
       logger.error('Error rechazando solicitud:', {
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+  };
+
+  const handleApproveQuote = async (requestId: string) => {
+    try {
+      const response = await fetch(`/api/maintenance/${requestId}/quote/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      await loadPageData();
+      logger.info('Cotización aprobada:', { requestId });
+    } catch (error) {
+      logger.error('Error aprobando cotización:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert(error instanceof Error ? error.message : 'Error al aprobar la cotización');
+    }
+  };
+
+  const handleRejectQuote = async (requestId: string, reason?: string) => {
+    try {
+      const response = await fetch(`/api/maintenance/${requestId}/quote/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          reason: reason || '',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      await loadPageData();
+      logger.info('Cotización rechazada:', { requestId, reason });
+    } catch (error) {
+      logger.error('Error rechazando cotización:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert(error instanceof Error ? error.message : 'Error al rechazar la cotización');
+    }
+  };
+
+  const handleResolveSelf = async (requestId: string) => {
+    if (
+      !confirm(
+        '¿Estás seguro de que deseas manejar esta solicitud por tu cuenta sin asignar un proveedor?'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/maintenance/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: 'COMPLETED',
+          notes: `[${new Date().toLocaleString()}]: Manejado por el propietario sin proveedor asignado`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      await loadPageData();
+      logger.info('Solicitud resuelta por cuenta propia:', { requestId });
+    } catch (error) {
+      logger.error('Error resolviendo solicitud por cuenta propia:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al marcar la solicitud como resuelta');
     }
   };
 
@@ -492,15 +597,25 @@ export default function MantenimientoPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'OPEN':
       case 'PENDING':
         return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
+      case 'ASSIGNED':
+        return <Badge className="bg-blue-100 text-blue-800">Asignada</Badge>;
+      case 'QUOTE_PENDING':
+        return <Badge className="bg-orange-100 text-orange-800">Cotización Pendiente</Badge>;
+      case 'QUOTE_APPROVED':
+        return <Badge className="bg-purple-100 text-purple-800">Cotización Aprobada</Badge>;
       case 'APPROVED':
         return <Badge className="bg-blue-100 text-blue-800">Aprobada</Badge>;
+      case 'SCHEDULED':
+        return <Badge className="bg-indigo-100 text-indigo-800">Programada</Badge>;
       case 'IN_PROGRESS':
         return <Badge className="bg-emerald-100 text-emerald-800">En Progreso</Badge>;
       case 'COMPLETED':
         return <Badge className="bg-green-100 text-green-800">Completada</Badge>;
       case 'REJECTED':
+      case 'CANCELLED':
         return <Badge className="bg-red-100 text-red-800">Rechazada</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -724,35 +839,72 @@ export default function MantenimientoPage() {
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
                         </Button>
-                        {request.status === 'PENDING' && (
+                        {(request.status === 'OPEN' || request.status === 'PENDING') && (
                           <>
                             <Button
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700"
-                              onClick={() => handleApproveRequest(request.id)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => handleAssignProvider(request)}
+                            >
+                              <Users className="w-4 h-4 mr-2" />
+                              Asignar Proveedor
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-green-300 text-green-700 hover:bg-green-50"
+                              onClick={() => handleResolveSelf(request.id)}
                             >
                               <CheckCircle className="w-4 h-4 mr-2" />
-                              Aprobar
+                              Manejar por Cuenta Propia
+                            </Button>
+                          </>
+                        )}
+                        {request.status === 'QUOTE_PENDING' && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleApproveQuote(request.id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Aprobar Cotización
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               className="border-red-300 text-red-700 hover:bg-red-50"
-                              onClick={() => handleRejectRequest(request.id)}
+                              onClick={() => {
+                                const reason = prompt('Razón del rechazo (opcional):');
+                                handleRejectQuote(request.id, reason || undefined);
+                              }}
                             >
                               <X className="w-4 h-4 mr-2" />
-                              Rechazar
+                              Rechazar Cotización
                             </Button>
                           </>
                         )}
-                        {request.status === 'APPROVED' && !request.provider && (
+                        {request.status === 'QUOTE_APPROVED' && (
+                          <Button
+                            size="sm"
+                            className="bg-indigo-600 hover:bg-indigo-700"
+                            onClick={() => {
+                              // Navegar a programar visita
+                              window.location.href = `/owner/maintenance/${request.id}/schedule`;
+                            }}
+                          >
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Programar Visita
+                          </Button>
+                        )}
+                        {request.status === 'ASSIGNED' && (
                           <Button
                             size="sm"
                             className="bg-blue-600 hover:bg-blue-700"
                             onClick={() => handleAssignProvider(request)}
                           >
                             <Users className="w-4 h-4 mr-2" />
-                            Asignar Proveedor
+                            Ver Proveedor
                           </Button>
                         )}
                       </div>

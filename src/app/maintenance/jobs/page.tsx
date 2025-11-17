@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -42,6 +44,8 @@ import {
   PlayCircle,
   PauseCircle,
   Square,
+  Send,
+  X,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
@@ -53,7 +57,13 @@ interface MaintenanceJob {
   propertyAddress: string;
   propertyOwner: string;
   ownerPhone: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  status:
+    | 'pending'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled'
+    | 'quote_pending'
+    | 'quote_approved';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   maintenanceType: 'plumbing' | 'electrical' | 'structural' | 'cleaning' | 'other';
   estimatedCost: number;
@@ -79,6 +89,15 @@ export default function MaintenanceJobsPage() {
   // Estado para modales
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<MaintenanceJob | null>(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [quoteData, setQuoteData] = useState({
+    estimatedCost: '',
+    estimatedTime: '',
+    notes: '',
+    materials: '',
+    laborCost: '',
+    materialsCost: '',
+  });
 
   useEffect(() => {
     loadJobs();
@@ -147,6 +166,8 @@ export default function MaintenanceJobsPage() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
+      quote_pending: { label: 'Cotización Pendiente', color: 'bg-orange-100 text-orange-800' },
+      quote_approved: { label: 'Cotización Aprobada', color: 'bg-purple-100 text-purple-800' },
       in_progress: { label: 'En Progreso', color: 'bg-blue-100 text-blue-800' },
       completed: { label: 'Completado', color: 'bg-green-100 text-green-800' },
       cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
@@ -197,6 +218,60 @@ export default function MaintenanceJobsPage() {
   const handleViewJobDetails = (job: MaintenanceJob) => {
     setSelectedJob(job);
     setShowJobDetailsModal(true);
+  };
+
+  const handleSubmitQuote = async () => {
+    if (!selectedJob) {
+      return;
+    }
+
+    if (!quoteData.estimatedCost || parseFloat(quoteData.estimatedCost) <= 0) {
+      setErrorMessage('El costo estimado es requerido y debe ser mayor a 0');
+      setTimeout(() => setErrorMessage(''), 5000);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/maintenance/${selectedJob.id}/quote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          estimatedCost: parseFloat(quoteData.estimatedCost),
+          estimatedTime: quoteData.estimatedTime || undefined,
+          notes: quoteData.notes || undefined,
+          materials: quoteData.materials || undefined,
+          laborCost: quoteData.laborCost ? parseFloat(quoteData.laborCost) : undefined,
+          materialsCost: quoteData.materialsCost ? parseFloat(quoteData.materialsCost) : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      setSuccessMessage('Cotización enviada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      setShowQuoteModal(false);
+      setQuoteData({
+        estimatedCost: '',
+        estimatedTime: '',
+        notes: '',
+        materials: '',
+        laborCost: '',
+        materialsCost: '',
+      });
+      await loadJobs();
+    } catch (error) {
+      logger.error('Error sending quote:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage(error instanceof Error ? error.message : 'Error al enviar la cotización');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
   };
 
   const handleExportJobs = () => {
@@ -502,13 +577,34 @@ export default function MaintenanceJobsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          {job.status === 'pending' && (
-                            <Button
-                              onClick={() => handleStatusChange(job.id, 'in_progress')}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              <PlayCircle className="w-4 h-4 mr-2" />
-                              Iniciar
+                          {(job.status === 'pending' || job.status === 'quote_approved') && (
+                            <>
+                              {job.status === 'pending' && (
+                                <Button
+                                  onClick={() => {
+                                    setSelectedJob(job);
+                                    setShowQuoteModal(true);
+                                  }}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Enviar Cotización
+                                </Button>
+                              )}
+                              <Button
+                                onClick={() => handleStatusChange(job.id, 'in_progress')}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <PlayCircle className="w-4 h-4 mr-2" />
+                                Iniciar
+                              </Button>
+                            </>
+                          )}
+
+                          {job.status === 'quote_pending' && (
+                            <Button variant="outline" disabled>
+                              <Clock className="w-4 h-4 mr-2" />
+                              Esperando Aprobación
                             </Button>
                           )}
 
@@ -812,6 +908,147 @@ export default function MaintenanceJobsPage() {
                     Completar Trabajo
                   </Button>
                 )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Cotización */}
+      <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5" />
+              Enviar Cotización
+            </DialogTitle>
+            <DialogDescription>{selectedJob && `Para: ${selectedJob.title}`}</DialogDescription>
+          </DialogHeader>
+
+          {selectedJob && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="estimatedCost">Costo Estimado (CLP) *</Label>
+                <Input
+                  id="estimatedCost"
+                  type="number"
+                  value={quoteData.estimatedCost}
+                  onChange={e =>
+                    setQuoteData(prev => ({
+                      ...prev,
+                      estimatedCost: e.target.value,
+                    }))
+                  }
+                  placeholder="0"
+                  min="0"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="estimatedTime">Tiempo Estimado</Label>
+                  <Input
+                    id="estimatedTime"
+                    value={quoteData.estimatedTime}
+                    onChange={e =>
+                      setQuoteData(prev => ({
+                        ...prev,
+                        estimatedTime: e.target.value,
+                      }))
+                    }
+                    placeholder="Ej: 2-4 horas"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="laborCost">Costo Mano de Obra (CLP)</Label>
+                  <Input
+                    id="laborCost"
+                    type="number"
+                    value={quoteData.laborCost}
+                    onChange={e =>
+                      setQuoteData(prev => ({
+                        ...prev,
+                        laborCost: e.target.value,
+                      }))
+                    }
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="materialsCost">Costo Materiales (CLP)</Label>
+                <Input
+                  id="materialsCost"
+                  type="number"
+                  value={quoteData.materialsCost}
+                  onChange={e =>
+                    setQuoteData(prev => ({
+                      ...prev,
+                      materialsCost: e.target.value,
+                    }))
+                  }
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="materials">Materiales Necesarios</Label>
+                <Textarea
+                  id="materials"
+                  value={quoteData.materials}
+                  onChange={e =>
+                    setQuoteData(prev => ({
+                      ...prev,
+                      materials: e.target.value,
+                    }))
+                  }
+                  placeholder="Lista de materiales requeridos..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="notes">Notas Adicionales</Label>
+                <Textarea
+                  id="notes"
+                  value={quoteData.notes}
+                  onChange={e =>
+                    setQuoteData(prev => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
+                  placeholder="Información adicional sobre la cotización..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowQuoteModal(false);
+                    setQuoteData({
+                      estimatedCost: '',
+                      estimatedTime: '',
+                      notes: '',
+                      materials: '',
+                      laborCost: '',
+                      materialsCost: '',
+                    });
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleSubmitQuote} className="bg-green-600 hover:bg-green-700">
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar Cotización
+                </Button>
               </div>
             </div>
           )}

@@ -8,6 +8,8 @@ function mapJobStatus(status: string): string {
   const statusMap: Record<string, string> = {
     PENDING: 'pending',
     ASSIGNED: 'pending',
+    QUOTE_PENDING: 'quote_pending',
+    QUOTE_APPROVED: 'quote_approved',
     IN_PROGRESS: 'in_progress',
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
