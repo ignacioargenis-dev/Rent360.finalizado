@@ -122,20 +122,38 @@ export async function PUT(request: NextRequest) {
         responseTimeValue = profileData.operational?.responseTime || mp.responseTime || 2;
       }
 
+      // Construir objeto de actualización solo con campos que se proporcionaron
+      const updateData: any = {
+        businessName: profileData.basicInfo?.companyName || mp.businessName,
+        description: profileData.basicInfo?.description || mp.description,
+        specialties: specialtiesJson, // ✅ Usar specialtiesJson limpio
+        responseTime: responseTimeValue,
+        availability,
+        updatedAt: new Date(),
+      };
+
+      // Solo actualizar address, city, region si se proporcionan
+      if (profileData.address?.street) {
+        updateData.address = profileData.address.street;
+      }
+      if (profileData.address?.city) {
+        updateData.city = profileData.address.city;
+      }
+      if (profileData.address?.region) {
+        updateData.region = profileData.address.region;
+      }
+
+      // Solo actualizar hourlyRate si se proporciona explícitamente
+      if (
+        profileData.services?.hourlyRate !== undefined &&
+        profileData.services?.hourlyRate !== null
+      ) {
+        updateData.hourlyRate = profileData.services.hourlyRate;
+      }
+
       await db.maintenanceProvider.update({
         where: { id: mp.id },
-        data: {
-          businessName: profileData.basicInfo?.companyName || mp.businessName,
-          address: profileData.address?.street || mp.address,
-          city: profileData.address?.city || mp.city,
-          region: profileData.address?.region || mp.region,
-          description: profileData.basicInfo?.description || mp.description,
-          specialties: specialtiesJson, // ✅ Usar specialtiesJson limpio
-          hourlyRate: profileData.services?.hourlyRate || mp.hourlyRate,
-          responseTime: responseTimeValue,
-          availability,
-          updatedAt: new Date(),
-        },
+        data: updateData,
       });
 
       console.log('✅ [API PUT] MaintenanceProvider actualizado');

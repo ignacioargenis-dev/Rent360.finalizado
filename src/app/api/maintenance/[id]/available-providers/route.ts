@@ -13,6 +13,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const user = await requireAuth(request);
     const maintenanceId = params.id;
 
+    // Obtener parámetros de query para filtros
+    const { searchParams } = new URL(request.url);
+    const locationFilter = searchParams.get('location'); // 'same_city', 'same_region', 'all'
+
     // Verificar que la solicitud existe y el usuario tiene acceso
     const maintenance = await db.maintenance.findUnique({
       where: { id: maintenanceId },
@@ -59,14 +63,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       status: 'ACTIVE',
     };
 
-    // Si hay ciudad o región en la propiedad, intentar filtrar (pero no es obligatorio)
-    if (maintenance.property.city || maintenance.property.region) {
+    // Aplicar filtro de ubicación según el parámetro
+    if (locationFilter === 'same_city' && maintenance.property.city) {
+      // Solo proveedores de la misma ciudad
+      whereClause.city = maintenance.property.city;
+    } else if (locationFilter === 'same_region' && maintenance.property.region) {
+      // Proveedores de la misma región (incluye misma ciudad)
       whereClause.OR = [
         { city: maintenance.property.city },
         { region: maintenance.property.region },
-        { city: null },
-        { region: null },
       ];
+    } else if (!locationFilter || locationFilter === 'all') {
+      // Sin filtro de ubicación - mostrar todos (pero priorizar los cercanos)
+      // No agregar filtro de ubicación, mostrar todos
     }
 
     const availableProviders = await db.maintenanceProvider.findMany({

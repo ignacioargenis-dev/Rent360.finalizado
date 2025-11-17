@@ -162,181 +162,180 @@ export default function MaintenanceSettingsPage() {
   const [selectedDocument, setSelectedDocument] = useState<string>('');
 
   // ✅ Cargar configuraciones iniciales
-  useEffect(() => {
-    const loadUserSettings = async () => {
-      try {
-        setLoading(true);
+  const loadUserSettings = async () => {
+    try {
+      setLoading(true);
 
-        // Cargar datos del usuario y perfil de mantenimiento
-        const userResponse = await fetch('/api/auth/me', {
-          credentials: 'include',
-        });
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
+      // Cargar datos del usuario y perfil de mantenimiento
+      const userResponse = await fetch('/api/auth/me', {
+        credentials: 'include',
+      });
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setSettings(prev => ({
+          ...prev,
+          companyName: userData.user?.name || '',
+          email: userData.user?.email || '',
+          phone: userData.user?.phone || '',
+        }));
+      }
+
+      // Cargar perfil de mantenimiento
+      const profileResponse = await fetch('/api/provider/profile', {
+        credentials: 'include',
+      });
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        if (profileData.success && profileData.profile) {
+          const profile = profileData.profile;
+
+          // Parsear especialidades
+          const specialtiesRaw = profile.specialties || profile.serviceTypes || [];
+          const specialties = Array.isArray(specialtiesRaw)
+            ? specialtiesRaw.map((s: any) => (typeof s === 'string' ? s : s.name || s))
+            : [];
+
+          // Cargar documentos reales desde el perfil
+          if (profile.documents) {
+            const docs: Array<{
+              id: string;
+              name: string;
+              type: string;
+              status: 'pending' | 'approved' | 'rejected';
+              uploadDate: string;
+              expiryDate?: string;
+              fileUrl: string;
+            }> = [];
+            const uploadDate =
+              profile.documents.createdAt && typeof profile.documents.createdAt === 'string'
+                ? new Date(profile.documents.createdAt).toISOString().split('T')[0] || ''
+                : new Date().toISOString().split('T')[0] || '';
+
+            const businessCert = profile.documents.businessCertificate;
+            const idFront = profile.documents.idFront;
+            const idBack = profile.documents.idBack;
+            const criminalRec = profile.documents.criminalRecord;
+
+            // Determinar estado basado en isVerified
+            const docStatus = profile.documents.isVerified ? 'approved' : 'pending';
+
+            if (businessCert && typeof businessCert === 'string') {
+              docs.push({
+                id: 'business-certificate',
+                name: 'Certificado de Inicio de Actividades',
+                type: 'certificate',
+                status: docStatus,
+                uploadDate: uploadDate,
+                fileUrl: businessCert,
+              });
+            }
+            if (idFront && typeof idFront === 'string') {
+              docs.push({
+                id: 'id-front',
+                name: 'Cédula de Identidad (Frente)',
+                type: 'id',
+                status: docStatus,
+                uploadDate: uploadDate,
+                fileUrl: idFront,
+              });
+            }
+            if (idBack && typeof idBack === 'string') {
+              docs.push({
+                id: 'id-back',
+                name: 'Cédula de Identidad (Reverso)',
+                type: 'id',
+                status: docStatus,
+                uploadDate: uploadDate,
+                fileUrl: idBack,
+              });
+            }
+            if (criminalRec && typeof criminalRec === 'string') {
+              docs.push({
+                id: 'criminal-record',
+                name: 'Certificado de Antecedentes',
+                type: 'certificate',
+                status: docStatus,
+                uploadDate: uploadDate,
+                fileUrl: criminalRec,
+              });
+            }
+
+            setDocuments(docs);
+          }
+
+          // Parsear availability para obtener emergencyService
+          let availabilityParsed: any = {};
+          if (profile.availability) {
+            try {
+              availabilityParsed =
+                typeof profile.availability === 'string'
+                  ? JSON.parse(profile.availability)
+                  : profile.availability;
+            } catch (e) {
+              // Ignorar error de parsing
+            }
+          }
+
           setSettings(prev => ({
             ...prev,
-            companyName: userData.user?.name || '',
-            email: userData.user?.email || '',
-            phone: userData.user?.phone || '',
+            companyName: profile.businessName || profile.companyName || prev.companyName,
+            description: profile.description || '',
+            website: profile.website || '',
+            specialties: specialties,
+            serviceRadius: prev.serviceRadius || 25, // Mantener valor por defecto ya que no existe en el modelo
+            emergencyService: availabilityParsed.emergencies || false,
+            insuranceCoverage: prev.insuranceCoverage || false, // Mantener valor por defecto ya que no existe en el modelo
+            responseTime: profile.responseTime || '2-4 horas',
+          }));
+
+          // Cargar datos de facturación desde el perfil
+          setBillingInfo({
+            billingName: profile.businessName || profile.companyName || '',
+            billingRut: profile.taxId || '',
+            billingAddress: profile.address || '',
+            billingPhone: profile.phone || '',
+            billingEmail: profile.email || '',
+            billingGiro: 'Servicios de reparación y mantenimiento',
+            billingComuna: profile.city || '',
+            billingCiudad: profile.city || '',
+          });
+        }
+      }
+
+      // ✅ Cargar configuraciones de notificaciones desde la nueva API
+      const settingsResponse = await fetch('/api/user/settings', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+        if (settingsData.success && settingsData.settings.notifications) {
+          setSettings(prev => ({
+            ...prev,
+            emailNotifications:
+              settingsData.settings.notifications.emailNotifications ?? prev.emailNotifications,
+            smsNotifications:
+              settingsData.settings.notifications.smsNotifications ?? prev.smsNotifications,
+            pushNotifications:
+              settingsData.settings.notifications.pushNotifications ?? prev.pushNotifications,
           }));
         }
-
-        // Cargar perfil de mantenimiento
-        const profileResponse = await fetch('/api/provider/profile', {
-          credentials: 'include',
-        });
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          if (profileData.success && profileData.profile) {
-            const profile = profileData.profile;
-
-            // Parsear especialidades
-            const specialtiesRaw = profile.specialties || profile.serviceTypes || [];
-            const specialties = Array.isArray(specialtiesRaw)
-              ? specialtiesRaw.map((s: any) => (typeof s === 'string' ? s : s.name || s))
-              : [];
-
-            // Cargar documentos reales desde el perfil
-            if (profile.documents) {
-              const docs: Array<{
-                id: string;
-                name: string;
-                type: string;
-                status: 'pending' | 'approved' | 'rejected';
-                uploadDate: string;
-                expiryDate?: string;
-                fileUrl: string;
-              }> = [];
-              const uploadDate =
-                profile.documents.createdAt && typeof profile.documents.createdAt === 'string'
-                  ? new Date(profile.documents.createdAt).toISOString().split('T')[0] || ''
-                  : new Date().toISOString().split('T')[0] || '';
-
-              const businessCert = profile.documents.businessCertificate;
-              const idFront = profile.documents.idFront;
-              const idBack = profile.documents.idBack;
-              const criminalRec = profile.documents.criminalRecord;
-
-              // Determinar estado basado en isVerified
-              const docStatus = profile.documents.isVerified ? 'approved' : 'pending';
-
-              if (businessCert && typeof businessCert === 'string') {
-                docs.push({
-                  id: 'business-certificate',
-                  name: 'Certificado de Inicio de Actividades',
-                  type: 'certificate',
-                  status: docStatus,
-                  uploadDate: uploadDate,
-                  fileUrl: businessCert,
-                });
-              }
-              if (idFront && typeof idFront === 'string') {
-                docs.push({
-                  id: 'id-front',
-                  name: 'Cédula de Identidad (Frente)',
-                  type: 'id',
-                  status: docStatus,
-                  uploadDate: uploadDate,
-                  fileUrl: idFront,
-                });
-              }
-              if (idBack && typeof idBack === 'string') {
-                docs.push({
-                  id: 'id-back',
-                  name: 'Cédula de Identidad (Reverso)',
-                  type: 'id',
-                  status: docStatus,
-                  uploadDate: uploadDate,
-                  fileUrl: idBack,
-                });
-              }
-              if (criminalRec && typeof criminalRec === 'string') {
-                docs.push({
-                  id: 'criminal-record',
-                  name: 'Certificado de Antecedentes',
-                  type: 'certificate',
-                  status: docStatus,
-                  uploadDate: uploadDate,
-                  fileUrl: criminalRec,
-                });
-              }
-
-              setDocuments(docs);
-            }
-
-            // Parsear horarios de trabajo
-            let workingHours = settings.workingHours;
-            if (profile.availability) {
-              try {
-                const availability =
-                  typeof profile.availability === 'string'
-                    ? JSON.parse(profile.availability)
-                    : profile.availability;
-                // Mapear disponibilidad a workingHours si existe
-              } catch (e) {
-                // Ignorar error de parsing
-              }
-            }
-
-            setSettings(prev => ({
-              ...prev,
-              companyName: profile.businessName || profile.companyName || prev.companyName,
-              description: profile.description || '',
-              website: profile.website || '',
-              specialties: specialties,
-              serviceRadius: profile.serviceRadius || 25,
-              emergencyService: profile.availability?.emergencies || false,
-              insuranceCoverage: profile.insuranceCoverage || false,
-              responseTime: profile.responseTime || '2-4 horas',
-            }));
-
-            // Cargar datos de facturación desde el perfil
-            setBillingInfo({
-              billingName: profile.businessName || profile.companyName || '',
-              billingRut: profile.taxId || '',
-              billingAddress: profile.address || '',
-              billingPhone: profile.phone || '',
-              billingEmail: profile.email || '',
-              billingGiro: 'Servicios de reparación y mantenimiento',
-              billingComuna: profile.city || '',
-              billingCiudad: profile.city || '',
-            });
-          }
-        }
-
-        // ✅ Cargar configuraciones de notificaciones desde la nueva API
-        const settingsResponse = await fetch('/api/user/settings', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        });
-
-        if (settingsResponse.ok) {
-          const settingsData = await settingsResponse.json();
-          if (settingsData.success && settingsData.settings.notifications) {
-            setSettings(prev => ({
-              ...prev,
-              emailNotifications:
-                settingsData.settings.notifications.emailNotifications ?? prev.emailNotifications,
-              smsNotifications:
-                settingsData.settings.notifications.smsNotifications ?? prev.smsNotifications,
-              pushNotifications:
-                settingsData.settings.notifications.pushNotifications ?? prev.pushNotifications,
-            }));
-          }
-        }
-
-        // Cargar cuenta bancaria
-        await loadBankAccount();
-      } catch (error) {
-        logger.error('Error loading maintenance settings:', error);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      // Cargar cuenta bancaria
+      await loadBankAccount();
+    } catch (error) {
+      logger.error('Error loading maintenance settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadUserSettings();
   }, []);
 
@@ -449,6 +448,7 @@ export default function MaintenanceSettingsPage() {
       }
 
       // Guardar perfil de mantenimiento usando la API de provider/profile
+      // El endpoint espera un formato específico con basicInfo, services, operational
       const profileResponse = await fetch('/api/provider/profile', {
         method: 'PUT',
         headers: {
@@ -456,17 +456,22 @@ export default function MaintenanceSettingsPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          businessName: settings.companyName,
-          description: settings.description,
-          website: settings.website,
-          specialties: settings.specialties,
-          serviceRadius: settings.serviceRadius,
-          responseTime: settings.responseTime || '2-4 horas',
-          availability: {
-            weekdays: true,
-            weekends:
-              settings.workingHours.saturday.enabled || settings.workingHours.sunday.enabled,
-            emergencies: settings.emergencyService,
+          basicInfo: {
+            companyName: settings.companyName,
+            description: settings.description,
+          },
+          services: {
+            specialties: settings.specialties,
+            // No enviar hourlyRate para mantener el valor existente
+          },
+          operational: {
+            responseTime: settings.responseTime || '2-4 horas',
+            availability: {
+              weekdays: true,
+              weekends:
+                settings.workingHours.saturday.enabled || settings.workingHours.sunday.enabled,
+              emergencies: settings.emergencyService,
+            },
           },
         }),
       });
@@ -499,6 +504,9 @@ export default function MaintenanceSettingsPage() {
           'Error al guardar configuraciones de notificaciones, pero el perfil se guardó correctamente'
         );
       }
+
+      // Recargar datos después de guardar para reflejar los cambios
+      await loadUserSettings();
 
       setSuccessMessage('Configuración guardada exitosamente');
       setTimeout(() => setSuccessMessage(''), 3000);

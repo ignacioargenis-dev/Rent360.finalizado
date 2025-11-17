@@ -127,6 +127,7 @@ export default function MantenimientoPage() {
   const [providerFilters, setProviderFilters] = useState({
     specialty: 'all',
     sortBy: 'rating', // 'rating', 'price_low', 'price_high', 'experience'
+    location: 'all', // 'all', 'same_city', 'same_region'
   });
   const [exportOptions, setExportOptions] = useState({
     format: 'csv', // 'csv', 'json'
@@ -455,7 +456,17 @@ export default function MantenimientoPage() {
         return;
       }
 
-      const response = await fetch(`/api/maintenance/${selectedRequest.id}/available-providers`, {
+      // Construir URL con parámetros de filtro
+      const params = new URLSearchParams();
+      if (providerFilters.location && providerFilters.location !== 'all') {
+        params.append('location', providerFilters.location);
+      }
+
+      const url = `/api/maintenance/${selectedRequest.id}/available-providers${
+        params.toString() ? `?${params.toString()}` : ''
+      }`;
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -469,7 +480,7 @@ export default function MantenimientoPage() {
       }
 
       const data = await response.json();
-      setAvailableProviders(data.providers || []);
+      setAvailableProviders(data.availableProviders || []);
     } catch (error) {
       logger.error('Error cargando proveedores:', { error });
       // Fallback to empty array if API fails
@@ -1107,7 +1118,7 @@ export default function MantenimientoPage() {
               {/* Filtros de búsqueda */}
               <div className="bg-gray-50 p-4 rounded-lg mb-6">
                 <h4 className="text-md font-semibold mb-3">Buscar y Filtrar Proveedores</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="specialty-filter" className="text-sm font-medium">
                       Especialidad
@@ -1132,6 +1143,30 @@ export default function MantenimientoPage() {
                         <SelectItem value="Limpieza">Limpieza Profesional</SelectItem>
                         <SelectItem value="Pintura">Pintura y Decoración</SelectItem>
                         <SelectItem value="Carpintería">Carpintería</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="location-filter" className="text-sm font-medium">
+                      Ubicación
+                    </Label>
+                    <Select
+                      value={providerFilters.location}
+                      onValueChange={value => {
+                        setProviderFilters(prev => ({ ...prev, location: value }));
+                        // Recargar proveedores cuando cambie el filtro de ubicación
+                        setTimeout(() => {
+                          loadAvailableProviders();
+                        }, 100);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas las ubicaciones" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas las ubicaciones</SelectItem>
+                        <SelectItem value="same_city">Misma ciudad</SelectItem>
+                        <SelectItem value="same_region">Misma región</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
