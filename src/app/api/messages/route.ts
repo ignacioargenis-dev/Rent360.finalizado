@@ -163,6 +163,12 @@ export async function GET(request: NextRequest) {
               id: true,
               title: true,
               address: true,
+              price: true,
+              images: true,
+              bedrooms: true,
+              bathrooms: true,
+              area: true,
+              type: true,
             },
           },
           contract: {

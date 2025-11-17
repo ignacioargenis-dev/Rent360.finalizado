@@ -41,6 +41,10 @@ import {
   Home,
   MapPin,
   Eye,
+  Bed,
+  Bath,
+  Square,
+  DollarSign,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { websocketClient } from '@/lib/websocket/socket-client';
@@ -63,6 +67,12 @@ interface Message {
     id: string;
     title: string;
     address: string;
+    price?: number;
+    images?: string[];
+    bedrooms?: number;
+    bathrooms?: number;
+    area?: number;
+    type?: string;
   };
 }
 
@@ -585,7 +595,18 @@ export default function UnifiedMessagingSystem({
           attachmentSize: message.attachmentSize,
           attachmentType: message.attachmentType,
           propertyId: message.propertyId,
-          property: message.property,
+          property: message.property
+            ? {
+                ...message.property,
+                images: message.property.images
+                  ? typeof message.property.images === 'string'
+                    ? JSON.parse(message.property.images)
+                    : Array.isArray(message.property.images)
+                      ? message.property.images
+                      : []
+                  : [],
+              }
+            : undefined,
         }));
 
         // Si hay mensajes nuevos, actualizar el timestamp de última actividad
@@ -1290,44 +1311,134 @@ export default function UnifiedMessagingSystem({
 
                           {/* Card especial para propiedades compartidas */}
                           {message.type === 'PROPERTY_SHARE' && message.property ? (
-                            <div className="mt-2 space-y-2">
-                              <div className="bg-white/10 p-3 rounded-lg border border-white/20">
-                                <div className="flex items-start gap-3">
-                                  <Home className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                  <div className="flex-1">
-                                    <h4 className="font-semibold text-sm mb-1">
-                                      {message.property.title}
-                                    </h4>
-                                    <p className="text-xs opacity-90 flex items-center gap-1 mb-2">
-                                      <MapPin className="w-3 h-3" />
-                                      {message.property.address}
-                                    </p>
-                                    <Button
-                                      size="sm"
-                                      variant="secondary"
-                                      className="w-full mt-2"
-                                      onClick={() => {
-                                        // Extraer enlace del contenido del mensaje si existe
-                                        const linkMatch =
-                                          message.content.match(/https?:\/\/[^\s]+/);
-                                        if (linkMatch) {
-                                          window.open(linkMatch[0], '_blank');
-                                        } else {
-                                          router.push(`/properties/${message.propertyId}`);
-                                        }
+                            <div className="mt-2 space-y-3">
+                              <div
+                                className={`rounded-lg border-2 overflow-hidden ${
+                                  message.senderId === user?.id
+                                    ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200'
+                                    : 'bg-gradient-to-br from-gray-50 to-gray-100/50 border-gray-200'
+                                }`}
+                              >
+                                {/* Imagen de la propiedad si existe */}
+                                {message.property.images && message.property.images.length > 0 && (
+                                  <div className="relative h-48 w-full overflow-hidden bg-gray-200">
+                                    <img
+                                      src={message.property.images[0]}
+                                      alt={message.property.title}
+                                      className="w-full h-full object-cover"
+                                      onError={e => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
                                       }}
+                                    />
+                                    <div className="absolute top-2 right-2">
+                                      <Badge
+                                        className={`${
+                                          message.senderId === user?.id
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-gray-800 text-white'
+                                        }`}
+                                      >
+                                        Propiedad Compartida
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="p-4">
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div
+                                      className={`p-2 rounded-lg ${
+                                        message.senderId === user?.id
+                                          ? 'bg-blue-200 text-blue-700'
+                                          : 'bg-gray-200 text-gray-700'
+                                      }`}
                                     >
-                                      <Eye className="w-4 h-4 mr-2" />
-                                      Ver Propiedad
-                                    </Button>
+                                      <Home className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-bold text-base mb-1 text-gray-900">
+                                        {message.property.title}
+                                      </h4>
+                                      <p className="text-sm text-gray-600 flex items-center gap-1 mb-2">
+                                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                                        <span className="truncate">{message.property.address}</span>
+                                      </p>
+
+                                      {/* Información adicional */}
+                                      <div className="flex flex-wrap gap-3 mb-3 text-xs text-gray-600">
+                                        {message.property.price && (
+                                          <div className="flex items-center gap-1">
+                                            <DollarSign className="w-3 h-3" />
+                                            <span className="font-semibold text-gray-900">
+                                              {new Intl.NumberFormat('es-CL', {
+                                                style: 'currency',
+                                                currency: 'CLP',
+                                                maximumFractionDigits: 0,
+                                              }).format(message.property.price)}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {message.property.bedrooms && (
+                                          <div className="flex items-center gap-1">
+                                            <Bed className="w-3 h-3" />
+                                            <span>{message.property.bedrooms}</span>
+                                          </div>
+                                        )}
+                                        {message.property.bathrooms && (
+                                          <div className="flex items-center gap-1">
+                                            <Bath className="w-3 h-3" />
+                                            <span>{message.property.bathrooms}</span>
+                                          </div>
+                                        )}
+                                        {message.property.area && (
+                                          <div className="flex items-center gap-1">
+                                            <Square className="w-3 h-3" />
+                                            <span>{message.property.area} m²</span>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <Button
+                                        size="sm"
+                                        className={`w-full ${
+                                          message.senderId === user?.id
+                                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                            : 'bg-gray-800 hover:bg-gray-900 text-white'
+                                        }`}
+                                        onClick={() => {
+                                          // Extraer enlace del contenido del mensaje si existe
+                                          const linkMatch =
+                                            message.content.match(/https?:\/\/[^\s]+/);
+                                          if (linkMatch) {
+                                            window.open(linkMatch[0], '_blank');
+                                          } else if (message.propertyId) {
+                                            router.push(`/properties/${message.propertyId}`);
+                                          }
+                                        }}
+                                      >
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        Ver Propiedad Completa
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Mensaje personalizado si existe */}
                               {message.content &&
-                                !message.content.match(/^Hola.*te comparto esta propiedad/) && (
-                                  <p className="text-xs opacity-90 whitespace-pre-wrap">
-                                    {message.content.split('\n\n🔗')[0]}
-                                  </p>
+                                !message.content.match(/^Hola.*te comparto esta propiedad/) &&
+                                message.content.split('\n\n🔗')[0]?.trim() && (
+                                  <div
+                                    className={`p-3 rounded-lg ${
+                                      message.senderId === user?.id
+                                        ? 'bg-blue-50/50 border border-blue-100'
+                                        : 'bg-gray-50 border border-gray-200'
+                                    }`}
+                                  >
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                      {message.content.split('\n\n🔗')[0]?.trim() || ''}
+                                    </p>
+                                  </div>
                                 )}
                             </div>
                           ) : (

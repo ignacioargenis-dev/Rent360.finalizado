@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { NotificationService, NotificationType } from '@/lib/notification-service';
 
 // Forzar renderizado dinámico
 export const dynamic = 'force-dynamic';
@@ -161,6 +162,34 @@ export async function POST(request: NextRequest, { params }: { params: { clientI
         propertyId: property.id, // Asociar con la propiedad
       },
     });
+
+    // Enviar notificación al receptor
+    try {
+      await NotificationService.create({
+        userId: brokerClient.userId,
+        type: NotificationType.NEW_MESSAGE,
+        title: `Nueva propiedad compartida`,
+        message: `${user.name || 'Tu corredor'} te compartió una propiedad: ${property.title}`,
+        link: `/messages?conversation=${user.id}`,
+        metadata: {
+          messageId: message.id,
+          senderId: user.id,
+          senderName: user.name,
+          propertyId: property.id,
+          propertyTitle: property.title,
+          type: 'PROPERTY_SHARE',
+        },
+      });
+      logger.info('Notificación de propiedad compartida enviada', {
+        receiverId: brokerClient.userId,
+        messageId: message.id,
+      });
+    } catch (notificationError) {
+      logger.warn('Error enviando notificación de propiedad compartida', {
+        error: notificationError,
+      });
+      // No fallar la respuesta si hay error en notificaciones
+    }
 
     // Guardar tracking del enlace compartido en ClientActivity
     if (brokerClient.id && !brokerClient.id.startsWith('temp_')) {

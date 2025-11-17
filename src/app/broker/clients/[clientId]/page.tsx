@@ -279,7 +279,8 @@ export default function BrokerClientDetailPage() {
 
   const loadAvailableProperties = async () => {
     try {
-      const response = await fetch('/api/broker/properties?status=available&limit=100', {
+      // Cargar todas las propiedades (propias y gestionadas) disponibles o en cualquier estado
+      const response = await fetch('/api/broker/properties?status=all&limit=100', {
         credentials: 'include',
         headers: {
           Accept: 'application/json',
