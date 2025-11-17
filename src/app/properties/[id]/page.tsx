@@ -26,6 +26,8 @@ import {
   Star,
   Users,
   Clock,
+  Info,
+  X,
 } from 'lucide-react';
 import { logger } from '@/lib/logger-minimal';
 
@@ -69,6 +71,8 @@ export default function PublicPropertyDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isSharedProperty, setIsSharedProperty] = useState(false);
+  const [shareBrokerName, setShareBrokerName] = useState<string | null>(null);
 
   const checkAuthStatus = async () => {
     try {
@@ -128,6 +132,43 @@ export default function PublicPropertyDetailPage() {
   useEffect(() => {
     checkAuthStatus();
     loadPropertyDetails();
+
+    // Procesar parámetros de URL para detectar propiedad compartida
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareToken = urlParams.get('share');
+    const brokerId = urlParams.get('broker');
+    const clientId = urlParams.get('client');
+
+    if (shareToken && brokerId) {
+      setIsSharedProperty(true);
+
+      // Registrar el clic en el enlace compartido
+      fetch(
+        `/api/properties/${propertyId}/track-share?share=${shareToken}&broker=${brokerId}&client=${clientId || ''}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      ).catch(err => {
+        logger.warn('Error tracking share link:', err);
+      });
+
+      // Obtener nombre del broker si es posible
+      if (brokerId) {
+        fetch(`/api/users/${brokerId}`, {
+          credentials: 'include',
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.user?.name) {
+              setShareBrokerName(data.user.name);
+            }
+          })
+          .catch(() => {
+            // Ignorar error, no crítico
+          });
+      }
+    }
   }, [propertyId, loadPropertyDetails]);
 
   const handleContact = async () => {
@@ -438,6 +479,36 @@ export default function PublicPropertyDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Banner para propiedad compartida */}
+      {isSharedProperty && (
+        <div className="bg-blue-50 border-b border-blue-200">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">
+                    {shareBrokerName
+                      ? `Esta propiedad fue compartida contigo por ${shareBrokerName}`
+                      : 'Esta propiedad fue compartida contigo por tu corredor'}
+                  </p>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    Puedes contactar directamente para más información
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSharedProperty(false)}
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+                aria-label="Cerrar banner"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -35,7 +35,26 @@ import {
   Users,
   Home,
   FileText as DocumentIcon,
+  Share2,
+  Plus,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
@@ -125,6 +144,11 @@ export default function BrokerClientDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [newInteraction, setNewInteraction] = useState('');
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
+  const [sharingProperty, setSharingProperty] = useState(false);
+  const [availableProperties, setAvailableProperties] = useState<any[]>([]);
 
   // Mock data for client details
   const mockClient: ClientDetail = {
@@ -250,7 +274,67 @@ export default function BrokerClientDetailPage() {
 
   useEffect(() => {
     loadClientDetails();
+    loadAvailableProperties();
   }, [clientId]);
+
+  const loadAvailableProperties = async () => {
+    try {
+      const response = await fetch('/api/broker/properties?status=available&limit=100', {
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.properties) {
+          setAvailableProperties(data.properties);
+        } else if (data.data) {
+          setAvailableProperties(data.data);
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading available properties:', error);
+    }
+  };
+
+  const handleShareProperty = async () => {
+    if (!selectedPropertyId) {
+      toast.error('Selecciona una propiedad');
+      return;
+    }
+
+    try {
+      setSharingProperty(true);
+      const response = await fetch(`/api/broker/clients/${clientId}/share-property`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          propertyId: selectedPropertyId,
+          message: shareMessage || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Propiedad compartida exitosamente');
+        setShowShareDialog(false);
+        setSelectedPropertyId('');
+        setShareMessage('');
+        loadClientDetails(); // Recargar para actualizar datos
+      } else {
+        toast.error(data.error || 'Error al compartir propiedad');
+      }
+    } catch (error) {
+      logger.error('Error sharing property:', error);
+      toast.error('Error al compartir propiedad');
+    } finally {
+      setSharingProperty(false);
+    }
+  };
 
   const loadClientDetails = async () => {
     setIsLoading(true);
@@ -627,8 +711,11 @@ export default function BrokerClientDetailPage() {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Tipo de Cliente</label>
                       <p className="font-semibold">
-                        {client.type?.toLowerCase() === 'tenant' ? 'Inquilino' : 
-                         client.type?.toLowerCase() === 'both' ? 'Ambos' : 'Propietario'}
+                        {client.type?.toLowerCase() === 'tenant'
+                          ? 'Inquilino'
+                          : client.type?.toLowerCase() === 'both'
+                            ? 'Ambos'
+                            : 'Propietario'}
                       </p>
                     </div>
                     <div>
@@ -650,7 +737,8 @@ export default function BrokerClientDetailPage() {
               </Card>
 
               {/* Preferences */}
-              {(client.type?.toLowerCase() === 'tenant' || client.type?.toLowerCase() === 'both') && (
+              {(client.type?.toLowerCase() === 'tenant' ||
+                client.type?.toLowerCase() === 'both') && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Preferencias de Búsqueda</CardTitle>
@@ -761,7 +849,17 @@ export default function BrokerClientDetailPage() {
           <TabsContent value="properties" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Propiedades de Interés</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Propiedades de Interés</CardTitle>
+                  <Button
+                    onClick={() => setShowShareDialog(true)}
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Compartir Propiedad
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -980,6 +1078,74 @@ export default function BrokerClientDetailPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Dialog para compartir propiedad */}
+        <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Compartir Propiedad</DialogTitle>
+              <DialogDescription>
+                Selecciona una propiedad para compartir con este cliente mediante el sistema de
+                mensajería.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="property-select">Propiedad a Compartir</Label>
+                <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
+                  <SelectTrigger id="property-select">
+                    <SelectValue placeholder="Selecciona una propiedad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableProperties.length === 0 ? (
+                      <SelectItem value="" disabled>
+                        No hay propiedades disponibles
+                      </SelectItem>
+                    ) : (
+                      availableProperties.map((property: any) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.title} - {property.address} ($
+                          {property.price?.toLocaleString('es-CL') || 'N/A'})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="share-message">Mensaje Personalizado (Opcional)</Label>
+                <Textarea
+                  id="share-message"
+                  placeholder="Agrega un mensaje personalizado para el cliente..."
+                  value={shareMessage}
+                  onChange={e => setShareMessage(e.target.value)}
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Si no agregas un mensaje, se enviará uno por defecto con los detalles de la
+                  propiedad.
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowShareDialog(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleShareProperty}
+                disabled={sharingProperty || !selectedPropertyId}
+              >
+                {sharingProperty && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                )}
+                Compartir Propiedad
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

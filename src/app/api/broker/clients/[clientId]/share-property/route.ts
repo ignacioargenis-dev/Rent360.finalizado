@@ -162,7 +162,7 @@ export async function POST(request: NextRequest, { params }: { params: { clientI
       },
     });
 
-    // Crear actividad del cliente si existe relación BrokerClient
+    // Guardar tracking del enlace compartido en ClientActivity
     if (brokerClient.id && !brokerClient.id.startsWith('temp_')) {
       try {
         await db.clientActivity.create({
@@ -178,7 +178,10 @@ export async function POST(request: NextRequest, { params }: { params: { clientI
               propertyTitle: property.title,
               propertyPrice: property.price,
               shareLink,
+              shareToken, // Guardar token para tracking
               messageId: message.id,
+              sharedAt: new Date().toISOString(),
+              viewCount: 0, // Inicializar contador de vistas
             },
           },
         });

@@ -38,6 +38,9 @@ import {
   X,
   Users,
   User,
+  Home,
+  MapPin,
+  Eye,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { websocketClient } from '@/lib/websocket/socket-client';
@@ -50,11 +53,17 @@ interface Message {
   senderRole: string;
   timestamp: string;
   isRead: boolean;
-  type: 'text' | 'image' | 'file';
+  type: 'text' | 'image' | 'file' | 'PROPERTY_SHARE' | string;
   attachmentUrl?: string;
   attachmentName?: string;
   attachmentSize?: number;
   attachmentType?: string;
+  propertyId?: string;
+  property?: {
+    id: string;
+    title: string;
+    address: string;
+  };
 }
 
 interface Conversation {
@@ -570,11 +579,13 @@ export default function UnifiedMessagingSystem({
           senderRole: message.sender?.role || 'USER',
           timestamp: message.createdAt || new Date().toISOString(),
           isRead: message.isRead || false,
-          type: 'text',
+          type: message.type || 'text',
           attachmentUrl: message.attachmentUrl,
           attachmentName: message.attachmentName,
           attachmentSize: message.attachmentSize,
           attachmentType: message.attachmentType,
+          propertyId: message.propertyId,
+          property: message.property,
         }));
 
         // Si hay mensajes nuevos, actualizar el timestamp de última actividad
@@ -1276,7 +1287,52 @@ export default function UnifiedMessagingSystem({
                               {formatTimeAgo(message.timestamp)}
                             </span>
                           </div>
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+
+                          {/* Card especial para propiedades compartidas */}
+                          {message.type === 'PROPERTY_SHARE' && message.property ? (
+                            <div className="mt-2 space-y-2">
+                              <div className="bg-white/10 p-3 rounded-lg border border-white/20">
+                                <div className="flex items-start gap-3">
+                                  <Home className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-sm mb-1">
+                                      {message.property.title}
+                                    </h4>
+                                    <p className="text-xs opacity-90 flex items-center gap-1 mb-2">
+                                      <MapPin className="w-3 h-3" />
+                                      {message.property.address}
+                                    </p>
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      className="w-full mt-2"
+                                      onClick={() => {
+                                        // Extraer enlace del contenido del mensaje si existe
+                                        const linkMatch =
+                                          message.content.match(/https?:\/\/[^\s]+/);
+                                        if (linkMatch) {
+                                          window.open(linkMatch[0], '_blank');
+                                        } else {
+                                          router.push(`/properties/${message.propertyId}`);
+                                        }
+                                      }}
+                                    >
+                                      <Eye className="w-4 h-4 mr-2" />
+                                      Ver Propiedad
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                              {message.content &&
+                                !message.content.match(/^Hola.*te comparto esta propiedad/) && (
+                                  <p className="text-xs opacity-90 whitespace-pre-wrap">
+                                    {message.content.split('\n\n🔗')[0]}
+                                  </p>
+                                )}
+                            </div>
+                          ) : (
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          )}
 
                           {/* Mostrar archivo adjunto si existe */}
                           {message.attachmentUrl && (
