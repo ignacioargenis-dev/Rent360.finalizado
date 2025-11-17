@@ -60,22 +60,33 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // El filtro por especialidad y ubicación se puede hacer opcionalmente
     const whereClause: any = {
       isVerified: true,
-      status: 'ACTIVE',
     };
 
-    // Aplicar filtro de ubicación según el parámetro
+    // Construir filtro de estado (aceptar múltiples variantes)
+    const statusFilter = {
+      OR: [
+        { status: 'ACTIVE' },
+        { status: 'active' },
+        { status: 'VERIFIED' },
+        { status: 'verified' },
+      ],
+    };
+
+    // Aplicar filtro de ubicación según el parámetro (solo si hay datos de ubicación)
     if (locationFilter === 'same_city' && maintenance.property.city) {
       // Solo proveedores de la misma ciudad
-      whereClause.city = maintenance.property.city;
+      whereClause.AND = [statusFilter, { city: maintenance.property.city }];
     } else if (locationFilter === 'same_region' && maintenance.property.region) {
       // Proveedores de la misma región (incluye misma ciudad)
-      whereClause.OR = [
-        { city: maintenance.property.city },
-        { region: maintenance.property.region },
+      whereClause.AND = [
+        statusFilter,
+        {
+          OR: [{ city: maintenance.property.city }, { region: maintenance.property.region }],
+        },
       ];
-    } else if (!locationFilter || locationFilter === 'all') {
-      // Sin filtro de ubicación - mostrar todos (pero priorizar los cercanos)
-      // No agregar filtro de ubicación, mostrar todos
+    } else {
+      // Sin filtro de ubicación - mostrar todos
+      whereClause.AND = [statusFilter];
     }
 
     const availableProviders = await db.maintenanceProvider.findMany({
@@ -107,6 +118,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       orderBy: [{ rating: 'desc' }, { completedJobs: 'desc' }, { hourlyRate: 'asc' }],
     });
 
+    // Mapeo de categorías de mantenimiento a especialidades comunes
+    const categoryMapping: Record<string, string[]> = {
+      general: ['general', 'mantenimiento general', 'mantenimiento'],
+      electrical: ['eléctrica', 'electricidad', 'reparaciones eléctricas', 'electrical'],
+      plumbing: ['plomería', 'plumbing', 'fontanería'],
+      structural: ['estructural', 'structural', 'construcción'],
+      appliance: ['electrodomésticos', 'appliance', 'reparación'],
+      cleaning: ['limpieza', 'cleaning', 'limpieza profesional'],
+      other: ['otro', 'other', 'general'],
+    };
+
     // Filtrar y transformar proveedores
     const providersWithDistance = availableProviders
       .map(provider => {
@@ -114,23 +136,73 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         let specialtiesArray: string[] = [];
         if (provider.specialties) {
           try {
-            specialtiesArray = JSON.parse(provider.specialties);
+            const parsed = JSON.parse(provider.specialties);
+            specialtiesArray = Array.isArray(parsed) ? parsed : [provider.specialties];
           } catch {
             // Si no es JSON, usar como string único
             specialtiesArray = [provider.specialties];
           }
         }
 
-        // Verificar si el proveedor tiene la especialidad requerida (opcional)
-        const matchesCategory =
-          !maintenance.category ||
-          specialtiesArray.some(s =>
-            s.toLowerCase().includes(maintenance.category.toLowerCase())
-          ) ||
-          provider.specialty?.toLowerCase().includes(maintenance.category.toLowerCase());
+        // Agregar specialty principal a la lista si no está
+        if (provider.specialty && !specialtiesArray.includes(provider.specialty)) {
+          specialtiesArray.unshift(provider.specialty);
+        }
 
+        // Verificar si el proveedor tiene la especialidad requerida (más flexible)
+        let matchesCategory = true;
+        if (maintenance.category) {
+          const categoryLower = maintenance.category.toLowerCase();
+          const mappedCategories = categoryMapping[categoryLower] || [categoryLower];
+
+          // Verificar si alguna especialidad coincide con la categoría o sus variantes
+          const hasMatchingSpecialty = specialtiesArray.some(spec => {
+            const specLower = spec.toLowerCase();
+            return mappedCategories.some(cat => specLower.includes(cat) || cat.includes(specLower));
+          });
+
+          const hasMatchingMainSpecialty =
+            provider.specialty &&
+            mappedCategories.some(
+              cat =>
+                provider.specialty!.toLowerCase().includes(cat) ||
+                cat.includes(provider.specialty!.toLowerCase())
+            );
+
+          matchesCategory = hasMatchingSpecialty || hasMatchingMainSpecialty || false;
+        }
+
+        // Si hay categoría pero no coincide, aún así mostrar el proveedor (filtro no estricto)
+        // Solo loguear para debug
         if (!matchesCategory && maintenance.category) {
-          return null; // Filtrar si no coincide con la categoría
+          logger.info('Proveedor no coincide con categoría pero se muestra:', {
+            providerId: provider.id,
+            providerSpecialty: provider.specialty,
+            providerSpecialties: specialtiesArray,
+            maintenanceCategory: maintenance.category,
+          });
+        }
+
+        // Parsear availability (es un JSON string)
+        let availabilityParsed: any = {};
+        let availabilityStatus = 'available';
+        if (provider.availability) {
+          try {
+            availabilityParsed = JSON.parse(provider.availability);
+            // Determinar disponibilidad basado en el objeto parseado
+            if (
+              availabilityParsed.weekdays ||
+              availabilityParsed.weekends ||
+              availabilityParsed.emergencies
+            ) {
+              availabilityStatus = 'available';
+            } else {
+              availabilityStatus = 'busy';
+            }
+          } catch {
+            // Si no es JSON válido, asumir disponible
+            availabilityStatus = 'available';
+          }
         }
 
         // Calcular distancia aproximada
@@ -158,9 +230,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           experience: `${provider.completedJobs || 0} trabajos completados`,
           distance,
           estimatedCost: (provider.hourlyRate || 0) * 2, // Estimación básica de 2 horas
-          availability: provider.availability || 'available',
-          availabilityStatus: provider.availability === 'available' ? 'available' : 'busy',
-          responseTime: provider.responseTime || 'N/A',
+          availability: availabilityParsed,
+          availabilityStatus: availabilityStatus,
+          responseTime: provider.responseTime ? `${provider.responseTime} horas` : 'N/A',
           description: provider.description || '',
           profileImage: provider.profileImage || '',
         };
@@ -170,7 +242,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     logger.info('Prestadores disponibles obtenidos:', {
       maintenanceId,
       userId: user.id,
-      providersCount: providersWithDistance.length,
+      totalProvidersFound: availableProviders.length,
+      providersAfterFiltering: providersWithDistance.length,
+      maintenanceCategory: maintenance.category,
+      propertyCity: maintenance.property.city,
+      propertyRegion: maintenance.property.region,
+      locationFilter,
     });
 
     return NextResponse.json({
