@@ -14,29 +14,25 @@ import { NotificationService } from './notification-service';
  */
 async function getServiceProviderCommissionPercentage(): Promise<number> {
   try {
-    // Intentar obtener desde platformConfig primero
+    // Buscar primero en SystemSetting (donde el admin guarda las configuraciones)
+    const systemSetting = await db.systemSetting.findUnique({
+      where: { key: 'serviceProviderCommissionPercentage' },
+    });
+
+    if (systemSetting) {
+      const percentage = parseFloat(systemSetting.value);
+      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+
+    // Si no existe en SystemSetting, intentar desde PlatformConfig como fallback
     const platformConfig = await db.platformConfig.findUnique({
       where: { key: 'serviceProviderCommissionPercentage' },
     });
 
     if (platformConfig) {
       const percentage = parseFloat(platformConfig.value);
-      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
-        return percentage;
-      }
-    }
-
-    // Si no existe en platformConfig, intentar desde systemSetting
-    const systemSetting = await db.systemSetting.findFirst({
-      where: {
-        key: 'serviceProviderCommissionPercentage',
-        category: 'payouts',
-        isActive: true,
-      },
-    });
-
-    if (systemSetting) {
-      const percentage = parseFloat(systemSetting.value);
       if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
         return percentage;
       }

@@ -6,6 +6,102 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { UserRatingService } from '@/lib/user-rating-service';
 
 /**
+ * Obtiene la configuración de comisión para proveedores de mantenimiento
+ */
+async function getMaintenanceProviderConfig(): Promise<{
+  commissionPercentage: number;
+  gracePeriodDays: number;
+}> {
+  try {
+    const [commissionSetting, gracePeriodSetting] = await Promise.all([
+      db.systemSetting.findUnique({
+        where: { key: 'maintenanceProviderCommissionPercentage' },
+      }),
+      db.systemSetting.findUnique({
+        where: { key: 'maintenanceProviderGracePeriodDays' },
+      }),
+    ]);
+
+    const [commissionConfig, gracePeriodConfig] = await Promise.all([
+      commissionSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'maintenanceProviderCommissionPercentage' },
+          }),
+      gracePeriodSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'maintenanceProviderGracePeriodDays' },
+          }),
+    ]);
+
+    return {
+      commissionPercentage: commissionSetting
+        ? parseFloat(commissionSetting.value) || 8
+        : commissionConfig
+          ? parseFloat(commissionConfig.value) || 8
+          : 8,
+      gracePeriodDays: gracePeriodSetting
+        ? parseFloat(gracePeriodSetting.value) || 15
+        : gracePeriodConfig
+          ? parseFloat(gracePeriodConfig.value) || 15
+          : 15,
+    };
+  } catch (error) {
+    logger.error('Error obteniendo configuración de mantenimiento:', error);
+    return { commissionPercentage: 8, gracePeriodDays: 15 };
+  }
+}
+
+/**
+ * Obtiene la configuración de comisión para proveedores de servicios
+ */
+async function getServiceProviderConfig(): Promise<{
+  commissionPercentage: number;
+  gracePeriodDays: number;
+}> {
+  try {
+    const [commissionSetting, gracePeriodSetting] = await Promise.all([
+      db.systemSetting.findUnique({
+        where: { key: 'serviceProviderCommissionPercentage' },
+      }),
+      db.systemSetting.findUnique({
+        where: { key: 'serviceProviderGracePeriodDays' },
+      }),
+    ]);
+
+    const [commissionConfig, gracePeriodConfig] = await Promise.all([
+      commissionSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'serviceProviderCommissionPercentage' },
+          }),
+      gracePeriodSetting
+        ? null
+        : db.platformConfig.findUnique({
+            where: { key: 'serviceProviderGracePeriodDays' },
+          }),
+    ]);
+
+    return {
+      commissionPercentage: commissionSetting
+        ? parseFloat(commissionSetting.value) || 8
+        : commissionConfig
+          ? parseFloat(commissionConfig.value) || 8
+          : 8,
+      gracePeriodDays: gracePeriodSetting
+        ? parseFloat(gracePeriodSetting.value) || 7
+        : gracePeriodConfig
+          ? parseFloat(gracePeriodConfig.value) || 7
+          : 7,
+    };
+  } catch (error) {
+    logger.error('Error obteniendo configuración de servicios:', error);
+    return { commissionPercentage: 8, gracePeriodDays: 7 };
+  }
+}
+
+/**
  * GET /api/provider/stats
  * Obtiene estadísticas del proveedor actual con datos reales
  */
@@ -39,6 +135,11 @@ export async function GET(request: NextRequest) {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
+    // Obtener configuraciones según el tipo de proveedor
+    const config = isMaintenanceProvider(user.role)
+      ? await getMaintenanceProviderConfig()
+      : await getServiceProviderConfig();
+
     let stats: any = {
       totalEarnings: 0,
       thisMonthEarnings: 0,
@@ -48,8 +149,8 @@ export async function GET(request: NextRequest) {
       averageRating: 0,
       totalRatings: 0,
       activeJobs: 0,
-      gracePeriodDays: isMaintenanceProvider(user.role) ? 15 : 7,
-      commissionPercentage: isMaintenanceProvider(user.role) ? 10 : 8,
+      gracePeriodDays: config.gracePeriodDays,
+      commissionPercentage: config.commissionPercentage,
     };
 
     if (isServiceProvider(user.role) && fullUser.serviceProvider) {
@@ -128,8 +229,8 @@ export async function GET(request: NextRequest) {
         activeJobs,
         averageRating: ratingSummary?.averageRating || 0,
         totalRatings: ratingSummary?.totalRatings || 0,
-        gracePeriodDays: 7,
-        commissionPercentage: 8,
+        gracePeriodDays: config.gracePeriodDays,
+        commissionPercentage: config.commissionPercentage,
       };
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       const maintenanceProviderId = fullUser.maintenanceProvider.id;
@@ -202,8 +303,8 @@ export async function GET(request: NextRequest) {
         activeJobs,
         averageRating: ratingSummary?.averageRating || 0,
         totalRatings: ratingSummary?.totalRatings || 0,
-        gracePeriodDays: 15,
-        commissionPercentage: 10,
+        gracePeriodDays: config.gracePeriodDays,
+        commissionPercentage: config.commissionPercentage,
       };
     }
 

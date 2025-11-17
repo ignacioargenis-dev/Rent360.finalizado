@@ -5,6 +5,50 @@ import { requireAuth } from '@/lib/auth';
 import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 
+/**
+ * Obtiene el porcentaje de comisión configurado para proveedores
+ */
+async function getProviderCommissionPercentage(
+  providerType: 'maintenance' | 'service'
+): Promise<number> {
+  try {
+    const key =
+      providerType === 'maintenance'
+        ? 'maintenanceProviderCommissionPercentage'
+        : 'serviceProviderCommissionPercentage';
+
+    // Buscar primero en SystemSetting
+    const systemSetting = await db.systemSetting.findUnique({
+      where: { key },
+    });
+
+    if (systemSetting) {
+      const percentage = parseFloat(systemSetting.value);
+      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+
+    // Si no está en SystemSetting, buscar en PlatformConfig
+    const platformConfig = await db.platformConfig.findUnique({
+      where: { key },
+    });
+
+    if (platformConfig) {
+      const percentage = parseFloat(platformConfig.value);
+      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+
+    // Valor por defecto: 8%
+    return 8;
+  } catch (error) {
+    logger.error('Error obteniendo porcentaje de comisión:', error);
+    return 8;
+  }
+}
+
 // Schema para crear pago a provider
 const createProviderPaymentSchema = z.object({
   providerId: z.string().min(1, 'ID de proveedor requerido'),
@@ -88,8 +132,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Proveedor no encontrado' }, { status: 404 });
     }
 
-    // Calcular comisión
-    const commissionPercentage = validatedData.commissionPercentage || 10; // Default 10%
+    // Obtener porcentaje de comisión desde configuración si no se proporciona
+    const defaultCommissionPercentage = await getProviderCommissionPercentage(
+      validatedData.providerType
+    );
+    const commissionPercentage = validatedData.commissionPercentage || defaultCommissionPercentage;
     const commissionAmount = (validatedData.amount * commissionPercentage) / 100;
     const netAmount = validatedData.amount - commissionAmount;
 

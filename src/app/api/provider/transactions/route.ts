@@ -5,6 +5,47 @@ import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 
 /**
+ * Obtiene el porcentaje de comisión configurado para proveedores
+ */
+async function getProviderCommissionPercentage(isMaintenance: boolean): Promise<number> {
+  try {
+    const key = isMaintenance
+      ? 'maintenanceProviderCommissionPercentage'
+      : 'serviceProviderCommissionPercentage';
+
+    // Buscar primero en SystemSetting
+    const systemSetting = await db.systemSetting.findUnique({
+      where: { key },
+    });
+
+    if (systemSetting) {
+      const percentage = parseFloat(systemSetting.value);
+      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+
+    // Si no está en SystemSetting, buscar en PlatformConfig
+    const platformConfig = await db.platformConfig.findUnique({
+      where: { key },
+    });
+
+    if (platformConfig) {
+      const percentage = parseFloat(platformConfig.value);
+      if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+        return percentage;
+      }
+    }
+
+    // Valores por defecto
+    return isMaintenance ? 8 : 8;
+  } catch (error) {
+    logger.error('Error obteniendo porcentaje de comisión:', error);
+    return 8;
+  }
+}
+
+/**
  * GET /api/provider/transactions
  * Obtiene las transacciones del proveedor actual
  */
@@ -83,29 +124,38 @@ export async function GET(request: NextRequest) {
         take: limit,
       });
 
-      transactions = maintenanceJobs.map(job => ({
-        id: `txn_maint_${job.id}`,
-        amount: job.actualCost || job.estimatedCost || 0,
-        commission: (job.actualCost || job.estimatedCost || 0) * 0.1, // 10% comisión
-        netAmount: (job.actualCost || job.estimatedCost || 0) * 0.9,
-        status: job.transactions[0]?.status || 'PENDING',
-        paymentMethod: job.transactions[0]?.paymentMethod || 'BANK_TRANSFER',
-        createdAt: job.completedDate || job.createdAt,
-        processedAt: job.transactions[0]?.processedAt,
-        notes: `Trabajo de mantenimiento: ${job.title}`,
-        providerType: 'MAINTENANCE',
-        jobs: [
-          {
-            id: job.id,
-            type: 'maintenance',
-            amount: job.actualCost || job.estimatedCost || 0,
-            date: job.completedDate || job.createdAt,
-            clientName: job.requester.name,
-            propertyTitle: job.property.title,
-            propertyAddress: job.property.address,
-          },
-        ],
-      }));
+      // Obtener porcentaje de comisión desde configuración
+      const commissionPercentage = await getProviderCommissionPercentage(true);
+      const commissionRate = commissionPercentage / 100;
+
+      transactions = maintenanceJobs.map(job => {
+        const amount = job.actualCost || job.estimatedCost || 0;
+        const commission = amount * commissionRate;
+        const netAmount = amount - commission;
+        return {
+          id: `txn_maint_${job.id}`,
+          amount,
+          commission,
+          netAmount,
+          status: job.transactions[0]?.status || 'PENDING',
+          paymentMethod: job.transactions[0]?.paymentMethod || 'BANK_TRANSFER',
+          createdAt: job.completedDate || job.createdAt,
+          processedAt: job.transactions[0]?.processedAt,
+          notes: `Trabajo de mantenimiento: ${job.title}`,
+          providerType: 'MAINTENANCE',
+          jobs: [
+            {
+              id: job.id,
+              type: 'maintenance',
+              amount: job.actualCost || job.estimatedCost || 0,
+              date: job.completedDate || job.createdAt,
+              clientName: job.requester.name,
+              propertyTitle: job.property.title,
+              propertyAddress: job.property.address,
+            },
+          ],
+        };
+      });
     } else if (isServiceProvider(user.role)) {
       if (!fullUser.serviceProvider?.id) {
         return NextResponse.json({
@@ -143,27 +193,36 @@ export async function GET(request: NextRequest) {
         take: limit,
       });
 
-      transactions = serviceJobs.map(job => ({
-        id: `txn_service_${job.id}`,
-        amount: job.finalPrice || job.basePrice,
-        commission: (job.finalPrice || job.basePrice) * 0.1, // 10% comisión
-        netAmount: (job.finalPrice || job.basePrice) * 0.9,
-        status: job.transactions[0]?.status || 'PENDING',
-        paymentMethod: job.transactions[0]?.paymentMethod || 'BANK_TRANSFER',
-        createdAt: job.completedDate || job.createdAt,
-        processedAt: job.transactions[0]?.processedAt,
-        notes: `Trabajo de servicio: ${job.title}`,
-        providerType: 'SERVICE',
-        jobs: [
-          {
-            id: job.id,
-            type: 'service',
-            amount: job.finalPrice || job.basePrice,
-            date: job.completedDate || job.createdAt,
-            clientName: job.requester.name,
-          },
-        ],
-      }));
+      // Obtener porcentaje de comisión desde configuración
+      const commissionPercentage = await getProviderCommissionPercentage(false);
+      const commissionRate = commissionPercentage / 100;
+
+      transactions = serviceJobs.map(job => {
+        const amount = job.finalPrice || job.basePrice;
+        const commission = amount * commissionRate;
+        const netAmount = amount - commission;
+        return {
+          id: `txn_service_${job.id}`,
+          amount,
+          commission,
+          netAmount,
+          status: job.transactions[0]?.status || 'PENDING',
+          paymentMethod: job.transactions[0]?.paymentMethod || 'BANK_TRANSFER',
+          createdAt: job.completedDate || job.createdAt,
+          processedAt: job.transactions[0]?.processedAt,
+          notes: `Trabajo de servicio: ${job.title}`,
+          providerType: 'SERVICE',
+          jobs: [
+            {
+              id: job.id,
+              type: 'service',
+              amount: job.finalPrice || job.basePrice,
+              date: job.completedDate || job.createdAt,
+              clientName: job.requester.name,
+            },
+          ],
+        };
+      });
     }
 
     // Filtrar por estado si se especifica
