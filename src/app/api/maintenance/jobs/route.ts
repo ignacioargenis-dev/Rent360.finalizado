@@ -2,86 +2,121 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { handleApiError } from '@/lib/api-error-handler';
 
-// Mock data para trabajos de mantenimiento
-const mockMaintenanceJobs = [
-  {
-    id: '1',
-    title: 'Mantenimiento preventivo - Ascensor',
-    property: 'Edificio Las Condes Tower',
-    type: 'Preventivo',
-    status: 'En progreso',
-    urgency: 'Programado',
-    dueDate: '2024-12-15T14:00:00Z',
-    technician: 'Juan Pérez',
-    description: 'Revisión completa y mantenimiento del ascensor principal',
-    estimatedCost: 150000,
-    createdAt: '2024-12-10T10:00:00Z'
-  },
-  {
-    id: '2',
-    title: 'Reparación urgente - Calefacción',
-    property: 'Casa Providencia 456',
-    type: 'Correctivo',
-    status: 'Pendiente',
-    urgency: 'Alta',
-    dueDate: '2024-12-15T16:00:00Z',
-    technician: 'María González',
-    description: 'Sistema de calefacción dejó de funcionar',
-    estimatedCost: 80000,
-    createdAt: '2024-12-14T08:00:00Z'
-  },
-  {
-    id: '3',
-    title: 'Inspección mensual - Electricidad',
-    property: 'Departamento Santiago Centro',
-    type: 'Preventivo',
-    status: 'Programado',
-    urgency: 'Media',
-    dueDate: '2024-12-16T11:00:00Z',
-    technician: 'Carlos Rodríguez',
-    description: 'Inspección rutinaria de instalaciones eléctricas',
-    estimatedCost: 50000,
-    createdAt: '2024-12-12T09:00:00Z'
-  },
-  {
-    id: '4',
-    title: 'Limpieza de conductos de ventilación',
-    property: 'Oficina Vitacura',
-    type: 'Preventivo',
-    status: 'Pendiente',
-    urgency: 'Baja',
-    dueDate: '2024-12-18T08:00:00Z',
-    technician: 'Ana Silva',
-    description: 'Limpieza profunda del sistema de ventilación',
-    estimatedCost: 120000,
-    createdAt: '2024-12-13T10:00:00Z'
-  }
-];
+function mapJobStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    PENDING: 'pending',
+    ASSIGNED: 'pending',
+    IN_PROGRESS: 'in_progress',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+  };
+  return statusMap[status.toUpperCase()] || 'pending';
+}
+
+function mapPriority(priority: string): string {
+  const priorityMap: Record<string, string> = {
+    LOW: 'low',
+    MEDIUM: 'medium',
+    HIGH: 'high',
+    URGENT: 'urgent',
+  };
+  return priorityMap[priority.toUpperCase()] || 'medium';
+}
+
+function mapMaintenanceType(category: string): string {
+  const typeMap: Record<string, string> = {
+    PLUMBING: 'plumbing',
+    ELECTRICAL: 'electrical',
+    STRUCTURAL: 'structural',
+    CLEANING: 'cleaning',
+    HVAC: 'other',
+    OTHER: 'other',
+  };
+  return typeMap[category.toUpperCase()] || 'other';
+}
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
     if (user.role !== 'MAINTENANCE') {
-      return NextResponse.json(
-        { error: 'Acceso no autorizado' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Acceso no autorizado' }, { status: 403 });
     }
 
-    // En un futuro real, consultaríamos la base de datos
-    return NextResponse.json({
-      success: true,
-      jobs: mockMaintenanceJobs
+    // Obtener datos completos del usuario para acceder a las relaciones
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: {
+        maintenanceProvider: true,
+      },
     });
 
+    if (!fullUser || !fullUser.maintenanceProvider) {
+      return NextResponse.json({
+        success: true,
+        jobs: [],
+      });
+    }
+
+    // Obtener trabajos de mantenimiento reales
+    const maintenanceJobs = await db.maintenance.findMany({
+      where: {
+        maintenanceProviderId: fullUser.maintenanceProvider.id,
+      },
+      include: {
+        requester: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        property: {
+          select: {
+            title: true,
+            address: true,
+            commune: true,
+            city: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 100,
+    });
+
+    // Transformar los datos al formato esperado por el frontend
+    const jobs = maintenanceJobs.map(job => ({
+      id: job.id,
+      title: job.title,
+      description: job.description || '',
+      propertyAddress: job.property?.address || job.property?.title || 'Dirección no disponible',
+      propertyOwner: job.requester?.name || 'Propietario no identificado',
+      ownerPhone: job.requester?.phone || '',
+      status: mapJobStatus(job.status),
+      priority: mapPriority(job.priority),
+      maintenanceType: mapMaintenanceType(job.category),
+      estimatedCost: job.estimatedCost || 0,
+      actualCost: job.actualCost || undefined,
+      scheduledDate:
+        job.scheduledDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      completedDate: job.completedDate?.toISOString().split('T')[0],
+      notes: job.visitNotes || undefined,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      jobs,
+    });
   } catch (error) {
-    logger.error('Error obteniendo trabajos de mantenimiento:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error obteniendo trabajos de mantenimiento:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const errorResponse = handleApiError(error);
+    return errorResponse;
   }
 }
 
@@ -90,14 +125,12 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth(request);
 
     if (user.role !== 'MAINTENANCE') {
-      return NextResponse.json(
-        { error: 'Acceso no autorizado' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Acceso no autorizado' }, { status: 403 });
     }
 
     const body = await request.json();
-    const { title, property, type, description, estimatedCost, dueDate, technician, urgency } = body;
+    const { title, property, type, description, estimatedCost, dueDate, technician, urgency } =
+      body;
 
     // Validación básica
     if (!title || !property || !type || !description) {
@@ -119,22 +152,23 @@ export async function POST(request: NextRequest) {
       technician: technician || 'Por asignar',
       urgency: urgency || 'Media',
       status: 'Pendiente',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
-    logger.info('Nuevo trabajo de mantenimiento creado:', { maintenanceId: user.id, jobId: newJob.id });
+    logger.info('Nuevo trabajo de mantenimiento creado:', {
+      maintenanceId: user.id,
+      jobId: newJob.id,
+    });
 
     return NextResponse.json({
       success: true,
       job: newJob,
-      message: 'Trabajo de mantenimiento creado exitosamente'
+      message: 'Trabajo de mantenimiento creado exitosamente',
     });
-
   } catch (error) {
-    logger.error('Error creando trabajo de mantenimiento:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error creando trabajo de mantenimiento:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

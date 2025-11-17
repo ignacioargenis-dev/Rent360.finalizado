@@ -39,6 +39,7 @@ import {
   CheckCircle,
   FileText,
   ChevronRight,
+  Info,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
@@ -67,6 +68,7 @@ interface MaintenanceSettings {
   serviceRadius: number;
   emergencyService: boolean;
   insuranceCoverage: boolean;
+  responseTime?: string;
 
   // Notification settings
   emailNotifications: boolean;
@@ -94,14 +96,13 @@ export default function MaintenanceSettingsPage() {
   >([]);
 
   const [settings, setSettings] = useState<MaintenanceSettings>({
-    companyName: 'Servicios de Mantenimiento XYZ',
-    description:
-      'Especialistas en reparaciones y mantenimiento de propiedades residenciales y comerciales.',
-    phone: '+56912345678',
-    email: 'contacto@mantenimiento.cl',
-    website: 'https://mantenimiento.cl',
+    companyName: '',
+    description: '',
+    phone: '',
+    email: '',
+    website: '',
 
-    specialties: ['plumbing', 'electrical', 'cleaning'],
+    specialties: [],
     workingHours: {
       monday: { start: '08:00', end: '18:00', enabled: true },
       tuesday: { start: '08:00', end: '18:00', enabled: true },
@@ -113,18 +114,29 @@ export default function MaintenanceSettingsPage() {
     },
 
     serviceRadius: 25,
-    emergencyService: true,
-    insuranceCoverage: true,
+    emergencyService: false,
+    insuranceCoverage: false,
+    responseTime: '2-4 horas',
 
     emailNotifications: true,
     smsNotifications: false,
     pushNotifications: true,
 
-    paymentMethods: ['platform_payment', 'bank_transfer', 'credit_card'],
-    minimumJobValue: 15000,
-    depositRequired: true,
-    depositPercentage: 30,
+    paymentMethods: ['platform_payment'],
+    minimumJobValue: 0,
+    depositRequired: false,
+    depositPercentage: 0,
   });
+
+  const [bankAccount, setBankAccount] = useState<{
+    id?: string;
+    bankName: string;
+    accountType: string;
+    accountNumber: string;
+    accountHolderName: string;
+    rut: string;
+  } | null>(null);
+  const [loadingBankAccount, setLoadingBankAccount] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -142,19 +154,63 @@ export default function MaintenanceSettingsPage() {
   useEffect(() => {
     const loadUserSettings = async () => {
       try {
-        // Cargar datos del usuario
+        setLoading(true);
+
+        // Cargar datos del usuario y perfil de mantenimiento
         const userResponse = await fetch('/api/auth/me', {
           credentials: 'include',
         });
         if (userResponse.ok) {
           const userData = await userResponse.json();
-          // Actualizar settings con datos reales del usuario
           setSettings(prev => ({
             ...prev,
-            companyName: userData.user?.name || prev.companyName,
-            email: userData.user?.email || prev.email,
-            phone: userData.user?.phone || prev.phone,
+            companyName: userData.user?.name || '',
+            email: userData.user?.email || '',
+            phone: userData.user?.phone || '',
           }));
+        }
+
+        // Cargar perfil de mantenimiento
+        const profileResponse = await fetch('/api/provider/profile', {
+          credentials: 'include',
+        });
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (profileData.success && profileData.profile) {
+            const profile = profileData.profile;
+
+            // Parsear especialidades
+            const specialtiesRaw = profile.specialties || profile.serviceTypes || [];
+            const specialties = Array.isArray(specialtiesRaw)
+              ? specialtiesRaw.map((s: any) => (typeof s === 'string' ? s : s.name || s))
+              : [];
+
+            // Parsear horarios de trabajo
+            let workingHours = settings.workingHours;
+            if (profile.availability) {
+              try {
+                const availability =
+                  typeof profile.availability === 'string'
+                    ? JSON.parse(profile.availability)
+                    : profile.availability;
+                // Mapear disponibilidad a workingHours si existe
+              } catch (e) {
+                // Ignorar error de parsing
+              }
+            }
+
+            setSettings(prev => ({
+              ...prev,
+              companyName: profile.businessName || profile.companyName || prev.companyName,
+              description: profile.description || '',
+              website: profile.website || '',
+              specialties: specialties,
+              serviceRadius: profile.serviceRadius || 25,
+              emergencyService: profile.availability?.emergencies || false,
+              insuranceCoverage: profile.insuranceCoverage || false,
+              responseTime: profile.responseTime || '2-4 horas',
+            }));
+          }
         }
 
         // ✅ Cargar configuraciones de notificaciones desde la nueva API
@@ -180,13 +236,38 @@ export default function MaintenanceSettingsPage() {
             }));
           }
         }
+
+        // Cargar cuenta bancaria
+        await loadBankAccount();
       } catch (error) {
         logger.error('Error loading maintenance settings:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadUserSettings();
   }, []);
+
+  const loadBankAccount = async () => {
+    try {
+      setLoadingBankAccount(true);
+      const response = await fetch('/api/provider/bank-account', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setBankAccount(data.bankAccount || null);
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading bank account:', error);
+    } finally {
+      setLoadingBankAccount(false);
+    }
+  };
 
   // Funciones para documentos fiscales
   const handleViewDocument = (documentType: string) => {
@@ -250,7 +331,32 @@ export default function MaintenanceSettingsPage() {
         throw new Error(errorData.error || 'Error al guardar la configuración');
       }
 
-      const data = await response.json();
+      // Guardar perfil de mantenimiento usando la API de provider/profile
+      const profileResponse = await fetch('/api/provider/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          businessName: settings.companyName,
+          description: settings.description,
+          website: settings.website,
+          specialties: settings.specialties,
+          serviceRadius: settings.serviceRadius,
+          responseTime: settings.responseTime || '2-4 horas',
+          availability: {
+            weekdays: true,
+            weekends:
+              settings.workingHours.saturday.enabled || settings.workingHours.sunday.enabled,
+            emergencies: settings.emergencyService,
+          },
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        logger.warn('Error al guardar perfil de mantenimiento, pero el perfil básico se guardó');
+      }
 
       // ✅ Guardar configuraciones de notificaciones
       const notificationsResponse = await fetch('/api/user/settings', {
@@ -535,31 +641,70 @@ export default function MaintenanceSettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wrench className="w-5 h-5" />
-                  Especialidades y Servicios
+                  Servicios Ofrecidos
                 </CardTitle>
-                <CardDescription>Configura las especialidades que ofreces</CardDescription>
+                <CardDescription>
+                  Gestiona los servicios que ofreces y sus precios base
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {[
-                    { id: 'plumbing', label: 'Plomería' },
-                    { id: 'electrical', label: 'Eléctrica' },
-                    { id: 'structural', label: 'Estructural' },
-                    { id: 'cleaning', label: 'Limpieza' },
-                    { id: 'painting', label: 'Pintura' },
-                    { id: 'carpentry', label: 'Carpintería' },
-                  ].map(specialty => (
-                    <div key={specialty.id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={specialty.id}
-                        checked={settings.specialties.includes(specialty.id)}
-                        onChange={() => toggleSpecialty(specialty.id)}
-                        className="rounded"
-                      />
-                      <Label htmlFor={specialty.id}>{specialty.label}</Label>
+              <CardContent className="space-y-6">
+                {/* Lista de servicios disponibles */}
+                <div>
+                  <Label className="text-base font-semibold mb-4 block">
+                    Especialidades y Tipos de Servicio
+                  </Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {[
+                      { id: 'plumbing', label: 'Plomería', icon: '🔧' },
+                      { id: 'electrical', label: 'Eléctrica', icon: '⚡' },
+                      { id: 'structural', label: 'Estructural', icon: '🏗️' },
+                      { id: 'cleaning', label: 'Limpieza', icon: '🧹' },
+                      { id: 'painting', label: 'Pintura', icon: '🎨' },
+                      { id: 'carpentry', label: 'Carpintería', icon: '🪚' },
+                      { id: 'hvac', label: 'Climatización', icon: '❄️' },
+                      { id: 'appliances', label: 'Electrodomésticos', icon: '🔌' },
+                      { id: 'landscaping', label: 'Jardinería', icon: '🌳' },
+                    ].map(specialty => (
+                      <div
+                        key={specialty.id}
+                        className={`flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          settings.specialties.includes(specialty.id)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleSpecialty(specialty.id)}
+                      >
+                        <input
+                          type="checkbox"
+                          id={specialty.id}
+                          checked={settings.specialties.includes(specialty.id)}
+                          onChange={() => toggleSpecialty(specialty.id)}
+                          className="rounded"
+                        />
+                        <Label
+                          htmlFor={specialty.id}
+                          className="cursor-pointer flex items-center gap-2"
+                        >
+                          <span>{specialty.icon}</span>
+                          <span>{specialty.label}</span>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Información adicional sobre servicios */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-blue-800">
+                        <strong>Consejo:</strong> Selecciona solo las especialidades en las que
+                        tienes experiencia comprobada. Los clientes podrán filtrar por estas
+                        especialidades al buscar proveedores de mantenimiento.
+                      </p>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -568,7 +713,7 @@ export default function MaintenanceSettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
-                  Área de Servicio
+                  Área de Cobertura y Disponibilidad
                 </CardTitle>
                 <CardDescription>
                   Configura tu radio de servicio y opciones adicionales
@@ -581,14 +726,24 @@ export default function MaintenanceSettingsPage() {
                     id="serviceRadius"
                     type="number"
                     value={settings.serviceRadius}
-                    onChange={e => updateSetting('serviceRadius', parseInt(e.target.value))}
+                    onChange={e => updateSetting('serviceRadius', parseInt(e.target.value) || 0)}
+                    min="1"
+                    max="100"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Define el radio máximo en kilómetros desde tu ubicación base para aceptar
+                    trabajos.
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="emergencyService">Servicio de Emergencia 24/7</Label>
-                    <p className="text-sm text-gray-600">Disponible para reparaciones urgentes</p>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <Label htmlFor="emergencyService" className="font-semibold">
+                      Servicio de Emergencia 24/7
+                    </Label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Disponible para reparaciones urgentes fuera del horario normal
+                    </p>
                   </div>
                   <Switch
                     id="emergencyService"
@@ -597,16 +752,55 @@ export default function MaintenanceSettingsPage() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="insuranceCoverage">Cobertura de Seguro</Label>
-                    <p className="text-sm text-gray-600">Trabajos con seguro de responsabilidad</p>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <Label htmlFor="insuranceCoverage" className="font-semibold">
+                      Cobertura de Seguro
+                    </Label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Trabajos con seguro de responsabilidad civil activo
+                    </p>
                   </div>
                   <Switch
                     id="insuranceCoverage"
                     checked={settings.insuranceCoverage}
                     onCheckedChange={checked => updateSetting('insuranceCoverage', checked)}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Tiempo de Respuesta
+                </CardTitle>
+                <CardDescription>
+                  Configura el tiempo promedio de respuesta a solicitudes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="responseTime">Tiempo Promedio de Respuesta</Label>
+                    <Select
+                      value={settings.responseTime || '2-4 horas'}
+                      onValueChange={value => updateSetting('responseTime', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inmediato">Inmediato (menos de 1 hora)</SelectItem>
+                        <SelectItem value="1-2 horas">1-2 horas</SelectItem>
+                        <SelectItem value="2-4 horas">2-4 horas</SelectItem>
+                        <SelectItem value="4-8 horas">4-8 horas</SelectItem>
+                        <SelectItem value="24 horas">24 horas</SelectItem>
+                        <SelectItem value="48 horas">48 horas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -993,39 +1187,65 @@ export default function MaintenanceSettingsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="minimumJobValue">Valor Mínimo de Trabajo</Label>
-                    <Input
-                      id="minimumJobValue"
-                      type="number"
-                      value={settings.minimumJobValue}
-                      onChange={e => updateSetting('minimumJobValue', parseInt(e.target.value))}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="depositPercentage">Porcentaje de Anticipo (%)</Label>
-                    <Input
-                      id="depositPercentage"
-                      type="number"
-                      value={settings.depositPercentage}
-                      onChange={e => updateSetting('depositPercentage', parseInt(e.target.value))}
-                      disabled={!settings.depositRequired}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="depositRequired">Requiere Anticipo</Label>
-                    <p className="text-sm text-gray-600">Solicitar pago anticipado para trabajos</p>
-                  </div>
-                  <Switch
-                    id="depositRequired"
-                    checked={settings.depositRequired}
-                    onCheckedChange={checked => updateSetting('depositRequired', checked)}
-                  />
+                {/* Configuración de Cuenta Bancaria */}
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Cuenta Bancaria para Recibir Pagos</h3>
+                  {loadingBankAccount ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : bankAccount ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-semibold text-green-900">{bankAccount.bankName}</p>
+                          <p className="text-sm text-green-800 mt-1">
+                            Tipo:{' '}
+                            {bankAccount.accountType === 'checking'
+                              ? 'Cuenta Corriente'
+                              : 'Cuenta de Ahorros'}
+                          </p>
+                          <p className="text-sm text-green-800">
+                            Número: ****{bankAccount.accountNumber.slice(-4)}
+                          </p>
+                          <p className="text-sm text-green-800">
+                            Titular: {bankAccount.accountHolderName}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Abrir modal para editar cuenta bancaria
+                            window.location.href = '/provider/payments/configure';
+                          }}
+                        >
+                          Editar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-semibold text-yellow-900 mb-2">
+                            No hay cuenta bancaria configurada
+                          </p>
+                          <p className="text-sm text-yellow-800">
+                            Configura tu cuenta bancaria para recibir los pagos de tus trabajos de
+                            mantenimiento.
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => {
+                            window.location.href = '/provider/payments/configure';
+                          }}
+                        >
+                          Configurar Cuenta
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

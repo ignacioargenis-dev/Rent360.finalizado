@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Star,
   RefreshCw,
@@ -295,28 +303,29 @@ export default function MaintenanceRatingsPage() {
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
+                  <Input
                     type="text"
                     placeholder="Buscar por cliente, comentario o tipo de trabajo..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10"
                   />
                 </div>
               </div>
               <div className="flex gap-2">
-                <select
-                  value={filterRating}
-                  onChange={e => setFilterRating(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">Todas las calificaciones</option>
-                  <option value="5">⭐⭐⭐⭐⭐ 5 estrellas</option>
-                  <option value="4">⭐⭐⭐⭐ 4 estrellas</option>
-                  <option value="3">⭐⭐⭐ 3 estrellas</option>
-                  <option value="2">⭐⭐ 2 estrellas</option>
-                  <option value="1">⭐ 1 estrella</option>
-                </select>
+                <Select value={filterRating} onValueChange={setFilterRating}>
+                  <SelectTrigger className="w-full md:w-64">
+                    <SelectValue placeholder="Todas las calificaciones" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las calificaciones</SelectItem>
+                    <SelectItem value="5">⭐⭐⭐⭐⭐ 5 estrellas</SelectItem>
+                    <SelectItem value="4">⭐⭐⭐⭐ 4 estrellas</SelectItem>
+                    <SelectItem value="3">⭐⭐⭐ 3 estrellas</SelectItem>
+                    <SelectItem value="2">⭐⭐ 2 estrellas</SelectItem>
+                    <SelectItem value="1">⭐ 1 estrella</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button variant="outline">
                   <Download className="w-4 h-4 mr-2" />
                   Exportar

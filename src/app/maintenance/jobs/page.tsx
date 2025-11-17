@@ -93,56 +93,24 @@ export default function MaintenanceJobsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for demonstration
-      const mockJobs: MaintenanceJob[] = [
-        {
-          id: '1',
-          title: 'Reparación de cañería',
-          description: 'Fuga en baño principal del departamento 5B',
-          propertyAddress: 'Av. Las Condes 1234, Las Condes',
-          propertyOwner: 'María González',
-          ownerPhone: '+56912345678',
-          status: 'in_progress',
-          priority: 'high',
-          maintenanceType: 'plumbing',
-          estimatedCost: 45000,
-          actualCost: 52000,
-          scheduledDate: '2024-01-15',
-          notes: 'Cliente solicita reparación urgente',
+      const response = await fetch('/api/maintenance/jobs', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          title: 'Mantenimiento eléctrico',
-          description: 'Revisión completa del sistema eléctrico',
-          propertyAddress: 'Providencia 567, Providencia',
-          propertyOwner: 'Carlos Rodríguez',
-          ownerPhone: '+56987654321',
-          status: 'pending',
-          priority: 'medium',
-          maintenanceType: 'electrical',
-          estimatedCost: 80000,
-          scheduledDate: '2024-01-18',
-        },
-        {
-          id: '3',
-          title: 'Limpieza general',
-          description: 'Limpieza profunda después de desocupación',
-          propertyAddress: 'Ñuñoa 890, Ñuñoa',
-          propertyOwner: 'Ana López',
-          ownerPhone: '+56911223344',
-          status: 'completed',
-          priority: 'low',
-          maintenanceType: 'cleaning',
-          estimatedCost: 30000,
-          actualCost: 28000,
-          scheduledDate: '2024-01-10',
-          completedDate: '2024-01-10',
-        },
-      ];
+        credentials: 'include',
+      });
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setJobs(mockJobs);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success && data.jobs) {
+        setJobs(data.jobs);
+      } else {
+        setJobs([]);
+      }
     } catch (error) {
       logger.error('Error loading maintenance jobs:', {
         error: error instanceof Error ? error.message : String(error),
@@ -404,14 +372,17 @@ export default function MaintenanceJobsPage() {
           </Card>
         </div>
 
-        {/* Filtros y búsqueda */}
+        {/* Lista de trabajos */}
         <Card>
           <CardHeader>
-            <CardTitle>Filtros y Búsqueda</CardTitle>
-            <CardDescription>Filtra y busca trabajos de mantenimiento específicos</CardDescription>
+            <CardTitle>Trabajos de Mantenimiento ({filteredJobs.length})</CardTitle>
+            <CardDescription>
+              Lista de trabajos contratados por propietarios y corredores
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
+            {/* Filtros y búsqueda */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -456,85 +427,6 @@ export default function MaintenanceJobsPage() {
                 Exportar
               </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Acciones Rápidas */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>Herramientas para gestión de trabajos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <QuickActionButton
-                icon={Plus}
-                label="Nuevo Trabajo"
-                description="Agendar mantenimiento"
-                onClick={() => router.push('/maintenance/jobs/new')}
-              />
-
-              <QuickActionButton
-                icon={Search}
-                label="Buscar"
-                description="Buscar trabajos"
-                onClick={() => {
-                  // Focus on search input
-                  const searchInput = document.querySelector(
-                    'input[placeholder*="Buscar"]'
-                  ) as HTMLInputElement;
-                  if (searchInput) {
-                    searchInput.focus();
-                    searchInput.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              />
-
-              <QuickActionButton
-                icon={Download}
-                label="Exportar"
-                description="Descargar lista"
-                onClick={handleExportJobs}
-              />
-
-              <QuickActionButton
-                icon={Calendar}
-                label="Calendario"
-                description="Ver agenda"
-                onClick={() => router.push('/maintenance/calendar')}
-              />
-
-              <QuickActionButton
-                icon={AlertTriangle}
-                label="Urgentes"
-                description="Trabajos críticos"
-                onClick={() => {
-                  setStatusFilter('in_progress');
-                  setTypeFilter('all');
-                  setSuccessMessage('Mostrando trabajos urgentes en progreso');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
-
-              <QuickActionButton
-                icon={RefreshCw}
-                label="Actualizar"
-                description="Recargar lista"
-                onClick={loadJobs}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lista de trabajos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Trabajos de Mantenimiento ({filteredJobs.length})</CardTitle>
-            <CardDescription>
-              Lista de trabajos contratados por propietarios y corredores
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
             <ScrollArea className="h-96">
               <div className="space-y-4">
                 {filteredJobs.map(job => (
@@ -675,6 +567,73 @@ export default function MaintenanceJobsPage() {
                 )}
               </div>
             </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Acciones Rápidas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Acciones Rápidas</CardTitle>
+            <CardDescription>Herramientas para gestión de trabajos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <QuickActionButton
+                icon={Plus}
+                label="Nuevo Trabajo"
+                description="Agendar mantenimiento"
+                onClick={() => router.push('/maintenance/jobs/new')}
+              />
+
+              <QuickActionButton
+                icon={Search}
+                label="Buscar"
+                description="Buscar trabajos"
+                onClick={() => {
+                  // Focus on search input
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar"]'
+                  ) as HTMLInputElement;
+                  if (searchInput) {
+                    searchInput.focus();
+                    searchInput.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              />
+
+              <QuickActionButton
+                icon={Download}
+                label="Exportar"
+                description="Descargar lista"
+                onClick={handleExportJobs}
+              />
+
+              <QuickActionButton
+                icon={Calendar}
+                label="Calendario"
+                description="Ver agenda"
+                onClick={() => router.push('/maintenance/calendar')}
+              />
+
+              <QuickActionButton
+                icon={AlertTriangle}
+                label="Urgentes"
+                description="Trabajos críticos"
+                onClick={() => {
+                  setStatusFilter('in_progress');
+                  setTypeFilter('all');
+                  setSuccessMessage('Mostrando trabajos urgentes en progreso');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
+              />
+
+              <QuickActionButton
+                icon={RefreshCw}
+                label="Actualizar"
+                description="Recargar lista"
+                onClick={loadJobs}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

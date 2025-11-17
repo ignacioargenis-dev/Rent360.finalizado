@@ -109,31 +109,35 @@ export default function MaintenanceReportsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for demonstration
-      const mockData: ReportData = {
-        period: selectedPeriod === 'month' ? 'Enero 2024' : '2024',
-        totalJobs: 45,
-        completedJobs: 42,
-        revenue: 2850000,
-        averageRating: 4.6,
-        topServices: [
-          { type: 'Plomería', count: 12, revenue: 850000 },
-          { type: 'Eléctrica', count: 8, revenue: 720000 },
-          { type: 'Limpieza', count: 15, revenue: 675000 },
-          { type: 'Estructural', count: 5, revenue: 425000 },
-          { type: 'Otro', count: 5, revenue: 175000 },
-        ],
-        monthlyTrend: [
-          { month: 'Ene', jobs: 8, revenue: 520000 },
-          { month: 'Feb', jobs: 12, revenue: 780000 },
-          { month: 'Mar', jobs: 15, revenue: 950000 },
-          { month: 'Abr', jobs: 10, revenue: 600000 },
-        ],
-      };
+      const response = await fetch(`/api/maintenance/reports?period=${selectedPeriod}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setReportData(mockData);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        setReportData(data.data);
+      } else {
+        setReportData({
+          period:
+            selectedPeriod === 'month'
+              ? new Date().toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })
+              : new Date().getFullYear().toString(),
+          totalJobs: 0,
+          completedJobs: 0,
+          revenue: 0,
+          averageRating: 0,
+          topServices: [],
+          monthlyTrend: [],
+        });
+      }
     } catch (error) {
       logger.error('Error loading report data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -146,35 +150,8 @@ export default function MaintenanceReportsPage() {
 
   const loadScheduledReports = async () => {
     try {
-      // Mock data for demonstration
-      const mockReports: ScheduledReport[] = [
-        {
-          id: '1',
-          name: 'Reporte Semanal de Rendimiento',
-          frequency: 'weekly',
-          recipients: 'tú mismo',
-          nextSend: '2024-01-29',
-          status: 'active',
-          type: 'performance',
-          includeCharts: true,
-          includeDetails: true,
-        },
-        {
-          id: '2',
-          name: 'Resumen Mensual Financiero',
-          frequency: 'monthly',
-          recipients: 'tú mismo + contador',
-          nextSend: '2024-02-01',
-          status: 'active',
-          type: 'financial',
-          includeCharts: true,
-          includeDetails: false,
-        },
-      ];
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setScheduledReports(mockReports);
+      // Por ahora, no hay API para reportes programados, usar array vacío
+      setScheduledReports([]);
     } catch (error) {
       logger.error('Error loading scheduled reports:', {
         error: error instanceof Error ? error.message : String(error),
