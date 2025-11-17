@@ -33,6 +33,9 @@ import {
   Loader2,
   X,
   Download,
+  FileText,
+  Eye,
+  ExternalLink,
 } from 'lucide-react';
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -95,6 +98,9 @@ export default function AdminUsersPage() {
   const [successMessage, setSuccessMessage] = useState('');
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [approvingProvider, setApprovingProvider] = useState<string | null>(null);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [selectedProviderDocuments, setSelectedProviderDocuments] = useState<any>(null);
 
   const [newUser, setNewUser] = useState({
     name: '',
@@ -122,6 +128,17 @@ export default function AdminUsersPage() {
     // Remover después de 5 segundos
     setTimeout(() => debugDiv.remove(), 5000);
   }, []); // Array vacío = solo se ejecuta una vez al montar
+
+  // Verificar query params al montar para aplicar filtros iniciales
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get('role');
+      if (roleParam && roleParam !== 'all') {
+        setRoleFilter(roleParam);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     window.console.error('🔍 [USERS] useEffect triggered:', {
@@ -374,6 +391,61 @@ export default function AdminUsersPage() {
       });
       setErrorMessage('Error al cambiar el estado del usuario. Por favor, inténtalo nuevamente.');
       setTimeout(() => setErrorMessage(''), 5000);
+    }
+  };
+
+  const approveProvider = async (userId: string, providerType: 'maintenance' | 'service') => {
+    try {
+      setApprovingProvider(userId);
+      setErrorMessage('');
+
+      // Obtener el ID del proveedor desde el usuario
+      const user = users.find(u => u.id === userId);
+      if (!user) {
+        throw new Error('Usuario no encontrado');
+      }
+
+      const providerId =
+        providerType === 'maintenance'
+          ? (user as any).maintenanceProvider?.id
+          : (user as any).serviceProvider?.id;
+
+      if (!providerId) {
+        throw new Error('Proveedor no encontrado');
+      }
+
+      const response = await fetch('/api/admin/providers', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          providerId,
+          providerType,
+          action: 'update_status',
+          data: {
+            status: 'ACTIVE',
+            isVerified: true,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || 'Error al aprobar proveedor');
+      }
+
+      // Recargar usuarios después de aprobar
+      await fetchUsers();
+      setSuccessMessage('Proveedor aprobado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      logger.error('Error aprobando proveedor:', { error: err });
+      setErrorMessage(err instanceof Error ? err.message : 'Error al aprobar proveedor');
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setApprovingProvider(null);
     }
   };
 
@@ -892,6 +964,7 @@ export default function AdminUsersPage() {
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Contacto</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Rol</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Estado</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Proveedor</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Registrado</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Acciones</th>
                   </tr>
@@ -936,10 +1009,133 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
+                        {(user as any).maintenanceProvider || (user as any).serviceProvider ? (
+                          <div className="space-y-1">
+                            {((user as any).maintenanceProvider && (
+                              <div className="text-sm">
+                                <div className="font-medium">
+                                  {(user as any).maintenanceProvider.businessName || 'Sin nombre'}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge
+                                    className={
+                                      (user as any).maintenanceProvider.isVerified
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-yellow-100 text-yellow-800'
+                                    }
+                                  >
+                                    {(user as any).maintenanceProvider.isVerified
+                                      ? 'Verificado'
+                                      : 'Pendiente'}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {(user as any).maintenanceProvider.status || 'N/A'}
+                                  </Badge>
+                                </div>
+                                {(user as any).maintenanceProvider.specialty && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {(user as any).maintenanceProvider.specialty}
+                                  </div>
+                                )}
+                                {(user as any).maintenanceProvider.documents && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs mt-1 h-6"
+                                    onClick={() => {
+                                      setSelectedProviderDocuments(
+                                        (user as any).maintenanceProvider.documents
+                                      );
+                                      setShowDocumentsModal(true);
+                                    }}
+                                  >
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    Ver Documentos
+                                  </Button>
+                                )}
+                              </div>
+                            )) ||
+                              ((user as any).serviceProvider && (
+                                <div className="text-sm">
+                                  <div className="font-medium">
+                                    {(user as any).serviceProvider.businessName || 'Sin nombre'}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge
+                                      className={
+                                        (user as any).serviceProvider.isVerified
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-yellow-100 text-yellow-800'
+                                      }
+                                    >
+                                      {(user as any).serviceProvider.isVerified
+                                        ? 'Verificado'
+                                        : 'Pendiente'}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {(user as any).serviceProvider.status || 'N/A'}
+                                    </Badge>
+                                  </div>
+                                  {(user as any).serviceProvider.serviceType && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {(user as any).serviceProvider.serviceType}
+                                    </div>
+                                  )}
+                                  {(user as any).serviceProvider.documents && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-xs mt-1 h-6"
+                                      onClick={() => {
+                                        setSelectedProviderDocuments(
+                                          (user as any).serviceProvider.documents
+                                        );
+                                        setShowDocumentsModal(true);
+                                      }}
+                                    >
+                                      <FileText className="w-3 h-3 mr-1" />
+                                      Ver Documentos
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">N/A</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
                         <div className="text-sm">{formatDate(user.createdAt)}</div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
+                          {/* Botón de aprobación para proveedores no verificados */}
+                          {((user as any).maintenanceProvider &&
+                            !(user as any).maintenanceProvider.isVerified) ||
+                          ((user as any).serviceProvider &&
+                            !(user as any).serviceProvider.isVerified) ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300"
+                              onClick={() =>
+                                approveProvider(
+                                  user.id,
+                                  (user as any).maintenanceProvider ? 'maintenance' : 'service'
+                                )
+                              }
+                              disabled={approvingProvider === user.id}
+                            >
+                              {approvingProvider === user.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Aprobar
+                                </>
+                              )}
+                            </Button>
+                          ) : null}
                           <Button
                             variant="outline"
                             size="sm"
@@ -1217,6 +1413,172 @@ export default function AdminUsersPage() {
               <Button onClick={handleConfirmExport}>
                 <Download className="w-4 h-4 mr-2" />
                 Exportar Usuarios
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Documentos del Proveedor */}
+        <Dialog open={showDocumentsModal} onOpenChange={setShowDocumentsModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Documentos del Proveedor</DialogTitle>
+              <DialogDescription>
+                Visualiza y descarga todos los documentos del proveedor
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedProviderDocuments && (
+              <div className="space-y-6">
+                {/* Antecedentes Penales */}
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Antecedentes Penales
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className={
+                        selectedProviderDocuments.isVerified ? 'bg-green-50' : 'bg-yellow-50'
+                      }
+                    >
+                      {selectedProviderDocuments.isVerified ? 'Verificado' : 'Pendiente'}
+                    </Badge>
+                  </div>
+                  {selectedProviderDocuments.criminalRecord ? (
+                    <div className="space-y-2">
+                      <iframe
+                        src={selectedProviderDocuments.criminalRecord}
+                        className="w-full h-96 border rounded"
+                        title="Antecedentes Penales"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          window.open(selectedProviderDocuments.criminalRecord, '_blank')
+                        }
+                        className="w-full"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Abrir en Nueva Pestaña
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No disponible</p>
+                  )}
+                </div>
+
+                {/* Carnet Frontal */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold flex items-center gap-2 mb-3">
+                    <Eye className="w-5 h-5" />
+                    Carnet de Identidad - Frontal
+                  </h3>
+                  {selectedProviderDocuments.idFront ? (
+                    <div className="space-y-2">
+                      <img
+                        src={selectedProviderDocuments.idFront}
+                        alt="Carnet Frontal"
+                        className="w-full max-w-md mx-auto border rounded"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(selectedProviderDocuments.idFront, '_blank')}
+                        className="w-full"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Abrir en Nueva Pestaña
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No disponible</p>
+                  )}
+                </div>
+
+                {/* Carnet Reverso */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold flex items-center gap-2 mb-3">
+                    <Eye className="w-5 h-5" />
+                    Carnet de Identidad - Reverso
+                  </h3>
+                  {selectedProviderDocuments.idBack ? (
+                    <div className="space-y-2">
+                      <img
+                        src={selectedProviderDocuments.idBack}
+                        alt="Carnet Reverso"
+                        className="w-full max-w-md mx-auto border rounded"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(selectedProviderDocuments.idBack, '_blank')}
+                        className="w-full"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Abrir en Nueva Pestaña
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No disponible</p>
+                  )}
+                </div>
+
+                {/* Certificado de Inicio de Actividades */}
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Certificado de Inicio de Actividades
+                    </h3>
+                  </div>
+                  {selectedProviderDocuments.businessCertificate ? (
+                    <div className="space-y-2">
+                      <iframe
+                        src={selectedProviderDocuments.businessCertificate}
+                        className="w-full h-96 border rounded"
+                        title="Certificado de Inicio de Actividades"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          window.open(selectedProviderDocuments.businessCertificate, '_blank')
+                        }
+                        className="w-full"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Abrir en Nueva Pestaña
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No disponible</p>
+                  )}
+                </div>
+
+                {/* Información de Verificación */}
+                {selectedProviderDocuments.verifiedAt && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      <strong>Verificado el:</strong>{' '}
+                      {new Date(selectedProviderDocuments.verifiedAt).toLocaleDateString('es-CL', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4">
+              <Button variant="outline" onClick={() => setShowDocumentsModal(false)}>
+                Cerrar
               </Button>
             </div>
           </DialogContent>

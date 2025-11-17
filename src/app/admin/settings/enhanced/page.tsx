@@ -174,6 +174,10 @@ interface SystemSettings {
   defaultPropertyStatus: string;
   autoApproveProperties: boolean;
   propertyExpiryDays: number;
+
+  // Configuración de Proveedores
+  autoApproveMaintenanceProviders: boolean;
+  autoApproveServiceProviders: boolean;
   featuredPropertyLimit: number;
   allowPropertyVideos: boolean;
   maxPropertyVideos: number;
@@ -404,6 +408,10 @@ export default function EnhancedAdminSettingsPage() {
     defaultPropertyStatus: 'AVAILABLE',
     autoApproveProperties: false,
     propertyExpiryDays: 30,
+
+    // Configuración de Proveedores
+    autoApproveMaintenanceProviders: false,
+    autoApproveServiceProviders: false,
     featuredPropertyLimit: 5,
     allowPropertyVideos: true,
     maxPropertyVideos: 3,
@@ -988,6 +996,7 @@ El equipo de Rent360`,
           'virtualTourEnabled',
           'propertyMapEnabled',
         ],
+        providers: ['autoApproveMaintenanceProviders', 'autoApproveServiceProviders'],
         users: [
           'defaultUserRole',
           'userApprovalRequired',
@@ -1206,6 +1215,7 @@ El equipo de Rent360`,
         runners: 'system',
         maintenanceProviders: 'system',
         serviceProviders: 'system',
+        providers: 'system',
         integrations: 'integration',
         advanced: 'system',
         ui: 'system',
@@ -1690,6 +1700,43 @@ El equipo de Rent360`,
                 setSettings({ ...settings, propertyExpiryDays: parseInt(e.target.value) })
               }
             />
+          </div>
+
+          {/* Configuración de Aprobación Automática de Proveedores */}
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-semibold mb-4">Aprobación Automática de Proveedores</h3>
+
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="font-medium">
+                  Aprobar Proveedores de Mantenimiento Automáticamente
+                </div>
+                <div className="text-sm text-gray-600">
+                  Los proveedores de mantenimiento se verifican automáticamente al registrarse
+                </div>
+              </div>
+              <Switch
+                checked={settings.autoApproveMaintenanceProviders}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, autoApproveMaintenanceProviders: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Aprobar Proveedores de Servicios Automáticamente</div>
+                <div className="text-sm text-gray-600">
+                  Los proveedores de servicios se verifican automáticamente al registrarse
+                </div>
+              </div>
+              <Switch
+                checked={settings.autoApproveServiceProviders}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, autoApproveServiceProviders: checked })
+                }
+              />
+            </div>
           </div>
 
           <div>

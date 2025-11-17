@@ -82,12 +82,66 @@ export async function GET(request: NextRequest) {
     const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
 
-    // Usar consulta optimizada con caché
-    const result = await getUsersOptimized({
+    // Usar consulta optimizada con caché, incluyendo información de proveedores
+    const result = await db.user.findMany({
       where,
       skip,
       take: limit,
       orderBy,
+      include: {
+        maintenanceProvider: {
+          select: {
+            id: true,
+            businessName: true,
+            status: true,
+            isVerified: true,
+            specialty: true,
+            city: true,
+            region: true,
+            rating: true,
+            completedJobs: true,
+            createdAt: true,
+            documents: {
+              select: {
+                id: true,
+                criminalRecord: true,
+                idFront: true,
+                idBack: true,
+                businessCertificate: true,
+                isVerified: true,
+                verifiedAt: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+        serviceProvider: {
+          select: {
+            id: true,
+            businessName: true,
+            status: true,
+            isVerified: true,
+            serviceType: true,
+            city: true,
+            region: true,
+            rating: true,
+            completedJobs: true,
+            createdAt: true,
+            documents: {
+              select: {
+                id: true,
+                criminalRecord: true,
+                idFront: true,
+                idBack: true,
+                businessCertificate: true,
+                isVerified: true,
+                verifiedAt: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     const duration = Date.now() - startTime;

@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
@@ -756,7 +755,7 @@ export default function MantenimientoPage() {
                 icon={User}
                 label="Proveedores"
                 description="Gestionar proveedores"
-                onClick={() => router.push('/admin/providers')}
+                onClick={() => router.push('/admin/users?role=PROVIDER')}
               />
 
               <QuickActionButton

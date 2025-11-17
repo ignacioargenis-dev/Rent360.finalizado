@@ -184,9 +184,35 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Verificar configuración de auto-aprobación (buscar en ambos lugares)
+      const [autoApproveSetting1, autoApproveSetting2] = await Promise.all([
+        tx.platformConfig.findFirst({
+          where: {
+            category: 'providers',
+            key: 'autoApproveMaintenanceProviders',
+          },
+        }),
+        tx.systemSetting.findFirst({
+          where: {
+            category: 'system',
+            key: 'autoApproveMaintenanceProviders',
+            isActive: true,
+          },
+        }),
+      ]);
+
+      const autoApproveSetting = autoApproveSetting1 || autoApproveSetting2;
+      const isAutoApproveEnabled =
+        autoApproveSetting?.value === 'true' || autoApproveSetting?.value === '1';
+
       // Crear proveedor según el tipo
       if (providerType === 'maintenance') {
         const maintenanceData = validatedData as z.infer<typeof maintenanceProviderSchema>;
+
+        // Determinar estado inicial según configuración
+        const initialStatus = isAutoApproveEnabled ? 'ACTIVE' : 'PENDING_VERIFICATION';
+        const initialIsVerified = isAutoApproveEnabled;
+
         const maintenanceProvider = await tx.maintenanceProvider.create({
           data: {
             userId: user.id,
@@ -199,11 +225,19 @@ export async function POST(request: NextRequest) {
             city: maintenanceData.city ?? null,
             region: maintenanceData.region ?? null,
             description: maintenanceData.description ?? null,
-            status: 'PENDING_VERIFICATION',
-            isVerified: false,
+            status: initialStatus,
+            isVerified: initialIsVerified,
             availability: JSON.stringify({}), // Horarios vacíos por defecto
           },
         });
+
+        // Si está auto-aprobado, activar el usuario también
+        if (isAutoApproveEnabled) {
+          await tx.user.update({
+            where: { id: user.id },
+            data: { isActive: true },
+          });
+        }
 
         // Vincular documentos
         await tx.providerDocuments.update({
@@ -213,7 +247,33 @@ export async function POST(request: NextRequest) {
 
         return { user, maintenanceProvider, bankAccount, documents };
       } else {
+        // Verificar configuración de auto-aprobación para servicios (buscar en ambos lugares)
+        const [autoApproveServiceSetting1, autoApproveServiceSetting2] = await Promise.all([
+          tx.platformConfig.findFirst({
+            where: {
+              category: 'providers',
+              key: 'autoApproveServiceProviders',
+            },
+          }),
+          tx.systemSetting.findFirst({
+            where: {
+              category: 'system',
+              key: 'autoApproveServiceProviders',
+              isActive: true,
+            },
+          }),
+        ]);
+
+        const autoApproveServiceSetting = autoApproveServiceSetting1 || autoApproveServiceSetting2;
+        const isAutoApproveServiceEnabled =
+          autoApproveServiceSetting?.value === 'true' || autoApproveServiceSetting?.value === '1';
+
         const serviceData = validatedData as z.infer<typeof serviceProviderSchema>;
+
+        // Determinar estado inicial según configuración
+        const initialStatus = isAutoApproveServiceEnabled ? 'ACTIVE' : 'PENDING_VERIFICATION';
+        const initialIsVerified = isAutoApproveServiceEnabled;
+
         const serviceProvider = await tx.serviceProvider.create({
           data: {
             userId: user.id,
@@ -226,11 +286,19 @@ export async function POST(request: NextRequest) {
             city: serviceData.city ?? null,
             region: serviceData.region ?? null,
             description: serviceData.description ?? null,
-            status: 'PENDING_VERIFICATION',
-            isVerified: false,
+            status: initialStatus,
+            isVerified: initialIsVerified,
             availability: JSON.stringify({}), // Horarios vacíos por defecto
           },
         });
+
+        // Si está auto-aprobado, activar el usuario también
+        if (isAutoApproveServiceEnabled) {
+          await tx.user.update({
+            where: { id: user.id },
+            data: { isActive: true },
+          });
+        }
 
         // Vincular documentos
         await tx.providerDocuments.update({
