@@ -56,38 +56,68 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
+    // DIAGNÓSTICO: Contar proveedores totales y por estado
+    const totalProvidersCount = await db.maintenanceProvider.count();
+    const verifiedProvidersCount = await db.maintenanceProvider.count({
+      where: { isVerified: true },
+    });
+    const activeVerifiedCount = await db.maintenanceProvider.count({
+      where: {
+        isVerified: true,
+        status: {
+          in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
+        },
+      },
+    });
+
+    logger.info('Diagnóstico de proveedores:', {
+      maintenanceId,
+      totalProviders: totalProvidersCount,
+      verifiedProviders: verifiedProvidersCount,
+      activeVerifiedProviders: activeVerifiedCount,
+      propertyCity: maintenance.property.city,
+      propertyRegion: maintenance.property.region,
+    });
+
     // Buscar prestadores disponibles (más flexible - mostrar todos los activos y verificados)
     // El filtro por especialidad y ubicación se puede hacer opcionalmente
     const whereClause: any = {
       isVerified: true,
-    };
-
-    // Construir filtro de estado (aceptar múltiples variantes)
-    const statusFilter = {
-      OR: [
-        { status: 'ACTIVE' },
-        { status: 'active' },
-        { status: 'VERIFIED' },
-        { status: 'verified' },
-      ],
+      // Aceptar múltiples variantes de estado activo
+      status: {
+        in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
+      },
     };
 
     // Aplicar filtro de ubicación según el parámetro (solo si hay datos de ubicación)
     if (locationFilter === 'same_city' && maintenance.property.city) {
       // Solo proveedores de la misma ciudad
-      whereClause.AND = [statusFilter, { city: maintenance.property.city }];
+      whereClause.city = maintenance.property.city;
     } else if (locationFilter === 'same_region' && maintenance.property.region) {
       // Proveedores de la misma región (incluye misma ciudad)
+      // Usar AND para combinar con los filtros de estado e isVerified
       whereClause.AND = [
-        statusFilter,
+        {
+          isVerified: true,
+          status: {
+            in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
+          },
+        },
         {
           OR: [{ city: maintenance.property.city }, { region: maintenance.property.region }],
         },
       ];
-    } else {
-      // Sin filtro de ubicación - mostrar todos
-      whereClause.AND = [statusFilter];
+      // Eliminar las propiedades del nivel superior ya que están en AND
+      delete whereClause.isVerified;
+      delete whereClause.status;
     }
+    // Si no hay filtro de ubicación, mostrar todos los verificados y activos
+
+    logger.info('Filtros aplicados:', {
+      maintenanceId,
+      whereClause: JSON.stringify(whereClause),
+      locationFilter,
+    });
 
     const availableProviders = await db.maintenanceProvider.findMany({
       where: whereClause,
@@ -106,6 +136,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         description: true,
         profileImage: true,
         availability: true,
+        status: true, // Agregado para logging
         user: {
           select: {
             id: true,
@@ -119,14 +150,84 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     });
 
     // Mapeo de categorías de mantenimiento a especialidades comunes
+    // Incluye todas las variantes posibles en español e inglés
     const categoryMapping: Record<string, string[]> = {
-      general: ['general', 'mantenimiento general', 'mantenimiento'],
-      electrical: ['eléctrica', 'electricidad', 'reparaciones eléctricas', 'electrical'],
-      plumbing: ['plomería', 'plumbing', 'fontanería'],
-      structural: ['estructural', 'structural', 'construcción'],
-      appliance: ['electrodomésticos', 'appliance', 'reparación'],
-      cleaning: ['limpieza', 'cleaning', 'limpieza profesional'],
-      other: ['otro', 'other', 'general'],
+      general: [
+        'general',
+        'mantenimiento general',
+        'mantenimiento',
+        'reparación',
+        'reparaciones',
+        'otro',
+        'other',
+      ],
+      electrical: [
+        'eléctrica',
+        'electricidad',
+        'reparaciones eléctricas',
+        'electrical',
+        'electric',
+        'eléctrico',
+        'instalación eléctrica',
+      ],
+      plumbing: [
+        'plomería',
+        'plumbing',
+        'fontanería',
+        'fontanero',
+        'cañerías',
+        'tuberías',
+        'agua',
+        'sanitario',
+      ],
+      structural: [
+        'estructural',
+        'structural',
+        'construcción',
+        'construcción',
+        'albañilería',
+        'mampostería',
+        'techos',
+        'paredes',
+      ],
+      appliance: [
+        'electrodomésticos',
+        'appliance',
+        'reparación electrodomésticos',
+        'refrigerador',
+        'lavadora',
+        'secadora',
+        'horno',
+        'microondas',
+      ],
+      cleaning: [
+        'limpieza',
+        'cleaning',
+        'limpieza profesional',
+        'aseo',
+        'desinfección',
+        'sanitización',
+      ],
+      painting: ['pintura', 'painting', 'pintor', 'pintado', 'acabados', 'reparación pintura'],
+      carpentry: [
+        'carpintería',
+        'carpentry',
+        'carpintero',
+        'muebles',
+        'puertas',
+        'ventanas',
+        'madera',
+      ],
+      hvac: [
+        'climatización',
+        'hvac',
+        'aire acondicionado',
+        'calefacción',
+        'ventilación',
+        'refrigeración',
+      ],
+      gardening: ['jardinería', 'gardening', 'jardín', 'paisajismo', 'riego', 'poda', 'césped'],
+      other: ['otro', 'other', 'general', 'especializado', 'especial'],
     };
 
     // Filtrar y transformar proveedores
@@ -151,36 +252,74 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
         // Verificar si el proveedor tiene la especialidad requerida (más flexible)
         let matchesCategory = true;
+        let matchDetails: any = null;
+
         if (maintenance.category) {
-          const categoryLower = maintenance.category.toLowerCase();
+          const categoryLower = maintenance.category.toLowerCase().trim();
           const mappedCategories = categoryMapping[categoryLower] || [categoryLower];
+
+          // Normalizar especialidades para comparación (sin acentos, minúsculas)
+          const normalizeString = (str: string) =>
+            str
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .trim();
+
+          const normalizedMappedCategories = mappedCategories.map(normalizeString);
 
           // Verificar si alguna especialidad coincide con la categoría o sus variantes
           const hasMatchingSpecialty = specialtiesArray.some(spec => {
-            const specLower = spec.toLowerCase();
-            return mappedCategories.some(cat => specLower.includes(cat) || cat.includes(specLower));
+            const specNormalized = normalizeString(spec);
+            return normalizedMappedCategories.some(
+              cat =>
+                specNormalized.includes(cat) ||
+                cat.includes(specNormalized) ||
+                specNormalized === cat
+            );
           });
 
           const hasMatchingMainSpecialty =
             provider.specialty &&
-            mappedCategories.some(
+            normalizedMappedCategories.some(
               cat =>
-                provider.specialty!.toLowerCase().includes(cat) ||
-                cat.includes(provider.specialty!.toLowerCase())
+                normalizeString(provider.specialty!).includes(cat) ||
+                cat.includes(normalizeString(provider.specialty!)) ||
+                normalizeString(provider.specialty!) === cat
             );
 
           matchesCategory = hasMatchingSpecialty || hasMatchingMainSpecialty || false;
+
+          // Guardar detalles del match para logging
+          matchDetails = {
+            category: maintenance.category,
+            categoryLower,
+            mappedCategories,
+            specialtiesArray,
+            providerSpecialty: provider.specialty,
+            hasMatchingSpecialty,
+            hasMatchingMainSpecialty,
+            matchesCategory,
+          };
         }
 
-        // Si hay categoría pero no coincide, aún así mostrar el proveedor (filtro no estricto)
-        // Solo loguear para debug
-        if (!matchesCategory && maintenance.category) {
-          logger.info('Proveedor no coincide con categoría pero se muestra:', {
-            providerId: provider.id,
-            providerSpecialty: provider.specialty,
-            providerSpecialties: specialtiesArray,
-            maintenanceCategory: maintenance.category,
-          });
+        // Logging detallado para debug
+        if (maintenance.category) {
+          if (matchesCategory) {
+            logger.info('Proveedor coincide con categoría:', {
+              providerId: provider.id,
+              businessName: provider.businessName,
+              ...matchDetails,
+            });
+          } else {
+            logger.warn('Proveedor NO coincide con categoría (pero se muestra):', {
+              providerId: provider.id,
+              businessName: provider.businessName,
+              ...matchDetails,
+              suggestion:
+                'Verificar que las especialidades del proveedor incluyan términos relacionados con la categoría',
+            });
+          }
         }
 
         // Parsear availability (es un JSON string)
@@ -239,16 +378,60 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       })
       .filter(provider => provider !== null);
 
+    // Contar proveedores que coinciden con la categoría
+    const matchingCategoryCount = providersWithDistance.filter(p => {
+      // Los proveedores que no coinciden ya fueron logueados arriba
+      return true; // Por ahora mostramos todos, pero podemos filtrar después si es necesario
+    }).length;
+
     logger.info('Prestadores disponibles obtenidos:', {
       maintenanceId,
       userId: user.id,
+      userRole: user.role,
+      totalProvidersInDB: totalProvidersCount,
+      verifiedProvidersInDB: verifiedProvidersCount,
+      activeVerifiedProvidersInDB: activeVerifiedCount,
       totalProvidersFound: availableProviders.length,
       providersAfterFiltering: providersWithDistance.length,
       maintenanceCategory: maintenance.category,
+      maintenanceType: (maintenance as any).type || 'N/A', // Tipo de trabajo (REPAIR, MAINTENANCE, etc.)
       propertyCity: maintenance.property.city,
       propertyRegion: maintenance.property.region,
       locationFilter,
+      providersDetails: availableProviders.map(p => {
+        // Parsear specialties para mostrar en el log
+        let specialtiesArray: string[] = [];
+        try {
+          const parsed = JSON.parse(p.specialties || '[]');
+          specialtiesArray = Array.isArray(parsed) ? parsed : [p.specialties];
+        } catch {
+          specialtiesArray = p.specialties ? [p.specialties] : [];
+        }
+        return {
+          id: p.id,
+          businessName: p.businessName,
+          status: p.status,
+          isVerified: true, // Ya filtrado
+          city: p.city,
+          region: p.region,
+          specialty: p.specialty,
+          specialties: specialtiesArray,
+        };
+      }),
     });
+
+    // Si no se encontraron proveedores, loguear información adicional para debug
+    if (availableProviders.length === 0) {
+      logger.warn('No se encontraron proveedores disponibles:', {
+        maintenanceId,
+        totalProvidersInDB: totalProvidersCount,
+        verifiedProvidersInDB: verifiedProvidersCount,
+        activeVerifiedProvidersInDB: activeVerifiedCount,
+        whereClause: JSON.stringify(whereClause),
+        suggestion:
+          'Verificar que existan proveedores con isVerified=true y status en [ACTIVE, VERIFIED]',
+      });
+    }
 
     return NextResponse.json({
       maintenance: {
