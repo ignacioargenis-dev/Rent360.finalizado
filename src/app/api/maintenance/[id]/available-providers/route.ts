@@ -40,8 +40,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Verificar permisos de acceso
     const hasPermission =
       user.role === 'ADMIN' ||
-      (user.role === 'broker' && maintenance.property.brokerId === user.id) ||
-      (user.role === 'owner' && maintenance.property.ownerId === user.id);
+      ((user.role === 'BROKER' || user.role === 'broker') &&
+        maintenance.property.brokerId === user.id) ||
+      ((user.role === 'OWNER' || user.role === 'owner') &&
+        maintenance.property.ownerId === user.id);
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -50,31 +52,30 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    // Buscar prestadores disponibles en la zona
+    // Buscar prestadores disponibles (más flexible - mostrar todos los activos y verificados)
+    // El filtro por especialidad y ubicación se puede hacer opcionalmente
+    const whereClause: any = {
+      isVerified: true,
+      status: 'ACTIVE',
+    };
+
+    // Si hay ciudad o región en la propiedad, intentar filtrar (pero no es obligatorio)
+    if (maintenance.property.city || maintenance.property.region) {
+      whereClause.OR = [
+        { city: maintenance.property.city },
+        { region: maintenance.property.region },
+        { city: null },
+        { region: null },
+      ];
+    }
+
     const availableProviders = await db.maintenanceProvider.findMany({
-      where: {
-        AND: [
-          { isVerified: true },
-          { status: 'ACTIVE' },
-          {
-            OR: [
-              { city: maintenance.property.city },
-              { region: maintenance.property.region },
-              { city: null }, // Prestadores que atienden toda la región
-            ],
-          },
-          {
-            // Filtrar por especialidad si es relevante
-            specialties: {
-              contains: maintenance.category,
-            },
-          },
-        ],
-      },
+      where: whereClause,
       select: {
         id: true,
         businessName: true,
         specialty: true,
+        specialties: true,
         hourlyRate: true,
         rating: true,
         totalRatings: true,
@@ -87,6 +88,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         availability: true,
         user: {
           select: {
+            id: true,
+            name: true,
             phone: true,
             email: true,
           },
@@ -95,24 +98,65 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       orderBy: [{ rating: 'desc' }, { completedJobs: 'desc' }, { hourlyRate: 'asc' }],
     });
 
-    // Calcular distancia aproximada (simplificada)
-    const providersWithDistance = availableProviders.map(provider => {
-      let distance = 'N/A';
-      if (provider.city === maintenance.property.city) {
-        distance = 'Misma ciudad';
-      } else if (provider.region === maintenance.property.region) {
-        distance = 'Misma región';
-      } else {
-        distance = 'Otra región';
-      }
+    // Filtrar y transformar proveedores
+    const providersWithDistance = availableProviders
+      .map(provider => {
+        // Parsear specialties si es JSON
+        let specialtiesArray: string[] = [];
+        if (provider.specialties) {
+          try {
+            specialtiesArray = JSON.parse(provider.specialties);
+          } catch {
+            // Si no es JSON, usar como string único
+            specialtiesArray = [provider.specialties];
+          }
+        }
 
-      return {
-        ...provider,
-        distance,
-        estimatedCost: provider.hourlyRate * 2, // Estimación básica de 2 horas
-        availabilityStatus: 'available', // En producción verificar calendario
-      };
-    });
+        // Verificar si el proveedor tiene la especialidad requerida (opcional)
+        const matchesCategory =
+          !maintenance.category ||
+          specialtiesArray.some(s =>
+            s.toLowerCase().includes(maintenance.category.toLowerCase())
+          ) ||
+          provider.specialty?.toLowerCase().includes(maintenance.category.toLowerCase());
+
+        if (!matchesCategory && maintenance.category) {
+          return null; // Filtrar si no coincide con la categoría
+        }
+
+        // Calcular distancia aproximada
+        let distance = 'N/A';
+        let location = '';
+        if (provider.city === maintenance.property.city) {
+          distance = 'Misma ciudad';
+          location = provider.city || '';
+        } else if (provider.region === maintenance.property.region) {
+          distance = 'Misma región';
+          location = provider.region || '';
+        } else {
+          distance = 'Otra región';
+          location = provider.city || provider.region || 'No especificada';
+        }
+
+        return {
+          id: provider.id,
+          name: provider.businessName || provider.user.name || 'Proveedor sin nombre',
+          specialty: provider.specialty || specialtiesArray[0] || 'General',
+          specialties: specialtiesArray,
+          rating: provider.rating || 0,
+          location: location,
+          hourlyRate: provider.hourlyRate || 0,
+          experience: `${provider.completedJobs || 0} trabajos completados`,
+          distance,
+          estimatedCost: (provider.hourlyRate || 0) * 2, // Estimación básica de 2 horas
+          availability: provider.availability || 'available',
+          availabilityStatus: provider.availability === 'available' ? 'available' : 'busy',
+          responseTime: provider.responseTime || 'N/A',
+          description: provider.description || '',
+          profileImage: provider.profileImage || '',
+        };
+      })
+      .filter(provider => provider !== null);
 
     logger.info('Prestadores disponibles obtenidos:', {
       maintenanceId,

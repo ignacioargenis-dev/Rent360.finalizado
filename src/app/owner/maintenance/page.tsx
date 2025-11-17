@@ -843,7 +843,7 @@ export default function MantenimientoPage() {
                           <>
                             <Button
                               size="sm"
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className="bg-emerald-600 hover:bg-emerald-700"
                               onClick={() => handleAssignProvider(request)}
                             >
                               <Users className="w-4 h-4 mr-2" />
@@ -1236,7 +1236,7 @@ export default function MantenimientoPage() {
                   Cancelar
                 </Button>
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-emerald-600 hover:bg-emerald-700"
                   onClick={handleConfirmProviderAssignment}
                   disabled={!selectedProvider}
                 >
