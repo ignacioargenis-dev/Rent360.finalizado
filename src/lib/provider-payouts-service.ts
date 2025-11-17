@@ -64,7 +64,9 @@ async function getMaintenanceProviderConfig(): Promise<{
           : 10000,
     };
   } catch (error) {
-    logger.error('Error obteniendo configuración de mantenimiento:', error);
+    logger.error('Error obteniendo configuración de mantenimiento:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       commissionPercentage: 8,
       gracePeriodDays: 15,
@@ -133,7 +135,9 @@ async function getServiceProviderConfig(): Promise<{
           : 5000,
     };
   } catch (error) {
-    logger.error('Error obteniendo configuración de servicios:', error);
+    logger.error('Error obteniendo configuración de servicios:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       commissionPercentage: 8,
       gracePeriodDays: 7,
