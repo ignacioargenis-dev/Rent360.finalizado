@@ -99,6 +99,13 @@ export default function MaintenanceEarningsPage() {
 
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+  const [analytics, setAnalytics] = useState<{
+    mostProfitableServices: Array<{ type: string; revenue: number }>;
+    mostFrequentClients: Array<{ name: string; count: number }>;
+  }>({
+    mostProfitableServices: [],
+    mostFrequentClients: [],
+  });
 
   // Estado para configuración de pagos
   const [paymentSettings, setPaymentSettings] = useState({
@@ -198,6 +205,25 @@ export default function MaintenanceEarningsPage() {
         });
       }
       setMonthlyStats(monthlyStatsData);
+
+      // Cargar analytics
+      const analyticsResponse = await fetch('/api/maintenance/earnings/analytics', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (analyticsResponse.ok) {
+        const analyticsData = await analyticsResponse.json();
+        if (analyticsData.success && analyticsData.data) {
+          setAnalytics({
+            mostProfitableServices: analyticsData.data.mostProfitableServices || [],
+            mostFrequentClients: analyticsData.data.mostFrequentClients || [],
+          });
+        }
+      }
     } catch (err) {
       logger.error('Error loading earnings data:', {
         error: err instanceof Error ? err.message : String(err),
@@ -472,20 +498,23 @@ export default function MaintenanceEarningsPage() {
                   <CardTitle>Tipos de Servicio Más Rentables</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Reparaciones Eléctricas</span>
-                      <span className="font-bold text-green-600">$450,000</span>
+                  {analytics.mostProfitableServices.length > 0 ? (
+                    <div className="space-y-3">
+                      {analytics.mostProfitableServices.map((service, index) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <span className="text-sm">{service.type}</span>
+                          <span className="font-bold text-green-600">
+                            {formatCurrency(service.revenue)}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Mantenimiento de Calefacción</span>
-                      <span className="font-bold text-green-600">$380,000</span>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No hay datos de servicios rentables disponibles</p>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Reparaciones de Plomería</span>
-                      <span className="font-bold text-green-600">$320,000</span>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -494,20 +523,23 @@ export default function MaintenanceEarningsPage() {
                   <CardTitle>Clientes Más Frecuentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Edificio Corporativo Ltda.</span>
-                      <span className="font-bold">8 trabajos</span>
+                  {analytics.mostFrequentClients.length > 0 ? (
+                    <div className="space-y-3">
+                      {analytics.mostFrequentClients.map((client, index) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <span className="text-sm">{client.name}</span>
+                          <span className="font-bold">
+                            {client.count} {client.count === 1 ? 'trabajo' : 'trabajos'}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Carlos Ramírez</span>
-                      <span className="font-bold">6 trabajos</span>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No hay datos de clientes frecuentes disponibles</p>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">María González</span>
-                      <span className="font-bold">5 trabajos</span>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

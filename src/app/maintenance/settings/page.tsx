@@ -138,6 +138,17 @@ export default function MaintenanceSettingsPage() {
   } | null>(null);
   const [loadingBankAccount, setLoadingBankAccount] = useState(false);
 
+  const [billingInfo, setBillingInfo] = useState({
+    billingName: '',
+    billingRut: '',
+    billingAddress: '',
+    billingPhone: '',
+    billingEmail: '',
+    billingGiro: '',
+    billingComuna: '',
+    billingCiudad: '',
+  });
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -185,6 +196,74 @@ export default function MaintenanceSettingsPage() {
               ? specialtiesRaw.map((s: any) => (typeof s === 'string' ? s : s.name || s))
               : [];
 
+            // Cargar documentos reales desde el perfil
+            if (profile.documents) {
+              const docs: Array<{
+                id: string;
+                name: string;
+                type: string;
+                status: 'pending' | 'approved' | 'rejected';
+                uploadDate: string;
+                expiryDate?: string;
+                fileUrl: string;
+              }> = [];
+              const uploadDate =
+                profile.documents.createdAt && typeof profile.documents.createdAt === 'string'
+                  ? new Date(profile.documents.createdAt).toISOString().split('T')[0] || ''
+                  : new Date().toISOString().split('T')[0] || '';
+
+              const businessCert = profile.documents.businessCertificate;
+              const idFront = profile.documents.idFront;
+              const idBack = profile.documents.idBack;
+              const criminalRec = profile.documents.criminalRecord;
+
+              // Determinar estado basado en isVerified
+              const docStatus = profile.documents.isVerified ? 'approved' : 'pending';
+
+              if (businessCert && typeof businessCert === 'string') {
+                docs.push({
+                  id: 'business-certificate',
+                  name: 'Certificado de Inicio de Actividades',
+                  type: 'certificate',
+                  status: docStatus,
+                  uploadDate: uploadDate,
+                  fileUrl: businessCert,
+                });
+              }
+              if (idFront && typeof idFront === 'string') {
+                docs.push({
+                  id: 'id-front',
+                  name: 'Cédula de Identidad (Frente)',
+                  type: 'id',
+                  status: docStatus,
+                  uploadDate: uploadDate,
+                  fileUrl: idFront,
+                });
+              }
+              if (idBack && typeof idBack === 'string') {
+                docs.push({
+                  id: 'id-back',
+                  name: 'Cédula de Identidad (Reverso)',
+                  type: 'id',
+                  status: docStatus,
+                  uploadDate: uploadDate,
+                  fileUrl: idBack,
+                });
+              }
+              if (criminalRec && typeof criminalRec === 'string') {
+                docs.push({
+                  id: 'criminal-record',
+                  name: 'Certificado de Antecedentes',
+                  type: 'certificate',
+                  status: docStatus,
+                  uploadDate: uploadDate,
+                  fileUrl: criminalRec,
+                });
+              }
+
+              setDocuments(docs);
+            }
+
             // Parsear horarios de trabajo
             let workingHours = settings.workingHours;
             if (profile.availability) {
@@ -210,6 +289,18 @@ export default function MaintenanceSettingsPage() {
               insuranceCoverage: profile.insuranceCoverage || false,
               responseTime: profile.responseTime || '2-4 horas',
             }));
+
+            // Cargar datos de facturación desde el perfil
+            setBillingInfo({
+              billingName: profile.businessName || profile.companyName || '',
+              billingRut: profile.taxId || '',
+              billingAddress: profile.address || '',
+              billingPhone: profile.phone || '',
+              billingEmail: profile.email || '',
+              billingGiro: 'Servicios de reparación y mantenimiento',
+              billingComuna: profile.city || '',
+              billingCiudad: profile.city || '',
+            });
           }
         }
 
@@ -300,12 +391,38 @@ export default function MaintenanceSettingsPage() {
 
   const handleSaveBillingInfo = async () => {
     try {
-      // Simular guardado de información fiscal
-      setSuccessMessage('✅ Información fiscal guardada exitosamente');
-      setShowBillingModal(false);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSaving(true);
+      // Actualizar perfil con datos de facturación
+      const response = await fetch('/api/provider/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          basicInfo: {
+            companyName: billingInfo.billingName,
+          },
+          address: {
+            street: billingInfo.billingAddress,
+            city: billingInfo.billingCiudad,
+            commune: billingInfo.billingComuna,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        setShowBillingModal(false);
+        setSuccessMessage('✅ Información fiscal guardada exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        throw new Error('Error al guardar');
+      }
     } catch (error) {
+      logger.error('Error saving billing info:', error);
       setErrorMessage('Error al guardar la información fiscal. Intente nuevamente.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -943,64 +1060,73 @@ export default function MaintenanceSettingsPage() {
                   <h3 className="text-lg font-semibold mb-4">Documentos Requeridos</h3>
                   <div className="space-y-4">
                     {[
-                      { id: 'rut', name: 'RUT/Cédula de Identidad', status: 'approved' },
-                      { id: 'patente', name: 'Patente Municipal', status: 'pending' },
-                      { id: 'seguro', name: 'Seguro de Responsabilidad Civil', status: 'missing' },
+                      { id: 'id-front', name: 'Cédula de Identidad (Frente)', required: true },
+                      { id: 'id-back', name: 'Cédula de Identidad (Reverso)', required: true },
                       {
-                        id: 'certificaciones',
-                        name: 'Certificaciones Profesionales',
-                        status: 'approved',
-                      },
-                      {
-                        id: 'antecedentes',
+                        id: 'criminal-record',
                         name: 'Certificado de Antecedentes',
-                        status: 'pending',
+                        required: true,
                       },
-                    ].map(doc => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Shield className="w-5 h-5 text-gray-400" />
-                          <div>
-                            <p className="font-medium">{doc.name}</p>
-                            <p className="text-sm text-gray-600">
-                              {doc.status === 'approved' && 'Aprobado'}
-                              {doc.status === 'pending' && 'En revisión'}
-                              {doc.status === 'missing' && 'Falta subir'}
-                            </p>
+                      {
+                        id: 'business-certificate',
+                        name: 'Certificado de Inicio de Actividades',
+                        required: true,
+                      },
+                    ].map(requiredDoc => {
+                      const uploadedDoc = documents.find(d => d.id === requiredDoc.id);
+                      const status = uploadedDoc
+                        ? uploadedDoc.status
+                        : ('missing' as 'approved' | 'pending' | 'rejected' | 'missing');
+                      return (
+                        <div
+                          key={requiredDoc.id}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Shield className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <p className="font-medium">{requiredDoc.name}</p>
+                              <p className="text-sm text-gray-600">
+                                {status === 'approved' && 'Aprobado'}
+                                {status === 'pending' && 'En revisión'}
+                                {status === 'rejected' && 'Rechazado'}
+                                {status === 'missing' && 'Falta subir'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {status === 'approved' && (
+                              <Badge className="bg-green-100 text-green-800">Aprobado</Badge>
+                            )}
+                            {status === 'pending' && (
+                              <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
+                            )}
+                            {status === 'rejected' && (
+                              <Badge className="bg-red-100 text-red-800">Rechazado</Badge>
+                            )}
+                            {status === 'missing' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const input = document.getElementById(
+                                      'document-upload'
+                                    ) as HTMLInputElement;
+                                    if (input) {
+                                      input.click();
+                                    }
+                                  }}
+                                >
+                                  Subir
+                                </Button>
+                                <Badge className="bg-red-100 text-red-800">Requerido</Badge>
+                              </>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {doc.status === 'approved' && (
-                            <Badge className="bg-green-100 text-green-800">Aprobado</Badge>
-                          )}
-                          {doc.status === 'pending' && (
-                            <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
-                          )}
-                          {doc.status === 'missing' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  const input = document.getElementById(
-                                    'document-upload'
-                                  ) as HTMLInputElement;
-                                  if (input) {
-                                    input.click();
-                                  }
-                                }}
-                              >
-                                Subir
-                              </Button>
-                              <Badge className="bg-red-100 text-red-800">Requerido</Badge>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1418,7 +1544,10 @@ export default function MaintenanceSettingsPage() {
                         <Input
                           id="billingName"
                           placeholder="Nombre para facturación"
-                          defaultValue="Servicios de Mantenimiento XYZ SpA"
+                          value={billingInfo.billingName}
+                          onChange={e =>
+                            setBillingInfo(prev => ({ ...prev, billingName: e.target.value }))
+                          }
                         />
                       </div>
 
@@ -1427,7 +1556,10 @@ export default function MaintenanceSettingsPage() {
                         <Input
                           id="billingRut"
                           placeholder="12.345.678-9"
-                          defaultValue="76.543.210-8"
+                          value={billingInfo.billingRut}
+                          onChange={e =>
+                            setBillingInfo(prev => ({ ...prev, billingRut: e.target.value }))
+                          }
                         />
                       </div>
                     </div>
@@ -1437,7 +1569,10 @@ export default function MaintenanceSettingsPage() {
                       <Input
                         id="billingAddress"
                         placeholder="Dirección completa"
-                        defaultValue="Av. Providencia 1234, Oficina 501, Providencia, Santiago"
+                        value={billingInfo.billingAddress}
+                        onChange={e =>
+                          setBillingInfo(prev => ({ ...prev, billingAddress: e.target.value }))
+                        }
                       />
                     </div>
 
@@ -1447,7 +1582,10 @@ export default function MaintenanceSettingsPage() {
                         <Input
                           id="billingPhone"
                           placeholder="+56 9 1234 5678"
-                          defaultValue="+56 9 8765 4321"
+                          value={billingInfo.billingPhone}
+                          onChange={e =>
+                            setBillingInfo(prev => ({ ...prev, billingPhone: e.target.value }))
+                          }
                         />
                       </div>
 
@@ -1457,7 +1595,10 @@ export default function MaintenanceSettingsPage() {
                           id="billingEmail"
                           type="email"
                           placeholder="facturacion@empresa.cl"
-                          defaultValue="facturacion@mantenimiento.cl"
+                          value={billingInfo.billingEmail}
+                          onChange={e =>
+                            setBillingInfo(prev => ({ ...prev, billingEmail: e.target.value }))
+                          }
                         />
                       </div>
                     </div>
@@ -1471,7 +1612,10 @@ export default function MaintenanceSettingsPage() {
                           <Input
                             id="billingGiro"
                             placeholder="Actividad económica"
-                            defaultValue="Servicios de reparación y mantenimiento"
+                            value={billingInfo.billingGiro}
+                            onChange={e =>
+                              setBillingInfo(prev => ({ ...prev, billingGiro: e.target.value }))
+                            }
                           />
                         </div>
 
@@ -1481,7 +1625,10 @@ export default function MaintenanceSettingsPage() {
                             <Input
                               id="billingComuna"
                               placeholder="Comuna"
-                              defaultValue="Providencia"
+                              value={billingInfo.billingComuna}
+                              onChange={e =>
+                                setBillingInfo(prev => ({ ...prev, billingComuna: e.target.value }))
+                              }
                             />
                           </div>
 
@@ -1490,7 +1637,10 @@ export default function MaintenanceSettingsPage() {
                             <Input
                               id="billingCiudad"
                               placeholder="Ciudad"
-                              defaultValue="Santiago"
+                              value={billingInfo.billingCiudad}
+                              onChange={e =>
+                                setBillingInfo(prev => ({ ...prev, billingCiudad: e.target.value }))
+                              }
                             />
                           </div>
                         </div>
@@ -1500,58 +1650,13 @@ export default function MaintenanceSettingsPage() {
                     <div className="border-t pt-4">
                       <h4 className="font-medium mb-2">Documentos Fiscales</h4>
                       <p className="text-sm text-gray-600 mb-4">
-                        Sube tus documentos fiscales para mantener tu información actualizada
+                        Los documentos fiscales se gestionan en la sección de Documentos del perfil
                       </p>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="font-medium">Certificado de Situación Tributaria</p>
-                              <p className="text-sm text-gray-600">Vence: 31/12/2024</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleViewDocument('Certificado de Situación Tributaria')
-                              }
-                            >
-                              Ver
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleUpdateDocument('Certificado de Situación Tributaria')
-                              }
-                            >
-                              Actualizar
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="font-medium">Certificado de Vigencia SII</p>
-                              <p className="text-sm text-gray-600">Vence: 31/03/2024</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Badge className="bg-red-100 text-red-800">Vencido</Badge>
-                            <Button
-                              size="sm"
-                              onClick={() => handleUpdateDocument('Certificado de Vigencia SII')}
-                            >
-                              Subir Nuevo
-                            </Button>
-                          </div>
-                        </div>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          Para subir o actualizar documentos fiscales, ve a la pestaña{' '}
+                          <strong>Documentos</strong> en esta misma página.
+                        </p>
                       </div>
                     </div>
 
@@ -1559,7 +1664,9 @@ export default function MaintenanceSettingsPage() {
                       <Button variant="outline" onClick={() => setShowBillingModal(false)}>
                         Cancelar
                       </Button>
-                      <Button onClick={handleSaveBillingInfo}>Guardar Información Fiscal</Button>
+                      <Button onClick={handleSaveBillingInfo} disabled={saving}>
+                        {saving ? 'Guardando...' : 'Guardar Información Fiscal'}
+                      </Button>
                     </div>
                   </div>
                 </DialogContent>

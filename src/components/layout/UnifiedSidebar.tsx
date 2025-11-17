@@ -651,9 +651,14 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: Star,
     },
     {
+      title: 'Mensajes',
+      url: '/maintenance/messages',
+      icon: MessageSquare,
+    },
+    {
       title: 'Mis Tickets',
       url: '/maintenance/tickets',
-      icon: MessageSquare,
+      icon: Ticket,
     },
     {
       title: 'Configuración',

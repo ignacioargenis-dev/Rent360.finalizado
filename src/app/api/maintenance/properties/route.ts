@@ -8,11 +8,15 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     // Verificar que el usuario tiene permisos para ver propiedades de mantenimiento
-    if (!['ADMIN', 'owner', 'broker', 'tenant'].includes(user.role)) {
+    if (
+      !['ADMIN', 'owner', 'broker', 'tenant', 'MAINTENANCE', 'MAINTENANCE_PROVIDER'].includes(
+        user.role
+      )
+    ) {
       return NextResponse.json(
         {
           error:
-            'Acceso denegado. Se requiere rol de administrador, propietario, corredor o inquilino.',
+            'Acceso denegado. Se requiere rol de administrador, propietario, corredor, inquilino o mantenimiento.',
         },
         { status: 403 }
       );
@@ -36,6 +40,27 @@ export async function GET(request: NextRequest) {
         some: {
           tenantId: user.id,
           status: { in: ['ACTIVE', 'PENDING'] },
+        },
+      };
+    } else if (user.role === 'MAINTENANCE' || user.role === 'MAINTENANCE_PROVIDER') {
+      // Para usuarios de mantenimiento, obtener primero el maintenance provider
+      const fullUser = await db.user.findUnique({
+        where: { id: user.id },
+        include: { maintenanceProvider: true },
+      });
+
+      if (!fullUser || !fullUser.maintenanceProvider) {
+        return NextResponse.json({
+          success: true,
+          properties: [],
+          totalCount: 0,
+        });
+      }
+
+      // Mostrar solo propiedades donde tienen trabajos asignados
+      whereClause.maintenance = {
+        some: {
+          maintenanceProviderId: fullUser.maintenanceProvider.id,
         },
       };
     }
