@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
       include: {
         requester: {
           select: {
+            id: true,
             name: true,
             email: true,
             phone: true,
