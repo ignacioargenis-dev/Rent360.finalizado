@@ -101,8 +101,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Verificar permisos de acceso
     const hasPermission =
       user.role === 'ADMIN' ||
-      (user.role === 'broker' && maintenance.property.brokerId === user.id) ||
-      (user.role === 'owner' && maintenance.property.ownerId === user.id);
+      ((user.role === 'broker' || user.role === 'BROKER') &&
+        maintenance.property.brokerId === user.id) ||
+      ((user.role === 'owner' || user.role === 'OWNER') &&
+        maintenance.property.ownerId === user.id);
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -111,22 +113,35 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       );
     }
 
-    // Verificar que no exista una visita programada para esta solicitud
-    const existingSchedule = await db.maintenanceVisitSchedule.findFirst({
+    // Determinar quién propone la fecha
+    const proposerRole =
+      user.role === 'ADMIN'
+        ? 'ADMIN'
+        : user.role === 'broker' || user.role === 'BROKER'
+          ? 'BROKER'
+          : user.role === 'owner' || user.role === 'OWNER'
+            ? 'OWNER'
+            : 'USER';
+
+    // Verificar si ya existe una propuesta pendiente
+    const existingProposal = await db.maintenanceVisitSchedule.findFirst({
       where: {
         maintenanceId,
-        status: { in: ['SCHEDULED', 'CONFIRMED'] },
+        status: { in: ['PROPOSED', 'ACCEPTED'] },
       },
     });
 
-    if (existingSchedule) {
+    if (existingProposal) {
       return NextResponse.json(
-        { error: 'Ya existe una visita programada para esta solicitud' },
+        {
+          error:
+            'Ya existe una propuesta de fecha pendiente. El proveedor debe aceptarla o proponer otra fecha.',
+        },
         { status: 400 }
       );
     }
 
-    // Crear la programación de visita
+    // Crear la propuesta de visita (status: PROPOSED)
     const visitSchedule = await db.maintenanceVisitSchedule.create({
       data: {
         maintenanceId,
@@ -139,6 +154,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         contactPhone,
         specialInstructions,
         createdBy: user.id,
+        proposedBy: proposerRole,
+        status: 'PROPOSED',
       },
       include: {
         provider: {
@@ -157,28 +174,27 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       },
     });
 
-    // Actualizar el estado de la solicitud de mantenimiento
+    // Actualizar el estado de la solicitud de mantenimiento a QUOTE_APPROVED si no lo está
     await db.maintenance.update({
       where: { id: maintenanceId },
       data: {
-        status: 'SCHEDULED',
         scheduledDate: new Date(scheduledDate),
         scheduledTime,
         visitDuration: estimatedDuration,
         visitNotes: specialInstructions,
         notes: maintenance.notes
-          ? `${maintenance.notes}\n[${new Date().toLocaleString()}]: Visita programada para ${scheduledDate} ${scheduledTime}`
-          : `[${new Date().toLocaleString()}]: Visita programada para ${scheduledDate} ${scheduledTime}`,
+          ? `${maintenance.notes}\n[${new Date().toLocaleString()}]: Fecha propuesta para ${scheduledDate} ${scheduledTime} por ${proposerRole}`
+          : `[${new Date().toLocaleString()}]: Fecha propuesta para ${scheduledDate} ${scheduledTime} por ${proposerRole}`,
       },
     });
 
-    // Notificar al prestador sobre la visita programada
+    // Notificar al prestador sobre la propuesta de fecha
     try {
       await NotificationService.create({
         userId: maintenance.maintenanceProvider.user.id,
-        type: NotificationType.NEW_MESSAGE,
-        title: 'Visita de Mantenimiento Programada',
-        message: `Se ha programado una visita para el mantenimiento: ${maintenance.title}`,
+        type: NotificationType.MAINTENANCE_REQUEST,
+        title: 'Propuesta de Fecha para Visita de Mantenimiento',
+        message: `Se ha propuesto una fecha para la visita del mantenimiento: ${maintenance.title}. Por favor, acepta o propón otra fecha.`,
         link: `/maintenance/jobs/${maintenance.id}`,
         metadata: {
           maintenanceId: maintenance.id,
@@ -190,57 +206,31 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           contactPerson: contactPerson || maintenance.requester.name,
           contactPhone: contactPhone || '',
           specialInstructions,
-          scheduledBy: user.name || 'Sistema',
+          proposedBy: user.name || 'Sistema',
+          proposalId: visitSchedule.id,
         },
       });
     } catch (notificationError) {
-      logger.error('Error enviando notificación de visita al prestador:', {
+      logger.error('Error enviando notificación de propuesta al prestador:', {
         providerId,
         maintenanceId,
         error: notificationError,
       });
     }
 
-    // Notificar al solicitante sobre la visita programada
-    try {
-      await NotificationService.create({
-        userId: maintenance.requester.id,
-        type: NotificationType.NEW_MESSAGE,
-        title: 'Visita de Mantenimiento Programada',
-        message: `Se ha programado una visita para su solicitud de mantenimiento: ${maintenance.title}`,
-        link: `/maintenance/${maintenance.id}`,
-        metadata: {
-          maintenanceId: maintenance.id,
-          maintenanceTitle: maintenance.title,
-          propertyAddress: maintenance.property.address,
-          scheduledDate,
-          scheduledTime,
-          estimatedDuration,
-          contactPerson: contactPerson || maintenance.requester.name,
-          contactPhone: contactPhone || '',
-          specialInstructions,
-          scheduledBy: user.name || 'Sistema',
-        },
-      });
-    } catch (notificationError) {
-      logger.error('Error enviando notificación de visita al solicitante:', {
-        requesterId: maintenance.requester.id,
-        maintenanceId,
-        error: notificationError,
-      });
-    }
-
-    logger.info('Visita programada exitosamente:', {
+    logger.info('Propuesta de fecha creada exitosamente:', {
       maintenanceId,
       providerId,
       scheduledDate,
       scheduledTime,
-      scheduledBy: user.id,
+      proposedBy: user.id,
+      proposalId: visitSchedule.id,
     });
 
     return NextResponse.json({
-      message: 'Visita programada exitosamente',
+      message: 'Fecha propuesta exitosamente. El proveedor debe aceptarla o proponer otra fecha.',
       visitSchedule,
+      status: 'PROPOSED',
     });
   } catch (error) {
     logger.error('Error programando visita:', {
@@ -284,8 +274,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const hasPermission =
       user.role === 'ADMIN' ||
-      (user.role === 'broker' && maintenance.property.brokerId === user.id) ||
-      (user.role === 'owner' && maintenance.property.ownerId === user.id);
+      ((user.role === 'broker' || user.role === 'BROKER') &&
+        maintenance.property.brokerId === user.id) ||
+      ((user.role === 'owner' || user.role === 'OWNER') &&
+        maintenance.property.ownerId === user.id);
 
     if (!hasPermission) {
       return NextResponse.json(

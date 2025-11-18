@@ -94,6 +94,15 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        visitSchedules: {
+          where: {
+            status: { in: ['PROPOSED', 'ACCEPTED'] },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -102,26 +111,42 @@ export async function GET(request: NextRequest) {
     });
 
     // Transformar los datos al formato esperado por el frontend
-    const jobs = maintenanceJobs.map(job => ({
-      id: job.id,
-      title: job.title,
-      description: job.description || '',
-      propertyAddress: job.property?.address || job.property?.title || 'Dirección no disponible',
-      propertyOwner:
-        job.requester?.name || job.property?.owner?.name || 'Propietario no identificado',
-      ownerPhone: job.requester?.phone || '',
-      ownerId: job.property?.ownerId || job.requester?.id || null,
-      propertyId: job.propertyId,
-      status: mapJobStatus(job.status),
-      priority: mapPriority(job.priority),
-      maintenanceType: mapMaintenanceType(job.category),
-      estimatedCost: job.estimatedCost || 0,
-      actualCost: job.actualCost || undefined,
-      scheduledDate:
-        job.scheduledDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-      completedDate: job.completedDate?.toISOString().split('T')[0],
-      notes: job.visitNotes || undefined,
-    }));
+    const jobs = maintenanceJobs.map(job => {
+      const latestProposal = job.visitSchedules?.[0];
+      return {
+        id: job.id,
+        title: job.title,
+        description: job.description || '',
+        propertyAddress: job.property?.address || job.property?.title || 'Dirección no disponible',
+        propertyOwner:
+          job.requester?.name || job.property?.owner?.name || 'Propietario no identificado',
+        ownerPhone: job.requester?.phone || '',
+        ownerId: job.property?.ownerId || job.requester?.id || null,
+        propertyId: job.propertyId,
+        status: mapJobStatus(job.status),
+        priority: mapPriority(job.priority),
+        maintenanceType: mapMaintenanceType(job.category),
+        estimatedCost: job.estimatedCost || 0,
+        actualCost: job.actualCost || undefined,
+        scheduledDate:
+          job.scheduledDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+        completedDate: job.completedDate?.toISOString().split('T')[0],
+        notes: job.visitNotes || undefined,
+        visitProposal: latestProposal
+          ? {
+              id: latestProposal.id,
+              scheduledDate: latestProposal.scheduledDate.toISOString().split('T')[0],
+              scheduledTime: latestProposal.scheduledTime,
+              estimatedDuration: latestProposal.estimatedDuration,
+              status: latestProposal.status,
+              proposedBy: latestProposal.proposedBy,
+              contactPerson: latestProposal.contactPerson,
+              contactPhone: latestProposal.contactPhone,
+              specialInstructions: latestProposal.specialInstructions,
+            }
+          : undefined,
+      };
+    });
 
     return NextResponse.json({
       success: true,

@@ -52,6 +52,18 @@ import {
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 
+interface VisitProposal {
+  id: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  estimatedDuration: number;
+  status: string;
+  proposedBy?: string;
+  contactPerson?: string;
+  contactPhone?: string;
+  specialInstructions?: string;
+}
+
 interface MaintenanceJob {
   id: string;
   title: string;
@@ -76,6 +88,7 @@ interface MaintenanceJob {
   scheduledDate: string;
   completedDate?: string;
   notes?: string;
+  visitProposal?: VisitProposal;
 }
 
 export default function MaintenanceJobsPage() {
@@ -96,6 +109,14 @@ export default function MaintenanceJobsPage() {
   const [selectedJob, setSelectedJob] = useState<MaintenanceJob | null>(null);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [showVisitProposalModal, setShowVisitProposalModal] = useState(false);
+  const [proposalAction, setProposalAction] = useState<'accept' | 'propose'>('accept');
+  const [newProposalData, setNewProposalData] = useState({
+    scheduledDate: '',
+    scheduledTime: '',
+    estimatedDuration: 120,
+    notes: '',
+  });
   const [ratingForm, setRatingForm] = useState({
     overallRating: 0,
     communicationRating: 0,
@@ -659,6 +680,87 @@ export default function MaintenanceJobsPage() {
                               <Clock className="w-4 h-4 mr-2" />
                               Esperando Aprobación
                             </Button>
+                          )}
+
+                          {job.visitProposal && job.visitProposal.status === 'PROPOSED' && (
+                            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <p className="text-sm font-semibold text-orange-800">
+                                    Propuesta de Fecha Recibida
+                                  </p>
+                                  <p className="text-xs text-orange-600 mt-1">
+                                    Propuesta por:{' '}
+                                    {job.visitProposal.proposedBy === 'OWNER'
+                                      ? 'Propietario'
+                                      : job.visitProposal.proposedBy === 'BROKER'
+                                        ? 'Corredor'
+                                        : 'Sistema'}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-700 space-y-1 mb-3">
+                                <p>
+                                  <strong>Fecha:</strong>{' '}
+                                  {new Date(job.visitProposal.scheduledDate).toLocaleDateString(
+                                    'es-CL'
+                                  )}
+                                </p>
+                                <p>
+                                  <strong>Hora:</strong> {job.visitProposal.scheduledTime}
+                                </p>
+                                <p>
+                                  <strong>Duración estimada:</strong>{' '}
+                                  {job.visitProposal.estimatedDuration} minutos
+                                </p>
+                                {job.visitProposal.contactPerson && (
+                                  <p>
+                                    <strong>Contacto:</strong> {job.visitProposal.contactPerson}
+                                    {job.visitProposal.contactPhone &&
+                                      ` - ${job.visitProposal.contactPhone}`}
+                                  </p>
+                                )}
+                                {job.visitProposal.specialInstructions && (
+                                  <p className="mt-2 text-xs text-gray-600">
+                                    <strong>Instrucciones:</strong>{' '}
+                                    {job.visitProposal.specialInstructions}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="bg-emerald-600 hover:bg-emerald-700 flex-1"
+                                  onClick={() => {
+                                    setSelectedJob(job);
+                                    setProposalAction('accept');
+                                    setShowVisitProposalModal(true);
+                                  }}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Aceptar Fecha
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => {
+                                    setSelectedJob(job);
+                                    setProposalAction('propose');
+                                    setNewProposalData({
+                                      scheduledDate: job.visitProposal!.scheduledDate,
+                                      scheduledTime: job.visitProposal!.scheduledTime,
+                                      estimatedDuration: job.visitProposal!.estimatedDuration,
+                                      notes: '',
+                                    });
+                                    setShowVisitProposalModal(true);
+                                  }}
+                                >
+                                  <Calendar className="w-4 h-4 mr-2" />
+                                  Proponer Otra
+                                </Button>
+                              </div>
+                            </div>
                           )}
 
                           {job.status === 'in_progress' && (
@@ -1306,6 +1408,218 @@ export default function MaintenanceJobsPage() {
               Enviar Calificación
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para aceptar/proponer fecha de visita */}
+      <Dialog open={showVisitProposalModal} onOpenChange={setShowVisitProposalModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {proposalAction === 'accept' ? 'Aceptar Fecha Propuesta' : 'Proponer Nueva Fecha'}
+            </DialogTitle>
+            <DialogDescription>
+              {proposalAction === 'accept'
+                ? 'Confirma que aceptas la fecha propuesta para la visita.'
+                : 'Propón una nueva fecha para la visita de mantenimiento.'}
+            </DialogDescription>
+          </DialogHeader>
+          {proposalAction === 'accept' && selectedJob?.visitProposal ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <h4 className="font-semibold text-emerald-800 mb-2">
+                  Detalles de la Fecha Propuesta:
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <p>
+                    <strong>Fecha:</strong>{' '}
+                    {new Date(selectedJob.visitProposal.scheduledDate).toLocaleDateString('es-CL')}
+                  </p>
+                  <p>
+                    <strong>Hora:</strong> {selectedJob.visitProposal.scheduledTime}
+                  </p>
+                  <p>
+                    <strong>Duración estimada:</strong>{' '}
+                    {selectedJob.visitProposal.estimatedDuration} minutos
+                  </p>
+                  {selectedJob.visitProposal.contactPerson && (
+                    <p>
+                      <strong>Contacto:</strong> {selectedJob.visitProposal.contactPerson}
+                      {selectedJob.visitProposal.contactPhone &&
+                        ` - ${selectedJob.visitProposal.contactPhone}`}
+                    </p>
+                  )}
+                  {selectedJob.visitProposal.specialInstructions && (
+                    <p className="mt-2">
+                      <strong>Instrucciones:</strong>{' '}
+                      {selectedJob.visitProposal.specialInstructions}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => setShowVisitProposalModal(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={async () => {
+                    if (!selectedJob || !selectedJob.visitProposal) {
+                      return;
+                    }
+
+                    try {
+                      const response = await fetch(
+                        `/api/maintenance/${selectedJob.id}/accept-visit-proposal`,
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          credentials: 'include',
+                          body: JSON.stringify({
+                            action: 'accept',
+                            proposalId: selectedJob.visitProposal.id,
+                          }),
+                        }
+                      );
+
+                      if (response.ok) {
+                        setSuccessMessage('Fecha aceptada exitosamente');
+                        setTimeout(() => setSuccessMessage(''), 5000);
+                        setShowVisitProposalModal(false);
+                        await loadJobs();
+                      } else {
+                        const error = await response.json();
+                        setErrorMessage(error.error || 'Error al aceptar la fecha');
+                        setTimeout(() => setErrorMessage(''), 5000);
+                      }
+                    } catch (error) {
+                      logger.error('Error aceptando propuesta:', { error });
+                      setErrorMessage('Error al aceptar la fecha');
+                      setTimeout(() => setErrorMessage(''), 5000);
+                    }
+                  }}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Aceptar Fecha
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="new-proposal-date">Fecha</Label>
+                  <Input
+                    id="new-proposal-date"
+                    type="date"
+                    value={newProposalData.scheduledDate}
+                    onChange={e =>
+                      setNewProposalData(prev => ({ ...prev, scheduledDate: e.target.value }))
+                    }
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-proposal-time">Hora</Label>
+                  <Input
+                    id="new-proposal-time"
+                    type="time"
+                    value={newProposalData.scheduledTime}
+                    onChange={e =>
+                      setNewProposalData(prev => ({ ...prev, scheduledTime: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="new-proposal-duration">Duración estimada (minutos)</Label>
+                <Input
+                  id="new-proposal-duration"
+                  type="number"
+                  value={newProposalData.estimatedDuration}
+                  onChange={e =>
+                    setNewProposalData(prev => ({
+                      ...prev,
+                      estimatedDuration: parseInt(e.target.value) || 120,
+                    }))
+                  }
+                  min={30}
+                  step={30}
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-proposal-notes">Notas adicionales (opcional)</Label>
+                <Textarea
+                  id="new-proposal-notes"
+                  value={newProposalData.notes}
+                  onChange={e => setNewProposalData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Agrega notas sobre la nueva fecha propuesta..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => setShowVisitProposalModal(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  disabled={!newProposalData.scheduledDate || !newProposalData.scheduledTime}
+                  onClick={async () => {
+                    if (!selectedJob || !selectedJob.visitProposal) {
+                      return;
+                    }
+
+                    try {
+                      const response = await fetch(
+                        `/api/maintenance/${selectedJob.id}/accept-visit-proposal`,
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          credentials: 'include',
+                          body: JSON.stringify({
+                            action: 'propose',
+                            proposalId: selectedJob.visitProposal.id,
+                            scheduledDate: newProposalData.scheduledDate,
+                            scheduledTime: newProposalData.scheduledTime,
+                            estimatedDuration: newProposalData.estimatedDuration,
+                            notes: newProposalData.notes || undefined,
+                          }),
+                        }
+                      );
+
+                      if (response.ok) {
+                        setSuccessMessage('Nueva fecha propuesta exitosamente');
+                        setTimeout(() => setSuccessMessage(''), 5000);
+                        setShowVisitProposalModal(false);
+                        setNewProposalData({
+                          scheduledDate: '',
+                          scheduledTime: '',
+                          estimatedDuration: 120,
+                          notes: '',
+                        });
+                        await loadJobs();
+                      } else {
+                        const error = await response.json();
+                        setErrorMessage(error.error || 'Error al proponer la fecha');
+                        setTimeout(() => setErrorMessage(''), 5000);
+                      }
+                    } catch (error) {
+                      logger.error('Error proponiendo nueva fecha:', { error });
+                      setErrorMessage('Error al proponer la fecha');
+                      setTimeout(() => setErrorMessage(''), 5000);
+                    }
+                  }}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Proponer Fecha
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </UnifiedDashboardLayout>

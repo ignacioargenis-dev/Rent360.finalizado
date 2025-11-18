@@ -1809,9 +1809,9 @@ export default function MantenimientoPage() {
             </div>
             <div>
               <Label htmlFor="special-instructions">Instrucciones especiales</Label>
-              <textarea
+              <Textarea
                 id="special-instructions"
-                className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full min-h-[100px]"
                 value={visitData.specialInstructions}
                 onChange={e =>
                   setVisitData(prev => ({ ...prev, specialInstructions: e.target.value }))
@@ -1838,7 +1838,7 @@ export default function MantenimientoPage() {
               Cancelar
             </Button>
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700"
+              className="bg-emerald-600 hover:bg-emerald-700"
               onClick={async () => {
                 if (!visitData.scheduledDate || !visitData.scheduledTime) {
                   alert('Fecha y hora son obligatorios');
