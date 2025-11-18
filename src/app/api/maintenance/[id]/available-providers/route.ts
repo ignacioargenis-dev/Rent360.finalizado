@@ -91,15 +91,47 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     };
 
     // Aplicar filtro de ubicación según el parámetro (solo si hay datos de ubicación)
-    if (locationFilter === 'same_city' && maintenance.property.city) {
-      // Solo proveedores de la misma ciudad
-      whereClause.city = maintenance.property.city;
+    if (
+      locationFilter === 'same_city' &&
+      (maintenance.property.city || (maintenance.property as any).commune)
+    ) {
+      // Solo proveedores de la misma comuna/ciudad
+      const locationOR: any[] = [];
+      if (maintenance.property.city) {
+        locationOR.push({ city: maintenance.property.city });
+        locationOR.push({ commune: maintenance.property.city });
+      }
+      if ((maintenance.property as any).commune) {
+        locationOR.push({ commune: (maintenance.property as any).commune });
+        locationOR.push({ city: (maintenance.property as any).commune });
+      }
+
+      if (locationOR.length > 0) {
+        whereClause.AND = [
+          {
+            isVerified: true,
+            status: {
+              in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
+            },
+          },
+          {
+            OR: locationOR,
+          },
+        ];
+        delete whereClause.isVerified;
+        delete whereClause.status;
+      }
     } else if (locationFilter === 'same_region' && maintenance.property.region) {
-      // Proveedores de la misma región (incluye misma ciudad)
+      // Proveedores de la misma región (incluye misma comuna/ciudad)
       // Construir OR solo con los campos que existen
       const locationOR: any[] = [];
       if (maintenance.property.city) {
         locationOR.push({ city: maintenance.property.city });
+        locationOR.push({ commune: maintenance.property.city });
+      }
+      if ((maintenance.property as any).commune) {
+        locationOR.push({ commune: (maintenance.property as any).commune });
+        locationOR.push({ city: (maintenance.property as any).commune });
       }
       if (maintenance.property.region) {
         locationOR.push({ region: maintenance.property.region });
@@ -147,6 +179,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         responseTime: true,
         address: true,
         city: true,
+        commune: true,
         region: true,
         description: true,
         profileImage: true,
@@ -401,26 +434,35 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         // Calcular distancia aproximada y construir ubicación
         let distance = 'N/A';
         let location = '';
-        if (provider.city === maintenance.property.city) {
+        const providerCommune = provider.commune || provider.city;
+        const propertyCommune = (maintenance.property as any).commune || maintenance.property.city;
+
+        if (providerCommune === propertyCommune && providerCommune) {
+          distance = 'Misma comuna';
+          location = provider.address ? `${provider.address}, ${providerCommune}` : providerCommune;
+        } else if (provider.city === maintenance.property.city && provider.city) {
           distance = 'Misma ciudad';
-          location = provider.address
-            ? `${provider.address}, ${provider.city}`
-            : provider.city || '';
-        } else if (provider.region === maintenance.property.region) {
+          location = provider.address ? `${provider.address}, ${provider.city}` : provider.city;
+        } else if (provider.region === maintenance.property.region && provider.region) {
           distance = 'Misma región';
           location = provider.address
-            ? `${provider.address}, ${provider.city || provider.region}`
-            : provider.city || provider.region || '';
+            ? `${provider.address}, ${providerCommune || provider.city || provider.region}`
+            : providerCommune || provider.city || provider.region || '';
         } else {
           distance = 'Otra región';
           location = provider.address
-            ? `${provider.address}, ${provider.city || provider.region || ''}`.trim()
-            : provider.city || provider.region || 'No especificada';
+            ? `${provider.address}, ${providerCommune || provider.city || provider.region || ''}`.trim()
+            : providerCommune || provider.city || provider.region || 'No especificada';
         }
 
-        // Si no hay dirección pero hay ciudad/región, mostrar al menos eso
+        // Si no hay dirección pero hay comuna/ciudad/región, mostrar al menos eso
         if (!location || location === 'No especificada') {
-          location = provider.address || provider.city || provider.region || 'No especificada';
+          location =
+            provider.address ||
+            providerCommune ||
+            provider.city ||
+            provider.region ||
+            'No especificada';
         }
 
         return {

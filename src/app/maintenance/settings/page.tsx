@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
+import { LocationSelectors } from '@/components/ui/location-selectors';
 
 interface MaintenanceSettings {
   // Profile settings
@@ -52,6 +53,8 @@ interface MaintenanceSettings {
   email: string;
   website: string;
   address: string;
+  region: string;
+  commune: string;
 
   // Service settings
   specialties: string[];
@@ -103,6 +106,8 @@ export default function MaintenanceSettingsPage() {
     email: '',
     website: '',
     address: '',
+    region: '',
+    commune: '',
 
     specialties: [],
     workingHours: {
@@ -284,6 +289,8 @@ export default function MaintenanceSettingsPage() {
             description: profile.description || '',
             website: profile.website || '',
             address: profile.address || '',
+            region: profile.region || '',
+            commune: profile.commune || '',
             specialties: specialties,
             serviceRadius: prev.serviceRadius || 25, // Mantener valor por defecto ya que no existe en el modelo
             emergencyService: availabilityParsed.emergencies || false,
@@ -465,6 +472,9 @@ export default function MaintenanceSettingsPage() {
           },
           address: {
             street: settings.address,
+            city: settings.commune, // La comuna se guarda en city para compatibilidad
+            commune: settings.commune,
+            region: settings.region,
           },
           services: {
             specialties: settings.specialties,
@@ -752,6 +762,15 @@ export default function MaintenanceSettingsPage() {
                     onChange={e => updateSetting('website', e.target.value)}
                   />
                 </div>
+
+                <LocationSelectors
+                  selectedRegion={settings.region}
+                  selectedCommune={settings.commune}
+                  onRegionChange={value => updateSetting('region', value)}
+                  onCommuneChange={value => updateSetting('commune', value)}
+                  regionLabel="Región"
+                  communeLabel="Comuna"
+                />
 
                 <div>
                   <Label htmlFor="address">Dirección</Label>
