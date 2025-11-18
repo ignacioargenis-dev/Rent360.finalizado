@@ -51,6 +51,7 @@ interface MaintenanceSettings {
   phone: string;
   email: string;
   website: string;
+  address: string;
 
   // Service settings
   specialties: string[];
@@ -101,6 +102,7 @@ export default function MaintenanceSettingsPage() {
     phone: '',
     email: '',
     website: '',
+    address: '',
 
     specialties: [],
     workingHours: {
@@ -281,6 +283,7 @@ export default function MaintenanceSettingsPage() {
             companyName: profile.businessName || profile.companyName || prev.companyName,
             description: profile.description || '',
             website: profile.website || '',
+            address: profile.address || '',
             specialties: specialties,
             serviceRadius: prev.serviceRadius || 25, // Mantener valor por defecto ya que no existe en el modelo
             emergencyService: availabilityParsed.emergencies || false,
@@ -459,6 +462,9 @@ export default function MaintenanceSettingsPage() {
           basicInfo: {
             companyName: settings.companyName,
             description: settings.description,
+          },
+          address: {
+            street: settings.address,
           },
           services: {
             specialties: settings.specialties,
@@ -745,6 +751,19 @@ export default function MaintenanceSettingsPage() {
                     value={settings.website}
                     onChange={e => updateSetting('website', e.target.value)}
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="address">Dirección</Label>
+                  <Input
+                    id="address"
+                    value={settings.address}
+                    onChange={e => updateSetting('address', e.target.value)}
+                    placeholder="Ej: Av. Las Condes 1234, Depto 5B"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Esta dirección se mostrará en las solicitudes de mantenimiento
+                  </p>
                 </div>
 
                 <div>

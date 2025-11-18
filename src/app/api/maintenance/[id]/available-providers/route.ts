@@ -145,6 +145,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         totalRatings: true,
         completedJobs: true,
         responseTime: true,
+        address: true,
         city: true,
         region: true,
         description: true,
@@ -162,6 +163,23 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       },
       orderBy: [{ rating: 'desc' }, { completedJobs: 'desc' }, { hourlyRate: 'asc' }],
     });
+
+    // Obtener conteo de trabajos activos para cada proveedor
+    const providerIds = availableProviders.map(p => p.id);
+    const activeJobsCounts = await Promise.all(
+      providerIds.map(async providerId => {
+        const activeJobsCount = await db.maintenance.count({
+          where: {
+            maintenanceProviderId: providerId,
+            status: { in: ['ASSIGNED', 'IN_PROGRESS'] },
+          },
+        });
+        return { providerId, activeJobsCount };
+      })
+    );
+    const activeJobsMap = new Map(
+      activeJobsCounts.map(item => [item.providerId, item.activeJobsCount])
+    );
 
     // Mapeo de categorías de mantenimiento a especialidades comunes
     // Incluye todas las variantes posibles en español e inglés
@@ -365,40 +383,44 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           }
         }
 
-        // Parsear availability (es un JSON string)
+        // Verificar trabajos activos del proveedor
+        const activeJobsCount = activeJobsMap.get(provider.id) || 0;
+        const availabilityStatus = activeJobsCount > 0 ? 'busy' : 'available';
+
+        // Parsear availability (es un JSON string) para otros propósitos
         let availabilityParsed: any = {};
-        let availabilityStatus = 'available';
         if (provider.availability) {
           try {
             availabilityParsed = JSON.parse(provider.availability);
-            // Determinar disponibilidad basado en el objeto parseado
-            if (
-              availabilityParsed.weekdays ||
-              availabilityParsed.weekends ||
-              availabilityParsed.emergencies
-            ) {
-              availabilityStatus = 'available';
-            } else {
-              availabilityStatus = 'busy';
-            }
           } catch {
-            // Si no es JSON válido, asumir disponible
-            availabilityStatus = 'available';
+            // Si no es JSON válido, usar valores por defecto
+            availabilityParsed = { weekdays: true, weekends: false, emergencies: false };
           }
         }
 
-        // Calcular distancia aproximada
+        // Calcular distancia aproximada y construir ubicación
         let distance = 'N/A';
         let location = '';
         if (provider.city === maintenance.property.city) {
           distance = 'Misma ciudad';
-          location = provider.city || '';
+          location = provider.address
+            ? `${provider.address}, ${provider.city}`
+            : provider.city || '';
         } else if (provider.region === maintenance.property.region) {
           distance = 'Misma región';
-          location = provider.region || '';
+          location = provider.address
+            ? `${provider.address}, ${provider.city || provider.region}`
+            : provider.city || provider.region || '';
         } else {
           distance = 'Otra región';
-          location = provider.city || provider.region || 'No especificada';
+          location = provider.address
+            ? `${provider.address}, ${provider.city || provider.region || ''}`.trim()
+            : provider.city || provider.region || 'No especificada';
+        }
+
+        // Si no hay dirección pero hay ciudad/región, mostrar al menos eso
+        if (!location || location === 'No especificada') {
+          location = provider.address || provider.city || provider.region || 'No especificada';
         }
 
         return {
