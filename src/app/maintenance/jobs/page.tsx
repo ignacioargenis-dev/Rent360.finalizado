@@ -47,6 +47,7 @@ import {
   Send,
   X,
   MessageSquare,
+  Star,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
@@ -94,6 +95,13 @@ export default function MaintenanceJobsPage() {
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<MaintenanceJob | null>(null);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [ratingForm, setRatingForm] = useState({
+    overallRating: 0,
+    communicationRating: 0,
+    professionalismRating: 0,
+    comment: '',
+  });
   const [quoteData, setQuoteData] = useState({
     estimatedCost: '',
     estimatedTime: '',
@@ -678,10 +686,24 @@ export default function MaintenanceJobsPage() {
                               Esperando Confirmación
                             </Button>
                           )}
-                          {job.status === 'completed' && (
-                            <Button variant="outline" disabled>
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Completado
+                          {job.status === 'completed' && job.ownerId && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                              onClick={() => {
+                                setSelectedJob(job);
+                                setShowRatingDialog(true);
+                                setRatingForm({
+                                  overallRating: 0,
+                                  communicationRating: 0,
+                                  professionalismRating: 0,
+                                  comment: '',
+                                });
+                              }}
+                            >
+                              <Star className="w-4 h-4 mr-2" />
+                              Calificar Cliente
                             </Button>
                           )}
 
@@ -1120,6 +1142,170 @@ export default function MaintenanceJobsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de calificación */}
+      <Dialog open={showRatingDialog} onOpenChange={setShowRatingDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-500" />
+              Calificar Cliente
+            </DialogTitle>
+            <DialogDescription>
+              Califica tu experiencia trabajando con {selectedJob?.propertyOwner || 'el cliente'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Componente StarRating */}
+            {(() => {
+              const StarRating = ({
+                label,
+                value,
+                onChange,
+              }: {
+                label: string;
+                value: number;
+                onChange: (value: number) => void;
+              }) => (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">{label}</Label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => onChange(star)}
+                        className="focus:outline-none"
+                      >
+                        <Star
+                          className={`w-6 h-6 ${
+                            star <= value
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300 hover:text-yellow-400'
+                          } transition-colors`}
+                        />
+                      </button>
+                    ))}
+                    <span className="text-sm text-gray-600 ml-2">
+                      {value > 0 ? `${value}/5` : ''}
+                    </span>
+                  </div>
+                </div>
+              );
+
+              return (
+                <>
+                  <StarRating
+                    label="Calificación General *"
+                    value={ratingForm.overallRating}
+                    onChange={value => setRatingForm(prev => ({ ...prev, overallRating: value }))}
+                  />
+                  <StarRating
+                    label="Comunicación"
+                    value={ratingForm.communicationRating}
+                    onChange={value =>
+                      setRatingForm(prev => ({ ...prev, communicationRating: value }))
+                    }
+                  />
+                  <StarRating
+                    label="Profesionalismo"
+                    value={ratingForm.professionalismRating}
+                    onChange={value =>
+                      setRatingForm(prev => ({ ...prev, professionalismRating: value }))
+                    }
+                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="rating-comment">Comentario</Label>
+                    <Textarea
+                      id="rating-comment"
+                      placeholder="Comparte tu experiencia trabajando con este cliente..."
+                      value={ratingForm.comment}
+                      onChange={e => setRatingForm(prev => ({ ...prev, comment: e.target.value }))}
+                      rows={4}
+                    />
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRatingDialog(false);
+                setRatingForm({
+                  overallRating: 0,
+                  communicationRating: 0,
+                  professionalismRating: 0,
+                  comment: '',
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-yellow-600 hover:bg-yellow-700"
+              disabled={ratingForm.overallRating === 0}
+              onClick={async () => {
+                if (!selectedJob || !selectedJob.ownerId) {
+                  alert('Error: No hay trabajo seleccionado');
+                  return;
+                }
+
+                try {
+                  const response = await fetch('/api/ratings', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      toUserId: selectedJob.ownerId,
+                      contextType: 'MAINTENANCE',
+                      contextId: selectedJob.id,
+                      overallRating: ratingForm.overallRating,
+                      communicationRating:
+                        ratingForm.communicationRating > 0
+                          ? ratingForm.communicationRating
+                          : undefined,
+                      professionalismRating:
+                        ratingForm.professionalismRating > 0
+                          ? ratingForm.professionalismRating
+                          : undefined,
+                      comment: ratingForm.comment || undefined,
+                      propertyId: selectedJob.propertyId,
+                    }),
+                  });
+
+                  if (response.ok) {
+                    setSuccessMessage('Calificación enviada exitosamente');
+                    setTimeout(() => setSuccessMessage(''), 5000);
+                    setShowRatingDialog(false);
+                    setRatingForm({
+                      overallRating: 0,
+                      communicationRating: 0,
+                      professionalismRating: 0,
+                      comment: '',
+                    });
+                    await loadJobs();
+                  } else {
+                    const error = await response.json();
+                    setErrorMessage(error.error || 'Error al enviar la calificación');
+                    setTimeout(() => setErrorMessage(''), 5000);
+                  }
+                } catch (error) {
+                  logger.error('Error enviando calificación:', { error });
+                  setErrorMessage('Error al enviar la calificación');
+                  setTimeout(() => setErrorMessage(''), 5000);
+                }
+              }}
+            >
+              <Star className="w-4 h-4 mr-2" />
+              Enviar Calificación
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </UnifiedDashboardLayout>
