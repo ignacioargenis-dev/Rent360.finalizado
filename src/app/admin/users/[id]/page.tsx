@@ -14,17 +14,31 @@ export default function UserDetailPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const response = await fetch(`/api/users/${params?.id}`);
-        if (response.ok) {
-          const data = await response.json();
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`/api/users/${params?.id}`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        if (data.success && data.user) {
           setUser(data.user);
+        } else {
+          throw new Error('Usuario no encontrado');
         }
       } catch (error) {
         console.error('Error loading user:', error);
+        setError(error instanceof Error ? error.message : 'Error al cargar el usuario');
       } finally {
         setLoading(false);
       }
@@ -37,19 +51,28 @@ export default function UserDetailPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout>
+      <UnifiedDashboardLayout title="Detalles del Usuario">
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Cargando...</div>
+          <div className="text-center">
+            <div className="text-lg mb-2">Cargando información del usuario...</div>
+            <div className="text-sm text-gray-500">Por favor espera</div>
+          </div>
         </div>
       </UnifiedDashboardLayout>
     );
   }
 
-  if (!user) {
+  if (error || !user) {
     return (
-      <UnifiedDashboardLayout>
+      <UnifiedDashboardLayout title="Error">
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-red-600">Usuario no encontrado</div>
+          <div className="text-center">
+            <div className="text-lg text-red-600 mb-2">{error || 'Usuario no encontrado'}</div>
+            <Button variant="outline" onClick={() => router.push('/admin/users')} className="mt-4">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver a la lista de usuarios
+            </Button>
+          </div>
         </div>
       </UnifiedDashboardLayout>
     );
@@ -69,9 +92,24 @@ export default function UserDetailPage() {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const formatDate = (date: string | Date) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('es-CL');
+  const formatDate = (date: string | Date | null | undefined) => {
+    if (!date) {
+      return 'No disponible';
+    }
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) {
+        return 'Fecha inválida';
+      }
+      return dateObj.toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Fecha inválida';
+    }
   };
 
   return (
@@ -202,7 +240,11 @@ export default function UserDetailPage() {
                 <div>
                   <span className="font-medium">Estado:</span>
                   <span className="ml-2">
-                    <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                    {user.isActive ? (
+                      <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                    ) : (
+                      <Badge className="bg-red-100 text-red-800">Inactivo</Badge>
+                    )}
                   </span>
                 </div>
 
@@ -228,14 +270,18 @@ export default function UserDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div>
-                  <span className="font-medium">Registrado:</span>
-                  <span className="ml-2">{formatDate(user.createdAt)}</span>
-                </div>
-                <div>
-                  <span className="font-medium">Última actualización:</span>
-                  <span className="ml-2">{formatDate(user.updatedAt)}</span>
-                </div>
+                {user.createdAt && (
+                  <div>
+                    <span className="font-medium">Registrado:</span>
+                    <span className="ml-2">{formatDate(user.createdAt)}</span>
+                  </div>
+                )}
+                {user.updatedAt && (
+                  <div>
+                    <span className="font-medium">Última actualización:</span>
+                    <span className="ml-2">{formatDate(user.updatedAt)}</span>
+                  </div>
+                )}
                 {user.lastLogin && (
                   <div>
                     <span className="font-medium">Último acceso:</span>
@@ -244,6 +290,89 @@ export default function UserDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Provider Information */}
+            {(user as any).maintenanceProvider && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Proveedor de Mantenimiento</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <span className="font-medium">Nombre del Negocio:</span>
+                    <span className="ml-2">
+                      {(user as any).maintenanceProvider.businessName || 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Especialidad:</span>
+                    <span className="ml-2">
+                      {(user as any).maintenanceProvider.specialty || 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Estado:</span>
+                    <span className="ml-2">
+                      <Badge
+                        className={
+                          (user as any).maintenanceProvider.isVerified
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }
+                      >
+                        {(user as any).maintenanceProvider.isVerified ? 'Verificado' : 'Pendiente'}
+                      </Badge>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Estado del Negocio:</span>
+                    <span className="ml-2">
+                      {(user as any).maintenanceProvider.status || 'N/A'}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {(user as any).serviceProvider && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Proveedor de Servicios</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <span className="font-medium">Nombre del Negocio:</span>
+                    <span className="ml-2">
+                      {(user as any).serviceProvider.businessName || 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Tipo de Servicio:</span>
+                    <span className="ml-2">
+                      {(user as any).serviceProvider.serviceType || 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Estado:</span>
+                    <span className="ml-2">
+                      <Badge
+                        className={
+                          (user as any).serviceProvider.isVerified
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }
+                      >
+                        {(user as any).serviceProvider.isVerified ? 'Verificado' : 'Pendiente'}
+                      </Badge>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Estado del Negocio:</span>
+                    <span className="ml-2">{(user as any).serviceProvider.status || 'N/A'}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Properties (if owner) */}
             {user.role === 'OWNER' && (
