@@ -1135,7 +1135,23 @@ export default function UserDetailPage() {
                 <div>
                   <span className="font-medium">Verificado:</span>
                   <span className="ml-2">
-                    {user.rutVerified ? (
+                    {/* Para proveedores, mostrar el estado de verificación del proveedor */}
+                    {(user as any).maintenanceProvider || (user as any).serviceProvider ? (
+                      (user as any).maintenanceProvider ? (
+                        (user as any).maintenanceProvider.isVerified ? (
+                          <Badge className="bg-green-100 text-green-800">Sí</Badge>
+                        ) : (
+                          <Badge className="bg-yellow-100 text-yellow-800">No</Badge>
+                        )
+                      ) : (user as any).serviceProvider ? (
+                        (user as any).serviceProvider.isVerified ? (
+                          <Badge className="bg-green-100 text-green-800">Sí</Badge>
+                        ) : (
+                          <Badge className="bg-yellow-100 text-yellow-800">No</Badge>
+                        )
+                      ) : null
+                    ) : // Para usuarios normales, mostrar verificación de RUT
+                    user.rutVerified ? (
                       <Badge className="bg-green-100 text-green-800">Sí</Badge>
                     ) : (
                       <Badge className="bg-yellow-100 text-yellow-800">No</Badge>
