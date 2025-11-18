@@ -168,12 +168,34 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const providerIds = availableProviders.map(p => p.id);
     const activeJobsCounts = await Promise.all(
       providerIds.map(async providerId => {
+        // Verificar trabajos con estados exactos (sin variaciones de mayúsculas/minúsculas)
         const activeJobsCount = await db.maintenance.count({
           where: {
             maintenanceProviderId: providerId,
-            status: { in: ['ASSIGNED', 'IN_PROGRESS'] },
+            status: {
+              in: ['ASSIGNED', 'IN_PROGRESS', 'QUOTE_PENDING', 'QUOTE_APPROVED', 'SCHEDULED'],
+            },
           },
         });
+
+        // Logging para debugging
+        if (activeJobsCount > 0) {
+          const activeJobs = await db.maintenance.findMany({
+            where: {
+              maintenanceProviderId: providerId,
+              status: {
+                in: ['ASSIGNED', 'IN_PROGRESS', 'QUOTE_PENDING', 'QUOTE_APPROVED', 'SCHEDULED'],
+              },
+            },
+            select: { id: true, status: true, title: true },
+          });
+          logger.info('Proveedor con trabajos activos:', {
+            providerId,
+            activeJobsCount,
+            jobs: activeJobs.map(j => ({ id: j.id, status: j.status, title: j.title })),
+          });
+        }
+
         return { providerId, activeJobsCount };
       })
     );

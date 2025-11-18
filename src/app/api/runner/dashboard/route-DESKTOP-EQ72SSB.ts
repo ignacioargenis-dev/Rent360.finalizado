@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,18 +65,9 @@ export async function GET(request: NextRequest) {
       .filter(v => v.status === 'COMPLETED' && new Date(v.scheduledAt) >= monthStart)
       .reduce((sum, v) => sum + (v.earnings || 0), 0);
 
-    // Calificación promedio
-    const visitsWithRatings = allVisits.filter(v => {
-      const rating = v.runnerRatings[0]?.overallRating || v.rating;
-      return rating && rating > 0;
-    });
-    const averageRating =
-      visitsWithRatings.length > 0
-        ? visitsWithRatings.reduce((sum, v) => {
-            const rating = v.runnerRatings[0]?.overallRating || v.rating || 0;
-            return sum + rating;
-          }, 0) / visitsWithRatings.length
-        : 0;
+    // Obtener calificación promedio real desde UserRatingService
+    const ratingSummary = await UserRatingService.getUserRatingSummary(user.id);
+    const averageRating = ratingSummary?.averageRating || 0;
 
     // Visitas de hoy
     const today = new Date();

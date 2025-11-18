@@ -90,6 +90,11 @@ interface MaintenanceRequest {
   scheduledDate?: string;
   completedDate?: string;
   provider?: string;
+  notes?: string;
+  maintenanceProvider?: {
+    businessName?: string;
+    specialty?: string;
+  };
 }
 
 interface MaintenanceStats {
@@ -169,7 +174,8 @@ export default function MantenimientoPage() {
           id: request.id,
           propertyId: request.propertyId,
           propertyTitle: request.property?.title || 'Propiedad sin título',
-          tenantName: request.requestedBy?.name || 'Usuario no identificado',
+          tenantName:
+            request.requestedBy?.name || request.requester?.name || 'Usuario no identificado',
           type: request.type || 'REPAIR',
           description: request.description || 'Sin descripción',
           urgency: request.priority || 'MEDIUM',
@@ -178,7 +184,12 @@ export default function MantenimientoPage() {
           createdAt: request.createdAt,
           scheduledDate: request.scheduledDate,
           completedDate: request.completedDate,
-          provider: request.assignedTo?.name || request.provider,
+          provider:
+            request.maintenanceProvider?.businessName ||
+            request.assignedTo?.name ||
+            request.provider,
+          notes: request.notes,
+          maintenanceProvider: request.maintenanceProvider,
         })
       );
 
@@ -864,9 +875,114 @@ export default function MantenimientoPage() {
                         </div>
                         <p className="text-gray-700 mb-3">{request.description}</p>
                         {request.provider && (
-                          <p className="text-sm text-emerald-700">
+                          <p className="text-sm text-emerald-700 mb-2">
                             <strong>Proveedor asignado:</strong> {request.provider}
                           </p>
+                        )}
+                        {request.status === 'QUOTE_PENDING' && request.notes && (
+                          <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                            <h4 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              Detalles de la Cotización
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              {(() => {
+                                // Parsear información de cotización desde notes
+                                const quoteMatch = request.notes.match(
+                                  /\[COTIZACIÓN[^\]]*\]:\s*([\s\S]*?)(?=\n\n|$)/
+                                );
+                                if (quoteMatch) {
+                                  const quoteText = quoteMatch[1];
+                                  const lines = quoteText.split('\n').filter(l => l.trim());
+                                  const quoteInfo: Record<string, string> = {};
+
+                                  lines.forEach(line => {
+                                    if (line.includes('Costo:')) {
+                                      quoteInfo.costo = line.replace('Costo:', '').trim();
+                                    } else if (line.includes('Tiempo estimado:')) {
+                                      quoteInfo.tiempo = line
+                                        .replace('Tiempo estimado:', '')
+                                        .trim();
+                                    } else if (line.includes('Notas:')) {
+                                      quoteInfo.notas = line.replace('Notas:', '').trim();
+                                    } else if (line.includes('Materiales:')) {
+                                      quoteInfo.materiales = line.replace('Materiales:', '').trim();
+                                    } else if (line.includes('Costo mano de obra:')) {
+                                      quoteInfo.manoObra = line
+                                        .replace('Costo mano de obra:', '')
+                                        .trim();
+                                    } else if (line.includes('Costo materiales:')) {
+                                      quoteInfo.costoMateriales = line
+                                        .replace('Costo materiales:', '')
+                                        .trim();
+                                    }
+                                  });
+
+                                  return (
+                                    <>
+                                      {quoteInfo.costo && (
+                                        <div>
+                                          <span className="font-medium text-orange-800">
+                                            Costo Total:{' '}
+                                          </span>
+                                          <span className="text-orange-900">{quoteInfo.costo}</span>
+                                        </div>
+                                      )}
+                                      {quoteInfo.tiempo && (
+                                        <div>
+                                          <span className="font-medium text-orange-800">
+                                            Tiempo Estimado:{' '}
+                                          </span>
+                                          <span className="text-orange-900">
+                                            {quoteInfo.tiempo}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {quoteInfo.manoObra && (
+                                        <div>
+                                          <span className="font-medium text-orange-800">
+                                            Mano de Obra:{' '}
+                                          </span>
+                                          <span className="text-orange-900">
+                                            {quoteInfo.manoObra}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {quoteInfo.costoMateriales && (
+                                        <div>
+                                          <span className="font-medium text-orange-800">
+                                            Materiales:{' '}
+                                          </span>
+                                          <span className="text-orange-900">
+                                            {quoteInfo.costoMateriales}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {quoteInfo.materiales && (
+                                        <div>
+                                          <span className="font-medium text-orange-800">
+                                            Lista de Materiales:{' '}
+                                          </span>
+                                          <span className="text-orange-900">
+                                            {quoteInfo.materiales}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {quoteInfo.notas && (
+                                        <div>
+                                          <span className="font-medium text-orange-800">
+                                            Notas:{' '}
+                                          </span>
+                                          <span className="text-orange-900">{quoteInfo.notas}</span>
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
+                          </div>
                         )}
                       </div>
 

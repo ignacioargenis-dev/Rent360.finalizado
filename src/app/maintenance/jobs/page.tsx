@@ -46,6 +46,7 @@ import {
   Square,
   Send,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
@@ -57,6 +58,8 @@ interface MaintenanceJob {
   propertyAddress: string;
   propertyOwner: string;
   ownerPhone: string;
+  ownerId?: string | null;
+  propertyId?: string;
   status:
     | 'pending'
     | 'in_progress'
@@ -642,6 +645,21 @@ export default function MaintenanceJobsPage() {
                             <Info className="w-4 h-4 mr-2" />
                             Detalles
                           </Button>
+
+                          {job.ownerId && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Abrir mensajería con el propietario
+                                window.location.href = `/messages?userId=${job.ownerId}&propertyId=${job.propertyId || ''}`;
+                              }}
+                              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                            >
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Contactar
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>

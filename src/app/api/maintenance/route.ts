@@ -99,16 +99,20 @@ export async function GET(request: NextRequest) {
               city: true,
             },
           },
-          // contractor: {
-          //   select: {
-          //     id: true,
-          //     name: true,
-          //     specialty: true,
-          //     rating: true,
-          //     phone: true,
-          //     email: true
-          //   }
-          // }
+          maintenanceProvider: {
+            select: {
+              id: true,
+              businessName: true,
+              specialty: true,
+            },
+          },
+          requester: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       }),
       db.maintenance.count({ where }),
@@ -125,6 +129,7 @@ export async function GET(request: NextRequest) {
       maintenanceRequests: maintenanceRequests.map(request => ({
         ...request,
         images: JSON.parse(request.images || '[]'),
+        notes: request.notes, // Incluir notes para parsear cotización
       })),
       pagination: {
         page,

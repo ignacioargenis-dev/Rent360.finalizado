@@ -77,10 +77,19 @@ export async function GET(request: NextRequest) {
         },
         property: {
           select: {
+            id: true,
             title: true,
             address: true,
             commune: true,
             city: true,
+            ownerId: true,
+            owner: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },
@@ -96,8 +105,11 @@ export async function GET(request: NextRequest) {
       title: job.title,
       description: job.description || '',
       propertyAddress: job.property?.address || job.property?.title || 'Dirección no disponible',
-      propertyOwner: job.requester?.name || 'Propietario no identificado',
+      propertyOwner:
+        job.requester?.name || job.property?.owner?.name || 'Propietario no identificado',
       ownerPhone: job.requester?.phone || '',
+      ownerId: job.property?.ownerId || job.requester?.id || null,
+      propertyId: job.propertyId,
       status: mapJobStatus(job.status),
       priority: mapPriority(job.priority),
       maintenanceType: mapMaintenanceType(job.category),

@@ -136,7 +136,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     try {
       await NotificationService.create({
         userId: provider.user.id,
-        type: NotificationType.NEW_MESSAGE,
+        type: NotificationType.MAINTENANCE_REQUEST,
         title: 'Nuevo Trabajo de Mantenimiento Asignado',
         message: `Se te ha asignado el mantenimiento: ${maintenance.title}`,
         link: `/maintenance/jobs/${maintenance.id}`,
