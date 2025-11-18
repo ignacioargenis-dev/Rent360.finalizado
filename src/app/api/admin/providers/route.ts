@@ -21,13 +21,10 @@ const verifyDocumentsSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     // Solo admins pueden ver todos los providers
     if (user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -46,12 +43,12 @@ export async function GET(request: NextRequest) {
     // Construir filtros
     const whereMaintenance: any = {};
     const whereService: any = {};
-    
+
     if (status) {
       whereMaintenance.status = status;
       whereService.status = status;
     }
-    
+
     if (verified !== null) {
       whereMaintenance.isVerified = verified === 'true';
       whereService.isVerified = verified === 'true';
@@ -59,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener maintenance providers
     if (!providerType || providerType === 'maintenance') {
-             const maintenance = await db.maintenanceProvider.findMany({
+      const maintenance = await db.maintenanceProvider.findMany({
         where: whereMaintenance,
         skip,
         take: limit,
@@ -83,12 +80,12 @@ export async function GET(request: NextRequest) {
         completedJobs: provider._count?.maintenanceJobs || 0,
         totalTransactions: provider._count?.transactions || 0,
       })) as any[];
-             totalMaintenance = await db.maintenanceProvider.count({ where: whereMaintenance });
+      totalMaintenance = await db.maintenanceProvider.count({ where: whereMaintenance });
     }
 
     // Obtener service providers
     if (!providerType || providerType === 'service') {
-             const service = await db.serviceProvider.findMany({
+      const service = await db.serviceProvider.findMany({
         where: whereService,
         skip,
         take: limit,
@@ -152,7 +149,6 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-
   } catch (error) {
     return handleApiError(error);
   }
@@ -162,44 +158,37 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     // Solo admins pueden actualizar providers
     if (user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const body = await request.json();
-    const { providerId, providerType, action, ...data } = body;
+    const { providerId, providerType, action, data: actionData, ...restData } = body;
 
     if (!providerId || !providerType || !action) {
       return NextResponse.json(
         { error: 'ID de proveedor, tipo y acción son requeridos' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (!['maintenance', 'service'].includes(providerType)) {
-      return NextResponse.json(
-        { error: 'Tipo de proveedor inválido' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Tipo de proveedor inválido' }, { status: 400 });
     }
 
     if (!['update_status', 'verify_documents', 'verify_bank_account'].includes(action)) {
-      return NextResponse.json(
-        { error: 'Acción inválida' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Acción inválida' }, { status: 400 });
     }
 
     let result;
 
     if (action === 'update_status') {
-      const validatedData = updateProviderStatusSchema.parse(data);
-      
+      // Usar actionData si existe, sino usar restData (para compatibilidad)
+      const dataToValidate = actionData || restData;
+      const validatedData = updateProviderStatusSchema.parse(dataToValidate);
+
       if (providerType === 'maintenance') {
         result = await db.maintenanceProvider.update({
           where: { id: providerId },
@@ -254,8 +243,9 @@ export async function PUT(request: NextRequest) {
         }
       }
     } else if (action === 'verify_documents') {
-      const validatedData = verifyDocumentsSchema.parse(data);
-      
+      const dataToValidate = actionData || restData;
+      const validatedData = verifyDocumentsSchema.parse(dataToValidate);
+
       if (providerType === 'maintenance') {
         result = await db.providerDocuments.update({
           where: { maintenanceProviderId: providerId },
@@ -276,8 +266,9 @@ export async function PUT(request: NextRequest) {
         });
       }
     } else if (action === 'verify_bank_account') {
-      const validatedData = verifyDocumentsSchema.parse(data);
-      
+      const dataToValidate = actionData || restData;
+      const validatedData = verifyDocumentsSchema.parse(dataToValidate);
+
       if (providerType === 'maintenance') {
         const provider = await db.maintenanceProvider.findUnique({
           where: { id: providerId },
@@ -290,7 +281,7 @@ export async function PUT(request: NextRequest) {
             where: { userId: provider.userId },
             orderBy: [
               { isPrimary: 'desc' }, // Primero las primarias
-              { createdAt: 'asc' }   // Luego por antigüedad
+              { createdAt: 'asc' }, // Luego por antigüedad
             ],
           });
 
@@ -315,7 +306,7 @@ export async function PUT(request: NextRequest) {
             where: { userId: provider.userId },
             orderBy: [
               { isPrimary: 'desc' }, // Primero las primarias
-              { createdAt: 'asc' }   // Luego por antigüedad
+              { createdAt: 'asc' }, // Luego por antigüedad
             ],
           });
 
@@ -335,7 +326,6 @@ export async function PUT(request: NextRequest) {
       message: 'Proveedor actualizado exitosamente',
       result,
     });
-
   } catch (error) {
     return handleApiError(error);
   }

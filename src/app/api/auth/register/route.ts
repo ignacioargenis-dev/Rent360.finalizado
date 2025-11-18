@@ -126,8 +126,53 @@ export async function POST(request: NextRequest) {
         data: userData,
       });
 
+      // Verificar configuración de aprobación automática
+      const [userApprovalSetting, autoApproveMaintenanceSetting, autoApproveServiceSetting] =
+        await Promise.all([
+          tx.systemSetting.findFirst({
+            where: {
+              category: 'users',
+              key: 'userApprovalRequired',
+              isActive: true,
+            },
+          }),
+          tx.systemSetting.findFirst({
+            where: {
+              OR: [
+                { category: 'providers', key: 'autoApproveMaintenanceProviders' },
+                { category: 'system', key: 'autoApproveMaintenanceProviders' },
+              ],
+              isActive: true,
+            },
+          }),
+          tx.systemSetting.findFirst({
+            where: {
+              OR: [
+                { category: 'providers', key: 'autoApproveServiceProviders' },
+                { category: 'system', key: 'autoApproveServiceProviders' },
+              ],
+              isActive: true,
+            },
+          }),
+        ]);
+
+      const userApprovalRequired =
+        userApprovalSetting?.value === 'true' || userApprovalSetting?.value === '1';
+      const autoApproveMaintenance =
+        autoApproveMaintenanceSetting?.value === 'true' ||
+        autoApproveMaintenanceSetting?.value === '1';
+      const autoApproveService =
+        autoApproveServiceSetting?.value === 'true' || autoApproveServiceSetting?.value === '1';
+
+      // Determinar si el usuario debe estar activo
+      let shouldBeActive = !userApprovalRequired;
+
       // Si el usuario se registra como PROVIDER o MAINTENANCE, crear perfil automáticamente
       if (normalizedRole === 'PROVIDER') {
+        const shouldAutoApprove = autoApproveService;
+        const initialStatus = shouldAutoApprove ? 'ACTIVE' : 'PENDING_VERIFICATION';
+        const initialIsVerified = shouldAutoApprove;
+
         // Crear perfil de ServiceProvider
         await tx.serviceProvider.create({
           data: {
@@ -137,8 +182,8 @@ export async function POST(request: NextRequest) {
             serviceType: 'OTHER',
             serviceTypes: JSON.stringify([]),
             basePrice: 0,
-            status: 'PENDING_VERIFICATION',
-            isVerified: false,
+            status: initialStatus,
+            isVerified: initialIsVerified,
             responseTime: 2,
             availability: JSON.stringify({
               weekdays: true,
@@ -152,11 +197,21 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        // Si está configurado para auto-aprobar, activar el usuario
+        if (shouldAutoApprove) {
+          shouldBeActive = true;
+        }
+
         logger.info('Perfil de ServiceProvider creado automáticamente durante registro', {
           userId: user.id,
           email: user.email,
+          autoApproved: shouldAutoApprove,
         });
       } else if (normalizedRole === 'MAINTENANCE') {
+        const shouldAutoApprove = autoApproveMaintenance;
+        const initialStatus = shouldAutoApprove ? 'ACTIVE' : 'PENDING_VERIFICATION';
+        const initialIsVerified = shouldAutoApprove;
+
         // Crear perfil de MaintenanceProvider
         await tx.maintenanceProvider.create({
           data: {
@@ -166,8 +221,8 @@ export async function POST(request: NextRequest) {
             specialty: 'Mantenimiento General',
             specialties: JSON.stringify([]),
             hourlyRate: 0,
-            status: 'PENDING_VERIFICATION',
-            isVerified: false,
+            status: initialStatus,
+            isVerified: initialIsVerified,
             responseTime: 2,
             availability: JSON.stringify({
               weekdays: true,
@@ -181,10 +236,25 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        // Si está configurado para auto-aprobar, activar el usuario
+        if (shouldAutoApprove) {
+          shouldBeActive = true;
+        }
+
         logger.info('Perfil de MaintenanceProvider creado automáticamente durante registro', {
           userId: user.id,
           email: user.email,
+          autoApproved: shouldAutoApprove,
         });
+      }
+
+      // Actualizar estado activo del usuario según configuración
+      if (shouldBeActive !== user.isActive) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { isActive: shouldBeActive },
+        });
+        user.isActive = shouldBeActive;
       }
 
       return user;
