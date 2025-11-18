@@ -51,12 +51,26 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Verificar permisos de acceso
+    // El usuario puede asignar si es:
+    // 1. ADMIN
+    // 2. El broker que gestiona la propiedad
+    // 3. El owner de la propiedad
+    // 4. El usuario que solicitó el mantenimiento (requester)
     const hasPermission =
       user.role === 'ADMIN' ||
       (user.role === 'broker' && maintenance.property.brokerId === user.id) ||
-      (user.role === 'owner' && maintenance.property.ownerId === user.id);
+      (user.role === 'owner' && maintenance.property.ownerId === user.id) ||
+      maintenance.requestedBy === user.id;
 
     if (!hasPermission) {
+      logger.warn('Intento de asignación sin permisos:', {
+        userId: user.id,
+        userRole: user.role,
+        maintenanceId,
+        propertyOwnerId: maintenance.property.ownerId,
+        propertyBrokerId: maintenance.property.brokerId,
+        requestedBy: maintenance.requestedBy,
+      });
       return NextResponse.json(
         { error: 'No tienes permisos para asignar prestadores a esta solicitud' },
         { status: 403 }
