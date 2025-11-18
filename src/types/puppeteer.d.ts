@@ -16,7 +16,7 @@ declare module 'puppeteer' {
   }
 
   export interface Page {
-    setContent(html: string, options?: { waitUntil?: string[] }): Promise<void>;
+    setContent(html: string, options?: { waitUntil?: string | string[] }): Promise<void>;
     pdf(options?: PDFOptions): Promise<Buffer>;
     close(): Promise<void>;
   }
