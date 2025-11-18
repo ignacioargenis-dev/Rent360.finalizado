@@ -891,7 +891,7 @@ export default function MantenimientoPage() {
                                 const quoteMatch = request.notes.match(
                                   /\[COTIZACIÓN[^\]]*\]:\s*([\s\S]*?)(?=\n\n|$)/
                                 );
-                                if (quoteMatch) {
+                                if (quoteMatch && quoteMatch[1]) {
                                   const quoteText = quoteMatch[1];
                                   const lines = quoteText.split('\n').filter(l => l.trim());
                                   const quoteInfo: Record<string, string> = {};
