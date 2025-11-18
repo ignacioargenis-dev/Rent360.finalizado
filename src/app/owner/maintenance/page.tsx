@@ -95,6 +95,7 @@ interface MaintenanceRequest {
   provider?: string;
   notes?: string;
   maintenanceProvider?: {
+    id?: string;
     businessName?: string;
     specialty?: string;
   };
