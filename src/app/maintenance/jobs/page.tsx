@@ -66,7 +66,8 @@ interface MaintenanceJob {
     | 'completed'
     | 'cancelled'
     | 'quote_pending'
-    | 'quote_approved';
+    | 'quote_approved'
+    | 'pending_confirmation';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   maintenanceType: 'plumbing' | 'electrical' | 'structural' | 'cleaning' | 'other';
   estimatedCost: number;
@@ -173,6 +174,10 @@ export default function MaintenanceJobsPage() {
       quote_approved: { label: 'Cotización Aprobada', color: 'bg-purple-100 text-purple-800' },
       in_progress: { label: 'En Progreso', color: 'bg-blue-100 text-blue-800' },
       completed: { label: 'Completado', color: 'bg-green-100 text-green-800' },
+      pending_confirmation: {
+        label: 'Esperando Confirmación',
+        color: 'bg-orange-100 text-orange-800',
+      },
       cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -210,12 +215,49 @@ export default function MaintenanceJobsPage() {
     }).format(amount);
   };
 
-  const handleStatusChange = (jobId: string, newStatus: string) => {
-    setJobs(prevJobs =>
-      prevJobs.map(job =>
-        job.id === jobId ? { ...job, status: newStatus as MaintenanceJob['status'] } : job
-      )
-    );
+  const handleStatusChange = async (jobId: string, newStatus: string) => {
+    // Si se está completando el trabajo, usar el endpoint específico
+    if (newStatus === 'completed') {
+      try {
+        const response = await fetch(`/api/maintenance/${jobId}/complete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSuccessMessage('Trabajo completado. Esperando confirmación del propietario.');
+          setTimeout(() => setSuccessMessage(''), 5000);
+          // Actualizar el estado local
+          setJobs(prevJobs =>
+            prevJobs.map(job =>
+              job.id === jobId
+                ? { ...job, status: 'pending_confirmation' as MaintenanceJob['status'] }
+                : job
+            )
+          );
+          await loadJobs(); // Recargar trabajos para obtener el estado actualizado
+        } else {
+          const error = await response.json();
+          setErrorMessage(error.error || 'Error al completar el trabajo');
+          setTimeout(() => setErrorMessage(''), 5000);
+        }
+      } catch (error) {
+        logger.error('Error completando trabajo:', { error, jobId });
+        setErrorMessage('Error al completar el trabajo');
+        setTimeout(() => setErrorMessage(''), 5000);
+      }
+    } else {
+      // Para otros cambios de estado, actualizar localmente
+      setJobs(prevJobs =>
+        prevJobs.map(job =>
+          job.id === jobId ? { ...job, status: newStatus as MaintenanceJob['status'] } : job
+        )
+      );
+    }
   };
 
   const handleViewJobDetails = (job: MaintenanceJob) => {
@@ -630,6 +672,12 @@ export default function MaintenanceJobsPage() {
                             </>
                           )}
 
+                          {job.status === 'pending_confirmation' && (
+                            <Button variant="outline" disabled>
+                              <Clock className="w-4 h-4 mr-2" />
+                              Esperando Confirmación
+                            </Button>
+                          )}
                           {job.status === 'completed' && (
                             <Button variant="outline" disabled>
                               <CheckCircle className="w-4 h-4 mr-2" />
@@ -651,8 +699,10 @@ export default function MaintenanceJobsPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                // Abrir mensajería con el propietario
-                                window.location.href = `/messages?userId=${job.ownerId}&propertyId=${job.propertyId || ''}`;
+                                // Abrir mensajería con el propietario usando el sistema de mensajería
+                                router.push(
+                                  `/maintenance/messages?userId=${job.ownerId}&propertyId=${job.propertyId || ''}`
+                                );
                               }}
                               className="border-blue-300 text-blue-700 hover:bg-blue-50"
                             >

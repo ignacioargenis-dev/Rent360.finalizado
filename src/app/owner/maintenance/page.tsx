@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,6 +83,7 @@ interface MaintenanceRequest {
     | 'APPROVED'
     | 'SCHEDULED'
     | 'IN_PROGRESS'
+    | 'PENDING_CONFIRMATION'
     | 'COMPLETED'
     | 'REJECTED'
     | 'CANCELLED';
@@ -108,6 +110,7 @@ interface MaintenanceStats {
 
 export default function MantenimientoPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
   const [stats, setStats] = useState<MaintenanceStats>({
@@ -125,8 +128,17 @@ export default function MantenimientoPage() {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showAssignProviderDialog, setShowAssignProviderDialog] = useState(false);
+  const [showScheduleVisitDialog, setShowScheduleVisitDialog] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [visitData, setVisitData] = useState({
+    scheduledDate: '',
+    scheduledTime: '',
+    estimatedDuration: 120,
+    contactPerson: '',
+    contactPhone: '',
+    specialInstructions: '',
+  });
   const [availableProviders, setAvailableProviders] = useState<any[]>([]);
   const [providerDiagnostic, setProviderDiagnostic] = useState<any>(null);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
@@ -1048,12 +1060,41 @@ export default function MantenimientoPage() {
                             size="sm"
                             className="bg-indigo-600 hover:bg-indigo-700"
                             onClick={() => {
-                              // Navegar a programar visita
-                              window.location.href = `/owner/maintenance/${request.id}/schedule`;
+                              setSelectedRequest(request);
+                              setShowScheduleVisitDialog(true);
                             }}
                           >
                             <Calendar className="w-4 h-4 mr-2" />
                             Programar Visita
+                          </Button>
+                        )}
+                        {request.status === 'ASSIGNED' && request.maintenanceProvider && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                            onClick={() => {
+                              // Obtener el userId del proveedor desde la API
+                              fetch(`/api/maintenance/${request.id}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                  const providerUserId =
+                                    data.maintenanceRequest?.maintenanceProvider?.user?.id;
+                                  if (providerUserId) {
+                                    router.push(
+                                      `/owner/messages?userId=${providerUserId}&propertyId=${request.propertyId}`
+                                    );
+                                  } else {
+                                    alert('No se pudo obtener la información del proveedor');
+                                  }
+                                })
+                                .catch(() => {
+                                  alert('Error al obtener información del proveedor');
+                                });
+                            }}
+                          >
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Contactar Proveedor
                           </Button>
                         )}
                         {request.status === 'ASSIGNED' && (
@@ -1064,6 +1105,40 @@ export default function MantenimientoPage() {
                           >
                             <Users className="w-4 h-4 mr-2" />
                             Ver Proveedor
+                          </Button>
+                        )}
+                        {request.status === 'PENDING_CONFIRMATION' && (
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(
+                                  `/api/maintenance/${request.id}/confirm-completion`,
+                                  {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    credentials: 'include',
+                                  }
+                                );
+
+                                if (response.ok) {
+                                  alert('Trabajo confirmado exitosamente');
+                                  loadPageData();
+                                } else {
+                                  const error = await response.json();
+                                  alert(`Error: ${error.error || 'Error al confirmar el trabajo'}`);
+                                }
+                              } catch (error) {
+                                logger.error('Error confirmando trabajo:', { error });
+                                alert('Error al confirmar el trabajo');
+                              }
+                            }}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Confirmar Completado
                           </Button>
                         )}
                       </div>
@@ -1628,6 +1703,158 @@ export default function MantenimientoPage() {
             <Button onClick={handleConfirmExport}>
               <Download className="w-4 h-4 mr-2" />
               Exportar Datos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de programar visita */}
+      <Dialog open={showScheduleVisitDialog} onOpenChange={setShowScheduleVisitDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Programar Visita de Mantenimiento</DialogTitle>
+            <DialogDescription>
+              Programar una visita para la solicitud de mantenimiento
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="visit-date">Fecha</Label>
+                <Input
+                  id="visit-date"
+                  type="date"
+                  value={visitData.scheduledDate}
+                  onChange={e => setVisitData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <Label htmlFor="visit-time">Hora</Label>
+                <Input
+                  id="visit-time"
+                  type="time"
+                  value={visitData.scheduledTime}
+                  onChange={e => setVisitData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="visit-duration">Duración estimada (minutos)</Label>
+              <Input
+                id="visit-duration"
+                type="number"
+                value={visitData.estimatedDuration}
+                onChange={e =>
+                  setVisitData(prev => ({
+                    ...prev,
+                    estimatedDuration: parseInt(e.target.value) || 120,
+                  }))
+                }
+                min={30}
+                step={30}
+              />
+            </div>
+            <div>
+              <Label htmlFor="contact-person">Persona de contacto</Label>
+              <Input
+                id="contact-person"
+                value={visitData.contactPerson}
+                onChange={e => setVisitData(prev => ({ ...prev, contactPerson: e.target.value }))}
+                placeholder="Nombre de la persona de contacto"
+              />
+            </div>
+            <div>
+              <Label htmlFor="contact-phone">Teléfono de contacto</Label>
+              <Input
+                id="contact-phone"
+                type="tel"
+                value={visitData.contactPhone}
+                onChange={e => setVisitData(prev => ({ ...prev, contactPhone: e.target.value }))}
+                placeholder="+56912345678"
+              />
+            </div>
+            <div>
+              <Label htmlFor="special-instructions">Instrucciones especiales</Label>
+              <textarea
+                id="special-instructions"
+                className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md"
+                value={visitData.specialInstructions}
+                onChange={e =>
+                  setVisitData(prev => ({ ...prev, specialInstructions: e.target.value }))
+                }
+                placeholder="Instrucciones adicionales para la visita..."
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowScheduleVisitDialog(false);
+                setVisitData({
+                  scheduledDate: '',
+                  scheduledTime: '',
+                  estimatedDuration: 120,
+                  contactPerson: '',
+                  contactPhone: '',
+                  specialInstructions: '',
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700"
+              onClick={async () => {
+                if (!visitData.scheduledDate || !visitData.scheduledTime) {
+                  alert('Fecha y hora son obligatorios');
+                  return;
+                }
+                if (!selectedRequest) {
+                  alert('Error: No hay solicitud seleccionada');
+                  return;
+                }
+
+                try {
+                  const response = await fetch(
+                    `/api/maintenance/${selectedRequest.id}/schedule-visit`,
+                    {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        providerId: selectedRequest.maintenanceProvider?.id || '',
+                        ...visitData,
+                      }),
+                    }
+                  );
+
+                  if (response.ok) {
+                    alert('Visita programada exitosamente');
+                    setShowScheduleVisitDialog(false);
+                    setVisitData({
+                      scheduledDate: '',
+                      scheduledTime: '',
+                      estimatedDuration: 120,
+                      contactPerson: '',
+                      contactPhone: '',
+                      specialInstructions: '',
+                    });
+                    loadPageData();
+                  } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.error || 'Error al programar visita'}`);
+                  }
+                } catch (error) {
+                  logger.error('Error scheduling visit:', { error });
+                  alert('Error al programar visita');
+                }
+              }}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Programar Visita
             </Button>
           </div>
         </DialogContent>

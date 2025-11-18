@@ -23,13 +23,10 @@ const updateMaintenanceSchema = z.object({
 });
 
 // GET - Obtener solicitud de mantenimiento específica
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
-    
+
     const maintenanceRequest = await db.maintenance.findUnique({
       where: { id: params.id },
       include: {
@@ -49,39 +46,37 @@ export async function GET(
             },
           },
         },
-        // contractor: {
-        //   select: {
-        //     id: true,
-        //     name: true,
-        //     specialty: true,
-        //     rating: true,
-        //     phone: true,
-        //     email: true
-        //   }
-        // }
+        maintenanceProvider: {
+          select: {
+            id: true,
+            businessName: true,
+            specialty: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
 
     if (!maintenanceRequest) {
       return NextResponse.json(
         { error: 'Solicitud de mantenimiento no encontrada' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
     // Verificar permisos según el rol
     if (user.role === 'TENANT' && maintenanceRequest.requestedBy !== user.id) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     if (user.role === 'OWNER' && maintenanceRequest.propertyId !== user.id) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -90,20 +85,16 @@ export async function GET(
         images: JSON.parse(maintenanceRequest.images || '[]'),
       },
     });
-
   } catch (error) {
     return handleApiError(error);
   }
 }
 
 // PUT - Actualizar solicitud de mantenimiento
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
-    
+
     const body = await request.json();
     const validatedData = updateMaintenanceSchema.parse(body);
 
@@ -122,7 +113,7 @@ export async function PUT(
     if (!existingRequest) {
       return NextResponse.json(
         { error: 'Solicitud de mantenimiento no encontrada' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -130,42 +121,33 @@ export async function PUT(
     if (user.role === 'TENANT') {
       // Inquilinos solo pueden actualizar sus propias solicitudes y solo ciertos campos
       if (existingRequest.requestedBy !== user.id) {
-        return NextResponse.json(
-          { error: 'No autorizado' },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
       }
-      
+
       // Inquilinos solo pueden actualizar rating y feedback
       const allowedFields = ['rating', 'feedback'];
       const hasUnauthorizedFields = Object.keys(validatedData).some(
-        key => !allowedFields.includes(key),
+        key => !allowedFields.includes(key)
       );
-      
+
       if (hasUnauthorizedFields) {
         return NextResponse.json(
           { error: 'Solo puedes actualizar la calificación y comentarios' },
-          { status: 403 },
+          { status: 403 }
         );
       }
     } else if (user.role === 'OWNER') {
       // Propietarios solo pueden actualizar solicitudes de sus propiedades
       if (existingRequest.property.ownerId !== user.id) {
-        return NextResponse.json(
-          { error: 'No autorizado' },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
       }
     } else if (user.role !== 'ADMIN' && user.role !== 'BROKER') {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     // Preparar datos para actualización
     const updateData: any = { ...validatedData };
-    
+
     if (validatedData.images) {
       updateData.images = JSON.stringify(validatedData.images);
     }
@@ -179,7 +161,7 @@ export async function PUT(
       if (!contractor) {
         return NextResponse.json(
           { error: 'Prestador de servicios no encontrado' },
-          { status: 404 },
+          { status: 404 }
         );
       }
     }
@@ -217,20 +199,16 @@ export async function PUT(
         images: JSON.parse(maintenanceRequest.images || '[]'),
       },
     });
-
   } catch (error) {
     return handleApiError(error);
   }
 }
 
 // DELETE - Eliminar solicitud de mantenimiento
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
-    
+
     // Verificar que la solicitud existe
     const existingRequest = await db.maintenance.findUnique({
       where: { id: params.id },
@@ -246,7 +224,7 @@ export async function DELETE(
     if (!existingRequest) {
       return NextResponse.json(
         { error: 'Solicitud de mantenimiento no encontrada' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -254,31 +232,22 @@ export async function DELETE(
     if (user.role === 'TENANT') {
       // Inquilinos solo pueden eliminar sus propias solicitudes si están abiertas
       if (existingRequest.requestedBy !== user.id) {
-        return NextResponse.json(
-          { error: 'No autorizado' },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
       }
-      
+
       if (existingRequest.status !== 'OPEN') {
         return NextResponse.json(
           { error: 'Solo se pueden eliminar solicitudes abiertas' },
-          { status: 400 },
+          { status: 400 }
         );
       }
     } else if (user.role === 'OWNER') {
       // Propietarios solo pueden eliminar solicitudes de sus propiedades
       if (existingRequest.property.ownerId !== user.id) {
-        return NextResponse.json(
-          { error: 'No autorizado' },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
       }
     } else if (user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     // Eliminar la solicitud
@@ -289,7 +258,6 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Solicitud de mantenimiento eliminada exitosamente',
     });
-
   } catch (error) {
     return handleApiError(error);
   }

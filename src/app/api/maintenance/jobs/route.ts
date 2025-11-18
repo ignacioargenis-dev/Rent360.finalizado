@@ -11,6 +11,7 @@ function mapJobStatus(status: string): string {
     QUOTE_PENDING: 'quote_pending',
     QUOTE_APPROVED: 'quote_approved',
     IN_PROGRESS: 'in_progress',
+    PENDING_CONFIRMATION: 'pending_confirmation',
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
   };
