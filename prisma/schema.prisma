@@ -811,7 +811,6 @@ model MaintenanceProvider {
   responseTime  Float              @default(0) // Tiempo promedio de respuesta en horas
   address       String?
   city          String?
-  commune       String?
   region        String?
   description   String?
   profileImage  String?

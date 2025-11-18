@@ -54,7 +54,7 @@ interface MaintenanceSettings {
   website: string;
   address: string;
   region: string;
-  commune: string;
+  city: string;
 
   // Service settings
   specialties: string[];
@@ -107,7 +107,7 @@ export default function MaintenanceSettingsPage() {
     website: '',
     address: '',
     region: '',
-    commune: '',
+    city: '',
 
     specialties: [],
     workingHours: {
@@ -290,7 +290,7 @@ export default function MaintenanceSettingsPage() {
             website: profile.website || '',
             address: profile.address || '',
             region: profile.region || '',
-            commune: profile.commune || '',
+            city: profile.city || '',
             specialties: specialties,
             serviceRadius: prev.serviceRadius || 25, // Mantener valor por defecto ya que no existe en el modelo
             emergencyService: availabilityParsed.emergencies || false,
@@ -472,8 +472,7 @@ export default function MaintenanceSettingsPage() {
           },
           address: {
             street: settings.address,
-            city: settings.commune, // La comuna se guarda en city para compatibilidad
-            commune: settings.commune,
+            city: settings.city,
             region: settings.region,
           },
           services: {
@@ -765,11 +764,11 @@ export default function MaintenanceSettingsPage() {
 
                 <LocationSelectors
                   selectedRegion={settings.region}
-                  selectedCommune={settings.commune}
+                  selectedCommune={settings.city}
                   onRegionChange={value => updateSetting('region', value)}
-                  onCommuneChange={value => updateSetting('commune', value)}
+                  onCommuneChange={value => updateSetting('city', value)}
                   regionLabel="Región"
-                  communeLabel="Comuna"
+                  communeLabel="Ciudad"
                 />
 
                 <div>

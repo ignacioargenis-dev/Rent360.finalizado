@@ -132,19 +132,12 @@ export async function PUT(request: NextRequest) {
         updatedAt: new Date(),
       };
 
-      // Solo actualizar address, city, commune, region si se proporcionan
+      // Solo actualizar address, city, region si se proporcionan
       if (profileData.address?.street) {
         updateData.address = profileData.address.street;
       }
       if (profileData.address?.city) {
         updateData.city = profileData.address.city;
-      }
-      if (profileData.address?.commune) {
-        updateData.commune = profileData.address.commune;
-        // Si no hay city pero hay commune, también actualizar city para compatibilidad
-        if (!profileData.address?.city) {
-          updateData.city = profileData.address.commune;
-        }
       }
       if (profileData.address?.region) {
         updateData.region = profileData.address.region;
