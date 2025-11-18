@@ -102,6 +102,11 @@ export default function BrokerMaintenanceDetailPage() {
   const [showScheduleVisit, setShowScheduleVisit] = useState(false);
   const [availableProviders, setAvailableProviders] = useState<any[]>([]);
   const [selectedProvider, setSelectedProvider] = useState('');
+  const [providerFilters, setProviderFilters] = useState({
+    specialty: 'all',
+    sortBy: 'rating',
+    location: 'all',
+  });
   const [visitData, setVisitData] = useState({
     scheduledDate: '',
     scheduledTime: '',
@@ -267,6 +272,67 @@ export default function BrokerMaintenanceDetailPage() {
     }
   };
 
+  const getSortedProviders = (providers: any[]) => {
+    const sorted = [...providers];
+    switch (providerFilters.sortBy) {
+      case 'rating':
+        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case 'price_low':
+        sorted.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
+        break;
+      case 'price_high':
+        sorted.sort((a, b) => (b.hourlyRate || 0) - (a.hourlyRate || 0));
+        break;
+      case 'experience':
+        sorted.sort((a, b) => {
+          const expA = parseInt(a.experience?.split(' ')[0] || '0');
+          const expB = parseInt(b.experience?.split(' ')[0] || '0');
+          return expB - expA;
+        });
+        break;
+      default:
+        break;
+    }
+    return sorted;
+  };
+
+  const loadAvailableProviders = async () => {
+    if (!maintenanceRequest) {
+      return;
+    }
+
+    try {
+      // Construir URL con parámetros de filtro
+      const params = new URLSearchParams();
+      if (providerFilters.location && providerFilters.location !== 'all') {
+        params.append('location', providerFilters.location);
+      }
+      if (providerFilters.specialty && providerFilters.specialty !== 'all') {
+        params.append('specialty', providerFilters.specialty);
+      }
+
+      const url = `/api/maintenance/${maintenanceId}/available-providers${
+        params.toString() ? `?${params.toString()}` : ''
+      }`;
+
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        const providers = data.availableProviders || [];
+        // Aplicar ordenamiento
+        const sortedProviders = getSortedProviders(providers);
+        setAvailableProviders(sortedProviders);
+      } else {
+        logger.error('Error loading available providers:', { status: response.status });
+        setAvailableProviders([]);
+      }
+    } catch (error) {
+      logger.error('Error loading available providers:', { error });
+      setAvailableProviders([]);
+    }
+  };
+
   const handleAssignContractor = async () => {
     if (!maintenanceRequest) {
       return;
@@ -274,14 +340,8 @@ export default function BrokerMaintenanceDetailPage() {
 
     try {
       setUpdating(true);
-      const response = await fetch(`/api/maintenance/${maintenanceId}/available-providers`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableProviders(data.availableProviders);
-        setShowAssignProvider(true);
-      } else {
-        alert('Error al cargar prestadores disponibles');
-      }
+      await loadAvailableProviders();
+      setShowAssignProvider(true);
     } catch (error) {
       logger.error('Error loading available providers:', { error });
       alert('Error al cargar prestadores disponibles');
@@ -788,7 +848,94 @@ export default function BrokerMaintenanceDetailPage() {
             </DialogDescription>
           </DialogHeader>
 
+          {/* Filtros de búsqueda */}
+          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <h4 className="text-md font-semibold mb-3">Buscar y Filtrar Proveedores</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="specialty-filter" className="text-sm font-medium">
+                  Especialidad
+                </Label>
+                <Select
+                  value={providerFilters.specialty}
+                  onValueChange={value => {
+                    setProviderFilters(prev => ({ ...prev, specialty: value }));
+                    setTimeout(() => {
+                      loadAvailableProviders();
+                    }, 100);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas las especialidades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las especialidades</SelectItem>
+                    <SelectItem value="Mantenimiento General">Mantenimiento General</SelectItem>
+                    <SelectItem value="Plomería">Plomería</SelectItem>
+                    <SelectItem value="Eléctrica">Reparaciones Eléctricas</SelectItem>
+                    <SelectItem value="Jardinería">Jardinería</SelectItem>
+                    <SelectItem value="Limpieza">Limpieza Profesional</SelectItem>
+                    <SelectItem value="Pintura">Pintura y Decoración</SelectItem>
+                    <SelectItem value="Carpintería">Carpintería</SelectItem>
+                    <SelectItem value="Estructural">Estructural</SelectItem>
+                    <SelectItem value="Electrodomésticos">Electrodomésticos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="location-filter" className="text-sm font-medium">
+                  Ubicación
+                </Label>
+                <Select
+                  value={providerFilters.location}
+                  onValueChange={value => {
+                    setProviderFilters(prev => ({ ...prev, location: value }));
+                    setTimeout(() => {
+                      loadAvailableProviders();
+                    }, 100);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas las ubicaciones" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las ubicaciones</SelectItem>
+                    <SelectItem value="same_city">Misma ciudad</SelectItem>
+                    <SelectItem value="same_region">Misma región</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="sort-filter" className="text-sm font-medium">
+                  Ordenar por
+                </Label>
+                <Select
+                  value={providerFilters.sortBy}
+                  onValueChange={value => {
+                    setProviderFilters(prev => ({ ...prev, sortBy: value }));
+                    // Reordenar proveedores cuando cambie el criterio
+                    const sorted = getSortedProviders(availableProviders);
+                    setAvailableProviders(sorted);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ordenar por..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rating">Calificación más alta</SelectItem>
+                    <SelectItem value="price_low">Precio más bajo</SelectItem>
+                    <SelectItem value="price_high">Precio más alto</SelectItem>
+                    <SelectItem value="experience">Más experiencia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4">
+            <h3 className="text-lg font-semibold">
+              Proveedores Disponibles ({availableProviders.length})
+            </h3>
             {availableProviders.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600">No hay prestadores disponibles en este momento.</p>
@@ -811,9 +958,11 @@ export default function BrokerMaintenanceDetailPage() {
                         <div className="flex-1">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h4 className="font-medium text-gray-900">{provider.businessName}</h4>
+                              <h4 className="font-medium text-gray-900">
+                                {provider.name || provider.businessName}
+                              </h4>
                               <p className="text-sm text-gray-600">
-                                {provider.specialty} • {provider.distance}
+                                {provider.specialty} • {provider.distance || provider.location}
                               </p>
                             </div>
                             <div className="text-right">

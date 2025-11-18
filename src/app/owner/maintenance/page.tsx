@@ -462,6 +462,9 @@ export default function MantenimientoPage() {
       if (providerFilters.location && providerFilters.location !== 'all') {
         params.append('location', providerFilters.location);
       }
+      if (providerFilters.specialty && providerFilters.specialty !== 'all') {
+        params.append('specialty', providerFilters.specialty);
+      }
 
       const url = `/api/maintenance/${selectedRequest.id}/available-providers${
         params.toString() ? `?${params.toString()}` : ''
@@ -496,15 +499,36 @@ export default function MantenimientoPage() {
     }
   };
 
+  // Función auxiliar para normalizar strings (sin acentos, minúsculas)
+  const normalizeString = (str: string) =>
+    str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
   // Función para filtrar y ordenar proveedores
   const getFilteredAndSortedProviders = () => {
     let filtered = availableProviders;
 
-    // Filtrar por especialidad
+    // El filtro de especialidad ya se aplica en el backend, pero mantenemos esta lógica
+    // como respaldo por si el backend no filtra correctamente
     if (providerFilters.specialty !== 'all') {
-      filtered = filtered.filter(provider =>
-        provider.specialty.toLowerCase().includes(providerFilters.specialty.toLowerCase())
-      );
+      const filterNormalized = normalizeString(providerFilters.specialty);
+      filtered = filtered.filter(provider => {
+        const providerSpecialty = normalizeString(provider.specialty || '');
+        const specialties = (provider.specialties || []).map((s: string) => normalizeString(s));
+
+        return (
+          providerSpecialty.includes(filterNormalized) ||
+          filterNormalized.includes(providerSpecialty) ||
+          providerSpecialty === filterNormalized ||
+          specialties.some(
+            (s: string) =>
+              s.includes(filterNormalized) || filterNormalized.includes(s) || s === filterNormalized
+          )
+        );
+      });
     }
 
     // Ordenar según criterio seleccionado
@@ -1133,9 +1157,13 @@ export default function MantenimientoPage() {
                     </Label>
                     <Select
                       value={providerFilters.specialty}
-                      onValueChange={value =>
-                        setProviderFilters(prev => ({ ...prev, specialty: value }))
-                      }
+                      onValueChange={value => {
+                        setProviderFilters(prev => ({ ...prev, specialty: value }));
+                        // Recargar proveedores cuando cambie el filtro de especialidad
+                        setTimeout(() => {
+                          loadAvailableProviders();
+                        }, 100);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Todas las especialidades" />
@@ -1144,13 +1172,13 @@ export default function MantenimientoPage() {
                         <SelectItem value="all">Todas las especialidades</SelectItem>
                         <SelectItem value="Mantenimiento General">Mantenimiento General</SelectItem>
                         <SelectItem value="Plomería">Plomería</SelectItem>
-                        <SelectItem value="Reparaciones Eléctricas">
-                          Reparaciones Eléctricas
-                        </SelectItem>
+                        <SelectItem value="Eléctrica">Reparaciones Eléctricas</SelectItem>
                         <SelectItem value="Jardinería">Jardinería</SelectItem>
                         <SelectItem value="Limpieza">Limpieza Profesional</SelectItem>
                         <SelectItem value="Pintura">Pintura y Decoración</SelectItem>
                         <SelectItem value="Carpintería">Carpintería</SelectItem>
+                        <SelectItem value="Estructural">Estructural</SelectItem>
+                        <SelectItem value="Electrodomésticos">Electrodomésticos</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -16,6 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Obtener parámetros de query para filtros
     const { searchParams } = new URL(request.url);
     const locationFilter = searchParams.get('location'); // 'same_city', 'same_region', 'all'
+    const specialtyFilter = searchParams.get('specialty'); // Filtro de especialidad opcional
 
     // Verificar que la solicitud existe y el usuario tiene acceso
     const maintenance = await db.maintenance.findUnique({
@@ -230,6 +231,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       other: ['otro', 'other', 'general', 'especializado', 'especial'],
     };
 
+    // Función auxiliar para normalizar strings (sin acentos, minúsculas)
+    const normalizeString = (str: string) =>
+      str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
     // Filtrar y transformar proveedores
     const providersWithDistance = availableProviders
       .map(provider => {
@@ -250,6 +259,29 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           specialtiesArray.unshift(provider.specialty);
         }
 
+        // Aplicar filtro de especialidad si está presente
+        if (specialtyFilter && specialtyFilter !== 'all') {
+          const filterNormalized = normalizeString(specialtyFilter);
+          const matchesSpecialtyFilter =
+            specialtiesArray.some(spec => {
+              const specNormalized = normalizeString(spec);
+              return (
+                specNormalized.includes(filterNormalized) ||
+                filterNormalized.includes(specNormalized) ||
+                specNormalized === filterNormalized
+              );
+            }) ||
+            (provider.specialty &&
+              (normalizeString(provider.specialty).includes(filterNormalized) ||
+                filterNormalized.includes(normalizeString(provider.specialty)) ||
+                normalizeString(provider.specialty) === filterNormalized));
+
+          // Si no coincide con el filtro, retornar null para filtrarlo después
+          if (!matchesSpecialtyFilter) {
+            return null;
+          }
+        }
+
         // Verificar si el proveedor tiene la especialidad requerida (más flexible)
         let matchesCategory = true;
         let matchDetails: any = null;
@@ -257,14 +289,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         if (maintenance.category) {
           const categoryLower = maintenance.category.toLowerCase().trim();
           const mappedCategories = categoryMapping[categoryLower] || [categoryLower];
-
-          // Normalizar especialidades para comparación (sin acentos, minúsculas)
-          const normalizeString = (str: string) =>
-            str
-              .toLowerCase()
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .trim();
 
           const normalizedMappedCategories = mappedCategories.map(normalizeString);
 
@@ -376,7 +400,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           profileImage: provider.profileImage || '',
         };
       })
-      .filter(provider => provider !== null);
+      .filter(provider => provider !== null) as any[];
 
     // Contar proveedores que coinciden con la categoría
     const matchingCategoryCount = providersWithDistance.filter(p => {
