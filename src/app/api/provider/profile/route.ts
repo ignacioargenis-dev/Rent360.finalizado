@@ -380,7 +380,6 @@ export async function GET(request: NextRequest) {
         phone: fullUser.phone || '',
         address: mp.address || '',
         city: mp.city || '',
-        commune: mp.commune || mp.city || '', // Usar commune si existe, sino city
         region: mp.region || '',
         description: mp.description || '',
         website: '',
