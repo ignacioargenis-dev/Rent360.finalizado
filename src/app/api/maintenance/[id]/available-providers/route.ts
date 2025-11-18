@@ -96,28 +96,41 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       whereClause.city = maintenance.property.city;
     } else if (locationFilter === 'same_region' && maintenance.property.region) {
       // Proveedores de la misma región (incluye misma ciudad)
-      // Usar AND para combinar con los filtros de estado e isVerified
-      whereClause.AND = [
-        {
-          isVerified: true,
-          status: {
-            in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
+      // Construir OR solo con los campos que existen
+      const locationOR: any[] = [];
+      if (maintenance.property.city) {
+        locationOR.push({ city: maintenance.property.city });
+      }
+      if (maintenance.property.region) {
+        locationOR.push({ region: maintenance.property.region });
+      }
+
+      // Solo aplicar filtro de ubicación si hay al menos una condición
+      if (locationOR.length > 0) {
+        whereClause.AND = [
+          {
+            isVerified: true,
+            status: {
+              in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
+            },
           },
-        },
-        {
-          OR: [{ city: maintenance.property.city }, { region: maintenance.property.region }],
-        },
-      ];
-      // Eliminar las propiedades del nivel superior ya que están en AND
-      delete whereClause.isVerified;
-      delete whereClause.status;
+          {
+            OR: locationOR,
+          },
+        ];
+        // Eliminar las propiedades del nivel superior ya que están en AND
+        delete whereClause.isVerified;
+        delete whereClause.status;
+      }
     }
-    // Si no hay filtro de ubicación, mostrar todos los verificados y activos
+    // Si no hay filtro de ubicación o locationFilter es 'all' o null, mostrar todos los verificados y activos
 
     logger.info('Filtros aplicados:', {
       maintenanceId,
       whereClause: JSON.stringify(whereClause),
       locationFilter,
+      propertyCity: maintenance.property.city,
+      propertyRegion: maintenance.property.region,
     });
 
     const availableProviders = await db.maintenanceProvider.findMany({
@@ -312,7 +325,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
                 normalizeString(provider.specialty!) === cat
             );
 
-          matchesCategory = hasMatchingSpecialty || hasMatchingMainSpecialty || false;
+          // Hacer el filtro más flexible: mostrar todos los proveedores aunque no coincidan exactamente
+          // Esto da más opciones al usuario. El filtro de especialidad del frontend puede refinar después.
+          matchesCategory = true; // Mostrar todos los proveedores verificados y activos
 
           // Guardar detalles del match para logging
           matchDetails = {
@@ -329,20 +344,24 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
         // Logging detallado para debug
         if (maintenance.category) {
-          if (matchesCategory) {
+          const hasMatch =
+            matchDetails?.hasMatchingSpecialty || matchDetails?.hasMatchingMainSpecialty;
+          if (hasMatch) {
             logger.info('Proveedor coincide con categoría:', {
               providerId: provider.id,
               businessName: provider.businessName,
               ...matchDetails,
             });
           } else {
-            logger.warn('Proveedor NO coincide con categoría (pero se muestra):', {
-              providerId: provider.id,
-              businessName: provider.businessName,
-              ...matchDetails,
-              suggestion:
-                'Verificar que las especialidades del proveedor incluyan términos relacionados con la categoría',
-            });
+            logger.info(
+              'Proveedor mostrado aunque no coincide exactamente con categoría (filtro flexible):',
+              {
+                providerId: provider.id,
+                businessName: provider.businessName,
+                ...matchDetails,
+                note: 'Se muestra para dar más opciones al usuario',
+              }
+            );
           }
         }
 
@@ -446,14 +465,42 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Si no se encontraron proveedores, loguear información adicional para debug
     if (availableProviders.length === 0) {
+      // Obtener algunos ejemplos de proveedores para diagnóstico
+      const sampleProviders = await db.maintenanceProvider.findMany({
+        take: 5,
+        select: {
+          id: true,
+          businessName: true,
+          status: true,
+          isVerified: true,
+          city: true,
+          region: true,
+        },
+      });
+
       logger.warn('No se encontraron proveedores disponibles:', {
         maintenanceId,
         totalProvidersInDB: totalProvidersCount,
         verifiedProvidersInDB: verifiedProvidersCount,
         activeVerifiedProvidersInDB: activeVerifiedCount,
         whereClause: JSON.stringify(whereClause),
+        locationFilter,
+        propertyCity: maintenance.property.city,
+        propertyRegion: maintenance.property.region,
+        sampleProviders: sampleProviders.map(p => ({
+          id: p.id,
+          businessName: p.businessName,
+          status: p.status,
+          isVerified: p.isVerified,
+          city: p.city,
+          region: p.region,
+        })),
         suggestion:
-          'Verificar que existan proveedores con isVerified=true y status en [ACTIVE, VERIFIED]',
+          verifiedProvidersCount === 0
+            ? 'No hay proveedores verificados. Un administrador debe aprobar los proveedores pendientes.'
+            : activeVerifiedCount === 0
+              ? 'Hay proveedores verificados pero ninguno está activo. Verifica el estado de los proveedores.'
+              : 'Verificar que existan proveedores con isVerified=true y status en [ACTIVE, VERIFIED]. También verificar filtros de ubicación.',
       });
     }
 
