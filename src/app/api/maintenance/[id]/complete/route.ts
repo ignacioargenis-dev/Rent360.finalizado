@@ -20,8 +20,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   try {
     const user = await requireAuth(request);
     const maintenanceId = params.id;
-    const body = await request.json();
-    const validatedData = completeMaintenanceSchema.parse(body);
+    const rawBody = await request.text();
+    let parsedBody: unknown = {};
+    if (rawBody.trim().length > 0) {
+      try {
+        parsedBody = JSON.parse(rawBody);
+      } catch (parseError) {
+        return NextResponse.json(
+          { error: 'El cuerpo de la solicitud debe ser un JSON válido.' },
+          { status: 400 }
+        );
+      }
+    }
+    const validatedData = completeMaintenanceSchema.parse(parsedBody);
 
     // Verificar que el usuario es un proveedor de mantenimiento
     const maintenanceProvider = await db.maintenanceProvider.findUnique({

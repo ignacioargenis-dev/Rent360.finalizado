@@ -94,6 +94,7 @@ interface MaintenanceRequest {
   completedDate?: string;
   provider?: string;
   notes?: string;
+  images?: string[];
   maintenanceProvider?: {
     id?: string;
     businessName?: string;
@@ -226,6 +227,7 @@ export default function MantenimientoPage() {
             request.assignedTo?.name ||
             request.provider,
           notes: request.notes,
+          images: Array.isArray(request.images) ? request.images : [],
           maintenanceProvider: request.maintenanceProvider,
           visitProposal: request.visitProposal
             ? {
@@ -1508,6 +1510,33 @@ export default function MantenimientoPage() {
                   {selectedRequest.description}
                 </p>
               </div>
+
+              {selectedRequest.images && selectedRequest.images.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Imágenes Adjuntas</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {selectedRequest.images.map((image, index) => (
+                      <div
+                        key={`${image}-${index}`}
+                        className="relative group cursor-pointer"
+                        onClick={() => window.open(image, '_blank')}
+                      >
+                        <img
+                          src={image}
+                          alt={`Evidencia ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200 shadow-sm group-hover:opacity-90 transition"
+                          onError={event => {
+                            event.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute bottom-2 right-2 bg-white/80 px-2 py-0.5 rounded text-xs text-gray-700">
+                          Ver
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
