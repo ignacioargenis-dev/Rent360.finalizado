@@ -201,12 +201,21 @@ export default function CalificacionesPage() {
       const ratingsList = data.data?.ratings || data.ratings || [];
 
       // Log para depuración
+      console.log('🔍 [Owner Ratings Page] API Response:', {
+        success: data.success,
+        total: data.data?.total || data.total || 0,
+        ratingsCount: ratingsList.length,
+        fullResponse: data,
+      });
+
       logger.info('Calificaciones recibidas del API:', {
         total: data.data?.total || data.total || 0,
         ratingsCount: ratingsList.length,
         ratings: ratingsList.map((r: any) => ({
           id: r.id,
+          fromUserId: r.fromUserId,
           fromUser: r.fromUser?.name,
+          toUserId: r.toUserId,
           toUser: r.toUser?.name,
           contextType: r.contextType,
           overallRating: r.overallRating,

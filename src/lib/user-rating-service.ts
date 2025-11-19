@@ -272,12 +272,14 @@ export class UserRatingService {
       }
 
       // Filtros avanzados
-      if (filters?.minRating !== undefined) {
-        where.overallRating = { ...where.overallRating, gte: filters.minRating };
-      }
-
-      if (filters?.maxRating !== undefined) {
-        where.overallRating = { ...where.overallRating, lte: filters.maxRating };
+      if (filters?.minRating !== undefined || filters?.maxRating !== undefined) {
+        where.overallRating = {};
+        if (filters?.minRating !== undefined) {
+          where.overallRating.gte = filters.minRating;
+        }
+        if (filters?.maxRating !== undefined) {
+          where.overallRating.lte = filters.maxRating;
+        }
       }
 
       if (filters?.startDate || filters?.endDate) {
@@ -306,6 +308,13 @@ export class UserRatingService {
         }
       }
 
+      // Log para depuración
+      logger.info('🔍 [UserRatingService] getUserRatings query:', {
+        userId,
+        filters,
+        where,
+      });
+
       const [ratings, total] = await Promise.all([
         db.userRating.findMany({
           where,
@@ -329,6 +338,20 @@ export class UserRatingService {
         }),
         db.userRating.count({ where }),
       ]);
+
+      // Log para depuración
+      logger.info('🔍 [UserRatingService] getUserRatings results:', {
+        userId,
+        total,
+        ratingsCount: ratings.length,
+        ratings: ratings.map(r => ({
+          id: r.id,
+          fromUserId: r.fromUserId,
+          toUserId: r.toUserId,
+          contextType: r.contextType,
+          overallRating: r.overallRating,
+        })),
+      });
 
       return { ratings, total };
     } catch (error) {
