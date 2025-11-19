@@ -58,8 +58,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Verificar permisos: solo owner o broker de la propiedad pueden confirmar
     const hasPermission =
       user.role === 'ADMIN' ||
-      (user.role === 'owner' && maintenance.property.ownerId === user.id) ||
-      (user.role === 'broker' && maintenance.property.brokerId === user.id);
+      ((user.role === 'OWNER' || user.role === 'owner') &&
+        maintenance.property.ownerId === user.id) ||
+      ((user.role === 'BROKER' || user.role === 'broker') &&
+        maintenance.property.brokerId === user.id) ||
+      maintenance.requestedBy === user.id; // El solicitante también puede confirmar
 
     if (!hasPermission) {
       return NextResponse.json(

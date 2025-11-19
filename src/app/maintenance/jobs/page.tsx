@@ -88,6 +88,7 @@ interface MaintenanceJob {
   scheduledDate: string;
   completedDate?: string;
   notes?: string;
+  images?: string[]; // Imágenes adjuntas por el propietario/broker
   visitProposal?: VisitProposal;
 }
 
@@ -1037,6 +1038,28 @@ export default function MaintenanceJobsPage() {
                   <h4 className="font-semibold text-gray-900 mb-2">Notas Adicionales</h4>
                   <div className="p-4 bg-yellow-50 rounded-lg">
                     <p className="text-sm text-yellow-800">{selectedJob.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Imágenes adjuntas */}
+              {selectedJob.images && selectedJob.images.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Imágenes Adjuntas</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {selectedJob.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`Imagen ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 border border-gray-200"
+                        onClick={() => window.open(image, '_blank')}
+                        onError={e => {
+                          console.error('❌ Error cargando imagen:', image);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ))}
                   </div>
                 </div>
               )}

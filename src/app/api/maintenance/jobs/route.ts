@@ -132,6 +132,7 @@ export async function GET(request: NextRequest) {
           job.scheduledDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
         completedDate: job.completedDate?.toISOString().split('T')[0],
         notes: job.visitNotes || undefined,
+        images: JSON.parse(job.images || '[]'), // Incluir imágenes adjuntas
         visitProposal: latestProposal
           ? {
               id: latestProposal.id,

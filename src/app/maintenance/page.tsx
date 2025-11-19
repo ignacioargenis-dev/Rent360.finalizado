@@ -125,107 +125,106 @@ export default function MaintenanceDashboard() {
   useEffect(() => {
     const loadMaintenanceData = async () => {
       try {
-        // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
-        const isNewUser =
-          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
+        setLoading(true);
 
-        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
-        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
-        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
-          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío
-          setStats({
-            activeJobs: 0,
-            totalJobs: 0,
-            monthlyRevenue: 0,
-            completedJobs: 0,
-            averageRating: 0,
-            pendingJobs: 0,
-          });
-          setRecentJobs([]);
-          setRecentActivity([]);
-          setLoading(false);
-          return;
+        // Cargar estadísticas reales desde la API
+        const [statsResponse, jobsResponse] = await Promise.all([
+          fetch('/api/provider/stats', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          }),
+          fetch('/api/maintenance/jobs?limit=5', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          }),
+        ]);
+
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          if (statsData.success && statsData.data) {
+            const apiStats = statsData.data;
+            setStats({
+              activeJobs: apiStats.activeJobs || 0,
+              totalJobs: apiStats.totalJobs || 0,
+              monthlyRevenue: apiStats.thisMonthEarnings || 0,
+              completedJobs: apiStats.completedJobs || 0,
+              averageRating: apiStats.averageRating || 0,
+              pendingJobs: apiStats.pendingJobs || 0,
+            });
+          }
         }
 
-        // Solo usuarios seed con @rent360.cl ven datos mock (para testing)
-        setStats({
-          activeJobs: 8,
-          totalJobs: 156,
-          monthlyRevenue: 3100000,
-          completedJobs: 47,
-          averageRating: 4.9,
-          pendingJobs: 5,
-        });
+        // Cargar trabajos recientes
+        if (jobsResponse.ok) {
+          const jobsData = await jobsResponse.json();
+          if (jobsData.success && jobsData.jobs) {
+            const recentJobsList = jobsData.jobs.slice(0, 5).map((job: any) => ({
+              id: job.id,
+              title: job.title,
+              propertyAddress: job.propertyAddress,
+              ownerName: job.propertyOwner,
+              status: job.status,
+              priority: job.priority,
+              scheduledDate: job.scheduledDate,
+              estimatedCost: job.estimatedCost || 0,
+            }));
+            setRecentJobs(recentJobsList);
 
-        setRecentJobs([
-          {
-            id: '1',
-            title: 'Reparación de cañería',
-            propertyAddress: 'Av. Apoquindo 3400, Las Condes',
-            ownerName: 'María González',
-            status: 'in_progress',
-            priority: 'high',
-            scheduledDate: '2024-01-15',
-            estimatedCost: 45000,
-          },
-          {
-            id: '2',
-            title: 'Mantenimiento eléctrico',
-            propertyAddress: 'Av. Providencia 1245, Providencia',
-            ownerName: 'Carlos Rodríguez',
-            status: 'pending',
-            priority: 'medium',
-            scheduledDate: '2024-01-18',
-            estimatedCost: 80000,
-          },
-          {
-            id: '3',
-            title: 'Limpieza general',
-            propertyAddress: 'Av. Vitacura 8900, Vitacura',
-            ownerName: 'Ana López',
-            status: 'completed',
-            priority: 'low',
-            scheduledDate: '2024-01-10',
-            estimatedCost: 30000,
-          },
-        ]);
-
-        setRecentActivity([
-          {
-            id: '1',
-            type: 'job_completed',
-            title: 'Trabajo completado',
-            description: 'Reparación de cañería en Av. Las Condes terminada exitosamente',
-            date: '2024-01-15',
-            status: 'COMPLETED',
-          },
-          {
-            id: '2',
-            type: 'payment_received',
-            title: 'Pago recibido',
-            description: 'María González pagó $45.000 por reparación de plomería',
-            date: '2024-01-15',
-            status: 'COMPLETED',
-          },
-          {
-            id: '3',
-            type: 'job_started',
-            title: 'Trabajo iniciado',
-            description: 'Mantenimiento eléctrico en Providencia ha comenzado',
-            date: '2024-01-14',
-          },
-        ]);
+            // Generar actividad reciente basada en los trabajos
+            const activityList = recentJobsList
+              .filter((job: any) => job.status === 'completed' || job.status === 'in_progress')
+              .slice(0, 3)
+              .map((job: any, index: number) => ({
+                id: `activity-${job.id}`,
+                type:
+                  job.status === 'completed'
+                    ? 'job_completed'
+                    : job.status === 'in_progress'
+                      ? 'job_started'
+                      : 'job_updated',
+                title:
+                  job.status === 'completed'
+                    ? 'Trabajo completado'
+                    : job.status === 'in_progress'
+                      ? 'Trabajo iniciado'
+                      : 'Trabajo actualizado',
+                description: `${job.title} en ${job.propertyAddress}`,
+                date: job.scheduledDate || new Date().toISOString().split('T')[0],
+                status: job.status === 'completed' ? 'COMPLETED' : 'ACTIVE',
+              }));
+            setRecentActivity(activityList);
+          }
+        }
 
         setLoading(false);
       } catch (error) {
         logger.error('Error loading maintenance data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+        // En caso de error, mostrar valores por defecto
+        setStats({
+          activeJobs: 0,
+          totalJobs: 0,
+          monthlyRevenue: 0,
+          completedJobs: 0,
+          averageRating: 0,
+          pendingJobs: 0,
+        });
+        setRecentJobs([]);
+        setRecentActivity([]);
         setLoading(false);
       }
     };
 
-    loadMaintenanceData();
+    if (user) {
+      loadMaintenanceData();
+    }
   }, [user]);
 
   const formatPrice = (price: number) => {

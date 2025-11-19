@@ -246,7 +246,21 @@ export async function GET(request: NextRequest) {
       const activeJobs = await db.maintenance.count({
         where: {
           maintenanceProviderId,
-          status: { in: ['PENDING', 'ASSIGNED', 'IN_PROGRESS'] },
+          status: { in: ['ASSIGNED', 'IN_PROGRESS', 'SCHEDULED'] },
+        },
+      });
+
+      const pendingJobs = await db.maintenance.count({
+        where: {
+          maintenanceProviderId,
+          status: { in: ['PENDING', 'QUOTE_PENDING', 'PENDING_CONFIRMATION'] },
+        },
+      });
+
+      // Contar todos los trabajos asignados al proveedor (totalJobs)
+      const totalJobs = await db.maintenance.count({
+        where: {
+          maintenanceProviderId,
         },
       });
 
@@ -301,6 +315,8 @@ export async function GET(request: NextRequest) {
         pendingPayments,
         completedJobs,
         activeJobs,
+        pendingJobs,
+        totalJobs,
         averageRating: ratingSummary?.averageRating || 0,
         totalRatings: ratingSummary?.totalRatings || 0,
         gracePeriodDays: config.gracePeriodDays,
