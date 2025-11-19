@@ -88,11 +88,59 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verificar permisos según el rol
-    if (user.role === 'TENANT' && maintenanceRequest.requestedBy !== user.id) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
+    const isAdmin = user.role === 'ADMIN';
+    const isTenant = user.role === 'TENANT' || user.role === 'tenant';
+    const isOwner = user.role === 'OWNER' || user.role === 'owner';
+    const isBroker = user.role === 'BROKER' || user.role === 'broker';
+    const isMaintenance = user.role === 'MAINTENANCE' || user.role === 'maintenance';
 
-    if (user.role === 'OWNER' && maintenanceRequest.propertyId !== user.id) {
+    // Admin tiene acceso completo
+    if (isAdmin) {
+      // Continuar sin restricciones
+    } else if (isTenant) {
+      // Inquilinos solo pueden ver sus propias solicitudes
+      if (maintenanceRequest.requestedBy !== user.id) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      }
+    } else if (isOwner) {
+      // Propietarios pueden ver solicitudes de sus propiedades
+      if (maintenanceRequest.property?.owner?.id !== user.id) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      }
+    } else if (isBroker) {
+      // Brokers pueden ver solicitudes de propiedades que gestionan
+      const brokerManagement = await db.brokerPropertyManagement.findFirst({
+        where: {
+          brokerId: user.id,
+          propertyId: maintenanceRequest.propertyId,
+          status: 'ACTIVE',
+        },
+      });
+      // Si no gestiona la propiedad y no es el propietario, denegar acceso
+      if (!brokerManagement && maintenanceRequest.property?.owner?.id !== user.id) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      }
+    } else if (isMaintenance) {
+      // Proveedores de mantenimiento pueden ver solicitudes asignadas a ellos
+      if (maintenanceRequest.maintenanceProviderId) {
+        const maintenanceProvider = await db.maintenanceProvider.findUnique({
+          where: { userId: user.id },
+          select: { id: true },
+        });
+        if (
+          maintenanceProvider &&
+          maintenanceRequest.maintenanceProviderId !== maintenanceProvider.id
+        ) {
+          return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+        }
+      } else {
+        // Si no hay proveedor asignado, solo el solicitante puede ver
+        if (maintenanceRequest.requestedBy !== user.id) {
+          return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+        }
+      }
+    } else {
+      // Otros roles no tienen acceso
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

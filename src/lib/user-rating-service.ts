@@ -191,6 +191,41 @@ export class UserRatingService {
         },
       });
 
+      // Actualizar estadísticas del proveedor si es un proveedor de mantenimiento
+      if (ratingData.contextType === 'MAINTENANCE' && toUser.role === 'MAINTENANCE') {
+        try {
+          const maintenanceProvider = await db.maintenanceProvider.findUnique({
+            where: { userId: ratingData.toUserId },
+            select: { id: true, rating: true, totalRatings: true },
+          });
+
+          if (maintenanceProvider) {
+            // Calcular nuevo promedio
+            const currentTotal =
+              (maintenanceProvider.rating || 0) * (maintenanceProvider.totalRatings || 0);
+            const newTotal = currentTotal + ratingData.overallRating;
+            const newCount = (maintenanceProvider.totalRatings || 0) + 1;
+            const newAverage = newTotal / newCount;
+
+            await db.maintenanceProvider.update({
+              where: { id: maintenanceProvider.id },
+              data: {
+                rating: newAverage,
+                totalRatings: newCount,
+              },
+            });
+
+            logger.info('Estadísticas de proveedor de mantenimiento actualizadas', {
+              providerId: maintenanceProvider.id,
+              newRating: newAverage,
+              newTotalRatings: newCount,
+            });
+          }
+        } catch (updateError) {
+          logger.warn('Error actualizando estadísticas del proveedor', { error: updateError });
+        }
+      }
+
       // Enviar notificación al usuario calificado
       try {
         await NotificationService.create({
