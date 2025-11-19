@@ -272,7 +272,11 @@ export default function MaintenanceJobsPage() {
           await loadJobs(); // Recargar trabajos para obtener el estado actualizado
         } else {
           const error = await response.json();
-          setErrorMessage(error.error || 'Error al completar el trabajo');
+          const errorMessage =
+            typeof error.error === 'string'
+              ? error.error
+              : error.error?.message || 'Error al completar el trabajo';
+          setErrorMessage(errorMessage);
           setTimeout(() => setErrorMessage(''), 5000);
         }
       } catch (error) {
@@ -1417,8 +1421,25 @@ export default function MaintenanceJobsPage() {
                     await loadJobs();
                   } else {
                     const error = await response.json();
-                    setErrorMessage(error.error || 'Error al enviar la calificación');
-                    setTimeout(() => setErrorMessage(''), 5000);
+                    let errorMessage =
+                      typeof error.error === 'string'
+                        ? error.error
+                        : error.error?.message || 'Error al enviar la calificación';
+
+                    // Detectar si es un error de calificación duplicada
+                    if (
+                      errorMessage.includes('Ya has calificado') ||
+                      errorMessage.includes('calificado este contexto anteriormente') ||
+                      error.error?.code === 'CONFLICT_ERROR'
+                    ) {
+                      alert(
+                        '⚠️ Esta calificación ya fue realizada anteriormente. No puedes calificar al mismo cliente dos veces por el mismo trabajo.'
+                      );
+                      setShowRatingDialog(false);
+                    } else {
+                      setErrorMessage(errorMessage);
+                      setTimeout(() => setErrorMessage(''), 5000);
+                    }
                   }
                 } catch (error) {
                   logger.error('Error enviando calificación:', { error });
@@ -1514,7 +1535,11 @@ export default function MaintenanceJobsPage() {
                         await loadJobs();
                       } else {
                         const error = await response.json();
-                        setErrorMessage(error.error || 'Error al aceptar la fecha');
+                        const errorMessage =
+                          typeof error.error === 'string'
+                            ? error.error
+                            : error.error?.message || 'Error al aceptar la fecha';
+                        setErrorMessage(errorMessage);
                         setTimeout(() => setErrorMessage(''), 5000);
                       }
                     } catch (error) {
@@ -1627,7 +1652,11 @@ export default function MaintenanceJobsPage() {
                         await loadJobs();
                       } else {
                         const error = await response.json();
-                        setErrorMessage(error.error || 'Error al proponer la fecha');
+                        const errorMessage =
+                          typeof error.error === 'string'
+                            ? error.error
+                            : error.error?.message || 'Error al proponer la fecha';
+                        setErrorMessage(errorMessage);
                         setTimeout(() => setErrorMessage(''), 5000);
                       }
                     } catch (error) {

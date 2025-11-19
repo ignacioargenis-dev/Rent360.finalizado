@@ -297,6 +297,9 @@ export class UserRatingService {
             fromUser: {
               select: { id: true, name: true, avatar: true },
             },
+            toUser: {
+              select: { id: true, name: true, avatar: true },
+            },
             property: {
               select: { id: true, title: true, address: true },
             },
