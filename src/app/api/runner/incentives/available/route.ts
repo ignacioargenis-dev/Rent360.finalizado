@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 import { RunnerReportsService } from '@/lib/runner-reports-service';
-import { RunnerRatingService } from '@/lib/runner-rating-service';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 /**
  * GET /api/runner/incentives/available
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener métricas de rendimiento del runner
     const performanceMetrics = await RunnerReportsService.generateRunnerPerformanceMetrics(user.id);
-    const ratingSummary = await RunnerRatingService.getRunnerRatingSummary(user.id);
+    const ratingSummary = await UserRatingService.getRunnerRatingSummary(user.id);
 
     // Obtener incentivos ya otorgados para este runner
     const earnedIncentives = await db.runnerIncentive.findMany({

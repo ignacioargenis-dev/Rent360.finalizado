@@ -46,13 +46,18 @@ interface Rating {
   tenantName: string;
   propertyTitle: string;
   overallRating: number;
-  punctuality: number;
-  professionalism: number;
-  communication: number;
+  punctuality?: number;
+  professionalism?: number;
+  communication?: number;
+  quality?: number;
+  reliability?: number;
   comment?: string;
+  positiveFeedback?: string[];
+  improvementAreas?: string[];
   verified: boolean;
   anonymous: boolean;
   date: string;
+  contextType?: string;
 }
 
 interface RatingToGive {
@@ -220,13 +225,18 @@ export default function CalificacionesPage() {
         propertyTitle:
           rating.property?.title || rating.propertyTitle || 'Propiedad no identificada',
         overallRating: rating.overallRating || rating.rating || 0,
-        punctuality: rating.punctualityRating || rating.punctuality || 0,
-        professionalism: rating.professionalismRating || rating.professionalism || 0,
-        communication: rating.communicationRating || rating.communication || 0,
+        punctuality: rating.punctualityRating || undefined,
+        professionalism: rating.professionalismRating || undefined,
+        communication: rating.communicationRating || undefined,
+        quality: rating.qualityRating || undefined,
+        reliability: rating.reliabilityRating || undefined,
         comment: rating.comment || 'Sin comentario',
+        positiveFeedback: rating.positiveFeedback || [],
+        improvementAreas: rating.improvementAreas || [],
         verified: rating.isVerified || rating.verified || false,
         anonymous: rating.isAnonymous || rating.anonymous || false,
         date: rating.createdAt || rating.date,
+        contextType: rating.contextType,
       }));
 
       // Usar datos reales o array vacío si no hay calificaciones
@@ -544,7 +554,7 @@ export default function CalificacionesPage() {
                                 <Star
                                   key={star}
                                   className={`w-3 h-3 ${
-                                    star <= rating.punctuality
+                                    star <= (rating.punctuality || 0)
                                       ? 'fill-yellow-400 text-yellow-400'
                                       : 'text-gray-300'
                                   }`}
@@ -559,7 +569,7 @@ export default function CalificacionesPage() {
                                 <Star
                                   key={star}
                                   className={`w-3 h-3 ${
-                                    star <= rating.professionalism
+                                    star <= (rating.professionalism || 0)
                                       ? 'fill-yellow-400 text-yellow-400'
                                       : 'text-gray-300'
                                   }`}
@@ -574,7 +584,7 @@ export default function CalificacionesPage() {
                                 <Star
                                   key={star}
                                   className={`w-3 h-3 ${
-                                    star <= rating.communication
+                                    star <= (rating.communication || 0)
                                       ? 'fill-yellow-400 text-yellow-400'
                                       : 'text-gray-300'
                                   }`}

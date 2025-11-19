@@ -3,7 +3,7 @@ import { logger } from './logger';
 import { DatabaseError, BusinessLogicError } from './errors';
 import { NotificationService } from './notification-service';
 import { RunnerReportsService } from './runner-reports-service';
-import { RunnerRatingService } from './runner-rating-service';
+import { UserRatingService } from './user-rating-service';
 import { RunnerIncentiveStatus } from '@prisma/client';
 
 export interface IncentiveRule {
@@ -319,7 +319,7 @@ export class RunnerIncentivesService {
       // Obtener métricas de rendimiento actuales
       const performanceMetrics =
         await RunnerReportsService.generateRunnerPerformanceMetrics(runnerId);
-      const ratingSummary = await RunnerRatingService.getRunnerRatingSummary(runnerId);
+      const ratingSummary = await UserRatingService.getRunnerRatingSummary(runnerId);
 
       // Obtener todas las reglas activas (desde BD y hardcodeadas)
       const allRules = await this.getAllActiveIncentiveRules();

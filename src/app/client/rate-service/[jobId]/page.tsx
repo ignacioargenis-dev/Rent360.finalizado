@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { ratingService, RatingType } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger-minimal';
 
 interface JobDetails {
@@ -104,14 +103,23 @@ export default function RateServicePage() {
         setJob(jobData);
       }
 
-      // Verificar si ya existe una reseña
-      const canRate = await ratingService.canRateProvider(user?.id || '', jobId);
-      if (!canRate) {
-        // Obtener reseña existente
-        const ratings = await ratingService.getProviderRatings(job?.providerId || '', 1);
-        const existing = ratings.find(r => r.jobId === jobId);
-        if (existing) {
-          setExistingRating(existing);
+      // Verificar si ya existe una reseña usando la API
+      if (user?.id && job?.providerId) {
+        try {
+          const ratingsResponse = await fetch(
+            `/api/ratings?userId=${job.providerId}&contextType=SERVICE&contextId=${jobId}&given=false`
+          );
+          if (ratingsResponse.ok) {
+            const data = await ratingsResponse.json();
+            const existing = data.data?.ratings?.find(
+              (r: any) => r.contextId === jobId && r.fromUserId === user.id
+            );
+            if (existing) {
+              setExistingRating(existing);
+            }
+          }
+        } catch (error) {
+          logger.warn('Error verificando calificación existente:', error);
         }
       }
     } catch (error) {
@@ -166,31 +174,36 @@ export default function RateServicePage() {
     try {
       setSubmitting(true);
 
+      // Determinar el contexto según el tipo de proveedor
+      const contextType = job.providerType === 'MAINTENANCE' ? 'MAINTENANCE' : 'SERVICE';
+
       const ratingData = {
-        providerId: job.providerId,
-        providerType: (job.providerType === 'MAINTENANCE'
-          ? 'MAINTENANCE'
-          : job.providerType === 'PROVIDER'
-            ? 'PROVIDER'
-            : 'PROVIDER') as 'MAINTENANCE' | 'PROVIDER',
-        clientId: user.id,
-        jobId: job.id,
-        ratings: {
-          overall: rating.overall,
-          punctuality: rating.punctuality,
-          professionalism: rating.professionalism,
-          communication: rating.communication,
-          property_knowledge: rating.quality, // Adaptar al enum
-          cleanliness: rating.quality,
-          quality_of_work: rating.quality,
-          value: rating.value,
-        },
-        comments: rating.comments.trim(),
+        toUserId: job.providerId,
+        contextType: contextType,
+        contextId: job.id,
+        overallRating: rating.overall,
+        punctualityRating: rating.punctuality,
+        professionalismRating: rating.professionalism,
+        communicationRating: rating.communication,
+        qualityRating: rating.quality, // Usar qualityRating en lugar de property_knowledge
+        comment: rating.comments.trim(),
         isAnonymous: rating.isAnonymous,
-        isVerified: rating.isVerified,
+        isPublic: true,
       };
 
-      await ratingService.createRating(ratingData);
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(ratingData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar la calificación');
+      }
       setSubmitted(true);
 
       // Redirigir después de 3 segundos

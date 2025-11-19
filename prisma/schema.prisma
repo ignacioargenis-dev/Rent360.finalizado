@@ -89,7 +89,7 @@ model User {
   documents           Document[]
   maintenanceRequests Maintenance[]              @relation("MaintenanceRequester")
   serviceJobRequests  ServiceJob[]               @relation("ServiceJobRequester")
-  scheduledVisits     MaintenanceVisitSchedule[]  @relation("MaintenanceVisitCreator")
+  scheduledVisits     MaintenanceVisitSchedule[] @relation("MaintenanceVisitCreator")
   acceptedVisits      MaintenanceVisitSchedule[] @relation("MaintenanceVisitAccepter")
 
   // Nuevas relaciones para providers
@@ -633,13 +633,13 @@ model Maintenance {
 // ============================================================================
 
 model MaintenanceVisitSchedule {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   maintenanceId         String
   maintenanceProviderId String
   scheduledDate         DateTime
   scheduledTime         String // HH:MM format
   estimatedDuration     Int // in minutes
-  status                String   @default("PROPOSED") // PROPOSED, ACCEPTED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, REJECTED
+  status                String    @default("PROPOSED") // PROPOSED, ACCEPTED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, REJECTED
   notes                 String?
   contactPerson         String?
   contactPhone          String?
@@ -648,14 +648,14 @@ model MaintenanceVisitSchedule {
   proposedBy            String? // OWNER, BROKER, PROVIDER - quien propuso la fecha
   acceptedBy            String? // User ID who accepted the proposal
   acceptedAt            DateTime? // When the proposal was accepted
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // Relations
   maintenance Maintenance         @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
   provider    MaintenanceProvider @relation(fields: [maintenanceProviderId], references: [id], onDelete: Cascade)
   creator     User                @relation("MaintenanceVisitCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  accepter    User?                @relation("MaintenanceVisitAccepter", fields: [acceptedBy], references: [id], onDelete: SetNull)
+  accepter    User?               @relation("MaintenanceVisitAccepter", fields: [acceptedBy], references: [id], onDelete: SetNull)
 
   @@index([maintenanceId])
   @@index([maintenanceProviderId])
@@ -1657,6 +1657,10 @@ model UserRating {
   comment          String?
   positiveFeedback String[] // Aspectos positivos (JSON array)
   improvementAreas String[] // Áreas de mejora (JSON array)
+
+  // Respuesta del usuario calificado
+  response     String? // Respuesta del usuario calificado a la calificación
+  responseDate DateTime? // Fecha de la respuesta
 
   // Información adicional de contexto
   propertyId String?

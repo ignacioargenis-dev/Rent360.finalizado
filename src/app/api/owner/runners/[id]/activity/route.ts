@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 /**
  * GET /api/owner/runners/[id]/activity
@@ -73,19 +74,6 @@ export async function GET(
               },
             },
           },
-          runnerRatings: {
-            select: {
-              id: true,
-              overallRating: true,
-              comment: true,
-              createdAt: true,
-              clientName: true,
-              clientId: true,
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-          },
           tenant: {
             select: {
               id: true,
@@ -132,19 +120,6 @@ export async function GET(
                     createdAt: true,
                   },
                 },
-              },
-            },
-            runnerRatings: {
-              select: {
-                id: true,
-                overallRating: true,
-                comment: true,
-                createdAt: true,
-                clientName: true,
-                clientId: true,
-              },
-              orderBy: {
-                createdAt: 'desc',
               },
             },
             tenant: {
@@ -267,15 +242,27 @@ export async function GET(
       take: 50,
     });
 
-    // Obtener todas las calificaciones del runner para calcular promedio real
-    const allRunnerRatings = await db.runnerRating.findMany({
-      where: {
-        runnerId: runnerId,
-      },
-      select: {
-        overallRating: true,
-      },
-    });
+    // Obtener calificación promedio desde el sistema unificado
+    const ratingSummary = await UserRatingService.getRunnerRatingSummary(runnerId);
+    const averageRating = ratingSummary?.averageRating || 0;
+
+    // Obtener calificaciones de visitas del owner para mapear ratings por visita
+    const visitIds = visits.map((v: any) => v.id);
+    const visitRatings =
+      visitIds.length > 0
+        ? await db.userRating.findMany({
+            where: {
+              contextType: 'PROPERTY_VISIT',
+              contextId: { in: visitIds },
+              toUserId: runnerId,
+              fromUserId: user.id, // Solo calificaciones del owner
+            },
+            select: { contextId: true, overallRating: true, comment: true },
+          })
+        : [];
+    const ratingsByVisitId = new Map(
+      visitRatings.map(r => [r.contextId, { rating: r.overallRating, comment: r.comment }])
+    );
 
     // Calcular estadísticas con manejo defensivo
     const stats = {
@@ -297,11 +284,7 @@ export async function GET(
         }).length || 0,
       totalEarnings: visits?.reduce((sum, v) => sum + (Number(v?.earnings) || 0), 0) || 0,
       totalPhotos: visits?.reduce((sum, v) => sum + (Number(v?.photosTaken) || 0), 0) || 0,
-      averageRating:
-        allRunnerRatings?.length > 0
-          ? allRunnerRatings.reduce((sum, r) => sum + (Number(r?.overallRating) || 0), 0) /
-            allRunnerRatings.length
-          : 0,
+      averageRating,
       totalIncentives: incentives?.length || 0,
       totalIncentiveValue:
         incentives?.reduce((sum, i) => {
@@ -448,32 +431,9 @@ export async function GET(
             photosTaken: Number(visit.photosTaken) || 0,
             duration: Number(visit.duration) || 0,
             notes: visit.notes || '',
-            rating:
-              visit.runnerRatings &&
-              Array.isArray(visit.runnerRatings) &&
-              visit.runnerRatings.length > 0
-                ? // Buscar la calificación del owner (user.id es el ownerId)
-                  visit.runnerRatings.find((r: any) => r.clientId === user.id)?.overallRating ||
-                  visit.runnerRatings[0]?.overallRating ||
-                  Number(visit.rating) ||
-                  null
-                : Number(visit.rating) || null,
-            hasRated:
-              visit.runnerRatings &&
-              Array.isArray(visit.runnerRatings) &&
-              visit.runnerRatings.some((r: any) => r.clientId === user.id)
-                ? true
-                : false,
-            feedback:
-              visit.runnerRatings &&
-              Array.isArray(visit.runnerRatings) &&
-              visit.runnerRatings.length > 0
-                ? // Buscar el feedback del owner
-                  visit.runnerRatings.find((r: any) => r.clientId === user.id)?.comment ||
-                  visit.runnerRatings[0]?.comment ||
-                  visit.clientFeedback ||
-                  null
-                : visit.clientFeedback || null,
+            rating: ratingsByVisitId.get(visit.id)?.rating || null,
+            hasRated: ratingsByVisitId.has(visit.id),
+            feedback: ratingsByVisitId.get(visit.id)?.comment || null,
             photos: visitPhotos,
             tenant: visit.tenant
               ? {

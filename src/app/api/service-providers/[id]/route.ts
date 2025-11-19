@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 /**
  * GET /api/service-providers/[id]
@@ -71,54 +72,66 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       logger.warn('Error parsing serviceTypes', { error: e, providerId });
     }
 
-    // Obtener trabajos completados con reseñas (feedback)
-    const completedJobs = await db.serviceJob.findMany({
+    // Obtener calificaciones desde el sistema unificado
+    const userId = provider.user?.id;
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Usuario del proveedor no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Obtener resumen de calificaciones
+    const ratingSummary = await UserRatingService.getUserRatingSummary(userId);
+    const averageRating = ratingSummary?.averageRating || 0;
+    const totalRatings = ratingSummary?.totalRatings || 0;
+
+    // Obtener calificaciones recientes (SERVICE y MAINTENANCE)
+    const recentRatings = await db.userRating.findMany({
       where: {
-        serviceProviderId: providerId,
-        status: 'COMPLETED',
-        feedback: { not: null },
+        toUserId: userId,
+        contextType: { in: ['SERVICE', 'MAINTENANCE'] },
+        isPublic: true,
       },
       include: {
-        requester: {
+        fromUser: {
           select: {
             name: true,
-            email: true,
+            avatar: true,
+          },
+        },
+        property: {
+          select: {
+            title: true,
+            address: true,
           },
         },
       },
       orderBy: {
-        completedDate: 'desc',
+        createdAt: 'desc',
       },
-      take: 10, // Últimas 10 reseñas
+      take: 10,
     });
 
-    // Transformar reseñas
-    const reviews = completedJobs
-      .filter(job => job.rating && job.feedback)
-      .map(job => ({
-        id: job.id,
-        rating: job.rating || 0,
-        comment: job.feedback || '',
-        clientName: job.requester?.name || 'Cliente',
-        date: job.completedDate?.toISOString() || job.updatedAt.toISOString(),
-      }));
+    // Transformar reseñas al formato esperado
+    const reviews = recentRatings.map(rating => ({
+      id: rating.id,
+      rating: rating.overallRating,
+      comment: rating.comment || '',
+      clientName: rating.isAnonymous ? 'Cliente Anónimo' : rating.fromUser?.name || 'Cliente',
+      date: rating.createdAt.toISOString(),
+      verified: rating.isVerified,
+      contextType: rating.contextType,
+      propertyTitle: rating.property?.title,
+    }));
 
-    // Calcular estadísticas
-    const allJobs = await db.serviceJob.findMany({
+    // Obtener trabajos completados para contar
+    const completedJobsCount = await db.serviceJob.count({
       where: {
         serviceProviderId: providerId,
-      },
-      select: {
-        status: true,
-        rating: true,
-        feedback: true,
+        status: 'COMPLETED',
       },
     });
-
-    const completedJobsCount = allJobs.filter(j => j.status === 'COMPLETED').length;
-    const ratings = allJobs.filter(j => j.rating).map(j => j.rating!) as number[];
-    const averageRating =
-      ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
 
     // Obtener todas las imágenes de los servicios
     const allImages: string[] = [];
@@ -179,8 +192,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         name: provider.businessName || provider.user?.name || 'Proveedor',
         serviceType: provider.serviceType || 'OTHER',
         specialty: services.length > 0 ? services[0].name : 'Servicio',
-        rating: provider.rating || averageRating || 0,
-        reviewCount: reviews.length || provider.totalRatings || 0,
+        rating: averageRating,
+        reviewCount: totalRatings,
         hourlyRate: provider.basePrice || 0,
         location: `${provider.city || ''} ${provider.region || ''}`.trim() || 'No especificada',
         description: provider.description || '',

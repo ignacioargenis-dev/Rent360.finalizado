@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { RunnerRatingService } from '@/lib/runner-rating-service';
+import { UserRatingService } from '@/lib/user-rating-service';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 import { BusinessLogicError } from '@/lib/errors';
+import { RatingContextType } from '@/types/index';
 
 /**
  * POST /api/visit/rate
@@ -77,22 +78,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que no haya una calificación existente para este usuario (tenant o owner)
-    const existingRating = await db.runnerRating.findUnique({
-      where: {
-        visitId_clientId: {
-          visitId,
-          clientId: user.id,
-        },
-      },
-    });
+    // Validar que puede calificar usando el sistema unificado
+    const canRate = await UserRatingService.canRateContext(
+      user.id,
+      visit.runner.id,
+      'PROPERTY_VISIT' as RatingContextType,
+      visitId
+    );
 
-    if (existingRating) {
-      return NextResponse.json({ error: 'Ya has calificado esta visita' }, { status: 409 });
+    if (!canRate.canRate) {
+      return NextResponse.json(
+        { error: canRate.reason || 'No puedes calificar esta visita' },
+        { status: 409 }
+      );
     }
 
-    // Usar el ID del usuario como clientId (tanto tenant como owner pueden calificar)
-    const rating = await RunnerRatingService.createRunnerRating({
+    // Crear calificación usando el sistema unificado
+    // Mapear propertyKnowledgeRating a qualityRating para compatibilidad
+    const rating = await UserRatingService.createRunnerRating({
       visitId,
       runnerId: visit.runner.id,
       clientId: user.id,

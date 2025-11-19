@@ -28,7 +28,11 @@ interface Rating {
   punctuality?: number;
   professionalism?: number;
   communication?: number;
+  quality?: number;
+  reliability?: number;
   comment?: string;
+  positiveFeedback?: string[];
+  improvementAreas?: string[];
   verified: boolean;
   anonymous: boolean;
   date: string;
@@ -56,7 +60,8 @@ export default function BrokerRatingsPage() {
       setError(null);
 
       // Cargar calificaciones recibidas desde la API de calificaciones
-      const response = await fetch('/api/ratings', {
+      // Brokers pueden recibir calificaciones de múltiples contextos
+      const response = await fetch('/api/ratings?limit=100', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -79,10 +84,14 @@ export default function BrokerRatingsPage() {
         reviewerType: rating.fromUser?.role || 'user',
         propertyTitle: rating.property?.title || 'Propiedad',
         overallRating: rating.overallRating || rating.rating || 0,
-        punctuality: rating.punctualityRating || rating.punctuality || 0,
-        professionalism: rating.professionalismRating || rating.professionalism || 0,
-        communication: rating.communicationRating || rating.communication || 0,
+        punctuality: rating.punctualityRating || undefined,
+        professionalism: rating.professionalismRating || undefined,
+        communication: rating.communicationRating || undefined,
+        quality: rating.qualityRating || undefined,
+        reliability: rating.reliabilityRating || undefined,
         comment: rating.comment || '',
+        positiveFeedback: rating.positiveFeedback || [],
+        improvementAreas: rating.improvementAreas || [],
         verified: rating.isVerified || rating.verified || false,
         anonymous: rating.isAnonymous || rating.anonymous || false,
         date: rating.createdAt || rating.date,
@@ -267,10 +276,29 @@ export default function BrokerRatingsPage() {
                             </span>
                           </div>
                           {rating.comment && <p className="text-gray-700 mb-2">{rating.comment}</p>}
+
+                          {/* Mostrar contexto de la calificación */}
+                          {rating.contextType && (
+                            <Badge variant="outline" className="text-xs mb-2">
+                              {rating.contextType === 'SERVICE'
+                                ? 'Servicio'
+                                : rating.contextType === 'CONTRACT'
+                                  ? 'Contrato'
+                                  : rating.contextType === 'PROPERTY_VISIT'
+                                    ? 'Visita'
+                                    : rating.contextType === 'MAINTENANCE'
+                                      ? 'Mantenimiento'
+                                      : rating.contextType}
+                            </Badge>
+                          )}
+
+                          {/* Calificaciones por categoría */}
                           {(rating.punctuality ||
                             rating.professionalism ||
-                            rating.communication) && (
-                            <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
+                            rating.communication ||
+                            rating.quality ||
+                            rating.reliability) && (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3 text-xs">
                               {rating.punctuality && (
                                 <div>
                                   <span className="text-gray-600">Puntualidad:</span>{' '}
@@ -289,6 +317,45 @@ export default function BrokerRatingsPage() {
                                   {renderStars(rating.communication)}
                                 </div>
                               )}
+                              {rating.quality && (
+                                <div>
+                                  <span className="text-gray-600">Calidad:</span>{' '}
+                                  {renderStars(rating.quality)}
+                                </div>
+                              )}
+                              {rating.reliability && (
+                                <div>
+                                  <span className="text-gray-600">Confiabilidad:</span>{' '}
+                                  {renderStars(rating.reliability)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Feedback positivo y áreas de mejora */}
+                          {rating.positiveFeedback && rating.positiveFeedback.length > 0 && (
+                            <div className="mt-3 p-2 bg-green-50 rounded">
+                              <p className="text-xs font-medium text-green-800 mb-1">
+                                Aspectos Positivos:
+                              </p>
+                              <ul className="text-xs text-green-700 list-disc list-inside">
+                                {rating.positiveFeedback.map((item: string, idx: number) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {rating.improvementAreas && rating.improvementAreas.length > 0 && (
+                            <div className="mt-2 p-2 bg-yellow-50 rounded">
+                              <p className="text-xs font-medium text-yellow-800 mb-1">
+                                Áreas de Mejora:
+                              </p>
+                              <ul className="text-xs text-yellow-700 list-disc list-inside">
+                                {rating.improvementAreas.map((item: string, idx: number) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
                             </div>
                           )}
                         </div>

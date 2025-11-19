@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 /**
  * GET /api/maintenance/[id]/available-providers
@@ -141,8 +142,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         specialty: true,
         specialties: true,
         hourlyRate: true,
-        rating: true,
-        totalRatings: true,
         completedJobs: true,
         responseTime: true,
         address: true,
@@ -161,8 +160,31 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           },
         },
       },
-      orderBy: [{ rating: 'desc' }, { completedJobs: 'desc' }, { hourlyRate: 'asc' }],
+      orderBy: [{ completedJobs: 'desc' }, { hourlyRate: 'asc' }],
     });
+
+    // Obtener calificaciones unificadas para cada proveedor
+    const providerUserIds = availableProviders.map(p => p.user?.id).filter(Boolean) as string[];
+    const ratingsMap = new Map<string, { averageRating: number; totalRatings: number }>();
+
+    await Promise.all(
+      providerUserIds.map(async userId => {
+        try {
+          const ratingSummary = await UserRatingService.getUserRatingSummary(userId);
+          if (ratingSummary) {
+            ratingsMap.set(userId, {
+              averageRating: ratingSummary.averageRating,
+              totalRatings: ratingSummary.totalRatings,
+            });
+          }
+        } catch (error) {
+          logger.warn('Error obteniendo calificación para proveedor:', {
+            userId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      })
+    );
 
     // Obtener conteo de trabajos activos para cada proveedor
     const providerIds = availableProviders.map(p => p.id);
@@ -444,12 +466,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           location = provider.address || provider.city || provider.region || 'No especificada';
         }
 
+        // Obtener calificación unificada
+        const userId = provider.user?.id;
+        const unifiedRating = userId ? ratingsMap.get(userId) : null;
+        const rating = unifiedRating?.averageRating || 0;
+        const totalRatings = unifiedRating?.totalRatings || 0;
+
         return {
           id: provider.id,
           name: provider.businessName || provider.user.name || 'Proveedor sin nombre',
           specialty: provider.specialty || specialtiesArray[0] || 'General',
           specialties: specialtiesArray,
-          rating: provider.rating || 0,
+          rating: rating,
+          totalRatings: totalRatings,
           location: location,
           hourlyRate: provider.hourlyRate || 0,
           experience: `${provider.completedJobs || 0} trabajos completados`,
@@ -460,9 +489,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           responseTime: provider.responseTime ? `${provider.responseTime} horas` : 'N/A',
           description: provider.description || '',
           profileImage: provider.profileImage || '',
+          user: provider.user, // Incluir información del usuario
         };
       })
       .filter(provider => provider !== null) as any[];
+
+    // Ordenar por calificación unificada (ya calculada arriba)
+    providersWithDistance.sort((a, b) => {
+      if (b.rating !== a.rating) {
+        return b.rating - a.rating;
+      }
+      return (b.totalRatings || 0) - (a.totalRatings || 0);
+    });
 
     // Contar proveedores que coinciden con la categoría
     const matchingCategoryCount = providersWithDistance.filter(p => {

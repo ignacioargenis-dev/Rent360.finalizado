@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,16 +43,53 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [{ rating: 'desc' }, { completedJobs: 'desc' }],
-      take: 50, // Limitar resultados
+      take: 50, // Limitar resultados iniciales
     });
 
-    logger.info(`Service providers loaded: ${providers.length} providers`);
+    // Obtener calificaciones para cada proveedor y ordenar
+    const providersWithRatings = await Promise.all(
+      providers.map(async provider => {
+        if (!provider.user?.id) {
+          return {
+            ...provider,
+            unifiedRating: 0,
+            unifiedTotalRatings: 0,
+          };
+        }
+
+        const ratingSummary = await UserRatingService.getUserRatingSummary(provider.user.id);
+        return {
+          ...provider,
+          unifiedRating: ratingSummary?.averageRating || 0,
+          unifiedTotalRatings: ratingSummary?.totalRatings || 0,
+        };
+      })
+    );
+
+    // Ordenar por calificación unificada y luego por trabajos completados
+    providersWithRatings.sort((a, b) => {
+      if (b.unifiedRating !== a.unifiedRating) {
+        return b.unifiedRating - a.unifiedRating;
+      }
+      return (b.completedJobs || 0) - (a.completedJobs || 0);
+    });
+
+    // Remover campos temporales antes de enviar
+    const sortedProviders = providersWithRatings.map(
+      ({ unifiedRating, unifiedTotalRatings, ...provider }) => ({
+        ...provider,
+        // Mantener compatibilidad: agregar rating y totalRatings calculados
+        rating: unifiedRating,
+        totalRatings: unifiedTotalRatings,
+      })
+    );
+
+    logger.info(`Service providers loaded: ${sortedProviders.length} providers`);
 
     return NextResponse.json({
       success: true,
-      providers,
-      count: providers.length,
+      providers: sortedProviders,
+      count: sortedProviders.length,
     });
   } catch (error) {
     logger.error('Error fetching service providers:', {

@@ -80,7 +80,8 @@ export default function MaintenanceRatingsPage() {
       setError(null);
 
       // Fetch real ratings data from API
-      const response = await fetch('/api/ratings?limit=100', {
+      // Filtrar solo calificaciones de mantenimiento (MAINTENANCE)
+      const response = await fetch('/api/ratings?contextType=MAINTENANCE&limit=100', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

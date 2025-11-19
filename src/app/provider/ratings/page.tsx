@@ -60,7 +60,8 @@ export default function ProviderRatingsPage() {
       setError(null);
 
       // Cargar calificaciones recibidas desde la API de calificaciones
-      const ratingsResponse = await fetch('/api/ratings', {
+      // Filtrar solo calificaciones de servicios (SERVICE o MAINTENANCE)
+      const ratingsResponse = await fetch('/api/ratings?contextType=SERVICE&limit=100', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

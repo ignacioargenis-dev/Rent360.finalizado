@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { UserRatingService } from '@/lib/user-rating-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,16 +35,6 @@ export async function GET(request: NextRequest) {
             phone: true,
           },
         },
-        runnerRatings: {
-          select: {
-            overallRating: true,
-            createdAt: true,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-        },
       },
       orderBy: {
         scheduledAt: 'desc',
@@ -64,18 +55,9 @@ export async function GET(request: NextRequest) {
       .filter(v => v.status === 'COMPLETED' && new Date(v.scheduledAt) >= monthStart)
       .reduce((sum, v) => sum + (v.earnings || 0), 0);
 
-    // Calificación promedio
-    const visitsWithRatings = allVisits.filter(v => {
-      const rating = v.runnerRatings[0]?.overallRating || v.rating;
-      return rating && rating > 0;
-    });
-    const averageRating =
-      visitsWithRatings.length > 0
-        ? visitsWithRatings.reduce((sum, v) => {
-            const rating = v.runnerRatings[0]?.overallRating || v.rating || 0;
-            return sum + rating;
-          }, 0) / visitsWithRatings.length
-        : 0;
+    // Obtener calificación promedio desde el sistema unificado
+    const ratingSummary = await UserRatingService.getRunnerRatingSummary(user.id);
+    const averageRating = ratingSummary?.averageRating || 0;
 
     // Visitas de hoy
     const today = new Date();
@@ -106,10 +88,27 @@ export async function GET(request: NextRequest) {
         };
       });
 
+    // Obtener todas las calificaciones de visitas completadas de una vez
+    const completedVisitIds = allVisits.filter(v => v.status === 'COMPLETED').map(v => v.id);
+
+    const visitRatings =
+      completedVisitIds.length > 0
+        ? await db.userRating.findMany({
+            where: {
+              contextType: 'PROPERTY_VISIT',
+              contextId: { in: completedVisitIds },
+              toUserId: user.id,
+            },
+            select: { contextId: true, overallRating: true },
+          })
+        : [];
+
+    const ratingsMap = new Map(visitRatings.map(r => [r.contextId, r.overallRating]));
+
     // Actividad reciente (últimas 10 visitas)
     const recentActivity = allVisits.slice(0, 10).map(v => {
       const visitDate = new Date(v.scheduledAt);
-      const rating = v.runnerRatings[0]?.overallRating || v.rating;
+      const visitRating = v.status === 'COMPLETED' ? ratingsMap.get(v.id) : undefined;
 
       return {
         id: v.id,
@@ -119,7 +118,7 @@ export async function GET(request: NextRequest) {
         date: visitDate.toISOString(),
         status: v.status,
         earnings: v.status === 'COMPLETED' ? v.earnings : undefined,
-        rating: rating || undefined,
+        rating: visitRating || undefined,
       };
     });
 

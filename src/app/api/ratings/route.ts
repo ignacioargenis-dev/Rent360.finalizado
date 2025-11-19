@@ -158,6 +158,14 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const offset = parseInt(searchParams.get('offset') || '0');
 
+    // Filtros avanzados
+    const minRating = searchParams.get('minRating');
+    const maxRating = searchParams.get('maxRating');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const hasResponse = searchParams.get('hasResponse');
+    const hasComment = searchParams.get('hasComment');
+
     // Si no se especifica userId, mostrar calificaciones del usuario autenticado
     const targetUserId = userId || user.id;
 
@@ -173,6 +181,26 @@ export async function GET(request: NextRequest) {
     // Solo filtrar por isPublic si se especifica explícitamente en la URL
     if (isPublicParam !== null) {
       filters.isPublic = isPublicParam === 'true';
+    }
+
+    // Filtros avanzados
+    if (minRating) {
+      filters.minRating = parseInt(minRating);
+    }
+    if (maxRating) {
+      filters.maxRating = parseInt(maxRating);
+    }
+    if (startDate) {
+      filters.startDate = new Date(startDate);
+    }
+    if (endDate) {
+      filters.endDate = new Date(endDate);
+    }
+    if (hasResponse !== null) {
+      filters.hasResponse = hasResponse === 'true';
+    }
+    if (hasComment !== null) {
+      filters.hasComment = hasComment === 'true';
     }
 
     const { ratings, total } = await UserRatingService.getUserRatings(targetUserId, filters);

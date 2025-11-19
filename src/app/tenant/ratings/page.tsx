@@ -53,6 +53,8 @@ interface Rating {
   quality?: number;
   reliability?: number;
   comment?: string;
+  positiveFeedback?: string[];
+  improvementAreas?: string[];
   verified: boolean;
   anonymous: boolean;
   date: string;
@@ -125,14 +127,16 @@ export default function TenantRatingsPage() {
         reviewerType: getReviewerType(rating.fromUser?.role || rating.reviewerType || 'user'),
         propertyTitle: rating.property?.title || rating.propertyTitle || 'Propiedad',
         overallRating: rating.overallRating || rating.rating || 0,
-        punctuality: rating.punctualityRating || rating.punctuality || 0,
-        professionalism: rating.professionalismRating || rating.professionalism || 0,
-        communication: rating.communicationRating || rating.communication || 0,
-        quality: rating.qualityRating || rating.quality || 0,
-        reliability: rating.reliabilityRating || rating.reliability || 0,
+        punctuality: rating.punctualityRating || undefined,
+        professionalism: rating.professionalismRating || undefined,
+        communication: rating.communicationRating || undefined,
+        quality: rating.qualityRating || undefined,
+        reliability: rating.reliabilityRating || undefined,
         comment: rating.comment || 'Sin comentario',
+        positiveFeedback: rating.positiveFeedback || [],
+        improvementAreas: rating.improvementAreas || [],
         verified: rating.verified || rating.isVerified || false,
-        anonymous: rating.anonymous || false,
+        anonymous: rating.anonymous || rating.isAnonymous || false,
         date: rating.createdAt || rating.date,
         contextType: rating.contextType,
         contextId: rating.contextId,
