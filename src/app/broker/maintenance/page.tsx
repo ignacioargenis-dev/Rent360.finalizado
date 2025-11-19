@@ -37,8 +37,23 @@ import {
   User,
   Calendar,
   DollarSign,
+  Info,
 } from 'lucide-react';
 import { User as UserType } from '@/types';
+
+interface VisitProposal {
+  id: string;
+  scheduledDate: string | null;
+  scheduledTime: string | null;
+  estimatedDuration?: number | null;
+  status?: string | null;
+  proposedBy?: string | null;
+  contactPerson?: string | null;
+  contactPhone?: string | null;
+  specialInstructions?: string | null;
+  acceptedAt?: string | null;
+  acceptedBy?: string | null;
+}
 
 interface MaintenanceRequest {
   id: string;
@@ -46,7 +61,19 @@ interface MaintenanceRequest {
   description: string;
   category: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status:
+    | 'OPEN'
+    | 'PENDING'
+    | 'ASSIGNED'
+    | 'QUOTE_PENDING'
+    | 'QUOTE_APPROVED'
+    | 'APPROVED'
+    | 'SCHEDULED'
+    | 'IN_PROGRESS'
+    | 'PENDING_CONFIRMATION'
+    | 'COMPLETED'
+    | 'REJECTED'
+    | 'CANCELLED';
   estimatedCost?: number;
   actualCost?: number;
   requestedBy: string;
@@ -67,6 +94,7 @@ interface MaintenanceRequest {
   assignedProvider?: {
     businessName: string;
   };
+  visitProposal?: VisitProposal;
 }
 
 export default function BrokerMaintenancePage() {
@@ -124,9 +152,27 @@ export default function BrokerMaintenancePage() {
       const response = await fetch(`/api/maintenance?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setMaintenanceRequests(data.maintenanceRequests);
+        const transformed: MaintenanceRequest[] = data.maintenanceRequests.map((request: any) => ({
+          ...request,
+          visitProposal: request.visitProposal
+            ? {
+                id: request.visitProposal.id,
+                scheduledDate: request.visitProposal.scheduledDate,
+                scheduledTime: request.visitProposal.scheduledTime,
+                estimatedDuration: request.visitProposal.estimatedDuration,
+                status: request.visitProposal.status,
+                proposedBy: request.visitProposal.proposedBy,
+                contactPerson: request.visitProposal.contactPerson,
+                contactPhone: request.visitProposal.contactPhone,
+                specialInstructions: request.visitProposal.specialInstructions,
+                acceptedAt: request.visitProposal.acceptedAt,
+                acceptedBy: request.visitProposal.acceptedBy,
+              }
+            : undefined,
+        }));
+        setMaintenanceRequests(transformed);
         setTotalPages(data.pagination.pages);
-        setStats(calculateStats(data.maintenanceRequests));
+        setStats(calculateStats(transformed));
       }
     } catch (error) {
       logger.error('Error loading maintenance requests:', { error });
@@ -147,15 +193,29 @@ export default function BrokerMaintenancePage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
-        return <Badge className="bg-blue-100 text-blue-800">Abierto</Badge>;
+      case 'PENDING':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
+      case 'ASSIGNED':
+        return <Badge className="bg-blue-100 text-blue-800">Asignada</Badge>;
+      case 'QUOTE_PENDING':
+        return <Badge className="bg-orange-100 text-orange-800">Cotización Pendiente</Badge>;
+      case 'QUOTE_APPROVED':
+        return <Badge className="bg-purple-100 text-purple-800">Cotización Aprobada</Badge>;
+      case 'APPROVED':
+        return <Badge className="bg-blue-100 text-blue-800">Aprobada</Badge>;
+      case 'SCHEDULED':
+        return <Badge className="bg-indigo-100 text-indigo-800">Programada</Badge>;
       case 'IN_PROGRESS':
-        return <Badge className="bg-yellow-100 text-yellow-800">En Progreso</Badge>;
+        return <Badge className="bg-emerald-100 text-emerald-800">En Progreso</Badge>;
+      case 'PENDING_CONFIRMATION':
+        return <Badge className="bg-yellow-100 text-yellow-800">Esperando Confirmación</Badge>;
       case 'COMPLETED':
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Completada</Badge>;
+      case 'REJECTED':
       case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-800">Cancelado</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Rechazada</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -200,6 +260,51 @@ export default function BrokerMaintenancePage() {
       default:
         return <Badge className="bg-gray-100 text-gray-800">{role}</Badge>;
     }
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) {
+      return '—';
+    }
+    try {
+      return new Date(value).toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return value;
+    }
+  };
+
+  const isWaitingForProviderResponse = (request: MaintenanceRequest) =>
+    request.visitProposal?.status === 'PROPOSED' &&
+    (request.visitProposal.proposedBy === 'OWNER' ||
+      request.visitProposal.proposedBy === 'BROKER' ||
+      request.visitProposal.proposedBy === 'ADMIN' ||
+      !request.visitProposal.proposedBy);
+
+  const isWaitingForOwnerResponse = (request: MaintenanceRequest) =>
+    request.visitProposal?.status === 'PROPOSED' && request.visitProposal.proposedBy === 'PROVIDER';
+
+  const renderVisitStatusBadge = (request: MaintenanceRequest) => {
+    if (!request.visitProposal) {
+      return <Badge variant="outline">Sin propuesta</Badge>;
+    }
+
+    if (isWaitingForProviderResponse(request)) {
+      return <Badge className="bg-blue-100 text-blue-800">Esperando proveedor</Badge>;
+    }
+
+    if (isWaitingForOwnerResponse(request)) {
+      return <Badge className="bg-orange-100 text-orange-800">Proveedor propuso fecha</Badge>;
+    }
+
+    if (request.visitProposal.status === 'ACCEPTED') {
+      return <Badge className="bg-emerald-100 text-emerald-800">Visita confirmada</Badge>;
+    }
+
+    return <Badge variant="outline">{request.visitProposal.status}</Badge>;
   };
 
   if (loading && !user) {
@@ -345,6 +450,24 @@ export default function BrokerMaintenancePage() {
           </CardContent>
         </Card>
 
+        <Card className="mb-6 bg-emerald-50 border-emerald-200">
+          <CardContent className="flex flex-col md:flex-row items-start md:items-center gap-4 pt-4">
+            <div className="p-3 rounded-full bg-white shadow-sm">
+              <Info className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-emerald-900">
+                ¿Cómo coordinar la visita con el proveedor?
+              </h3>
+              <p className="text-sm text-emerald-800 mt-1">
+                1) Envía una propuesta de fecha desde la solicitud (estado “Cotización aprobada”).
+                2) El proveedor podrá aceptarla o proponer otra. 3) Cuando el proveedor responda,
+                verás el aviso en la columna “Visita” para aceptar o ajustar la fecha.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Maintenance Requests Table */}
         <Card>
           <CardHeader>
@@ -377,6 +500,7 @@ export default function BrokerMaintenancePage() {
                       <TableHead>Título</TableHead>
                       <TableHead>Prioridad</TableHead>
                       <TableHead>Estado</TableHead>
+                      <TableHead>Visita</TableHead>
                       <TableHead>Solicitante</TableHead>
                       <TableHead>Costo Estimado</TableHead>
                       <TableHead>Fecha de Creación</TableHead>
@@ -407,6 +531,27 @@ export default function BrokerMaintenancePage() {
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(request.status)}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {renderVisitStatusBadge(request)}
+                            {request.visitProposal && (
+                              <p className="text-xs text-gray-600">
+                                {formatDate(request.visitProposal.scheduledDate)} ·{' '}
+                                {request.visitProposal.scheduledTime || '--:--'} hrs
+                              </p>
+                            )}
+                            {isWaitingForOwnerResponse(request) && (
+                              <p className="text-xs text-orange-700">
+                                Revisa la nueva fecha propuesta por el proveedor.
+                              </p>
+                            )}
+                            {isWaitingForProviderResponse(request) && (
+                              <p className="text-xs text-blue-700">
+                                Propuesta enviada. Esperando respuesta del proveedor.
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{request.requester.name}</div>

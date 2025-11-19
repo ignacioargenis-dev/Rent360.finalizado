@@ -127,15 +127,46 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const existingProposal = await db.maintenanceVisitSchedule.findFirst({
       where: {
         maintenanceId,
-        status: { in: ['PROPOSED', 'ACCEPTED'] },
+        status: 'PROPOSED',
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (existingProposal) {
+      const existingSide = (existingProposal.proposedBy || 'OWNER').toUpperCase();
+      const currentSide = proposerRole.toUpperCase();
+      const isSameSideProposal = existingSide === currentSide && existingSide !== 'PROVIDER';
+
+      if (isSameSideProposal) {
+        await db.maintenanceVisitSchedule.update({
+          where: { id: existingProposal.id },
+          data: {
+            status: 'REPLACED',
+          },
+        });
+      } else {
+        const errorMessage =
+          existingSide === 'PROVIDER'
+            ? 'El proveedor ya propuso una fecha. Acepta o responde a su propuesta.'
+            : 'Ya existe una propuesta pendiente. Espera la respuesta del proveedor antes de enviar una nueva.';
+        return NextResponse.json({ error: errorMessage }, { status: 400 });
+      }
+    }
+
+    // Si ya hay una visita confirmada, impedir nuevas propuestas
+    const confirmedVisit = await db.maintenanceVisitSchedule.findFirst({
+      where: {
+        maintenanceId,
+        status: 'ACCEPTED',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (confirmedVisit) {
       return NextResponse.json(
         {
           error:
-            'Ya existe una propuesta de fecha pendiente. El proveedor debe aceptarla o proponer otra fecha.',
+            'Este mantenimiento ya tiene una visita confirmada. Si necesitas reagendar, solicita al proveedor que actualice la programación.',
         },
         { status: 400 }
       );

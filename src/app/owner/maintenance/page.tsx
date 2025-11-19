@@ -99,6 +99,19 @@ interface MaintenanceRequest {
     businessName?: string;
     specialty?: string;
   };
+  visitProposal?: {
+    id: string;
+    scheduledDate: string | null;
+    scheduledTime: string | null;
+    estimatedDuration?: number | null;
+    status?: string | null;
+    proposedBy?: string | null;
+    contactPerson?: string | null;
+    contactPhone?: string | null;
+    specialInstructions?: string | null;
+    acceptedAt?: string | null;
+    acceptedBy?: string | null;
+  };
 }
 
 interface MaintenanceStats {
@@ -150,6 +163,7 @@ export default function MantenimientoPage() {
     contactPhone: '',
     specialInstructions: '',
   });
+  const [proposalActionRequestId, setProposalActionRequestId] = useState<string | null>(null);
   const [availableProviders, setAvailableProviders] = useState<any[]>([]);
   const [providerDiagnostic, setProviderDiagnostic] = useState<any>(null);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
@@ -213,6 +227,21 @@ export default function MantenimientoPage() {
             request.provider,
           notes: request.notes,
           maintenanceProvider: request.maintenanceProvider,
+          visitProposal: request.visitProposal
+            ? {
+                id: request.visitProposal.id,
+                scheduledDate: request.visitProposal.scheduledDate,
+                scheduledTime: request.visitProposal.scheduledTime,
+                estimatedDuration: request.visitProposal.estimatedDuration,
+                status: request.visitProposal.status,
+                proposedBy: request.visitProposal.proposedBy,
+                contactPerson: request.visitProposal.contactPerson,
+                contactPhone: request.visitProposal.contactPhone,
+                specialInstructions: request.visitProposal.specialInstructions,
+                acceptedAt: request.visitProposal.acceptedAt,
+                acceptedBy: request.visitProposal.acceptedBy,
+              }
+            : undefined,
         })
       );
 
@@ -485,6 +514,160 @@ export default function MantenimientoPage() {
     setShowAssignProviderDialog(true);
   };
 
+  const openScheduleDialog = (
+    request: MaintenanceRequest,
+    options?: { prefillFromProposal?: boolean }
+  ) => {
+    setSelectedRequest(request);
+
+    let nextVisitData = {
+      scheduledDate: '',
+      scheduledTime: '',
+      estimatedDuration: 120,
+      contactPerson: request.tenantName || '',
+      contactPhone: '',
+      specialInstructions: '',
+    };
+
+    if (options?.prefillFromProposal && request.visitProposal) {
+      const proposalDate = request.visitProposal.scheduledDate ?? '';
+      nextVisitData = {
+        scheduledDate: String(proposalDate).split('T')[0] || '',
+        scheduledTime: request.visitProposal.scheduledTime || '',
+        estimatedDuration: request.visitProposal.estimatedDuration || 120,
+        contactPerson: request.visitProposal.contactPerson || request.tenantName || '',
+        contactPhone: request.visitProposal.contactPhone || '',
+        specialInstructions: request.visitProposal.specialInstructions || '',
+      };
+    }
+
+    setVisitData(nextVisitData);
+    setShowScheduleVisitDialog(true);
+  };
+
+  const handleAcceptProviderProposal = async (request: MaintenanceRequest) => {
+    if (!request.visitProposal) {
+      return;
+    }
+
+    try {
+      setProposalActionRequestId(request.id);
+      const response = await fetch(`/api/maintenance/${request.id}/accept-visit-proposal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'accept',
+          proposalId: request.visitProposal.id,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Fecha de visita confirmada');
+        await loadPageData();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Error al aceptar la propuesta');
+      }
+    } catch (error) {
+      logger.error('Error aceptando propuesta del proveedor:', { error });
+      alert('Error al aceptar la propuesta de visita');
+    } finally {
+      setProposalActionRequestId(null);
+    }
+  };
+
+  const renderVisitProposalInfo = (request: MaintenanceRequest) => {
+    if (!request.visitProposal) {
+      return null;
+    }
+
+    const proposal = request.visitProposal;
+
+    if (isWaitingForProviderResponse(request)) {
+      return (
+        <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h4 className="font-semibold text-blue-900 mb-1 flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Propuesta enviada
+          </h4>
+          <p className="text-sm text-blue-800">
+            Estamos esperando la confirmación del proveedor para la visita propuesta.
+          </p>
+          <p className="text-sm text-blue-700 mt-2">
+            {formatDate(proposal.scheduledDate)} · {proposal.scheduledTime || '--:--'} hrs (
+            {proposal.estimatedDuration || 120} min)
+          </p>
+        </div>
+      );
+    }
+
+    if (isWaitingForOwnerResponse(request)) {
+      const isLoading = proposalActionRequestId === request.id;
+      return (
+        <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <h4 className="font-semibold text-orange-900 mb-1 flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            El proveedor propuso una nueva fecha
+          </h4>
+          <div className="text-sm text-orange-900 space-y-1">
+            <p>
+              <strong>Fecha:</strong> {formatDate(proposal.scheduledDate)}
+            </p>
+            <p>
+              <strong>Hora:</strong> {proposal.scheduledTime || '--:--'} hrs
+            </p>
+            <p>
+              <strong>Duración estimada:</strong> {proposal.estimatedDuration || 120} minutos
+            </p>
+            {proposal.specialInstructions && (
+              <p className="text-xs text-orange-700">
+                <strong>Notas:</strong> {proposal.specialInstructions}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-3 pt-3">
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              disabled={isLoading}
+              onClick={() => handleAcceptProviderProposal(request)}
+            >
+              {isLoading ? 'Procesando...' : 'Aceptar Fecha'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openScheduleDialog(request, { prefillFromProposal: true })}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Proponer Otra Fecha
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (proposal.status === 'ACCEPTED') {
+      return (
+        <div className="mt-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <h4 className="font-semibold text-emerald-900 mb-1 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            Visita confirmada
+          </h4>
+          <p className="text-sm text-emerald-900">
+            {formatDate(proposal.scheduledDate)} · {proposal.scheduledTime || '--:--'} hrs (
+            {proposal.estimatedDuration || 120} min)
+          </p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const loadAvailableProviders = async () => {
     try {
       if (!selectedRequest) {
@@ -671,6 +854,31 @@ export default function MantenimientoPage() {
       minimumFractionDigits: 0,
     }).format(price);
   };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) {
+      return 'No definido';
+    }
+    try {
+      return new Date(value).toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return value;
+    }
+  };
+
+  const isWaitingForProviderResponse = (request: MaintenanceRequest) =>
+    request.visitProposal?.status === 'PROPOSED' &&
+    (request.visitProposal.proposedBy === 'OWNER' ||
+      request.visitProposal.proposedBy === 'BROKER' ||
+      request.visitProposal.proposedBy === 'ADMIN' ||
+      !request.visitProposal.proposedBy);
+
+  const isWaitingForOwnerResponse = (request: MaintenanceRequest) =>
+    request.visitProposal?.status === 'PROPOSED' && request.visitProposal.proposedBy === 'PROVIDER';
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -1007,6 +1215,7 @@ export default function MantenimientoPage() {
                             </div>
                           </div>
                         )}
+                        {renderVisitProposalInfo(request)}
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
@@ -1066,19 +1275,25 @@ export default function MantenimientoPage() {
                             </Button>
                           </>
                         )}
-                        {request.status === 'QUOTE_APPROVED' && (
-                          <Button
-                            size="sm"
-                            className="bg-indigo-600 hover:bg-indigo-700"
-                            onClick={() => {
-                              setSelectedRequest(request);
-                              setShowScheduleVisitDialog(true);
-                            }}
-                          >
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Programar Visita
-                          </Button>
-                        )}
+                        {request.status === 'QUOTE_APPROVED' &&
+                          !isWaitingForOwnerResponse(request) && (
+                            <Button
+                              size="sm"
+                              className="bg-indigo-600 hover:bg-indigo-700"
+                              disabled={isWaitingForProviderResponse(request)}
+                              title={
+                                isWaitingForProviderResponse(request)
+                                  ? 'Ya enviaste una propuesta. Espera la respuesta del proveedor.'
+                                  : undefined
+                              }
+                              onClick={() => openScheduleDialog(request)}
+                            >
+                              <Calendar className="w-4 h-4 mr-2" />
+                              {isWaitingForProviderResponse(request)
+                                ? 'Propuesta enviada'
+                                : 'Proponer Visita'}
+                            </Button>
+                          )}
                         {request.status === 'ASSIGNED' && request.maintenanceProvider && (
                           <Button
                             size="sm"
@@ -1745,9 +1960,9 @@ export default function MantenimientoPage() {
       <Dialog open={showScheduleVisitDialog} onOpenChange={setShowScheduleVisitDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Programar Visita de Mantenimiento</DialogTitle>
+            <DialogTitle>Proponer Visita de Mantenimiento</DialogTitle>
             <DialogDescription>
-              Programar una visita para la solicitud de mantenimiento
+              Envía una fecha y hora sugerida para coordinar con el proveedor asignado.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1865,7 +2080,7 @@ export default function MantenimientoPage() {
                   );
 
                   if (response.ok) {
-                    alert('Visita programada exitosamente');
+                    alert('Propuesta enviada. Esperando confirmación del proveedor.');
                     setShowScheduleVisitDialog(false);
                     setVisitData({
                       scheduledDate: '',
@@ -1887,7 +2102,7 @@ export default function MantenimientoPage() {
               }}
             >
               <Calendar className="w-4 h-4 mr-2" />
-              Programar Visita
+              Enviar Propuesta
             </Button>
           </div>
         </DialogContent>

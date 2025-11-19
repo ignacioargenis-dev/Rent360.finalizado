@@ -43,13 +43,38 @@ import {
 } from 'lucide-react';
 import { User as UserType } from '@/types';
 
+interface VisitProposal {
+  id: string;
+  scheduledDate: string | null;
+  scheduledTime: string | null;
+  estimatedDuration?: number | null;
+  status?: string | null;
+  proposedBy?: string | null;
+  contactPerson?: string | null;
+  contactPhone?: string | null;
+  specialInstructions?: string | null;
+  acceptedAt?: string | null;
+  acceptedBy?: string | null;
+}
+
 interface MaintenanceRequest {
   id: string;
   title: string;
   description: string;
   category: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ASSIGNED' | 'SCHEDULED';
+  status:
+    | 'OPEN'
+    | 'IN_PROGRESS'
+    | 'COMPLETED'
+    | 'CANCELLED'
+    | 'ASSIGNED'
+    | 'SCHEDULED'
+    | 'PENDING'
+    | 'QUOTE_PENDING'
+    | 'QUOTE_APPROVED'
+    | 'PENDING_CONFIRMATION'
+    | 'REJECTED';
   estimatedCost?: number;
   actualCost?: number;
   requestedBy: string;
@@ -84,6 +109,7 @@ interface MaintenanceRequest {
       email: string;
     };
   };
+  visitProposal?: VisitProposal;
 }
 
 export default function BrokerMaintenanceDetailPage() {
@@ -107,6 +133,7 @@ export default function BrokerMaintenanceDetailPage() {
     sortBy: 'rating',
     location: 'all',
   });
+  const [proposalActionRequestId, setProposalActionRequestId] = useState<string | null>(null);
   const [visitData, setVisitData] = useState({
     scheduledDate: '',
     scheduledTime: '',
@@ -141,42 +168,30 @@ export default function BrokerMaintenanceDetailPage() {
   const loadMaintenanceRequest = async () => {
     try {
       setLoading(true);
-      // For now, simulate loading - in a real app this would fetch from API
-      // const response = await fetch(`/api/maintenance/${maintenanceId}`);
-      // const data = await response.json();
-      // setMaintenanceRequest(data);
+      const response = await fetch(`/api/maintenance/${maintenanceId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
 
-      // Mock data for demonstration
-      setTimeout(() => {
-        setMaintenanceRequest({
-          id: maintenanceId,
-          title: 'Reparación de grifería en baño principal',
-          description:
-            'El grifo del lavamanos tiene una fuga constante. Necesita reparación urgente.',
-          category: 'plumbing',
-          priority: 'HIGH',
-          status: 'OPEN',
-          estimatedCost: 45000,
-          requestedBy: 'user-1',
-          requesterRole: 'TENANT',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-01-15T10:30:00Z',
-          images: [],
-          property: {
-            id: 'prop-1',
-            title: 'Departamento Las Condes',
-            address: 'Av. Las Condes 1234',
-            city: 'Santiago',
-          },
-          requester: {
-            name: 'María González',
-            email: 'maria@example.com',
-          },
-        });
-        setLoading(false);
-      }, 1000);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const normalized: MaintenanceRequest = {
+        ...data.maintenanceRequest,
+        visitProposal: data.maintenanceRequest.visitProposal || undefined,
+      };
+
+      setMaintenanceRequest(normalized);
     } catch (error) {
       logger.error('Error loading maintenance request:', { error });
+      alert('No se pudo cargar la solicitud de mantenimiento');
+    } finally {
       setLoading(false);
     }
   };
@@ -376,14 +391,7 @@ export default function BrokerMaintenanceDetailPage() {
       return;
     }
 
-    // Pre-llenar datos de contacto
-    setVisitData(prev => ({
-      ...prev,
-      contactPerson: maintenanceRequest.requester.name,
-      contactPhone: maintenanceRequest.requester.email, // Usar email como fallback
-    }));
-
-    setShowScheduleVisit(true);
+    openScheduleDialog();
   };
 
   const handleConfirmProviderAssignment = async () => {
@@ -437,6 +445,10 @@ export default function BrokerMaintenanceDetailPage() {
       alert('Fecha y hora son obligatorios');
       return;
     }
+    if (!maintenanceRequest?.assignedProvider?.id) {
+      alert('Debes tener un proveedor asignado antes de proponer una visita.');
+      return;
+    }
 
     try {
       setUpdating(true);
@@ -452,17 +464,7 @@ export default function BrokerMaintenanceDetailPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setMaintenanceRequest(prev =>
-          prev
-            ? {
-                ...prev,
-                status: 'SCHEDULED',
-                scheduledDate: visitData.scheduledDate,
-                updatedAt: new Date().toISOString(),
-              }
-            : null
-        );
+        await loadMaintenanceRequest();
         setShowScheduleVisit(false);
         setVisitData({
           scheduledDate: '',
@@ -472,7 +474,7 @@ export default function BrokerMaintenanceDetailPage() {
           contactPhone: '',
           specialInstructions: '',
         });
-        alert('Visita programada exitosamente');
+        alert('Propuesta enviada. Esperando confirmación del proveedor.');
       } else {
         const error = await response.json();
         alert(`Error: ${error.error || 'Error al programar visita'}`);
@@ -488,19 +490,29 @@ export default function BrokerMaintenanceDetailPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
-        return <Badge className="bg-blue-100 text-blue-800">Abierto</Badge>;
+      case 'PENDING':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
       case 'ASSIGNED':
-        return <Badge className="bg-purple-100 text-purple-800">Prestador Asignado</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">Prestador asignado</Badge>;
+      case 'QUOTE_PENDING':
+        return <Badge className="bg-orange-100 text-orange-800">Cotización pendiente</Badge>;
+      case 'QUOTE_APPROVED':
+        return <Badge className="bg-purple-100 text-purple-800">Cotización aprobada</Badge>;
+      case 'APPROVED':
+        return <Badge className="bg-blue-100 text-blue-800">Aprobada</Badge>;
       case 'SCHEDULED':
-        return <Badge className="bg-indigo-100 text-indigo-800">Visita Programada</Badge>;
+        return <Badge className="bg-indigo-100 text-indigo-800">Visita programada</Badge>;
       case 'IN_PROGRESS':
-        return <Badge className="bg-yellow-100 text-yellow-800">En Progreso</Badge>;
+        return <Badge className="bg-emerald-100 text-emerald-800">En progreso</Badge>;
+      case 'PENDING_CONFIRMATION':
+        return <Badge className="bg-yellow-100 text-yellow-800">Esperando confirmación</Badge>;
       case 'COMPLETED':
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Completada</Badge>;
+      case 'REJECTED':
       case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-800">Cancelado</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Rechazada</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -530,6 +542,192 @@ export default function BrokerMaintenanceDetailPage() {
       default:
         return <CheckCircle className="w-5 h-5 text-gray-500" />;
     }
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) {
+      return 'No definido';
+    }
+    try {
+      return new Date(value).toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return value;
+    }
+  };
+
+  const isWaitingForProviderResponse = (request?: MaintenanceRequest | null) =>
+    !!request?.visitProposal &&
+    request.visitProposal.status === 'PROPOSED' &&
+    (request.visitProposal.proposedBy === 'OWNER' ||
+      request.visitProposal.proposedBy === 'BROKER' ||
+      request.visitProposal.proposedBy === 'ADMIN' ||
+      !request.visitProposal.proposedBy);
+
+  const isWaitingForOwnerResponse = (request?: MaintenanceRequest | null) =>
+    !!request?.visitProposal &&
+    request.visitProposal.status === 'PROPOSED' &&
+    request.visitProposal.proposedBy === 'PROVIDER';
+
+  const openScheduleDialog = (options?: { prefillFromProposal?: boolean }) => {
+    if (!maintenanceRequest) {
+      return;
+    }
+
+    let nextVisitData = {
+      scheduledDate: '',
+      scheduledTime: '',
+      estimatedDuration: 120,
+      contactPerson: maintenanceRequest.requester.name || '',
+      contactPhone: maintenanceRequest.requester.email || '',
+      specialInstructions: '',
+    };
+
+    if (options?.prefillFromProposal && maintenanceRequest.visitProposal) {
+      const proposalDate = maintenanceRequest.visitProposal.scheduledDate ?? '';
+      nextVisitData = {
+        scheduledDate: String(proposalDate).split('T')[0] || '',
+        scheduledTime: maintenanceRequest.visitProposal.scheduledTime || '',
+        estimatedDuration: maintenanceRequest.visitProposal.estimatedDuration || 120,
+        contactPerson:
+          maintenanceRequest.visitProposal.contactPerson || maintenanceRequest.requester.name || '',
+        contactPhone:
+          maintenanceRequest.visitProposal.contactPhone || maintenanceRequest.requester.email || '',
+        specialInstructions: maintenanceRequest.visitProposal.specialInstructions || '',
+      };
+    }
+
+    setVisitData(nextVisitData);
+    setShowScheduleVisit(true);
+  };
+
+  const handleAcceptProviderProposal = async () => {
+    if (!maintenanceRequest?.visitProposal) {
+      return;
+    }
+
+    try {
+      setProposalActionRequestId(maintenanceRequest.id);
+      const response = await fetch(
+        `/api/maintenance/${maintenanceRequest.id}/accept-visit-proposal`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            action: 'accept',
+            proposalId: maintenanceRequest.visitProposal.id,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        alert('Fecha de visita confirmada');
+        await loadMaintenanceRequest();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Error al aceptar la propuesta del proveedor');
+      }
+    } catch (error) {
+      logger.error('Error aceptando propuesta del proveedor:', { error });
+      alert('Error al aceptar la propuesta de visita');
+    } finally {
+      setProposalActionRequestId(null);
+    }
+  };
+
+  const renderVisitProposalInfo = () => {
+    if (!maintenanceRequest?.visitProposal) {
+      return null;
+    }
+
+    const proposal = maintenanceRequest.visitProposal;
+    const isLoading = proposalActionRequestId === maintenanceRequest.id;
+
+    if (isWaitingForProviderResponse(maintenanceRequest)) {
+      return (
+        <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h4 className="font-semibold text-blue-900 mb-1 flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Propuesta enviada
+          </h4>
+          <p className="text-sm text-blue-800">
+            El proveedor debe confirmar o sugerir un nuevo horario para la visita propuesta.
+          </p>
+          <p className="text-sm text-blue-700 mt-2">
+            {formatDate(proposal.scheduledDate)} · {proposal.scheduledTime || '--:--'} hrs (
+            {proposal.estimatedDuration || 120} min)
+          </p>
+        </div>
+      );
+    }
+
+    if (isWaitingForOwnerResponse(maintenanceRequest)) {
+      return (
+        <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <h4 className="font-semibold text-orange-900 mb-1 flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            El proveedor propuso una nueva fecha
+          </h4>
+          <div className="text-sm text-orange-900 space-y-1">
+            <p>
+              <strong>Fecha:</strong> {formatDate(proposal.scheduledDate)}
+            </p>
+            <p>
+              <strong>Hora:</strong> {proposal.scheduledTime || '--:--'} hrs
+            </p>
+            <p>
+              <strong>Duración estimada:</strong> {proposal.estimatedDuration || 120} minutos
+            </p>
+            {proposal.specialInstructions && (
+              <p className="text-xs text-orange-700">
+                <strong>Notas:</strong> {proposal.specialInstructions}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-3 pt-3">
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              disabled={isLoading}
+              onClick={handleAcceptProviderProposal}
+            >
+              {isLoading ? 'Procesando...' : 'Aceptar Fecha'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openScheduleDialog({ prefillFromProposal: true })}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Proponer otra fecha
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (proposal.status === 'ACCEPTED') {
+      return (
+        <div className="mt-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <h4 className="font-semibold text-emerald-900 mb-1 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            Visita confirmada
+          </h4>
+          <p className="text-sm text-emerald-900">
+            {formatDate(proposal.scheduledDate)} · {proposal.scheduledTime || '--:--'} hrs (
+            {proposal.estimatedDuration || 120} min)
+          </p>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   if (loading || !maintenanceRequest) {
@@ -637,6 +835,8 @@ export default function BrokerMaintenanceDetailPage() {
                       </p>
                     </div>
                   </div>
+
+                  {renderVisitProposalInfo()}
                 </CardContent>
               </Card>
 
@@ -825,11 +1025,32 @@ export default function BrokerMaintenanceDetailPage() {
                       variant="outline"
                       size="sm"
                       className="w-full"
+                      disabled={isWaitingForProviderResponse(maintenanceRequest)}
+                      title={
+                        isWaitingForProviderResponse(maintenanceRequest)
+                          ? 'Ya hay una propuesta pendiente. Espera la respuesta del proveedor.'
+                          : undefined
+                      }
                       onClick={handleScheduleVisit}
                     >
                       <Calendar className="w-4 h-4 mr-2" />
-                      Agendar Visita
+                      {isWaitingForProviderResponse(maintenanceRequest)
+                        ? 'Propuesta enviada'
+                        : 'Proponer Visita'}
                     </Button>
+
+                    {isWaitingForOwnerResponse(maintenanceRequest) && (
+                      <Button
+                        size="sm"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        onClick={handleAcceptProviderProposal}
+                        disabled={proposalActionRequestId === maintenanceRequest.id}
+                      >
+                        {proposalActionRequestId === maintenanceRequest.id
+                          ? 'Confirmando...'
+                          : 'Aceptar Fecha del Proveedor'}
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1010,13 +1231,13 @@ export default function BrokerMaintenanceDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal para programar visita */}
+      {/* Modal para proponer visita */}
       <Dialog open={showScheduleVisit} onOpenChange={setShowScheduleVisit}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Programar Visita de Mantenimiento</DialogTitle>
+            <DialogTitle>Proponer Visita de Mantenimiento</DialogTitle>
             <DialogDescription>
-              Programa la fecha y hora para la visita del prestador asignado.
+              Envía una fecha sugerida. El proveedor podrá aceptarla o proponer otra alternativa.
             </DialogDescription>
           </DialogHeader>
 
@@ -1102,7 +1323,7 @@ export default function BrokerMaintenanceDetailPage() {
               onClick={handleConfirmVisitSchedule}
               disabled={!visitData.scheduledDate || !visitData.scheduledTime || updating}
             >
-              {updating ? 'Programando...' : 'Programar Visita'}
+              {updating ? 'Enviando...' : 'Enviar Propuesta'}
             </Button>
           </div>
         </DialogContent>

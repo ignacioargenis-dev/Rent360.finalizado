@@ -113,6 +113,23 @@ export async function GET(request: NextRequest) {
               email: true,
             },
           },
+          visitSchedules: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              scheduledDate: true,
+              scheduledTime: true,
+              estimatedDuration: true,
+              status: true,
+              proposedBy: true,
+              contactPerson: true,
+              contactPhone: true,
+              specialInstructions: true,
+              acceptedAt: true,
+              acceptedBy: true,
+            },
+          },
         },
       }),
       db.maintenance.count({ where }),
@@ -126,11 +143,35 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      maintenanceRequests: maintenanceRequests.map(request => ({
-        ...request,
-        images: JSON.parse(request.images || '[]'),
-        notes: request.notes, // Incluir notes para parsear cotización
-      })),
+      maintenanceRequests: maintenanceRequests.map(request => {
+        const latestVisit = request.visitSchedules?.[0];
+        const mappedRequest: any = {
+          ...request,
+          images: JSON.parse(request.images || '[]'),
+          notes: request.notes, // Incluir notes para parsear cotización
+        };
+
+        if (latestVisit) {
+          mappedRequest.visitProposal = {
+            id: latestVisit.id,
+            scheduledDate: latestVisit.scheduledDate?.toISOString() || null,
+            scheduledTime: latestVisit.scheduledTime,
+            estimatedDuration: latestVisit.estimatedDuration,
+            status: latestVisit.status,
+            proposedBy: latestVisit.proposedBy,
+            contactPerson: latestVisit.contactPerson,
+            contactPhone: latestVisit.contactPhone,
+            specialInstructions: latestVisit.specialInstructions,
+            acceptedAt: latestVisit.acceptedAt?.toISOString() || null,
+            acceptedBy: latestVisit.acceptedBy,
+          };
+        } else {
+          mappedRequest.visitProposal = undefined;
+        }
+
+        delete mappedRequest.visitSchedules;
+        return mappedRequest;
+      }),
       pagination: {
         page,
         limit,
