@@ -177,6 +177,24 @@ export async function GET(request: NextRequest) {
 
     const { ratings, total } = await UserRatingService.getUserRatings(targetUserId, filters);
 
+    // Log para depuración
+    logger.info('Calificaciones obtenidas para usuario:', {
+      targetUserId,
+      filters,
+      total,
+      ratingsCount: ratings.length,
+      ratings: ratings.map((r: any) => ({
+        id: r.id,
+        fromUserId: r.fromUserId,
+        fromUserName: r.fromUser?.name,
+        toUserId: r.toUserId,
+        toUserName: r.toUser?.name,
+        contextType: r.contextType,
+        overallRating: r.overallRating,
+        isPublic: r.isPublic,
+      })),
+    });
+
     return NextResponse.json({
       success: true,
       data: { ratings, total },

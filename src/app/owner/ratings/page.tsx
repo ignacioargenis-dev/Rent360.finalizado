@@ -176,7 +176,7 @@ export default function CalificacionesPage() {
     try {
       setLoading(true);
 
-      // Fetch real ratings data from API
+      // Fetch real ratings data from API - NO filtrar por isPublic para mostrar todas las calificaciones recibidas
       const response = await fetch('/api/ratings?limit=100', {
         method: 'GET',
         headers: {
@@ -194,6 +194,20 @@ export default function CalificacionesPage() {
 
       // La API devuelve { success: true, data: { ratings: [...], total: ... }, pagination: {...} }
       const ratingsList = data.data?.ratings || data.ratings || [];
+
+      // Log para depuración
+      logger.info('Calificaciones recibidas del API:', {
+        total: data.data?.total || data.total || 0,
+        ratingsCount: ratingsList.length,
+        ratings: ratingsList.map((r: any) => ({
+          id: r.id,
+          fromUser: r.fromUser?.name,
+          toUser: r.toUser?.name,
+          contextType: r.contextType,
+          overallRating: r.overallRating,
+          isPublic: r.isPublic,
+        })),
+      });
 
       // Transform API data to match our interface
       const transformedRatings: Rating[] = ratingsList.map((rating: any) => ({
