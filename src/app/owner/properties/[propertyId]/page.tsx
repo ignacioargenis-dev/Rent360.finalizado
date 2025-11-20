@@ -45,6 +45,55 @@ import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
 import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
+import UserRatingInfoButton from '@/components/ratings/UserRatingInfoButton';
+
+interface TenantInfo {
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  leaseStart: string;
+  leaseEnd: string;
+  monthlyRent: number;
+}
+
+interface BrokerInfo {
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  commission?: number;
+}
+
+interface MaintenanceProviderInfo {
+  providerId?: string;
+  userId?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  businessName?: string;
+  specialty?: string;
+  rating?: number;
+}
+
+interface MaintenanceRecord {
+  id: string;
+  date: string;
+  type?: string;
+  description: string;
+  cost: number;
+  status: string;
+  provider?: MaintenanceProviderInfo | null;
+}
+
+interface PaymentHistoryRecord {
+  id: string;
+  date: string;
+  amount: number;
+  status: string;
+  method?: string;
+  reference?: string;
+}
 
 interface PropertyDetail {
   id: string;
@@ -62,20 +111,8 @@ interface PropertyDetail {
   description: string;
   features: string[];
   images: string[];
-  currentTenant?: {
-    name: string;
-    email: string;
-    phone: string;
-    leaseStart: string;
-    leaseEnd: string;
-    monthlyRent: number;
-  };
-  broker?: {
-    name: string;
-    email: string;
-    phone: string;
-    commission: number;
-  };
+  currentTenant?: TenantInfo | null;
+  broker?: BrokerInfo | null;
   maintenanceHistory: MaintenanceRecord[];
   financialData: {
     monthlyRevenue: number;
@@ -86,6 +123,7 @@ interface PropertyDetail {
   };
   documents: Document[];
   notes: Note[];
+  paymentHistory?: PaymentHistoryRecord[];
 
   // Nuevos campos de características
   furnished: boolean;
@@ -112,16 +150,6 @@ interface PropertyDetail {
   // Tour virtual
   virtualTourEnabled: boolean;
   virtualTourData: string | null;
-}
-
-interface MaintenanceRecord {
-  id: string;
-  date: string;
-  type: string;
-  description: string;
-  cost: number;
-  status: 'completed' | 'pending' | 'in_progress';
-  provider?: string;
 }
 
 interface Document {
@@ -187,6 +215,7 @@ export default function OwnerPropertyDetailPage() {
       '/api/placeholder/600/400',
     ],
     currentTenant: {
+      id: 'tenant-demo',
       name: 'María González',
       email: 'maria.gonzalez@email.com',
       phone: '+56 9 1234 5678',
@@ -195,6 +224,7 @@ export default function OwnerPropertyDetailPage() {
       monthlyRent: 450000,
     },
     broker: {
+      id: 'broker-demo',
       name: 'Carlos Rodríguez',
       email: 'carlos.rodriguez@broker.com',
       phone: '+56 9 8765 4321',
@@ -208,7 +238,13 @@ export default function OwnerPropertyDetailPage() {
         description: 'Reparación de fuga en grifería del baño',
         cost: 35000,
         status: 'completed',
-        provider: 'Fontanería Express',
+        provider: {
+          providerId: 'prov-1',
+          userId: 'user-provider-1',
+          businessName: 'Fontanería Express',
+          specialty: 'Plomería',
+          rating: 4.8,
+        },
       },
       {
         id: '2',
@@ -217,7 +253,13 @@ export default function OwnerPropertyDetailPage() {
         description: 'Revisión completa del sistema eléctrico',
         cost: 45000,
         status: 'completed',
-        provider: 'Servicios Eléctricos Ltda',
+        provider: {
+          providerId: 'prov-2',
+          userId: 'user-provider-2',
+          businessName: 'Servicios Eléctricos Ltda',
+          specialty: 'Electricidad',
+          rating: 4.7,
+        },
       },
       {
         id: '3',
@@ -226,7 +268,13 @@ export default function OwnerPropertyDetailPage() {
         description: 'Limpieza profunda antes de nueva temporada',
         cost: 55000,
         status: 'pending',
-        provider: 'Limpieza Express',
+        provider: {
+          providerId: 'prov-3',
+          userId: 'user-provider-3',
+          businessName: 'Limpieza Express',
+          specialty: 'Limpieza',
+          rating: 4.6,
+        },
       },
     ],
     financialData: {
@@ -236,6 +284,7 @@ export default function OwnerPropertyDetailPage() {
       maintenanceCosts: 135000,
       netIncome: 4065000,
     },
+    paymentHistory: [],
     documents: [
       {
         id: '1',
@@ -301,6 +350,272 @@ export default function OwnerPropertyDetailPage() {
     virtualTourData: null,
   };
 
+  const mapMaintenanceRecord = (record: any): MaintenanceRecord => {
+    if (!record) {
+      return {
+        id: `maintenance-${Math.random().toString(36).slice(2)}`,
+        date: new Date().toISOString(),
+        type: 'Mantenimiento',
+        description: 'Detalle no disponible',
+        cost: 0,
+        status: 'pending',
+        provider: null,
+      };
+    }
+
+    const providerSource =
+      record.provider ||
+      record.maintenanceProvider ||
+      (typeof record.provider === 'string' ? { name: record.provider } : null);
+
+    let provider: MaintenanceProviderInfo | null = null;
+    if (typeof providerSource === 'string') {
+      provider = { name: providerSource };
+    } else if (providerSource) {
+      provider = {
+        providerId: providerSource.providerId || providerSource.id,
+        userId:
+          providerSource.userId ||
+          providerSource.user?.id ||
+          providerSource.userID ||
+          providerSource.user_id,
+        name: providerSource.name || providerSource.userName || providerSource.user?.name,
+        email: providerSource.email || providerSource.userEmail || providerSource.user?.email,
+        phone: providerSource.phone || providerSource.userPhone || providerSource.user?.phone,
+        businessName: providerSource.businessName,
+        specialty: providerSource.specialty,
+        rating: providerSource.rating,
+      };
+    }
+
+    return {
+      id: record.id || `maintenance-${Math.random().toString(36).slice(2)}`,
+      date: record.date || record.createdAt || new Date().toISOString(),
+      type: record.type || record.category || 'Mantenimiento',
+      description: record.description || 'Sin descripción',
+      cost: Number(record.cost ?? record.estimatedCost ?? 0),
+      status: (record.status || 'pending').toLowerCase(),
+      provider,
+    };
+  };
+
+  const buildFinancialData = ({
+    monthlyRent,
+    price,
+    status,
+    maintenanceHistory,
+    financialData,
+  }: {
+    monthlyRent?: number;
+    price?: number;
+    status?: string;
+    maintenanceHistory?: MaintenanceRecord[];
+    financialData?: PropertyDetail['financialData'];
+  }): PropertyDetail['financialData'] => {
+    if (financialData) {
+      return financialData;
+    }
+    const monthlyRevenue = monthlyRent ?? price ?? 0;
+    const maintenanceCosts = (maintenanceHistory || []).reduce(
+      (sum, record) => sum + (record.cost || 0),
+      0
+    );
+    const normalizedStatus = status?.toLowerCase();
+    const occupancyRate =
+      normalizedStatus === 'rented' ? 100 : normalizedStatus === 'available' ? 80 : 0;
+
+    return {
+      monthlyRevenue,
+      yearlyRevenue: monthlyRevenue * 12,
+      occupancyRate,
+      maintenanceCosts,
+      netIncome: monthlyRevenue - maintenanceCosts,
+    };
+  };
+
+  const transformOwnerProperty = (data: any): PropertyDetail => {
+    const maintenanceHistory = Array.isArray(data.maintenanceHistory)
+      ? data.maintenanceHistory.map(mapMaintenanceRecord)
+      : [];
+
+    return {
+      id: data.id,
+      title: data.title,
+      address: data.address,
+      city: data.city,
+      region: data.region,
+      type: data.type,
+      bedrooms: data.bedrooms,
+      bathrooms: data.bathrooms,
+      area: data.area,
+      monthlyRent: data.monthlyRent || data.price || 0,
+      currency: data.currency || 'CLP',
+      status: data.status || 'available',
+      description: data.description || 'Sin descripción',
+      features: Array.isArray(data.features) ? data.features : [],
+      images:
+        Array.isArray(data.images) && data.images.length > 0
+          ? data.images
+          : ['/api/placeholder/600/400'],
+      currentTenant: data.currentTenant
+        ? {
+            id: data.currentTenant.id,
+            name: data.currentTenant.name,
+            email: data.currentTenant.email,
+            phone: data.currentTenant.phone,
+            leaseStart: data.currentTenant.leaseStart,
+            leaseEnd: data.currentTenant.leaseEnd,
+            monthlyRent: data.currentTenant.monthlyRent,
+          }
+        : null,
+      broker: data.broker
+        ? {
+            id: data.broker.id,
+            name: data.broker.name,
+            email: data.broker.email,
+            phone: data.broker.phone,
+            commission: data.broker.commission,
+          }
+        : null,
+      maintenanceHistory,
+      financialData: buildFinancialData({
+        monthlyRent: data.monthlyRent || data.price,
+        status: data.status,
+        maintenanceHistory,
+        financialData: data.financialData,
+      }),
+      documents: Array.isArray(data.documents) ? data.documents : [],
+      notes: Array.isArray(data.notes) ? data.notes : [],
+      paymentHistory: Array.isArray(data.paymentHistory) ? data.paymentHistory : [],
+      furnished: Boolean(data.furnished),
+      petFriendly: Boolean(data.petFriendly),
+      parkingSpaces: data.parkingSpaces || 0,
+      availableFrom: data.availableFrom ? new Date(data.availableFrom) : new Date(),
+      floor: data.floor,
+      buildingName: data.buildingName,
+      yearBuilt: data.yearBuilt,
+      heating: Boolean(data.heating),
+      cooling: Boolean(data.cooling),
+      internet: Boolean(data.internet),
+      elevator: Boolean(data.elevator),
+      balcony: Boolean(data.balcony),
+      terrace: Boolean(data.terrace),
+      garden: Boolean(data.garden),
+      pool: Boolean(data.pool),
+      gym: Boolean(data.gym),
+      security: Boolean(data.security),
+      concierge: Boolean(data.concierge),
+      virtualTourEnabled: Boolean(data.virtualTourEnabled),
+      virtualTourData: data.virtualTourData || null,
+    };
+  };
+
+  const transformPublicProperty = (propertyData: any): PropertyDetail => {
+    const maintenanceHistory = Array.isArray(propertyData.maintenanceHistory)
+      ? propertyData.maintenanceHistory.map(mapMaintenanceRecord)
+      : [];
+
+    return {
+      id: propertyData.id,
+      title: propertyData.title,
+      address: propertyData.address,
+      city: propertyData.city,
+      region: propertyData.region,
+      type: propertyData.type,
+      bedrooms: propertyData.bedrooms,
+      bathrooms: propertyData.bathrooms,
+      area: propertyData.area,
+      monthlyRent: propertyData.price,
+      currency: 'CLP',
+      status: propertyData.status,
+      description: propertyData.description,
+      features: propertyData.features || [],
+      images:
+        propertyData.images && propertyData.images.length > 0
+          ? propertyData.images
+          : ['/api/placeholder/600/400'],
+      currentTenant: propertyData.currentTenant
+        ? {
+            id: propertyData.currentTenant.id,
+            name: propertyData.currentTenant.name,
+            email: propertyData.currentTenant.email,
+            phone: propertyData.currentTenant.phone || '',
+            leaseStart: propertyData.currentTenant.leaseStart || '',
+            leaseEnd: propertyData.currentTenant.leaseEnd || '',
+            monthlyRent: propertyData.currentTenant.monthlyRent || propertyData.price || 0,
+          }
+        : null,
+      broker: propertyData.broker
+        ? {
+            id: propertyData.broker.id,
+            name: propertyData.broker.name,
+            email: propertyData.broker.email,
+            phone: propertyData.broker.phone || '',
+            commission: propertyData.broker.commission || 0,
+          }
+        : null,
+      maintenanceHistory,
+      financialData: buildFinancialData({
+        monthlyRent: propertyData.price,
+        status: propertyData.status,
+        maintenanceHistory,
+        financialData: propertyData.financialData,
+      }),
+      documents: propertyData.documents || [],
+      notes: propertyData.notes || [],
+      paymentHistory: propertyData.paymentHistory || [],
+      furnished: propertyData.furnished || false,
+      petFriendly: propertyData.petFriendly || false,
+      parkingSpaces: propertyData.parkingSpaces || 0,
+      availableFrom: propertyData.availableFrom ? new Date(propertyData.availableFrom) : new Date(),
+      floor: propertyData.floor,
+      buildingName: propertyData.buildingName,
+      yearBuilt: propertyData.yearBuilt,
+      heating: propertyData.heating || false,
+      cooling: propertyData.cooling || false,
+      internet: propertyData.internet || false,
+      elevator: propertyData.elevator || false,
+      balcony: propertyData.balcony || false,
+      terrace: propertyData.terrace || false,
+      garden: propertyData.garden || false,
+      pool: propertyData.pool || false,
+      gym: propertyData.gym || false,
+      security: propertyData.security || false,
+      concierge: propertyData.concierge || false,
+      virtualTourEnabled: propertyData.virtualTourEnabled || false,
+      virtualTourData: propertyData.virtualTourData || null,
+    };
+  };
+
+  const fetchWithHandling = useCallback(async (path: string) => {
+    const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (!response.ok) {
+        const details = await response.json().catch(() => ({}));
+        logger.error('Error fetching property endpoint', {
+          path,
+          status: response.status,
+          details,
+        });
+        return null;
+      }
+
+      return response.json();
+    } catch (fetchError) {
+      logger.error('Error fetching property endpoint', { path, error: fetchError });
+      return null;
+    }
+  }, []);
+
   const loadPropertyDetails = useCallback(
     async (isAutoRefresh = false) => {
       if (isAutoRefresh) {
@@ -308,109 +623,39 @@ export default function OwnerPropertyDetailPage() {
       } else {
         setIsLoading(true);
       }
+
       try {
-        // ✅ CORREGIDO: Cargar datos reales de la API
-        const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-            'Cache-Control': 'no-cache',
-          },
-        });
-
-        if (response.ok) {
-          const responseData = await response.json();
-
-          if (!responseData.success || !responseData.property) {
-            logger.error('Invalid response format from API', { responseData });
-            setError('Error al cargar los datos de la propiedad');
-            return;
-          }
-
-          const propertyData = responseData.property;
-
-          // Transformar datos de la API al formato esperado
-          const transformedProperty: PropertyDetail = {
-            id: propertyData.id,
-            title: propertyData.title,
-            address: propertyData.address,
-            city: propertyData.city,
-            region: propertyData.region,
-            type: propertyData.type,
-            bedrooms: propertyData.bedrooms,
-            bathrooms: propertyData.bathrooms,
-            area: propertyData.area,
-            monthlyRent: propertyData.price,
-            currency: 'CLP', // Valor fijo ya que no existe en el esquema
-            status: propertyData.status,
-            description: propertyData.description,
-            features: propertyData.features || [],
-            images:
-              propertyData.images && propertyData.images.length > 0
-                ? propertyData.images
-                : ['/api/placeholder/600/400'], // Fallback a placeholder si no hay imágenes
-            currentTenant: propertyData.currentTenant || null,
-            broker: propertyData.broker || null,
-            maintenanceHistory: propertyData.maintenanceHistory || [],
-            financialData: propertyData.financialData || {
-              monthlyRevenue: propertyData.price || 0,
-              yearlyRevenue: (propertyData.price || 0) * 12,
-              occupancyRate: propertyData.status === 'rented' ? 100 : 0,
-              maintenanceCosts: 0,
-              netIncome: propertyData.price || 0,
-            },
-            documents: propertyData.documents || [],
-            notes: propertyData.notes || [],
-            furnished: propertyData.furnished || false,
-            petFriendly: propertyData.petFriendly || false,
-            parkingSpaces: propertyData.parkingSpaces || 0,
-            availableFrom: propertyData.availableFrom
-              ? new Date(propertyData.availableFrom)
-              : new Date(),
-            floor: propertyData.floor,
-            buildingName: propertyData.buildingName,
-            yearBuilt: propertyData.yearBuilt,
-
-            // Características del edificio/servicios
-            heating: propertyData.heating || false,
-            cooling: propertyData.cooling || false,
-            internet: propertyData.internet || false,
-            elevator: propertyData.elevator || false,
-            balcony: propertyData.balcony || false,
-            terrace: propertyData.terrace || false,
-            garden: propertyData.garden || false,
-            pool: propertyData.pool || false,
-            gym: propertyData.gym || false,
-            security: propertyData.security || false,
-            concierge: propertyData.concierge || false,
-
-            // Tour virtual
-            virtualTourEnabled: propertyData.virtualTourEnabled || false,
-            virtualTourData: propertyData.virtualTourData || null,
-          };
-
-          setProperty(transformedProperty);
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          logger.error('Error loading property:', {
-            status: response.status,
-            statusText: response.statusText,
-            propertyId,
-            errorData,
-          });
-          setError(`Error al cargar los datos: ${errorData.error || 'Error desconocido'}`);
+        const ownerResponse = await fetchWithHandling(`/api/owner/properties/${propertyId}`);
+        if (ownerResponse?.success && ownerResponse.data) {
+          setProperty(transformOwnerProperty(ownerResponse.data));
+          setError(null);
+          return;
         }
-      } catch (error) {
-        logger.error('Error al cargar detalles de la propiedad', { error, propertyId });
-        setError('Error de conexión al cargar los datos');
+
+        const publicResponse = await fetchWithHandling(`/api/properties/${propertyId}`);
+        if (publicResponse?.success && publicResponse.property) {
+          setProperty(transformPublicProperty(publicResponse.property));
+          setError(null);
+          return;
+        }
+
+        setProperty(mockProperty);
+        setError(
+          'No se pudieron cargar los datos de la propiedad. Mostrando información de referencia.'
+        );
+      } catch (loadError) {
+        logger.error('Error al cargar detalles de la propiedad', { error: loadError, propertyId });
+        setProperty(mockProperty);
+        setError('Error al cargar los datos de la propiedad. Mostrando información de referencia.');
       } finally {
-        setIsLoading(false);
-        setIsAutoRefreshing(false);
+        if (isAutoRefresh) {
+          setIsAutoRefreshing(false);
+        } else {
+          setIsLoading(false);
+        }
       }
     },
-    [propertyId]
+    [fetchWithHandling, propertyId, mockProperty]
   );
 
   useEffect(() => {
@@ -663,7 +908,11 @@ export default function OwnerPropertyDetailPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) {
+      return 'No disponible';
+    }
+
     return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'long',
@@ -1010,7 +1259,15 @@ export default function OwnerPropertyDetailPage() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="text-lg font-semibold">{property.broker.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-semibold">{property.broker.name}</h3>
+                          <UserRatingInfoButton
+                            userId={property.broker.id}
+                            userName={property.broker.name}
+                            size="sm"
+                            variant="outline"
+                          />
+                        </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                           <Mail className="w-4 h-4" />
                           {property.broker.email}
@@ -1107,7 +1364,15 @@ export default function OwnerPropertyDetailPage() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="text-lg font-semibold">{property.currentTenant.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-semibold">{property.currentTenant.name}</h3>
+                          <UserRatingInfoButton
+                            userId={property.currentTenant.id}
+                            userName={property.currentTenant.name}
+                            size="sm"
+                            variant="outline"
+                          />
+                        </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                           <Mail className="w-4 h-4" />
                           {property.currentTenant.email}
@@ -1220,9 +1485,29 @@ export default function OwnerPropertyDetailPage() {
                           <p className="font-medium">{maintenance.type}</p>
                           <p className="text-sm text-gray-600">{maintenance.description}</p>
                           {maintenance.provider && (
-                            <p className="text-xs text-gray-500">
-                              Proveedor: {maintenance.provider}
-                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 flex-wrap">
+                              <span>
+                                Proveedor:{' '}
+                                <span className="font-medium text-gray-700">
+                                  {maintenance.provider.businessName ||
+                                    maintenance.provider.name ||
+                                    'Proveedor'}
+                                </span>
+                              </span>
+                              <UserRatingInfoButton
+                                userId={maintenance.provider.userId}
+                                userName={
+                                  maintenance.provider.businessName || maintenance.provider.name
+                                }
+                                size="sm"
+                                variant="ghost"
+                              />
+                              {maintenance.provider.specialty && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  {maintenance.provider.specialty}
+                                </Badge>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1262,8 +1547,10 @@ export default function OwnerPropertyDetailPage() {
                     <p className="text-sm text-gray-600">Costo Promedio</p>
                     <p className="text-2xl font-bold text-yellow-600">
                       {formatCurrency(
-                        property.maintenanceHistory.reduce((sum, m) => sum + m.cost, 0) /
-                          property.maintenanceHistory.length
+                        property.maintenanceHistory.length > 0
+                          ? property.maintenanceHistory.reduce((sum, m) => sum + m.cost, 0) /
+                              property.maintenanceHistory.length
+                          : 0
                       )}
                     </p>
                   </div>

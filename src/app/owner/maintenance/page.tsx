@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import UserRatingInfoButton from '@/components/ratings/UserRatingInfoButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -67,6 +68,35 @@ import {
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
+interface MaintenanceProviderInfo {
+  id?: string;
+  businessName?: string;
+  specialty?: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  userPhone?: string;
+}
+
+interface AvailableMaintenanceProvider {
+  id: string;
+  name: string;
+  specialty: string;
+  specialties: string[];
+  rating: number;
+  totalRatings: number;
+  location: string;
+  hourlyRate: number;
+  experience: string;
+  distance: string;
+  availabilityStatus: string;
+  availability?: any;
+  user?: {
+    id?: string;
+    name?: string;
+  };
+}
+
 interface MaintenanceRequest {
   id: string;
   propertyId: string;
@@ -95,11 +125,7 @@ interface MaintenanceRequest {
   provider?: string;
   notes?: string;
   images?: string[];
-  maintenanceProvider?: {
-    id?: string;
-    businessName?: string;
-    specialty?: string;
-  };
+  maintenanceProvider?: MaintenanceProviderInfo;
   visitProposal?: {
     id: string;
     scheduledDate: string | null;
@@ -165,7 +191,7 @@ export default function MantenimientoPage() {
     specialInstructions: '',
   });
   const [proposalActionRequestId, setProposalActionRequestId] = useState<string | null>(null);
-  const [availableProviders, setAvailableProviders] = useState<any[]>([]);
+  const [availableProviders, setAvailableProviders] = useState<AvailableMaintenanceProvider[]>([]);
   const [providerDiagnostic, setProviderDiagnostic] = useState<any>(null);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [providerFilters, setProviderFilters] = useState({
@@ -224,11 +250,25 @@ export default function MantenimientoPage() {
           completedDate: request.completedDate,
           provider:
             request.maintenanceProvider?.businessName ||
+            request.maintenanceProvider?.userName ||
             request.assignedTo?.name ||
             request.provider,
           notes: request.notes,
           images: Array.isArray(request.images) ? request.images : [],
-          maintenanceProvider: request.maintenanceProvider,
+          maintenanceProvider: request.maintenanceProvider
+            ? {
+                id: request.maintenanceProvider.id,
+                businessName: request.maintenanceProvider.businessName,
+                specialty: request.maintenanceProvider.specialty,
+                userId: request.maintenanceProvider.userId || request.maintenanceProvider.user?.id,
+                userName:
+                  request.maintenanceProvider.userName || request.maintenanceProvider.user?.name,
+                userEmail:
+                  request.maintenanceProvider.userEmail || request.maintenanceProvider.user?.email,
+                userPhone:
+                  request.maintenanceProvider.userPhone || request.maintenanceProvider.user?.phone,
+              }
+            : undefined,
           visitProposal: request.visitProposal
             ? {
                 id: request.visitProposal.id,
@@ -703,7 +743,11 @@ export default function MantenimientoPage() {
       }
 
       const data = await response.json();
-      setAvailableProviders(data.availableProviders || []);
+      const normalizedProviders = (data.availableProviders || []).map((provider: any) => ({
+        ...provider,
+        specialties: Array.isArray(provider.specialties) ? provider.specialties : [],
+      }));
+      setAvailableProviders(normalizedProviders);
       // Guardar información de diagnóstico si está disponible
       if (data.diagnostic) {
         setProviderDiagnostic(data.diagnostic);
@@ -1107,11 +1151,29 @@ export default function MantenimientoPage() {
                           </div>
                         </div>
                         <p className="text-gray-700 mb-3">{request.description}</p>
-                        {request.provider && (
+                        {request.maintenanceProvider ? (
+                          <div className="text-sm text-emerald-700 mb-2 flex items-center gap-2 flex-wrap">
+                            <strong>Proveedor asignado:</strong>
+                            <span className="font-medium text-emerald-800">
+                              {request.maintenanceProvider.businessName ||
+                                request.maintenanceProvider.userName ||
+                                request.provider}
+                            </span>
+                            <UserRatingInfoButton
+                              userId={request.maintenanceProvider.userId}
+                              userName={
+                                request.maintenanceProvider.businessName ||
+                                request.maintenanceProvider.userName
+                              }
+                              size="sm"
+                              variant="ghost"
+                            />
+                          </div>
+                        ) : request.provider ? (
                           <p className="text-sm text-emerald-700 mb-2">
                             <strong>Proveedor asignado:</strong> {request.provider}
                           </p>
-                        )}
+                        ) : null}
                         {request.status === 'QUOTE_PENDING' && request.notes && (
                           <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                             <h4 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
@@ -1302,15 +1364,23 @@ export default function MantenimientoPage() {
                             variant="outline"
                             className="border-blue-300 text-blue-700 hover:bg-blue-50"
                             onClick={() => {
-                              // Obtener el userId del proveedor desde la API
+                              const providerUserId = request.maintenanceProvider?.userId;
+                              if (providerUserId) {
+                                router.push(
+                                  `/owner/messages?userId=${providerUserId}&propertyId=${request.propertyId}`
+                                );
+                                return;
+                              }
+
+                              // Fallback para obtener el userId desde la API
                               fetch(`/api/maintenance/${request.id}`)
                                 .then(res => res.json())
                                 .then(data => {
-                                  const providerUserId =
+                                  const fetchedUserId =
                                     data.maintenanceRequest?.maintenanceProvider?.user?.id;
-                                  if (providerUserId) {
+                                  if (fetchedUserId) {
                                     router.push(
-                                      `/owner/messages?userId=${providerUserId}&propertyId=${request.propertyId}`
+                                      `/owner/messages?userId=${fetchedUserId}&propertyId=${request.propertyId}`
                                     );
                                   } else {
                                     alert('No se pudo obtener la información del proveedor');
@@ -1756,7 +1826,15 @@ export default function MantenimientoPage() {
                               <Users className="w-6 h-6 text-blue-600" />
                             </div>
                             <div>
-                              <h4 className="font-semibold">{provider.name}</h4>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-semibold">{provider.name}</h4>
+                                <UserRatingInfoButton
+                                  userId={provider.user?.id}
+                                  userName={provider.name}
+                                  size="sm"
+                                  variant="ghost"
+                                />
+                              </div>
                               <p className="text-sm text-gray-600">{provider.specialty}</p>
                               <div className="flex items-center gap-4 mt-2">
                                 <div className="flex items-center gap-1">

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import UserRatingInfoButton from '@/components/ratings/UserRatingInfoButton';
 import {
   Search,
   Filter,
@@ -513,7 +514,15 @@ export default function OwnerRunnersPage() {
                         <User className="w-6 h-6 text-blue-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{assignedRunner.runner.name}</CardTitle>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <CardTitle className="text-lg">{assignedRunner.runner.name}</CardTitle>
+                          <UserRatingInfoButton
+                            userId={assignedRunner.runner.id}
+                            userName={assignedRunner.runner.name}
+                            size="sm"
+                            variant="ghost"
+                          />
+                        </div>
                         <div className="flex items-center space-x-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           <span className="text-sm text-gray-600">
@@ -694,7 +703,15 @@ export default function OwnerRunnersPage() {
                         <User className="w-6 h-6 text-blue-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{runner.name}</CardTitle>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <CardTitle className="text-lg">{runner.name}</CardTitle>
+                          <UserRatingInfoButton
+                            userId={runner.id}
+                            userName={runner.name}
+                            size="sm"
+                            variant="ghost"
+                          />
+                        </div>
                         <div className="flex items-center space-x-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           <span className="text-sm text-gray-600">{runner.rating}</span>

@@ -104,6 +104,14 @@ export async function GET(request: NextRequest) {
               id: true,
               businessName: true,
               specialty: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  phone: true,
+                },
+              },
             },
           },
           requester: {
@@ -170,6 +178,19 @@ export async function GET(request: NextRequest) {
         }
 
         delete mappedRequest.visitSchedules;
+
+        if (request.maintenanceProvider) {
+          mappedRequest.maintenanceProvider = {
+            id: request.maintenanceProvider.id,
+            businessName: request.maintenanceProvider.businessName,
+            specialty: request.maintenanceProvider.specialty,
+            userId: request.maintenanceProvider.user?.id,
+            userName: request.maintenanceProvider.user?.name,
+            userEmail: request.maintenanceProvider.user?.email,
+            userPhone: request.maintenanceProvider.user?.phone,
+          };
+        }
+
         return mappedRequest;
       }),
       pagination: {

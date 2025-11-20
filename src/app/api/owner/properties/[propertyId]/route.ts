@@ -74,11 +74,13 @@ export async function GET(request: NextRequest, { params }: { params: { property
       include: {
         maintenanceProvider: {
           select: {
+            id: true,
             businessName: true,
             specialty: true,
             rating: true,
             user: {
               select: {
+                id: true,
                 name: true,
                 email: true,
                 phone: true,
@@ -121,6 +123,7 @@ export async function GET(request: NextRequest, { params }: { params: { property
       images: property.images ? JSON.parse(property.images) : [],
       currentTenant: property.contracts[0]?.tenant
         ? {
+            id: property.contracts[0].tenant.id,
             name: property.contracts[0].tenant.name,
             email: property.contracts[0].tenant.email,
             phone: property.contracts[0].tenant.phone,
@@ -131,6 +134,7 @@ export async function GET(request: NextRequest, { params }: { params: { property
         : null,
       broker: property.broker
         ? {
+            id: property.broker.id,
             name: property.broker.name,
             email: property.broker.email,
             phone: property.broker.phone,
@@ -146,9 +150,11 @@ export async function GET(request: NextRequest, { params }: { params: { property
         cost: maintenance.estimatedCost || 0,
         provider: maintenance.maintenanceProvider
           ? {
-              name: maintenance.maintenanceProvider.user.name,
-              email: maintenance.maintenanceProvider.user.email,
-              phone: maintenance.maintenanceProvider.user.phone,
+              providerId: maintenance.maintenanceProvider.id,
+              userId: maintenance.maintenanceProvider.user?.id,
+              name: maintenance.maintenanceProvider.user?.name,
+              email: maintenance.maintenanceProvider.user?.email,
+              phone: maintenance.maintenanceProvider.user?.phone,
               businessName: maintenance.maintenanceProvider.businessName,
               specialty: maintenance.maintenanceProvider.specialty,
               rating: maintenance.maintenanceProvider.rating,
