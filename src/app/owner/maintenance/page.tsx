@@ -807,8 +807,8 @@ export default function MantenimientoPage() {
         break;
       case 'experience':
         filtered.sort((a, b) => {
-          const expA = parseInt(a.experience.split(' ')[0]);
-          const expB = parseInt(b.experience.split(' ')[0]);
+          const expA = parseInt((a.experience || '0').split(' ')[0] || '0');
+          const expB = parseInt((b.experience || '0').split(' ')[0] || '0');
           return expB - expA;
         });
         break;
@@ -1160,10 +1160,12 @@ export default function MantenimientoPage() {
                                 request.provider}
                             </span>
                             <UserRatingInfoButton
-                              userId={request.maintenanceProvider.userId}
+                              userId={request.maintenanceProvider.userId || null}
                               userName={
                                 request.maintenanceProvider.businessName ||
-                                request.maintenanceProvider.userName
+                                request.maintenanceProvider.userName ||
+                                request.provider ||
+                                'Proveedor'
                               }
                               size="sm"
                               variant="ghost"
@@ -1829,7 +1831,7 @@ export default function MantenimientoPage() {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h4 className="font-semibold">{provider.name}</h4>
                                 <UserRatingInfoButton
-                                  userId={provider.user?.id}
+                                  userId={provider.user?.id || null}
                                   userName={provider.name}
                                   size="sm"
                                   variant="ghost"

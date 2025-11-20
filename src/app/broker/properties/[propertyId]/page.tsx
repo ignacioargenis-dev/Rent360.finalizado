@@ -70,7 +70,7 @@ interface PropertyDetail {
     leaseStart: string;
     leaseEnd: string;
     monthlyRent: number;
-  };
+  } | null;
   maintenanceHistory: MaintenanceRecord[];
   financialData: {
     monthlyRevenue: number;
@@ -349,7 +349,7 @@ export default function BrokerPropertyDetailPage() {
           leaseEnd: data.currentTenant.leaseEnd,
           monthlyRent: data.currentTenant.monthlyRent,
         }
-      : undefined,
+      : null,
     maintenanceHistory: Array.isArray(data.maintenanceHistory)
       ? data.maintenanceHistory.map(mapBrokerMaintenanceRecord)
       : [],
@@ -963,7 +963,7 @@ export default function BrokerPropertyDetailPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-lg font-semibold">{property.ownerName}</h3>
                         <UserRatingInfoButton
-                          userId={property.ownerId}
+                          userId={property.ownerId || null}
                           userName={property.ownerName}
                           size="sm"
                           variant="ghost"
@@ -1070,7 +1070,7 @@ export default function BrokerPropertyDetailPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-lg font-semibold">{property.currentTenant.name}</h3>
                           <UserRatingInfoButton
-                            userId={property.currentTenant.id}
+                            userId={property.currentTenant.id || null}
                             userName={property.currentTenant.name}
                             size="sm"
                             variant="ghost"
@@ -1198,9 +1198,11 @@ export default function BrokerPropertyDetailPage() {
                               {typeof maintenance.provider !== 'string' && (
                                 <>
                                   <UserRatingInfoButton
-                                    userId={maintenance.provider.userId}
+                                    userId={maintenance.provider.userId || null}
                                     userName={
-                                      maintenance.provider.businessName || maintenance.provider.name
+                                      maintenance.provider.businessName ||
+                                      maintenance.provider.name ||
+                                      'Proveedor'
                                     }
                                     size="sm"
                                     variant="ghost"

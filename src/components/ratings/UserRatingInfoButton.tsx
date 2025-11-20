@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Info, Loader2, Star } from 'lucide-react';
-import { Button, type ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -31,13 +31,15 @@ type RatingSummary = {
   verifiedRatingsPercentage?: number;
 };
 
+type RatingButtonProps = React.ComponentProps<typeof Button>;
+
 interface UserRatingInfoButtonProps {
   userId?: string | null;
   userName?: string;
   className?: string;
   label?: string;
-  variant?: ButtonProps['variant'];
-  size?: ButtonProps['size'];
+  variant?: RatingButtonProps['variant'];
+  size?: RatingButtonProps['size'];
 }
 
 export default function UserRatingInfoButton({

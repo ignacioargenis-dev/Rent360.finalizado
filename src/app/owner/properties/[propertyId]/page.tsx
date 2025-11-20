@@ -1262,7 +1262,7 @@ export default function OwnerPropertyDetailPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-lg font-semibold">{property.broker.name}</h3>
                           <UserRatingInfoButton
-                            userId={property.broker.id}
+                            userId={property.broker.id || null}
                             userName={property.broker.name}
                             size="sm"
                             variant="outline"
@@ -1284,7 +1284,7 @@ export default function OwnerPropertyDetailPage() {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Comisión</label>
                       <p className="text-lg font-semibold text-green-600">
-                        {formatCurrency(property.broker.commission)}
+                        {formatCurrency(property.broker.commission ?? 0)}
                       </p>
                     </div>
                   </CardContent>
@@ -1367,7 +1367,7 @@ export default function OwnerPropertyDetailPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-lg font-semibold">{property.currentTenant.name}</h3>
                           <UserRatingInfoButton
-                            userId={property.currentTenant.id}
+                            userId={property.currentTenant.id || null}
                             userName={property.currentTenant.name}
                             size="sm"
                             variant="outline"
@@ -1489,23 +1489,31 @@ export default function OwnerPropertyDetailPage() {
                               <span>
                                 Proveedor:{' '}
                                 <span className="font-medium text-gray-700">
-                                  {maintenance.provider.businessName ||
-                                    maintenance.provider.name ||
-                                    'Proveedor'}
+                                  {typeof maintenance.provider === 'string'
+                                    ? maintenance.provider
+                                    : maintenance.provider.businessName ||
+                                      maintenance.provider.name ||
+                                      'Proveedor'}
                                 </span>
                               </span>
-                              <UserRatingInfoButton
-                                userId={maintenance.provider.userId}
-                                userName={
-                                  maintenance.provider.businessName || maintenance.provider.name
-                                }
-                                size="sm"
-                                variant="ghost"
-                              />
-                              {maintenance.provider.specialty && (
-                                <Badge variant="outline" className="text-[10px]">
-                                  {maintenance.provider.specialty}
-                                </Badge>
+                              {typeof maintenance.provider !== 'string' && (
+                                <>
+                                  <UserRatingInfoButton
+                                    userId={maintenance.provider.userId || null}
+                                    userName={
+                                      maintenance.provider.businessName ||
+                                      maintenance.provider.name ||
+                                      'Proveedor'
+                                    }
+                                    size="sm"
+                                    variant="ghost"
+                                  />
+                                  {maintenance.provider.specialty && (
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {maintenance.provider.specialty}
+                                    </Badge>
+                                  )}
+                                </>
                               )}
                             </div>
                           )}
