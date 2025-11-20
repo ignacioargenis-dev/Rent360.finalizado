@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogContent,
@@ -174,6 +175,11 @@ export default function MantenimientoPage() {
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
+  const [selectedRequestForPayment, setSelectedRequestForPayment] =
+    useState<MaintenanceRequest | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('khipu');
+  const [paymentStatuses, setPaymentStatuses] = useState<Record<string, any>>({});
   const [ratingForm, setRatingForm] = useState({
     overallRating: 0,
     communicationRating: 0,
@@ -309,6 +315,9 @@ export default function MantenimientoPage() {
         totalCost,
         monthlyCost,
       });
+
+      // Cargar estado del pago para cada solicitud
+      await loadPaymentStatuses(transformedRequests);
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -458,24 +467,81 @@ export default function MantenimientoPage() {
     }
   };
 
-  const handleApproveQuote = async (requestId: string) => {
+  const loadPaymentStatuses = async (requests: MaintenanceRequest[]) => {
+    const statuses: Record<string, any> = {};
+    for (const request of requests) {
+      try {
+        const response = await fetch(`/api/maintenance/${request.id}/payment/status`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            statuses[request.id] = data.data;
+          }
+        }
+      } catch (error) {
+        // Silently fail - no payment status available
+        logger.debug('No payment status available for request:', { requestId: request.id });
+      }
+    }
+    setPaymentStatuses(statuses);
+  };
+
+  const openPaymentMethodDialog = (request: MaintenanceRequest) => {
+    setSelectedRequestForPayment(request);
+    setSelectedPaymentMethod('khipu'); // Default to Khipu
+    setShowPaymentMethodDialog(true);
+  };
+
+  const handleApproveQuote = async () => {
+    if (!selectedRequestForPayment) {
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/maintenance/${requestId}/quote/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `/api/maintenance/${selectedRequestForPayment.id}/quote/approve`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            paymentMethod: selectedPaymentMethod,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
       }
 
+      const data = await response.json();
+
+      // Si hay URL de Khipu, mostrarla
+      if (data.paymentUrl) {
+        const openKhipu = confirm(
+          'Pago autorizado. ¿Deseas abrir la página de pago de Khipu ahora?'
+        );
+        if (openKhipu) {
+          window.open(data.paymentUrl, '_blank');
+        }
+      }
+
+      setShowPaymentMethodDialog(false);
+      setSelectedRequestForPayment(null);
       await loadPageData();
-      logger.info('Cotización aprobada:', { requestId });
+      logger.info('Cotización aprobada:', { requestId: selectedRequestForPayment.id });
     } catch (error) {
       logger.error('Error aprobando cotización:', {
         error: error instanceof Error ? error.message : String(error),
@@ -1176,6 +1242,56 @@ export default function MantenimientoPage() {
                             <strong>Proveedor asignado:</strong> {request.provider}
                           </p>
                         ) : null}
+                        {/* Estado del Pago */}
+                        {paymentStatuses[request.id] && (
+                          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm font-medium text-blue-900">
+                                  Estado del Pago:
+                                </span>
+                                <Badge
+                                  className={
+                                    paymentStatuses[request.id].status === 'AUTHORIZED'
+                                      ? 'bg-yellow-100 text-yellow-800'
+                                      : paymentStatuses[request.id].status === 'COMPLETED'
+                                        ? 'bg-green-100 text-green-800'
+                                        : paymentStatuses[request.id].status === 'FAILED'
+                                          ? 'bg-red-100 text-red-800'
+                                          : 'bg-gray-100 text-gray-800'
+                                  }
+                                >
+                                  {paymentStatuses[request.id].status === 'AUTHORIZED'
+                                    ? 'Autorizado - Pendiente'
+                                    : paymentStatuses[request.id].status === 'COMPLETED'
+                                      ? 'Completado'
+                                      : paymentStatuses[request.id].status === 'FAILED'
+                                        ? 'Fallido'
+                                        : paymentStatuses[request.id].status}
+                                </Badge>
+                              </div>
+                              {paymentStatuses[request.id].paymentUrl && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                                  onClick={() =>
+                                    window.open(paymentStatuses[request.id].paymentUrl, '_blank')
+                                  }
+                                >
+                                  <CreditCard className="w-4 h-4 mr-2" />
+                                  Pagar con Khipu
+                                </Button>
+                              )}
+                            </div>
+                            {paymentStatuses[request.id].method && (
+                              <div className="mt-2 text-xs text-blue-700">
+                                Método: {paymentStatuses[request.id].method.toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         {request.status === 'QUOTE_PENDING' && request.notes && (
                           <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                             <h4 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
@@ -1322,7 +1438,7 @@ export default function MantenimientoPage() {
                             <Button
                               size="sm"
                               className="bg-green-600 hover:bg-green-700"
-                              onClick={() => handleApproveQuote(request.id)}
+                              onClick={() => openPaymentMethodDialog(request)}
                             >
                               <CheckCircle className="w-4 h-4 mr-2" />
                               Aprobar Cotización
@@ -2408,6 +2524,125 @@ export default function MantenimientoPage() {
             >
               <Star className="w-4 h-4 mr-2" />
               Enviar Calificación
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Selección de Método de Pago */}
+      <Dialog open={showPaymentMethodDialog} onOpenChange={setShowPaymentMethodDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Seleccionar Método de Pago</DialogTitle>
+            <DialogDescription>
+              Elige cómo deseas pagar la cotización de mantenimiento
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {selectedRequestForPayment && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="text-sm text-gray-600 mb-1">Monto a pagar:</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {formatPrice(selectedRequestForPayment.estimatedCost)}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Métodos de Pago Disponibles</Label>
+              <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
+                    <RadioGroupItem value="khipu" id="khipu" />
+                    <Label htmlFor="khipu" className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="w-5 h-5 text-blue-600" />
+                          <div>
+                            <div className="font-medium text-gray-900">Khipu</div>
+                            <div className="text-sm text-gray-600">
+                              Transferencias y tarjetas (Chile)
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
+                    <RadioGroupItem value="stripe" id="stripe" />
+                    <Label htmlFor="stripe" className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="w-5 h-5 text-indigo-600" />
+                          <div>
+                            <div className="font-medium text-gray-900">Stripe</div>
+                            <div className="text-sm text-gray-600">
+                              Tarjetas y transferencias internacionales
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
+                    <RadioGroupItem value="paypal" id="paypal" />
+                    <Label htmlFor="paypal" className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <div className="font-medium text-gray-900">PayPal</div>
+                            <div className="text-sm text-gray-600">Billetera digital</div>
+                          </div>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
+                    <RadioGroupItem value="webpay" id="webpay" />
+                    <Label htmlFor="webpay" className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="w-5 h-5 text-green-600" />
+                          <div>
+                            <div className="font-medium text-gray-900">WebPay</div>
+                            <div className="text-sm text-gray-600">Tarjetas (Chile)</div>
+                          </div>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="flex items-center gap-2 p-4 bg-blue-50 rounded-lg">
+              <Shield className="w-5 h-5 text-blue-600" />
+              <div className="text-sm">
+                <div className="font-medium text-blue-900">Pago Seguro</div>
+                <div className="text-blue-700">
+                  Todos los pagos se procesan de forma segura. No se permiten pagos en efectivo ni
+                  cheque.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPaymentMethodDialog(false);
+                setSelectedRequestForPayment(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={handleApproveQuote}>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Aprobar y Pagar
             </Button>
           </div>
         </DialogContent>

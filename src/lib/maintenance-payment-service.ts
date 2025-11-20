@@ -614,16 +614,20 @@ export class MaintenancePaymentService {
       return null;
     }
 
+    const metadata = payment.notes ? JSON.parse(payment.notes) : {};
+
     return {
       id: payment.id,
       maintenanceId: payment.maintenanceId,
       amount: payment.amount,
       status: payment.status,
+      method: payment.paymentMethod,
       paymentMethod: payment.paymentMethod,
       createdAt: payment.createdAt,
       processedAt: payment.processedAt,
       reference: payment.reference,
-      metadata: payment.notes ? JSON.parse(payment.notes) : {},
+      metadata,
+      paymentUrl: metadata.paymentUrl || null, // URL de Khipu si está disponible
     };
   }
 
