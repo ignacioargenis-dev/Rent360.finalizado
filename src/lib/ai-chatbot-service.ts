@@ -1,5 +1,5 @@
 import { OpenAI } from 'openai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { logger } from './logger';
 import { DatabaseError } from './errors';
@@ -2538,30 +2538,40 @@ export class AIChatbotService {
         return;
       }
 
-      // Intentar inicializar Google AI
+      // Intentar inicializar Google AI (prioridad alta para modalidad híbrida)
       const googleKey = process.env.GOOGLE_AI_API_KEY;
-      if (googleKey) {
-        this.googleAI = new GoogleGenerativeAI(googleKey);
-        this.config = {
-          provider: 'google',
-          apiKey: googleKey,
-          model: process.env.GOOGLE_MODEL || 'gemini-pro',
-          maxTokens: parseInt(process.env.GOOGLE_MAX_TOKENS || '1000'),
-          temperature: parseFloat(process.env.GOOGLE_TEMPERATURE || '0.7'),
-        };
-        logger.info('Google AI inicializado para chatbot');
-        return;
+      if (googleKey && googleKey.trim().length > 0) {
+        try {
+          this.googleAI = new GoogleGenerativeAI(googleKey);
+          this.config = {
+            provider: 'google',
+            apiKey: googleKey.substring(0, 10) + '...', // Solo log parcial por seguridad
+            model: process.env.GOOGLE_MODEL || 'gemini-pro',
+            maxTokens: parseInt(process.env.GOOGLE_MAX_TOKENS || '1500'),
+            temperature: parseFloat(process.env.GOOGLE_TEMPERATURE || '0.7'),
+          };
+          logger.info('✅ Google AI (Gemini) inicializado correctamente para chatbot', {
+            model: this.config.model,
+            maxTokens: this.config.maxTokens,
+          });
+          return;
+        } catch (error) {
+          logger.error('Error inicializando Google AI:', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continuar para intentar otros proveedores o usar local
+        }
       }
 
-      // Si no hay proveedores externos, usar lógica local
+      // Si no hay proveedores externos, usar lógica local (modalidad híbrida - fallback)
       this.config = {
         provider: 'local',
         apiKey: '',
-        model: 'local-logic',
+        model: 'local-logic-enhanced',
         maxTokens: 1000,
         temperature: 0.7,
       };
-      logger.info('Usando lógica local para chatbot (sin IA externa)');
+      logger.info('⚠️ Usando lógica local mejorada para chatbot (modalidad híbrida - fallback)');
     } catch (error) {
       logger.error('Error inicializando proveedores de IA:', {
         error: error instanceof Error ? error.message : String(error),
@@ -2599,17 +2609,17 @@ export class AIChatbotService {
     trainingSource?: string;
   }> {
     try {
-      // 🚀 FASE 2: Usar datos reales del usuario para respuestas más contextuales
+      // 🚀 SEGURIDAD: NO incluir datos reales del usuario en el prompt para IA externa
+      // Solo usar información general y pública
       let enhancedPrompt = userMessage;
 
-      if (context?.userData) {
-        const contextSummary = this.generateContextSummary(userRole, context.userData);
-        if (contextSummary) {
-          enhancedPrompt = `${contextSummary}\n\nUsuario pregunta: ${userMessage}`;
-        }
-      }
+      // ⚠️ IMPORTANTE: NO incluir datos confidenciales del usuario en el prompt
+      // Solo usar información general sobre el rol y funcionalidades permitidas
+      // Los datos reales del usuario NO deben enviarse a IA externa por seguridad
 
-      // Primero intentar con datos de entrenamiento específicos mejorados
+      // 🚀 MODALIDAD HÍBRIDA: Estrategia en 3 niveles
+
+      // NIVEL 1: Intentar con datos de entrenamiento específicos (rápido y preciso)
       const contextualResponse = TrainingDataManager.generateContextualResponse(
         enhancedPrompt,
         userRole,
@@ -2628,52 +2638,147 @@ export class AIChatbotService {
           confidence = Math.min(0.95, confidence + 0.1);
         }
 
-        const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
-        const intent = this.extractIntent(userMessage);
+        // Si la confianza es alta (>= 0.8), usar respuesta de entrenamiento
+        if (confidence >= 0.8) {
+          const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
+          const intent = this.extractIntent(userMessage);
 
-        // 🚀 FASE 1: Registrar interacción para aprendizaje con contexto mejorado
-        aiLearningSystem.recordInteraction({
-          userId,
-          userRole,
-          userMessage,
-          botResponse: contextualResponse,
-          context: {
+          // Validar respuesta por seguridad antes de retornar
+          const securityContext = this.createSecurityContext(userRole, userId);
+          const validatedResponse = this.validateResponse(contextualResponse, securityContext);
+
+          aiLearningSystem.recordInteraction({
+            userId,
+            userRole,
+            userMessage,
+            botResponse: validatedResponse,
+            context: {
+              source: 'training_data',
+              hasRealData: !!context?.userData,
+              memoryTopics: context?.memoryContext?.previousTopics?.length || 0,
+            },
+            intent: intent || 'unknown',
+            confidence,
+          });
+
+          logger.info('✅ Respuesta de entrenamiento (alta confianza)', {
+            userId,
+            userRole,
+            intent,
+            confidence,
             source: 'training_data',
-            hasRealData: !!context?.userData,
-            memoryTopics: context?.memoryContext?.previousTopics?.length || 0,
-          },
-          intent: intent || 'unknown',
-          confidence,
-        });
+          });
 
-        logger.info('Respuesta generada con datos de entrenamiento mejorados', {
-          userId,
-          userRole,
-          intent,
-          hasRealData: !!context?.userData,
-          confidence,
-          trainingSource: 'specialized_dataset',
-        });
-
-        return {
-          response: contextualResponse,
-          confidence,
-          intent,
-          suggestions,
-          metadata: {
-            source: 'training_data',
-            dataset: 'specialized',
-            timestamp: new Date().toISOString(),
-          },
-          trainingSource: 'specialized_dataset',
-        };
+          return {
+            response: validatedResponse,
+            confidence,
+            intent,
+            suggestions,
+            metadata: {
+              source: 'training_data',
+              dataset: 'specialized',
+              timestamp: new Date().toISOString(),
+            },
+            trainingSource: 'specialized_dataset',
+          };
+        }
+        // Si confianza es media (0.6-0.8), continuar a IA real para mejorar
       }
 
-      // Si no hay coincidencia específica, usar el método original
+      // NIVEL 2: Usar IA real (Google AI) si está disponible y confianza de entrenamiento es baja
+      if (this.config?.provider !== 'local' && this.config?.provider !== undefined) {
+        try {
+          logger.info('🤖 Usando IA real para generar respuesta', {
+            provider: this.config.provider,
+            userRole,
+          });
+
+          const securityContext = this.createSecurityContext(userRole, userId);
+          const aiPrompt = this.createSecurePrompt(
+            userMessage,
+            securityContext,
+            conversationHistory
+          );
+
+          let aiResult: { response: string; confidence: number };
+
+          switch (this.config.provider) {
+            case 'google':
+              aiResult = await this.processWithGoogle(aiPrompt);
+              break;
+            case 'openai':
+              aiResult = await this.processWithOpenAI(aiPrompt);
+              break;
+            case 'anthropic':
+              aiResult = await this.processWithAnthropic(aiPrompt);
+              break;
+            default:
+              throw new Error(`Proveedor ${this.config.provider} no soportado`);
+          }
+
+          // Validar respuesta de IA por seguridad
+          const validatedAIResponse = this.validateResponse(aiResult.response, securityContext);
+
+          const intent = this.extractIntent(userMessage);
+          const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
+
+          aiLearningSystem.recordInteraction({
+            userId,
+            userRole,
+            userMessage,
+            botResponse: validatedAIResponse,
+            context: {
+              source: 'ai_provider',
+              provider: this.config.provider,
+              hasRealData: !!context?.userData,
+            },
+            intent: intent || 'unknown',
+            confidence: aiResult.confidence,
+          });
+
+          logger.info('✅ Respuesta generada por IA real', {
+            provider: this.config.provider,
+            confidence: aiResult.confidence,
+            userRole,
+          });
+
+          return {
+            response: validatedAIResponse,
+            confidence: aiResult.confidence,
+            intent,
+            suggestions,
+            metadata: {
+              source: 'ai_provider',
+              provider: this.config.provider,
+              model: this.config.model,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        } catch (error) {
+          logger.error('⚠️ Error usando IA real, usando fallback local', {
+            error: error instanceof Error ? error.message : String(error),
+            provider: this.config?.provider,
+          });
+          // Continuar a fallback local
+        }
+      }
+
+      // NIVEL 3: Fallback a lógica local mejorada
+      logger.info('📚 Usando lógica local mejorada (fallback)', { userRole });
       const result = await this.processMessage(userMessage, userRole, userId, conversationHistory);
+
+      // Validar respuesta local también
+      const securityContext = this.createSecurityContext(userRole, userId);
+      const validatedLocalResponse = this.validateResponse(result.response, securityContext);
+
       return {
         ...result,
-        metadata: result.metadata || {},
+        response: validatedLocalResponse,
+        metadata: {
+          ...result.metadata,
+          source: 'local_logic',
+          timestamp: new Date().toISOString(),
+        },
       };
     } catch (error) {
       logger.error('Error procesando mensaje con datos de entrenamiento:', {
@@ -2837,13 +2942,59 @@ export class AIChatbotService {
       throw new Error('Google AI no inicializado');
     }
 
-    const model = this.googleAI.getGenerativeModel({ model: this.config!.model });
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    try {
+      // 🔒 Configuración del modelo con seguridad reforzada
+      const model = this.googleAI.getGenerativeModel({
+        model: this.config!.model || 'gemini-pro',
+        generationConfig: {
+          maxOutputTokens: this.config!.maxTokens || 1000,
+          temperature: this.config!.temperature || 0.7,
+          topP: 0.8,
+          topK: 40,
+        },
+        // 🛡️ Configuración de seguridad estricta para bloquear contenido peligroso
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+          },
+        ],
+      });
 
-    const confidence = 0.8; // Google AI tiene buena confianza
+      const result = await model.generateContent(prompt);
+      const response = result.response.text();
 
-    return { response, confidence };
+      // Validar que la respuesta no esté vacía
+      if (!response || response.trim().length === 0) {
+        throw new Error('Respuesta vacía de Google AI');
+      }
+
+      const confidence = 0.85; // Google AI tiene buena confianza
+
+      logger.info('Respuesta generada por Google AI', {
+        responseLength: response.length,
+        confidence,
+      });
+
+      return { response, confidence };
+    } catch (error) {
+      logger.error('Error procesando con Google AI:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   }
 
   /**
@@ -2871,27 +3022,45 @@ export class AIChatbotService {
       }
     }
 
-    // Lógica simple basada en palabras clave (fallback mejorado)
-    if (input.includes('propiedad') || input.includes('casa') || input.includes('departamento')) {
+    // 🚀 MEJORADO: Detección mejorada de búsqueda de propiedades
+    if (
+      input.includes('propiedad') ||
+      input.includes('casa') ||
+      input.includes('departamento') ||
+      input.includes('arrendar') ||
+      input.includes('buscar') ||
+      (input.includes('quiero') && (input.includes('vivir') || input.includes('alquilar')))
+    ) {
       return {
         response:
-          'Te ayudo a buscar propiedades. Puedo mostrarte opciones según tu ubicación, presupuesto y preferencias. ¿En qué zona te interesa vivir y cuál es tu presupuesto mensual?',
+          'Te ayudo a buscar propiedades en Rent360:\n\n**Cómo buscar:**\n1. Usa el buscador principal en la página de inicio\n2. Filtra por:\n   - **Ubicación**: Comuna, ciudad, región\n   - **Tipo**: Casa, departamento, local comercial, etc.\n   - **Precio**: Rango mensual de arriendo\n   - **Características**: Habitaciones, baños, estacionamiento, mascotas permitidas\n\n3. **Explora resultados:**\n   - Ve fotos y detalles completos\n   - Revisa ubicación en mapa\n   - Lee descripciones y características\n   - Contacta directamente al propietario o corredor\n\n4. **Agenda visitas:**\n   - Solicita visitas desde la plataforma\n   - El sistema te conecta con el propietario\n   - Recibe confirmación de la visita\n\n**Tips:**\n- Guarda propiedades como favoritas\n- Recibe notificaciones de nuevas propiedades que coincidan con tus criterios\n- Compara propiedades lado a lado\n\n¿En qué zona te interesa vivir y cuál es tu presupuesto mensual?',
         confidence: 0.95,
       };
     }
 
-    if (input.includes('contrato') || input.includes('arriendo') || input.includes('alquiler')) {
+    if (
+      input.includes('contrato') ||
+      input.includes('arriendo') ||
+      input.includes('alquiler') ||
+      (input.includes('firmar') && input.includes('contrato'))
+    ) {
       return {
         response:
-          'Para gestionar contratos, puedes acceder a la sección "Mis Contratos" donde encontrarás todos tus documentos, fechas de vencimiento y opciones de renovación. ¿Necesitas ayuda con algún contrato específico?',
+          'Te ayudo con los contratos en Rent360:\n\n**Para Inquilinos:**\n- Ve a "Mis Contratos" en tu panel\n- Verás todos tus contratos activos\n- Puedes ver detalles, fechas importantes y términos\n- Descarga copias en PDF\n- Solicita renovación cuando se acerque el vencimiento\n\n**Para Propietarios:**\n- Gestiona contratos desde "Contratos" en tu panel\n- Crea nuevos contratos digitales\n- Envía contratos para firma electrónica\n- Gestiona renovaciones y terminaciones\n- Ver historial completo de contratos\n\n**Firma Electrónica:**\n- Los contratos se pueden firmar digitalmente\n- Es legalmente válido y seguro\n- Recibes notificaciones cuando hay cambios\n\n**Renovaciones:**\n- El sistema te notifica antes del vencimiento\n- Puedes renovar directamente desde la plataforma\n- Los términos se pueden actualizar\n\n¿Necesitas ayuda con algún contrato específico o quieres crear uno nuevo?',
         confidence: 0.9,
       };
     }
 
-    if (input.includes('pago') || input.includes('renta') || input.includes('dinero')) {
+    if (
+      input.includes('pago') ||
+      input.includes('renta') ||
+      input.includes('dinero') ||
+      input.includes('pagar') ||
+      (input.includes('cómo') && input.includes('pago'))
+    ) {
       return {
         response:
-          'Para realizar pagos, puedes usar la sección "Pagos" donde encontrarás múltiples métodos de pago seguros. También puedes configurar pagos automáticos para no olvidarte. ¿Qué método prefieres usar?',
+          'Te ayudo con los pagos en Rent360:\n\n**Métodos de pago disponibles:**\n- **Khipu**: Transferencias y tarjetas (Chile)\n- **Stripe**: Tarjetas internacionales\n- **PayPal**: Billetera digital\n- **WebPay**: Tarjetas (Chile)\n\n**Para Inquilinos:**\n- Ve a "Pagos" en tu panel\n- Verás pagos pendientes con fechas de vencimiento\n- Selecciona el pago y elige tu método\n- Recibe confirmación inmediata\n- Configura pagos automáticos para no preocuparte\n\n**Para Propietarios:**\n- Ve a "Pagos" para ver todos los recibidos\n- Historial completo de pagos\n- Exporta reportes financieros\n- Recibe notificaciones de nuevos pagos\n\n**Seguridad:**\n- Todos los pagos están encriptados\n- No almacenamos datos de tarjetas\n- Cumplimos estándares internacionales de seguridad\n\n**Pagos automáticos:**\n- Configura pagos recurrentes\n- Recibe recordatorios antes de cada pago\n- Modifica o cancela cuando quieras\n\n¿Qué método prefieres usar o necesitas ayuda con algo específico?',
         confidence: 0.85,
       };
     }
@@ -2899,11 +3068,13 @@ export class AIChatbotService {
     if (
       input.includes('problema') ||
       input.includes('mantenimiento') ||
-      input.includes('reparar')
+      input.includes('reparar') ||
+      input.includes('arreglar') ||
+      (input.includes('necesito') && (input.includes('arreglo') || input.includes('reparación')))
     ) {
       return {
         response:
-          'Para reportar un problema de mantenimiento, puedes crear un ticket en la sección "Mantenimiento". Te ayudaré a categorizar el problema y asignar la prioridad correcta. ¿Qué tipo de problema tienes?',
+          'Te ayudo a reportar problemas de mantenimiento:\n\n**Cómo solicitar mantenimiento:**\n1. Ve a "Mantenimiento" o "Solicitar Mantenimiento" en tu panel\n2. Haz clic en "Nueva Solicitud"\n3. Completa:\n   - **Tipo**: Reparación, mantenimiento, emergencia, inspección\n   - **Descripción**: Explica el problema en detalle\n   - **Urgencia**: Baja, Media, Alta, Crítica\n   - **Fotos**: Adjunta fotos (muy recomendado)\n\n**Niveles de urgencia:**\n- **Crítica**: Problemas de seguridad (fuga de gas, sin electricidad)\n- **Alta**: Afecta uso normal (sin agua caliente, calefacción rota)\n- **Media**: Puede esperar (grifo que gotea, puerta que no cierra)\n- **Baja**: Mantenimiento preventivo\n\n**¿Qué pasa después?**\n- Tu propietario recibe notificación\n- El sistema busca proveedores en tu zona\n- El propietario asigna un proveedor\n- Recibes actualizaciones del estado\n- Puedes comunicarte con el proveedor\n\n**Tip:** Mientras más detallada sea tu descripción y más fotos incluyas, más rápido se resolverá el problema.\n\n¿Qué tipo de problema necesitas reportar?',
         confidence: 0.8,
       };
     }
@@ -2951,11 +3122,69 @@ export class AIChatbotService {
       };
     }
 
+    // 🚀 MEJORADO: Detección específica para registro de proveedores
+    if (
+      input.includes('jardinero') ||
+      input.includes('jardinería') ||
+      input.includes('plomero') ||
+      input.includes('electricista') ||
+      input.includes('carpintero') ||
+      input.includes('pintor') ||
+      (input.includes('ofrecer') && input.includes('servicio')) ||
+      (input.includes('soy') && (input.includes('proveedor') || input.includes('trabajador')))
+    ) {
+      if (
+        input.includes('registro') ||
+        input.includes('registrarse') ||
+        input.includes('crear') ||
+        input.includes('cuenta') ||
+        input.includes('ofrecer')
+      ) {
+        return {
+          response:
+            '¡Perfecto! Para ofrecer tus servicios en Rent360, necesitas registrarte como Proveedor de Servicios. Te explico el proceso:\n\n**Pasos para registrarte:**\n\n1. **Crear cuenta**: Ve a "Registrarse" en la página principal y selecciona "Proveedor de Servicios"\n2. **Completar datos básicos**: Nombre, email, teléfono y contraseña\n3. **Verificar email**: Confirma tu cuenta desde el correo que recibirás\n4. **Completar perfil**:\n   - Especifica tu especialidad (jardinería, plomería, electricidad, etc.)\n   - Describe los servicios que ofreces\n   - Indica las zonas donde trabajas\n   - Configura tus precios (por hora o por servicio)\n   - Sube fotos de trabajos anteriores\n5. **Subir documentos**: Cédula de identidad y certificaciones si las tienes\n6. **Esperar verificación**: El administrador revisará tu perfil\n\n**Una vez verificado podrás:**\n- Recibir solicitudes de trabajo de propietarios e inquilinos\n- Ver detalles de cada solicitud (ubicación, urgencia, descripción)\n- Aceptar o rechazar trabajos según tu disponibilidad\n- Comunicarte directamente con clientes\n- Recibir pagos automáticos después de completar trabajos\n- Ver tus ganancias y comisiones en tu panel\n\n¿Qué tipo de servicios ofreces? Puedo darte información más específica.',
+          confidence: 0.92,
+        };
+      }
+    }
+
+    // 🚀 MEJORADO: Detección de preguntas sobre registro en general
+    if (
+      (input.includes('registro') ||
+        input.includes('registrarse') ||
+        input.includes('crear cuenta')) &&
+      (input.includes('proveedor') || input.includes('servicio') || input.includes('trabajar'))
+    ) {
+      return {
+        response:
+          'Para registrarte como proveedor de servicios en Rent360:\n\n1. Haz clic en "Registrarse" y selecciona "Proveedor de Servicios"\n2. Completa tus datos básicos (nombre, email, teléfono)\n3. Verifica tu email\n4. Completa tu perfil con información sobre tus servicios\n5. Sube documentos requeridos (cédula, certificaciones)\n6. Espera la verificación del administrador\n\nUna vez verificado, podrás recibir solicitudes de trabajo y comenzar a ofrecer tus servicios. ¿Qué tipo de servicios ofreces?',
+        confidence: 0.9,
+      };
+    }
+
+    // 🚀 MEJORADO: Detección de preguntas de ayuda general
+    if (
+      input.includes('ayuda') ||
+      input.includes('help') ||
+      input.includes('información') ||
+      input.includes('informacion') ||
+      (input.includes('qué') && input.includes('puedo')) ||
+      (input.includes('cómo') && input.includes('funciona'))
+    ) {
+      if (userRole === 'guest' || userRole === 'GUEST') {
+        return {
+          response:
+            '¡Hola! Soy el asistente de Rent360 y estoy aquí para ayudarte. Puedo responder tus preguntas sobre:\n\n**📋 Información General:**\n- ¿Qué es Rent360 y cómo funciona?\n- Tipos de usuarios y roles\n- Costos y comisiones\n- Seguridad y privacidad\n\n**👤 Registro y Cuenta:**\n- Cómo crear tu cuenta\n- Registro como propietario, inquilino, proveedor, corredor\n- Proceso de verificación\n- Documentos requeridos\n\n**🏠 Propiedades:**\n- Cómo buscar propiedades\n- Cómo publicar propiedades\n- Filtros y búsqueda avanzada\n\n**💰 Pagos:**\n- Métodos de pago disponibles\n- Cómo realizar pagos\n- Pagos automáticos\n- Seguridad de pagos\n\n**🔧 Servicios:**\n- Cómo ofrecer servicios (jardinería, plomería, etc.)\n- Cómo solicitar mantenimiento\n- Proceso de trabajo con proveedores\n\n**📄 Contratos:**\n- Contratos digitales\n- Firma electrónica\n- Renovaciones\n\n¿Sobre qué te gustaría saber más? Puedes preguntarme cualquier cosa.',
+          confidence: 0.7,
+        };
+      }
+    }
+
     // Respuesta por defecto mejorada para usuarios guest
     if (userRole === 'guest' || userRole === 'GUEST') {
       return {
         response:
-          'Hola, soy el asistente de Rent360. Puedo ayudarte con información sobre: registro y creación de cuenta, tipos de usuarios y roles, funcionalidades de la plataforma, comisiones y costos, seguridad y privacidad, documentos requeridos, servicios disponibles (Runner360, proveedores, corredores), sistema de pagos, búsqueda de propiedades, contratos digitales, y mucho más. ¿Sobre qué te gustaría saber?',
+          '¡Hola! Soy el asistente de Rent360. Puedo ayudarte con:\n\n**Información sobre:**\n- Registro y creación de cuenta\n- Tipos de usuarios (propietario, inquilino, proveedor, corredor)\n- Cómo buscar o publicar propiedades\n- Sistema de pagos\n- Cómo ofrecer servicios\n- Contratos digitales\n- Y mucho más\n\n**Ejemplos de preguntas que puedo responder:**\n- "¿Cómo me registro como proveedor?"\n- "¿Cómo busco propiedades?"\n- "¿Cuánto cuesta usar Rent360?"\n- "Soy jardinero, ¿cómo ofrezco mis servicios?"\n\n¿Sobre qué te gustaría saber? Hazme cualquier pregunta y te ayudo.',
         confidence: 0.6,
       };
     }
@@ -2963,7 +3192,7 @@ export class AIChatbotService {
     // Respuesta por defecto para usuarios registrados
     return {
       response:
-        'Entiendo tu consulta. Te puedo ayudar con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento, documentos, comisiones y configuración de tu cuenta. ¿Qué te gustaría hacer?',
+        'Entiendo tu consulta. Te puedo ayudar con:\n\n- **Búsqueda y gestión de propiedades**\n- **Gestión de contratos** (crear, ver, renovar)\n- **Pagos** (realizar, configurar automáticos, ver historial)\n- **Mantenimiento** (solicitar, ver estado, comunicarte con proveedores)\n- **Documentos** (subir, ver, gestionar)\n- **Comisiones y ganancias**\n- **Configuración de tu cuenta**\n\n¿Qué te gustaría hacer? Puedes preguntarme algo específico o usar las opciones rápidas del menú.',
       confidence: 0.6,
     };
   }
@@ -3077,42 +3306,99 @@ export class AIChatbotService {
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
   ): string {
     const systemPrompt = `
-Eres un asistente virtual especializado en el sistema Rent360.
+Eres un asistente virtual especializado en Rent360, una plataforma de gestión inmobiliaria.
 
-INFORMACIÓN DE SEGURIDAD CRÍTICA:
-- Solo puedes acceder a datos del usuario actual (${securityContext.maxDataAccess})
+🔒 RESTRICCIONES DE SEGURIDAD CRÍTICAS (NUNCA VIOLAR):
+
+**INFORMACIÓN PROHIBIDA - NUNCA COMPARTIR:**
+- Datos personales de usuarios (emails, teléfonos, direcciones, RUTs, números de cuenta bancaria)
+- Información financiera específica (montos de pagos, saldos, números de tarjeta)
+- Contraseñas, tokens, API keys, o credenciales de cualquier tipo
+- Información técnica del sistema (estructura de base de datos, código fuente, configuraciones internas)
+- Datos de otros usuarios que no sean públicos
+- Información de seguridad del sistema (vulnerabilidades, métodos de encriptación)
+- Detalles de implementación técnica (nombres de tablas, esquemas de base de datos, endpoints internos)
+- Información de configuración del servidor o infraestructura
+
+**ACCESO A DATOS:**
+- Solo puedes acceder a información pública y general sobre Rent360
+- NO puedes acceder a datos del usuario actual (${securityContext.maxDataAccess})
 - NO puedes ejecutar acciones del sistema
 - NO puedes modificar configuraciones
 - NO puedes acceder a datos de otros usuarios
-- NO puedes proporcionar información sensible del sistema
-- SIEMPRE debes mantener la privacidad de los datos
 
-ROL DEL USUARIO: ${securityContext.allowedTopics.join(', ')}
-TEMAS PERMITIDOS: ${securityContext.allowedTopics.join(', ')}
-TEMAS RESTRINGIDOS: ${securityContext.restrictedTopics.join(', ')}
+**TEMAS PERMITIDOS:**
+${securityContext.allowedTopics.map((topic: string) => `- ${topic}`).join('\n')}
 
-INSTRUCCIONES:
-1. Solo responde preguntas relacionadas con las funcionalidades permitidas para este rol
-2. Si la pregunta es sobre temas restringidos, redirige al soporte humano
-3. Nunca reveles información técnica interna del sistema
-4. Mantén un tono amigable y profesional
-5. Si no sabes la respuesta, sugiere contactar al soporte
+**TEMAS RESTRINGIDOS (NUNCA RESPONDER):**
+${securityContext.restrictedTopics.map((topic: string) => `- ${topic}`).join('\n')}
+
+**INSTRUCCIONES DE RESPUESTA:**
+1. Solo proporciona información general sobre funcionalidades de Rent360
+2. NUNCA menciones datos específicos de usuarios, propiedades, contratos o pagos
+3. Si se pregunta por información confidencial, responde: "No puedo acceder a información personal. Para consultas específicas, contacta al soporte."
+4. Si la pregunta es sobre temas restringidos, redirige al soporte: "Para esa consulta, te recomiendo contactar al soporte técnico."
+5. Mantén un tono amigable y profesional
+6. Si no sabes la respuesta exacta, proporciona información general útil
+7. NUNCA inventes información que no conozcas con certeza
+8. NUNCA proporciones pasos técnicos que puedan comprometer la seguridad
+
+**EJEMPLOS DE RESPUESTAS CORRECTAS:**
+- ✅ "Para registrarte como proveedor, ve a Registrarse y selecciona Proveedor de Servicios"
+- ✅ "Los pagos se procesan de forma segura con múltiples métodos disponibles"
+- ❌ "Tu saldo actual es $500.000" (NUNCA - información confidencial)
+- ❌ "La base de datos usa PostgreSQL con esquema X" (NUNCA - información técnica)
 
 Pregunta del usuario: ${userMessage}
 
-${conversationHistory ? `Historial de conversación:\n${conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}` : ''}
+${
+  conversationHistory
+    ? `Historial de conversación (últimas 3 interacciones):\n${conversationHistory
+        .slice(-3)
+        .map(msg => `${msg.role}: ${msg.content}`)
+        .join('\n')}`
+    : ''
+}
 
-Respuesta:
+Recuerda: SIEMPRE prioriza la seguridad y privacidad. Si hay duda, redirige al soporte.
+
+Respuesta (solo información general y pública):
 `;
 
     return systemPrompt;
   }
 
   /**
-   * Valida respuesta por seguridad
+   * Valida respuesta por seguridad - VERSIÓN MEJORADA CON DETECCIÓN DE INFORMACIÓN CONFIDENCIAL
    */
   private validateResponse(response: string, securityContext: any): string {
     const lowerResponse = response.toLowerCase();
+
+    // 🚨 DETECCIÓN DE INFORMACIÓN CONFIDENCIAL
+    const confidentialPatterns = [
+      // Datos personales
+      /\b\d{8,9}\b/g, // RUTs (8-9 dígitos)
+      /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, // Números de tarjeta
+      /\b\d{10,}\b/g, // Números de cuenta bancaria
+      // Emails específicos (no genéricos)
+      /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/gi,
+      // Información técnica confidencial
+      /\b(password|contraseña|secret|token|api[_\s]?key|credential)\s*[:=]\s*\S+/gi,
+      /\b(database|db|schema|table|endpoint|api[_\s]?url)\s*[:=]\s*\S+/gi,
+      // Información financiera específica
+      /\$\s*\d{1,3}(?:\.\d{3})*(?:,\d{2})?\b/g, // Montos específicos grandes
+      // Información de sistema
+      /\b(server|servidor|host|ip|port|config|env)\s*[:=]\s*\S+/gi,
+    ];
+
+    for (const pattern of confidentialPatterns) {
+      if (pattern.test(response)) {
+        logger.warn('Respuesta bloqueada por contener información confidencial potencial', {
+          pattern: pattern.toString(),
+        });
+        return 'Lo siento, no puedo proporcionar esa información por razones de seguridad. Para consultas específicas, contacta al soporte técnico.';
+      }
+    }
 
     // Verificar si contiene información restringida
     const hasRestrictedContent = securityContext.restrictedTopics.some((topic: string) =>
@@ -3120,15 +3406,42 @@ Respuesta:
     );
 
     if (hasRestrictedContent) {
+      logger.warn('Respuesta bloqueada por tema restringido', { topic: 'restricted' });
       return 'Lo siento, no puedo proporcionar información sobre ese tema. Te recomiendo contactar al soporte técnico para obtener ayuda especializada.';
     }
 
     // Verificar si intenta ejecutar acciones
-    const actionKeywords = ['eliminar', 'borrar', 'modificar', 'cambiar', 'actualizar', 'crear'];
+    const actionKeywords = [
+      'eliminar',
+      'borrar',
+      'modificar',
+      'cambiar',
+      'actualizar',
+      'crear',
+      'ejecutar',
+      'correr',
+      'run',
+      'delete',
+      'update',
+      'create',
+    ];
     const hasActionKeywords = actionKeywords.some(keyword => lowerResponse.includes(keyword));
 
     if (hasActionKeywords && !securityContext.canExecuteActions) {
       return 'Para realizar cambios en tu cuenta o ejecutar acciones, por favor accede directamente a las secciones correspondientes del sistema o contacta al soporte.';
+    }
+
+    // 🚨 DETECCIÓN DE INFORMACIÓN DE OTROS USUARIOS
+    const otherUserPatterns = [
+      /\b(usuario|user|propietario|inquilino)\s+(?:llamado|nombre|es)\s+[A-Z][a-z]+\b/gi,
+      /\b(email|correo|teléfono|teléfono)\s+(?:de|del|es)\s+[^\s]+\b/gi,
+    ];
+
+    for (const pattern of otherUserPatterns) {
+      if (pattern.test(response)) {
+        logger.warn('Respuesta bloqueada por posible información de otros usuarios');
+        return 'No puedo proporcionar información sobre otros usuarios. Para consultas específicas, contacta al soporte.';
+      }
     }
 
     return response;

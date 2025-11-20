@@ -29,7 +29,7 @@ export const generalKnowledgeDataset: TrainingDataset = {
     {
       input: '¿Qué es Rent360?',
       output:
-        'Rent360 es una plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos, corredores y proveedores de servicios. Ofrecemos herramientas completas para la gestión de propiedades, contratos, pagos y mantenimiento, todo en un solo lugar.',
+        'Rent360 es una plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos, corredores y proveedores de servicios. Ofrecemos herramientas completas para la gestión de propiedades, contratos, pagos y mantenimiento, todo en un solo lugar.\n\n**¿Qué puedes hacer en Rent360?**\n\n🏠 **Si eres Propietario:**\n- Gestionar tus propiedades y contratos\n- Recibir pagos automáticos\n- Solicitar servicios de mantenimiento\n- Gestionar inquilinos y corredores\n\n🏡 **Si eres Inquilino:**\n- Buscar y arrendar propiedades\n- Pagar tu arriendo de forma segura\n- Solicitar mantenimiento\n- Gestionar tu contrato digital\n\n🔧 **Si eres Proveedor de Servicios:**\n- Ofrecer tus servicios (jardinería, plomería, electricidad, etc.)\n- Recibir solicitudes de trabajo\n- Gestionar tus pagos y ganancias\n\n🏢 **Si eres Corredor:**\n- Gestionar propiedades de tus clientes\n- Obtener comisiones automáticas\n- Gestionar contratos y clientes\n\n¿En qué te gustaría que te ayude?',
       intent: 'platform_info',
       category: 'general',
       context: 'user_asking_about_platform',
@@ -38,7 +38,7 @@ export const generalKnowledgeDataset: TrainingDataset = {
     {
       input: '¿Cómo funciona el sistema de pagos?',
       output:
-        'El sistema de pagos de Rent360 permite a los inquilinos pagar su arriendo de forma segura y automática. Los propietarios reciben los pagos directamente en su cuenta bancaria registrada. El sistema también maneja comisiones para corredores y proveedores de servicios.',
+        'El sistema de pagos de Rent360 es seguro y automatizado:\n\n**Para Inquilinos:**\n- Puedes pagar tu arriendo con múltiples métodos (Khipu, Stripe, PayPal, WebPay)\n- Los pagos se procesan automáticamente\n- Puedes configurar pagos recurrentes\n- Recibes confirmación inmediata\n\n**Para Propietarios:**\n- Recibes los pagos directamente en tu cuenta bancaria\n- Puedes ver el historial completo de pagos\n- Recibes notificaciones cuando hay pagos\n- Puedes exportar reportes financieros\n\n**Para Proveedores:**\n- Recibes pagos automáticos después de completar trabajos\n- La plataforma retiene una comisión (configurable por el admin)\n- Puedes ver tus ganancias en tiempo real\n- Los pagos se procesan de forma segura\n\n**Seguridad:**\n- Todos los pagos están encriptados\n- No se almacenan datos de tarjetas\n- Cumplimos con estándares de seguridad internacionales\n\n¿Tienes alguna pregunta específica sobre pagos?',
       intent: 'payment_system',
       category: 'payments',
       context: 'user_asking_about_payments',
@@ -53,6 +53,24 @@ export const generalKnowledgeDataset: TrainingDataset = {
       context: 'owner_asking_about_properties',
       confidence: 0.88,
     },
+    {
+      input: '¿Cómo busco propiedades?',
+      output:
+        'Para buscar propiedades en Rent360:\n\n1. **Usa el buscador principal** en la página de inicio\n2. **Filtra por:**\n   - Ubicación (comuna, ciudad, región)\n   - Tipo de propiedad (casa, departamento, etc.)\n   - Rango de precio\n   - Número de habitaciones y baños\n   - Características (estacionamiento, mascotas, etc.)\n\n3. **Explora resultados:**\n   - Ve fotos y detalles de cada propiedad\n   - Revisa la ubicación en el mapa\n   - Lee descripciones y características\n   - Contacta al propietario o corredor\n\n4. **Agenda visitas:**\n   - Solicita una visita directamente desde la plataforma\n   - El sistema te conecta con el propietario o corredor\n   - Recibe confirmación de la visita\n\n**Tip:** Puedes guardar propiedades como favoritas para revisarlas después.\n\n¿Buscas alguna propiedad específica?',
+      intent: 'search_properties',
+      category: 'properties',
+      context: 'user_searching_properties',
+      confidence: 0.92,
+    },
+    {
+      input: '¿Cuánto cuesta usar Rent360?',
+      output:
+        'Rent360 es **gratuito** para usuarios básicos. Solo se cobran comisiones cuando hay transacciones exitosas:\n\n**Comisiones (solo cuando hay transacciones):**\n\n📊 **Corredores:** 3% - 5% del valor del contrato (configurable)\n🔧 **Proveedores de Servicios:** Generalmente 8% del monto del servicio\n🏃 **Runners:** Variable según tipo de visita ($15.000 - $25.000 por visita)\n\n**Lo que es GRATIS:**\n- Registrarse y crear cuenta\n- Buscar propiedades\n- Publicar propiedades (para propietarios)\n- Gestionar contratos\n- Usar el sistema de mensajería\n- Solicitar servicios\n\n**Solo pagas cuando:**\n- Se firma un contrato (comisión al corredor)\n- Se completa un servicio (comisión al proveedor)\n- Se realiza una visita (pago al runner)\n\n**No hay costos ocultos ni suscripciones mensuales.**\n\n¿Tienes más preguntas sobre costos?',
+      intent: 'platform_costs',
+      category: 'general',
+      context: 'user_asking_about_costs',
+      confidence: 0.93,
+    },
   ],
   patterns: [
     '¿Qué es Rent360?',
@@ -60,6 +78,11 @@ export const generalKnowledgeDataset: TrainingDataset = {
     '¿Qué puedo hacer aquí?',
     '¿Cuáles son las funcionalidades?',
     '¿Cómo empiezo?',
+    'qué es rent360',
+    'cómo funciona rent360',
+    'qué ofrece rent360',
+    'para qué sirve rent360',
+    'cómo usar rent360',
   ],
   responses: [
     'Rent360 es tu plataforma integral de gestión inmobiliaria.',
@@ -138,7 +161,7 @@ export const tenantDataset: TrainingDataset = {
     {
       input: '¿Cómo pago mi arriendo?',
       output:
-        'Puedes pagar tu arriendo desde la sección de pagos en tu panel de inquilino. El sistema acepta transferencias bancarias, tarjetas de crédito y débito. También puedes configurar pagos automáticos para no preocuparte por las fechas de vencimiento.',
+        'Puedes pagar tu arriendo de forma fácil y segura:\n\n**Pasos para pagar:**\n1. Ve a tu panel de inquilino → Sección "Pagos"\n2. Verás tus pagos pendientes con fechas de vencimiento\n3. Selecciona el pago que quieres realizar\n4. Elige tu método de pago:\n   - **Khipu**: Transferencias y tarjetas (Chile)\n   - **Stripe**: Tarjetas internacionales\n   - **PayPal**: Billetera digital\n   - **WebPay**: Tarjetas (Chile)\n5. Completa el pago y recibirás confirmación inmediata\n\n**Pagos automáticos:**\n- Puedes configurar pagos recurrentes para que se cobren automáticamente\n- Recibirás recordatorios antes de cada pago\n- Puedes cancelar o modificar los pagos automáticos en cualquier momento\n\n**Seguridad:**\n- Todos los pagos están encriptados\n- No almacenamos datos de tarjetas\n- Recibes comprobante por email\n\n¿Necesitas ayuda con algún paso específico?',
       intent: 'pay_rent',
       category: 'payments',
       context: 'tenant_paying_rent',
@@ -147,7 +170,7 @@ export const tenantDataset: TrainingDataset = {
     {
       input: '¿Cómo solicito mantenimiento?',
       output:
-        'Para solicitar mantenimiento, ve a la sección de "Solicitar Mantenimiento" en tu panel. Describe el problema, adjunta fotos si es necesario y selecciona la urgencia. El sistema notificará automáticamente a tu propietario y proveedores de servicios.',
+        'Para solicitar mantenimiento en tu propiedad:\n\n**Pasos:**\n1. Ve a tu panel de inquilino → "Mantenimiento" o "Solicitar Mantenimiento"\n2. Haz clic en "Nueva Solicitud"\n3. Completa el formulario:\n   - **Tipo de problema**: Reparación, mantenimiento, emergencia, inspección\n   - **Descripción detallada**: Explica qué necesita arreglo\n   - **Urgencia**: Baja, Media, Alta, Crítica\n   - **Fotos**: Adjunta fotos del problema (opcional pero recomendado)\n4. Envía la solicitud\n\n**¿Qué pasa después?**\n- Tu propietario recibe una notificación\n- El sistema busca proveedores disponibles en tu zona\n- El propietario puede aprobar y asignar un proveedor\n- Recibirás actualizaciones del estado\n- Puedes comunicarte con el proveedor asignado\n\n**Tipos de urgencia:**\n- **Crítica**: Problemas de seguridad o que impiden habitar (ej: fuga de gas, sin electricidad)\n- **Alta**: Problemas que afectan el uso normal (ej: sin agua caliente, calefacción rota)\n- **Media**: Problemas que pueden esperar (ej: grifo que gotea, puerta que no cierra bien)\n- **Baja**: Mantenimiento preventivo o mejoras\n\n¿Qué tipo de problema necesitas reportar?',
       intent: 'request_maintenance',
       category: 'maintenance',
       context: 'tenant_requesting_maintenance',
@@ -244,6 +267,42 @@ export const brokerDataset: TrainingDataset = {
 export const providerDataset: TrainingDataset = {
   category: 'provider_specialized',
   examples: [
+    {
+      input: '¿Cómo creo mi cuenta para ofrecer servicios?',
+      output:
+        'Para crear tu cuenta como proveedor de servicios en Rent360, sigue estos pasos:\n\n1. Haz clic en "Registrarse" o "Crear cuenta" en la página principal\n2. Selecciona el tipo de usuario "Proveedor de Servicios" o "Provider"\n3. Completa el formulario con tus datos personales (nombre, email, teléfono)\n4. Crea una contraseña segura\n5. Verifica tu email\n6. Completa tu perfil con información sobre tus servicios (especialidad, experiencia, áreas de cobertura)\n7. Sube documentos requeridos (cédula, certificaciones si las tienes)\n8. Espera la verificación del administrador\n\nUna vez verificado, podrás recibir solicitudes de trabajo y comenzar a ofrecer tus servicios. ¿Necesitas ayuda con algún paso específico?',
+      intent: 'register_as_provider',
+      category: 'registration',
+      context: 'guest_registering_as_provider',
+      confidence: 0.95,
+    },
+    {
+      input: 'soy jardinero y quiero ofrecer mis servicios',
+      output:
+        '¡Perfecto! Como jardinero puedes ofrecer tus servicios en Rent360. Aquí te explico cómo:\n\n**Para registrarte como proveedor de jardinería:**\n\n1. **Crea tu cuenta**: Ve a "Registrarse" y selecciona "Proveedor de Servicios"\n2. **Completa tu perfil**: Incluye tu especialidad (jardinería, paisajismo, mantenimiento de jardines)\n3. **Define tus servicios**: Especifica qué servicios ofreces (poda, diseño, riego, fertilización, etc.)\n4. **Establece tu cobertura**: Indica en qué zonas trabajas\n5. **Configura precios**: Define tus tarifas por hora o por servicio\n6. **Sube documentos**: Cédula, certificaciones (si las tienes), fotos de trabajos anteriores\n\n**Una vez verificado, podrás:**\n- Recibir solicitudes de trabajo de propietarios\n- Ver detalles de cada solicitud (ubicación, urgencia, descripción)\n- Aceptar o rechazar trabajos\n- Comunicarte directamente con clientes\n- Recibir pagos automáticos después de completar trabajos\n- Ver tus ganancias y comisiones\n\n¿Quieres que te guíe en el proceso de registro?',
+      intent: 'register_gardener',
+      category: 'registration',
+      context: 'guest_registering_gardener',
+      confidence: 0.95,
+    },
+    {
+      input: 'quiero ofrecer servicios de jardinería',
+      output:
+        'Excelente, puedes ofrecer servicios de jardinería en Rent360. Para comenzar:\n\n**Pasos para registrarte:**\n1. Crea una cuenta seleccionando "Proveedor de Servicios"\n2. En tu perfil, especifica que tu especialidad es jardinería\n3. Describe los servicios que ofreces (poda, diseño, mantenimiento, etc.)\n4. Indica tus zonas de cobertura\n5. Sube fotos de trabajos anteriores para mostrar tu experiencia\n6. Configura tus precios\n\nUna vez verificado, recibirás solicitudes de trabajo de propietarios que necesiten servicios de jardinería. El sistema te conecta automáticamente con clientes en tu área.\n\n¿Tienes alguna pregunta sobre el proceso de registro?',
+      intent: 'offer_gardening_services',
+      category: 'registration',
+      context: 'guest_offering_gardening',
+      confidence: 0.93,
+    },
+    {
+      input: 'como puedo crear mi cuenta para ofrecer servicio de jardineria',
+      output:
+        'Para crear tu cuenta y ofrecer servicios de jardinería en Rent360:\n\n**Proceso de registro:**\n\n1. **Ir a Registrarse**: En la página principal, haz clic en "Registrarse" o "Crear cuenta"\n2. **Seleccionar tipo de usuario**: Elige "Proveedor de Servicios" o "Provider"\n3. **Datos básicos**: Completa nombre, email, teléfono y crea una contraseña\n4. **Verificar email**: Revisa tu correo y confirma tu cuenta\n5. **Completar perfil**:\n   - Especialidad: Jardinería\n   - Servicios que ofreces (poda, diseño, mantenimiento, riego, etc.)\n   - Zonas donde trabajas\n   - Precios por hora o por servicio\n   - Fotos de trabajos anteriores\n6. **Documentos**: Sube tu cédula y certificaciones si las tienes\n7. **Esperar verificación**: El administrador revisará tu perfil\n\n**Después de ser verificado:**\n- Recibirás solicitudes de trabajo de propietarios\n- Podrás aceptar trabajos que te interesen\n- El sistema procesará los pagos automáticamente\n- Verás tus ganancias y comisiones en tu panel\n\n¿Necesitas ayuda con algún paso específico?',
+      intent: 'register_gardening_provider',
+      category: 'registration',
+      context: 'guest_registering_gardening',
+      confidence: 0.95,
+    },
     {
       input: '¿Cómo veo las solicitudes de servicio?',
       output:
@@ -389,6 +448,103 @@ export const supportDataset: TrainingDataset = {
 };
 
 /**
+ * DATASET ESPECIALIZADO - REGISTRO DE USUARIOS (GUEST)
+ */
+export const registrationDataset: TrainingDataset = {
+  category: 'user_registration',
+  examples: [
+    {
+      input: '¿Cómo me registro?',
+      output:
+        'Para registrarte en Rent360, sigue estos pasos:\n\n1. Haz clic en "Registrarse" o "Crear cuenta" en la página principal\n2. Selecciona el tipo de usuario que mejor te describe:\n   - **Propietario**: Si tienes propiedades para arrendar\n   - **Inquilino**: Si buscas una propiedad para arrendar\n   - **Proveedor de Servicios**: Si ofreces servicios (jardinería, plomería, electricidad, etc.)\n   - **Corredor**: Si eres corredor inmobiliario\n   - **Runner**: Si quieres realizar visitas a propiedades\n3. Completa el formulario con tus datos personales\n4. Verifica tu email\n5. Completa tu perfil según tu tipo de usuario\n\n¿Qué tipo de usuario quieres ser?',
+      intent: 'general_registration',
+      category: 'registration',
+      context: 'guest_asking_registration',
+      confidence: 0.95,
+    },
+    {
+      input: 'quiero registrarme como proveedor',
+      output:
+        '¡Perfecto! Para registrarte como proveedor de servicios:\n\n**Pasos para registrarte:**\n1. Ve a "Registrarse" y selecciona "Proveedor de Servicios"\n2. Completa tus datos básicos (nombre, email, teléfono)\n3. Crea una contraseña segura\n4. Verifica tu email\n5. Completa tu perfil:\n   - Especialidad (jardinería, plomería, electricidad, etc.)\n   - Servicios que ofreces\n   - Zonas donde trabajas\n   - Precios\n   - Fotos de trabajos anteriores\n6. Sube documentos (cédula, certificaciones)\n7. Espera la verificación del administrador\n\n**Una vez verificado podrás:**\n- Recibir solicitudes de trabajo\n- Aceptar trabajos que te interesen\n- Comunicarte con clientes\n- Recibir pagos automáticos\n- Ver tus ganancias\n\n¿Qué tipo de servicios ofreces?',
+      intent: 'register_as_provider',
+      category: 'registration',
+      context: 'guest_registering_provider',
+      confidence: 0.95,
+    },
+    {
+      input: 'soy plomero y quiero ofrecer mis servicios',
+      output:
+        'Excelente, como plomero puedes ofrecer tus servicios en Rent360. Para registrarte:\n\n**Proceso de registro:**\n1. Crea tu cuenta seleccionando "Proveedor de Servicios"\n2. En tu perfil, especifica que tu especialidad es plomería\n3. Describe tus servicios (instalaciones, reparaciones, mantenimiento, etc.)\n4. Indica tus zonas de cobertura\n5. Configura tus precios (por hora o por servicio)\n6. Sube fotos de trabajos anteriores\n7. Sube tu cédula y certificaciones si las tienes\n\n**Después de ser verificado:**\n- Recibirás solicitudes de trabajo de propietarios e inquilinos\n- Podrás ver detalles de cada solicitud (ubicación, urgencia, descripción)\n- Aceptar o rechazar trabajos según tu disponibilidad\n- Comunicarte directamente con clientes\n- Recibir pagos automáticos después de completar trabajos\n- Ver tus ganancias y comisiones en tu panel\n\n¿Tienes alguna pregunta sobre el proceso?',
+      intent: 'register_plumber',
+      category: 'registration',
+      context: 'guest_registering_plumber',
+      confidence: 0.95,
+    },
+    {
+      input: 'soy electricista y quiero trabajar',
+      output:
+        'Perfecto, como electricista puedes trabajar en Rent360. Para comenzar:\n\n**Registro como proveedor:**\n1. Crea tu cuenta seleccionando "Proveedor de Servicios"\n2. Especifica que tu especialidad es electricidad\n3. Describe tus servicios (instalaciones, reparaciones, mantenimiento eléctrico, etc.)\n4. Define tus zonas de cobertura\n5. Establece tus precios\n6. Sube fotos de trabajos anteriores y certificaciones\n7. Sube tu cédula\n\n**Una vez verificado:**\n- Recibirás solicitudes de trabajo de propietarios e inquilinos\n- Podrás aceptar trabajos que te interesen\n- El sistema te conecta automáticamente con clientes\n- Los pagos se procesan automáticamente\n- Verás tus ganancias en tu panel\n\n¿Necesitas ayuda con algún paso?',
+      intent: 'register_electrician',
+      category: 'registration',
+      context: 'guest_registering_electrician',
+      confidence: 0.95,
+    },
+    {
+      input: 'quiero ofrecer servicios de mantenimiento',
+      output:
+        'Excelente, puedes ofrecer servicios de mantenimiento en Rent360. Para registrarte:\n\n**Pasos:**\n1. Crea tu cuenta como "Proveedor de Servicios"\n2. Especifica tu especialidad (mantenimiento general, específico, etc.)\n3. Describe los servicios que ofreces\n4. Indica tus zonas de cobertura\n5. Configura tus precios\n6. Sube fotos de trabajos anteriores\n7. Sube documentos (cédula, certificaciones)\n\n**Después de ser verificado:**\n- Recibirás solicitudes de mantenimiento de propietarios\n- Podrás ver detalles y aceptar trabajos\n- Comunicarte con clientes\n- Recibir pagos automáticos\n- Ver tus ganancias\n\n¿Qué tipo de mantenimiento ofreces?',
+      intent: 'register_maintenance',
+      category: 'registration',
+      context: 'guest_registering_maintenance',
+      confidence: 0.93,
+    },
+    {
+      input: 'necesito ayuda para registrarme',
+      output:
+        '¡Te ayudo con el registro! El proceso es simple:\n\n**Pasos generales:**\n1. Haz clic en "Registrarse" o "Crear cuenta" en la página principal\n2. Selecciona tu tipo de usuario:\n   - **Propietario**: Si tienes propiedades para arrendar\n   - **Inquilino**: Si buscas una propiedad\n   - **Proveedor de Servicios**: Si ofreces servicios (jardinería, plomería, etc.)\n   - **Corredor**: Si eres corredor inmobiliario\n   - **Runner**: Si quieres realizar visitas a propiedades\n\n3. Completa el formulario con tus datos básicos\n4. Verifica tu email (revisa tu bandeja de entrada)\n5. Completa tu perfil según tu tipo de usuario\n\n**Documentos que necesitarás:**\n- Cédula de identidad\n- Email válido\n- Teléfono de contacto\n- (Opcional) Certificaciones profesionales si eres proveedor\n\n**¿Qué tipo de usuario quieres ser?** Puedo darte información más específica según tu caso.',
+      intent: 'general_registration_help',
+      category: 'registration',
+      context: 'guest_needing_registration_help',
+      confidence: 0.94,
+    },
+    {
+      input: 'no puedo registrarme',
+      output:
+        'Te ayudo a resolver el problema de registro. Vamos paso a paso:\n\n**Problemas comunes y soluciones:**\n\n1. **"Email ya está en uso"**\n   - El email ya está registrado. Intenta iniciar sesión en su lugar\n   - Si olvidaste tu contraseña, usa "Recuperar contraseña"\n\n2. **"No recibo el email de verificación"**\n   - Revisa tu carpeta de spam/correo no deseado\n   - Verifica que escribiste el email correctamente\n   - Espera unos minutos (puede tardar hasta 5 minutos)\n   - Intenta reenviar el email de verificación\n\n3. **"Error al enviar formulario"**\n   - Verifica que todos los campos requeridos estén completos\n   - Asegúrate de que la contraseña tenga al menos 8 caracteres\n   - Verifica tu conexión a internet\n   - Intenta con otro navegador\n\n4. **"No puedo seleccionar tipo de usuario"**\n   - Asegúrate de hacer clic en la opción correcta\n   - Intenta refrescar la página\n\n**Si el problema persiste:**\n- Contacta al soporte técnico con tu email\n- Describe el error específico que ves\n- Incluye una captura de pantalla si es posible\n\n¿Cuál de estos problemas estás experimentando?',
+      intent: 'registration_troubleshooting',
+      category: 'registration',
+      context: 'guest_having_registration_issues',
+      confidence: 0.92,
+    },
+  ],
+  patterns: [
+    '¿Cómo me registro?',
+    'quiero registrarme',
+    'crear cuenta',
+    'ofrecer servicios',
+    'soy jardinero',
+    'soy plomero',
+    'soy electricista',
+    'quiero trabajar',
+    'registrarse como proveedor',
+    'cómo crear cuenta',
+    'necesito registrarme',
+    'quiero ser proveedor',
+    'cómo ofrecer servicios',
+    'registro de proveedor',
+    'crear cuenta proveedor',
+    'registrarse para trabajar',
+    'cómo me registro como proveedor',
+  ],
+  responses: [
+    'Te guío en el proceso de registro.',
+    'Te explico cómo crear tu cuenta.',
+    'Te ayudo a registrarte como proveedor.',
+    'Te muestro los pasos para ofrecer tus servicios.',
+  ],
+};
+
+/**
  * DATASET DE CONOCIMIENTO LEGAL Y REGULATORIO
  */
 export const legalDataset: TrainingDataset = {
@@ -450,6 +606,7 @@ export const allTrainingDatasets: TrainingDataset[] = [
   adminDataset,
   supportDataset,
   legalDataset,
+  registrationDataset,
 ];
 
 /**
@@ -468,6 +625,13 @@ export class TrainingDataManager {
    * Busca ejemplos por rol de usuario
    */
   static getExamplesByRole(role: string): TrainingExample[] {
+    // 🚀 MEJORADO: Incluir dataset de registro para usuarios guest
+    if (role === 'guest' || role === 'GUEST' || role === 'anonymous') {
+      const registrationExamples = this.getExamplesByCategory('user_registration');
+      const generalExamples = this.getExamplesByCategory('general_knowledge');
+      return [...registrationExamples, ...generalExamples];
+    }
+
     const roleDatasetMap: Record<string, string> = {
       OWNER: 'owner_specialized',
       TENANT: 'tenant_specialized',
@@ -478,7 +642,11 @@ export class TrainingDataManager {
     };
 
     const category = roleDatasetMap[role] || 'general_knowledge';
-    return this.getExamplesByCategory(category);
+    const roleExamples = this.getExamplesByCategory(category);
+    const generalExamples = this.getExamplesByCategory('general_knowledge');
+
+    // Combinar ejemplos del rol con conocimiento general
+    return [...roleExamples, ...generalExamples];
   }
 
   /**
@@ -500,26 +668,103 @@ export class TrainingDataManager {
     userRole: string,
     context: string
   ): string | null {
+    const inputLower = userInput.toLowerCase();
+
+    // 🚀 MEJORADO: Buscar primero en dataset de registro para usuarios guest
+    if (userRole === 'guest' || userRole === 'GUEST' || userRole === 'anonymous') {
+      const registrationExamples = this.getExamplesByCategory('user_registration');
+
+      // Buscar coincidencias más flexibles
+      const registrationMatch = registrationExamples.find(ex => {
+        const exInputLower = ex.input.toLowerCase();
+        // Coincidencia exacta o parcial
+        if (inputLower.includes(exInputLower) || exInputLower.includes(inputLower)) {
+          return true;
+        }
+        // Buscar palabras clave importantes
+        const keywords = [
+          'jardinero',
+          'jardinería',
+          'plomero',
+          'electricista',
+          'mantenimiento',
+          'ofrecer',
+          'servicios',
+          'registro',
+          'registrarse',
+          'crear',
+          'cuenta',
+          'proveedor',
+          'provider',
+          'trabajar',
+        ];
+        const exKeywords = keywords.filter(k => exInputLower.includes(k));
+        const inputKeywords = keywords.filter(k => inputLower.includes(k));
+        return (
+          exKeywords.length > 0 &&
+          inputKeywords.length > 0 &&
+          exKeywords.some(k => inputKeywords.includes(k))
+        );
+      });
+
+      if (registrationMatch) {
+        return registrationMatch.output;
+      }
+    }
+
+    // Buscar en ejemplos específicos del rol
     const examples = this.getExamplesByRole(userRole);
 
-    // Buscar ejemplo similar
-    const similarExample = examples.find(
-      ex =>
-        ex.input.toLowerCase().includes(userInput.toLowerCase()) ||
-        userInput.toLowerCase().includes(ex.input.toLowerCase())
-    );
+    // Buscar ejemplo similar con coincidencias más flexibles
+    const similarExample = examples.find(ex => {
+      const exInputLower = ex.input.toLowerCase();
+      // Coincidencia exacta o parcial
+      if (inputLower.includes(exInputLower) || exInputLower.includes(inputLower)) {
+        return true;
+      }
+      // Buscar palabras clave importantes en ambos
+      const importantWords = inputLower.split(/\s+/).filter(w => w.length > 3);
+      const exImportantWords = exInputLower.split(/\s+/).filter(w => w.length > 3);
+      const commonWords = importantWords.filter(w => exImportantWords.includes(w));
+      return commonWords.length >= 2; // Al menos 2 palabras en común
+    });
 
     if (similarExample) {
       return similarExample.output;
     }
 
-    // Buscar en conocimiento general
+    // Buscar en conocimiento general con búsqueda más flexible
     const generalExamples = this.getExamplesByCategory('general_knowledge');
-    const generalMatch = generalExamples.find(ex =>
-      ex.input.toLowerCase().includes(userInput.toLowerCase())
-    );
+    const generalMatch = generalExamples.find(ex => {
+      const exInputLower = ex.input.toLowerCase();
+      return (
+        inputLower.includes(exInputLower) ||
+        exInputLower.includes(inputLower) ||
+        exInputLower.split(/\s+/).some(w => inputLower.includes(w) && w.length > 4)
+      );
+    });
 
-    return generalMatch ? generalMatch.output : null;
+    if (generalMatch) {
+      return generalMatch.output;
+    }
+
+    // 🚀 NUEVO: Buscar en todos los datasets si no hay coincidencia específica
+    for (const dataset of allTrainingDatasets) {
+      const match = dataset.examples.find(ex => {
+        const exInputLower = ex.input.toLowerCase();
+        // Buscar palabras clave importantes
+        const importantWords = inputLower.split(/\s+/).filter(w => w.length > 3);
+        const exImportantWords = exInputLower.split(/\s+/).filter(w => w.length > 3);
+        const commonWords = importantWords.filter(w => exImportantWords.includes(w));
+        return commonWords.length >= 2;
+      });
+
+      if (match) {
+        return match.output;
+      }
+    }
+
+    return null;
   }
 
   /**
