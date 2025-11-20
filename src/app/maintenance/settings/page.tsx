@@ -159,6 +159,7 @@ export default function MaintenanceSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [commissionPercentage, setCommissionPercentage] = useState(10);
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -338,6 +339,21 @@ export default function MaintenanceSettingsPage() {
 
       // Cargar cuenta bancaria
       await loadBankAccount();
+
+      // Cargar porcentaje de comisión desde la configuración del sistema
+      try {
+        const commissionResponse = await fetch('/api/provider/stats', {
+          credentials: 'include',
+        });
+        if (commissionResponse.ok) {
+          const commissionData = await commissionResponse.json();
+          if (commissionData.success && commissionData.data?.commissionPercentage) {
+            setCommissionPercentage(commissionData.data.commissionPercentage);
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading commission percentage:', error);
+      }
     } catch (error) {
       logger.error('Error loading maintenance settings:', error);
     } finally {
@@ -1295,9 +1311,9 @@ export default function MaintenanceSettingsPage() {
                       </h4>
                       <div className="text-sm text-blue-800 space-y-2">
                         <p>
-                          <strong>Comisión de Servicio (10%):</strong> Rent360 cobra una comisión
-                          justa por conectar clientes con proveedores verificados y garantizar
-                          transacciones seguras.
+                          <strong>Comisión de Servicio ({commissionPercentage}%):</strong> Rent360
+                          cobra una comisión justa por conectar clientes con proveedores verificados
+                          y garantizar transacciones seguras.
                         </p>
                         <p>
                           <strong>Seguridad Garantizada:</strong> Todas las transacciones están
@@ -1334,18 +1350,38 @@ export default function MaintenanceSettingsPage() {
                             <p>
                               <strong>Trabajo de $50.000:</strong>
                             </p>
-                            <p>Comisión Plataforma (10%): $5.000</p>
                             <p>
-                              <strong>Recibes: $45.000</strong>
+                              Comisión Plataforma ({commissionPercentage}%): $
+                              {Math.round((50000 * commissionPercentage) / 100).toLocaleString(
+                                'es-CL'
+                              )}
+                            </p>
+                            <p>
+                              <strong>
+                                Recibes: $
+                                {(
+                                  50000 - Math.round((50000 * commissionPercentage) / 100)
+                                ).toLocaleString('es-CL')}
+                              </strong>
                             </p>
                           </div>
                           <div>
                             <p>
                               <strong>Trabajo de $100.000:</strong>
                             </p>
-                            <p>Comisión Plataforma (10%): $10.000</p>
                             <p>
-                              <strong>Recibes: $90.000</strong>
+                              Comisión Plataforma ({commissionPercentage}%): $
+                              {Math.round((100000 * commissionPercentage) / 100).toLocaleString(
+                                'es-CL'
+                              )}
+                            </p>
+                            <p>
+                              <strong>
+                                Recibes: $
+                                {(
+                                  100000 - Math.round((100000 * commissionPercentage) / 100)
+                                ).toLocaleString('es-CL')}
+                              </strong>
                             </p>
                           </div>
                         </div>

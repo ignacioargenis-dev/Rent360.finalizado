@@ -434,14 +434,15 @@ Equipo de Mantenimiento Rent360`;
           </Card>
         </div>
 
-        {/* Filtros y búsqueda */}
+        {/* Lista de Propiedades */}
         <Card>
           <CardHeader>
-            <CardTitle>Filtros y Búsqueda</CardTitle>
-            <CardDescription>Filtra y busca propiedades específicas</CardDescription>
+            <CardTitle>Propiedades ({filteredProperties.length})</CardTitle>
+            <CardDescription>Propiedades donde realizas trabajos de mantenimiento</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
+            {/* Filtros y búsqueda */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -483,6 +484,112 @@ Equipo de Mantenimiento Rent360`;
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
+            </div>
+
+            {/* Lista de propiedades */}
+            <div className="space-y-4">
+              {filteredProperties.length === 0 ? (
+                <div className="text-center py-12">
+                  <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No hay propiedades encontradas
+                  </h3>
+                  <p className="text-gray-600">
+                    {properties.length === 0
+                      ? 'Aún no tienes propiedades asignadas.'
+                      : 'No se encontraron propiedades que coincidan con los filtros aplicados.'}
+                  </p>
+                </div>
+              ) : (
+                filteredProperties.map(property => (
+                  <Card key={property.id} className="border-l-4 border-l-blue-500">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {property.address}
+                            </h3>
+                            {getStatusBadge(property.status)}
+                            {getTypeBadge(property.propertyType)}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <MapPin className="w-4 h-4 text-gray-400" />
+                                <span>
+                                  {property.commune}, {property.region}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <User className="w-4 h-4 text-gray-400" />
+                                <span>{property.ownerName}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Phone className="w-4 h-4 text-gray-400" />
+                                <span>{property.ownerPhone}</span>
+                              </div>
+                            </div>
+
+                            <div>
+                              <div className="mb-2">
+                                <span className="font-medium">Trabajos Totales: </span>
+                                <span>{property.totalJobs}</span>
+                              </div>
+                              <div className="mb-2">
+                                <span className="font-medium">Trabajos Activos: </span>
+                                <span className="text-blue-600 font-semibold">
+                                  {property.activeJobs}
+                                </span>
+                              </div>
+                              <div className="mb-2">
+                                <span className="font-medium">Trabajos Completados: </span>
+                                <span className="text-green-600 font-semibold">
+                                  {property.completedJobs}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="font-medium">Ingresos Totales: </span>
+                                <span className="text-green-600 font-semibold">
+                                  {formatCurrency(property.totalRevenue)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewPropertyDetails(property)}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Ver Detalles
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewPropertyJobs(property)}
+                          >
+                            <Wrench className="w-4 h-4 mr-2" />
+                            Ver Trabajos
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleContactOwner(property)}
+                          >
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Contactar
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

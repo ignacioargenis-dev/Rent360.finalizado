@@ -80,61 +80,74 @@ export default function MaintenanceCalendarPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for demonstration
-      const mockJobs: CalendarJob[] = [
-        {
-          id: '1',
-          title: 'Reparación de cañería',
-          propertyAddress: 'Av. Las Condes 1234, Depto 5B',
-          ownerName: 'María González',
-          ownerPhone: '+56912345678',
-          date: '2024-01-15',
-          startTime: '09:00',
-          endTime: '11:00',
-          status: 'confirmed',
-          priority: 'high',
-          maintenanceType: 'plumbing',
-          estimatedCost: 45000,
-          notes: 'Cliente solicita reparación urgente',
+      // Cargar trabajos reales desde la API
+      const response = await fetch('/api/maintenance/jobs', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          title: 'Mantenimiento eléctrico',
-          propertyAddress: 'Providencia 567',
-          ownerName: 'Carlos Rodríguez',
-          ownerPhone: '+56987654321',
-          date: '2024-01-18',
-          startTime: '14:00',
-          endTime: '16:00',
-          status: 'scheduled',
-          priority: 'medium',
-          maintenanceType: 'electrical',
-          estimatedCost: 80000,
-        },
-        {
-          id: '3',
-          title: 'Limpieza general',
-          propertyAddress: 'Ñuñoa 890',
-          ownerName: 'Ana López',
-          ownerPhone: '+56911223344',
-          date: '2024-01-20',
-          startTime: '10:00',
-          endTime: '12:00',
-          status: 'scheduled',
-          priority: 'low',
-          maintenanceType: 'cleaning',
-          estimatedCost: 30000,
-        },
-      ];
+        credentials: 'include',
+      });
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setJobs(mockJobs);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success && data.jobs) {
+        // Transformar trabajos al formato del calendario
+        const calendarJobs: CalendarJob[] = data.jobs.map((job: any) => {
+          const scheduledDate = job.scheduledDate
+            ? new Date(job.scheduledDate)
+            : job.completedDate
+              ? new Date(job.completedDate)
+              : new Date();
+          const completedDate = job.completedDate ? new Date(job.completedDate) : null;
+
+          // Determinar estado
+          let status: CalendarJob['status'] = 'scheduled';
+          if (job.status === 'completed' || job.status === 'COMPLETED') {
+            status = 'completed';
+          } else if (job.status === 'in_progress' || job.status === 'IN_PROGRESS') {
+            status = 'in_progress';
+          } else if (job.status === 'quote_approved' || job.status === 'QUOTE_APPROVED') {
+            status = 'confirmed';
+          } else if (job.status === 'cancelled' || job.status === 'CANCELLED') {
+            status = 'cancelled';
+          }
+
+          return {
+            id: job.id,
+            title: job.title,
+            propertyAddress: job.propertyAddress,
+            ownerName: job.propertyOwner,
+            ownerPhone: job.ownerPhone,
+            date: scheduledDate.toISOString().split('T')[0],
+            startTime: scheduledDate.toLocaleTimeString('es-CL', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            endTime: completedDate
+              ? completedDate.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+              : scheduledDate.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+            status,
+            priority: job.priority || 'medium',
+            maintenanceType: job.maintenanceType || 'other',
+            estimatedCost: job.estimatedCost || 0,
+            notes: job.notes,
+          };
+        });
+
+        setJobs(calendarJobs);
+      } else {
+        setJobs([]);
+      }
     } catch (error) {
       logger.error('Error loading calendar jobs:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar el calendario');
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -145,7 +158,7 @@ export default function MaintenanceCalendarPage() {
       scheduled: { label: 'Programado', color: 'bg-blue-100 text-blue-800' },
       confirmed: { label: 'Confirmado', color: 'bg-green-100 text-green-800' },
       in_progress: { label: 'En Progreso', color: 'bg-yellow-100 text-yellow-800' },
-      completed: { label: 'Completado', color: 'bg-gray-100 text-gray-800' },
+      completed: { label: 'Completado', color: 'bg-emerald-100 text-emerald-800' },
       cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.scheduled;
@@ -362,6 +375,8 @@ export default function MaintenanceCalendarPage() {
               {/* Calendar days */}
               {daysInMonth.map((day, index) => {
                 const dayJobs = day ? getJobsForDate(day) : [];
+                const completedJobs = dayJobs.filter(job => job.status === 'completed');
+                const scheduledJobs = dayJobs.filter(job => job.status !== 'completed');
                 const isToday =
                   day === new Date().getDate() &&
                   currentDate.getMonth() === new Date().getMonth() &&
@@ -371,9 +386,10 @@ export default function MaintenanceCalendarPage() {
                   <div
                     key={index}
                     className={`
-                      min-h-24 p-2 border rounded-lg cursor-pointer transition-colors
+                      min-h-24 p-2 border rounded-lg cursor-pointer transition-colors relative
                       ${day ? 'hover:bg-gray-50' : ''}
                       ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'}
+                      ${completedJobs.length > 0 ? 'bg-emerald-50 border-emerald-200' : ''}
                     `}
                     onClick={() =>
                       day &&
@@ -384,13 +400,20 @@ export default function MaintenanceCalendarPage() {
                   >
                     {day && (
                       <>
-                        <div
-                          className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-900'}`}
-                        >
-                          {day}
+                        <div className="flex items-center justify-between mb-1">
+                          <div
+                            className={`text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-900'}`}
+                          >
+                            {day}
+                          </div>
+                          {completedJobs.length > 0 && (
+                            <div className="bg-emerald-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                              {completedJobs.length}
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-1">
-                          {dayJobs.slice(0, 2).map(job => (
+                          {scheduledJobs.slice(0, 2).map(job => (
                             <div
                               key={job.id}
                               className={`
@@ -410,6 +433,12 @@ export default function MaintenanceCalendarPage() {
                               {job.startTime} {job.title}
                             </div>
                           ))}
+                          {completedJobs.length > 0 && (
+                            <div className="text-xs p-1 rounded bg-emerald-100 text-emerald-800 font-medium">
+                              ✓ {completedJobs.length} completado
+                              {completedJobs.length > 1 ? 's' : ''}
+                            </div>
+                          )}
                           {dayJobs.length > 2 && (
                             <div className="text-xs text-gray-500 text-center">
                               +{dayJobs.length - 2} más

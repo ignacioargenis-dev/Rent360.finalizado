@@ -190,17 +190,38 @@ export default function MaintenanceEarningsPage() {
         }
       }
 
-      // Calcular estadísticas mensuales (últimos 3 meses)
-      // Nota: Por ahora usar datos aproximados. En el futuro se podría crear una API específica
-      const monthlyStatsData = [];
+      // Calcular estadísticas mensuales reales desde los pagos
+      const monthlyStatsData: MonthlyStats[] = [];
       const now = new Date();
+      const paymentsByMonth = new Map<string, { earnings: number; jobs: number }>();
+
+      // Agrupar pagos por mes
+      payments.forEach(payment => {
+        if (payment.status === 'completed' && payment.date) {
+          const paymentDate = new Date(payment.date);
+          const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
+          const monthName = paymentDate.toLocaleDateString('es-CL', { month: 'long' });
+
+          if (!paymentsByMonth.has(monthKey)) {
+            paymentsByMonth.set(monthKey, { earnings: 0, jobs: 0 });
+          }
+
+          const monthData = paymentsByMonth.get(monthKey)!;
+          monthData.earnings += payment.amount;
+          monthData.jobs += 1;
+        }
+      });
+
+      // Crear estadísticas para los últimos 3 meses
       for (let i = 2; i >= 0; i--) {
-        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+        const monthData = paymentsByMonth.get(monthKey) || { earnings: 0, jobs: 0 };
 
         monthlyStatsData.push({
-          month: monthStart.toLocaleDateString('es-CL', { month: 'long' }),
-          earnings: Math.floor((loadedStats.monthlyEarnings || 0) * (0.7 + Math.random() * 0.6)),
-          jobs: Math.floor((loadedStats.completedJobs || 0) / 3),
+          month: monthDate.toLocaleDateString('es-CL', { month: 'long' }),
+          earnings: monthData.earnings,
+          jobs: monthData.jobs,
           rating: loadedStats.averageRating || 0,
         });
       }

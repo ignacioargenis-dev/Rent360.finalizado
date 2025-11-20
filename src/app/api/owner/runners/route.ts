@@ -58,12 +58,12 @@ export async function GET(request: NextRequest) {
             visitsAsRunner: true,
           },
         },
-        // Última calificación promedio
-        runnerRatingsGiven: {
+        // Calificaciones recibidas (del sistema unificado)
+        ratingsReceived: {
           select: {
             overallRating: true,
           },
-          take: 10, // Últimas 10 calificaciones para calcular promedio
+          take: 50, // Últimas 50 calificaciones para calcular promedio
           orderBy: {
             createdAt: 'desc',
           },
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     // Calcular estadísticas para cada corredor
     const runnersWithStats = runners.map(runner => {
-      const ratings = runner.runnerRatingsGiven;
+      const ratings = runner.ratingsReceived;
       const averageRating =
         ratings.length > 0
           ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length
