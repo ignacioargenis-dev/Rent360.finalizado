@@ -305,13 +305,22 @@ export default function CalificacionesPage() {
         setRatingsToGive(ratingsToGive);
       }
     } catch (error) {
+      console.error('🔍 [Owner Ratings Page] Error loading ratings data:', {
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      });
+
       logger.error('Error loading ratings data:', {
         error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
       });
 
       // En caso de error, mostrar arrays vacíos
       setRatings([]);
       setRatingsToGive([]);
+
+      // Mostrar mensaje de error al usuario
+      toast.error('Error al cargar las calificaciones. Por favor, intenta de nuevo.');
     } finally {
       setLoading(false);
     }
