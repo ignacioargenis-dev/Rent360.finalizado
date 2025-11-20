@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useRouter } from 'next/navigation';
+import UserRatingInfoButton from '@/components/ratings/UserRatingInfoButton';
 
 interface Tenant {
   id: string;
@@ -449,6 +450,13 @@ export default function InquilinosPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
                         <h3 className="text-lg font-semibold text-gray-900">{tenant.name}</h3>
+                        <UserRatingInfoButton
+                          userId={tenant.id || null}
+                          userName={tenant.name}
+                          size="sm"
+                          variant="ghost"
+                          label="Ver calificaciones"
+                        />
                         <Badge className={getStatusColor(tenant.status)}>{tenant.status}</Badge>
                         <Badge className={getPaymentStatusColor(tenant.paymentStatus)}>
                           {tenant.paymentStatus}

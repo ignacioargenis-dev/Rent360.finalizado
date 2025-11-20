@@ -41,6 +41,7 @@ import {
   Check,
   X,
 } from 'lucide-react';
+import UserRatingInfoButton from '@/components/ratings/UserRatingInfoButton';
 
 export default function BrokerServicesPage() {
   const router = useRouter();
@@ -152,6 +153,13 @@ export default function BrokerServicesPage() {
     } catch (error) {
       toast.error('Error al rechazar invitación');
     }
+  };
+
+  const handleMessageBroker = (brokerId?: string) => {
+    if (!brokerId) {
+      return;
+    }
+    router.push(`/owner/messages?userId=${brokerId}`);
   };
 
   useEffect(() => {
@@ -451,6 +459,14 @@ export default function BrokerServicesPage() {
                           <h4 className="text-sm font-medium text-gray-900">
                             {invitation.broker?.name || 'Corredor'}
                           </h4>
+                          <UserRatingInfoButton
+                            userId={invitation.broker?.id || null}
+                            userName={invitation.broker?.name}
+                            size="sm"
+                            variant="ghost"
+                            label="Ver calificaciones"
+                            className="text-xs"
+                          />
                           <Badge variant="outline" className="text-xs">
                             {invitation.invitationType === 'SERVICE_OFFER'
                               ? 'Oferta de Servicios'
@@ -579,9 +595,18 @@ export default function BrokerServicesPage() {
                         <div className="h-10 w-10 rounded-full bg-green-200 flex items-center justify-center">
                           <User className="h-5 w-5 text-green-700" />
                         </div>
-                        <div>
-                          <p className="font-semibold">{request.assignedBroker.name}</p>
-                          <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold">{request.assignedBroker.name}</p>
+                            <UserRatingInfoButton
+                              userId={request.assignedBroker.id || null}
+                              userName={request.assignedBroker.name}
+                              size="sm"
+                              variant="ghost"
+                              label="Ver calificaciones"
+                            />
+                          </div>
+                          <div className="flex items-center gap-3 text-sm text-gray-600 flex-wrap mt-1">
                             <span className="flex items-center gap-1">
                               <Mail className="h-3 w-3" />
                               {request.assignedBroker.email}
@@ -592,6 +617,17 @@ export default function BrokerServicesPage() {
                                 {request.assignedBroker.phone}
                               </span>
                             )}
+                          </div>
+                          <div className="mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-1"
+                              onClick={() => handleMessageBroker(request.assignedBroker.id)}
+                            >
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              Enviar mensaje
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -616,8 +652,17 @@ export default function BrokerServicesPage() {
                                 <User className="h-5 w-5 text-blue-600" />
                               </div>
                               <div>
-                                <p className="font-semibold">{response.broker.name}</p>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-semibold">{response.broker.name}</p>
+                                  <UserRatingInfoButton
+                                    userId={response.broker.id || null}
+                                    userName={response.broker.name}
+                                    size="sm"
+                                    variant="ghost"
+                                    label="Ver calificaciones"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap mt-1">
                                   <Mail className="h-3 w-3" />
                                   {response.broker.email}
                                   {response.broker.phone && (
@@ -652,33 +697,43 @@ export default function BrokerServicesPage() {
                             </div>
                           )}
 
-                          {response.status === 'SENT' && (
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleResponse(request.id, response.id, 'accept')}
-                              >
-                                <Check className="h-4 w-4 mr-1" />
-                                Aceptar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleResponse(request.id, response.id, 'view')}
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                Marcar Vista
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleResponse(request.id, response.id, 'reject')}
-                              >
-                                <X className="h-4 w-4 mr-1" />
-                                Rechazar
-                              </Button>
-                            </div>
-                          )}
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMessageBroker(response.broker.id)}
+                            >
+                              <MessageSquare className="h-4 w-4 mr-1" />
+                              Enviar mensaje
+                            </Button>
+                            {response.status === 'SENT' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleResponse(request.id, response.id, 'accept')}
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Aceptar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleResponse(request.id, response.id, 'view')}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Marcar Vista
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleResponse(request.id, response.id, 'reject')}
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  Rechazar
+                                </Button>
+                              </>
+                            )}
+                          </div>
 
                           <p className="text-xs text-gray-500 mt-2">
                             Enviada: {new Date(response.createdAt).toLocaleString()}

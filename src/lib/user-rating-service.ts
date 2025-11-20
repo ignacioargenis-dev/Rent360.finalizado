@@ -100,6 +100,21 @@ export interface UserRatingSummary {
     quality?: number | undefined;
     punctuality?: number | undefined;
   };
+  recentReviews: Array<{
+    id: string;
+    overallRating: number;
+    comment?: string | null;
+    response?: string | null;
+    responseDate?: string | null;
+    createdAt: string;
+    contextType?: string | null;
+    contextId?: string | null;
+    fromUser?: {
+      id: string;
+      name: string;
+      avatar?: string | null;
+    } | null;
+  }>;
 }
 
 /**
@@ -381,9 +396,12 @@ export class UserRatingService {
       const ratings = await db.userRating.findMany({
         where: {
           toUserId: userId,
-          isPublic: true,
+          NOT: {
+            isPublic: false,
+          },
         },
         select: {
+          id: true,
           overallRating: true,
           communicationRating: true,
           reliabilityRating: true,
@@ -393,6 +411,22 @@ export class UserRatingService {
           positiveFeedback: true,
           improvementAreas: true,
           isVerified: true,
+          comment: true,
+          response: true,
+          responseDate: true,
+          createdAt: true,
+          contextType: true,
+          contextId: true,
+          fromUser: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
         },
       });
 
@@ -409,6 +443,7 @@ export class UserRatingService {
           verifiedRatingsPercentage: 0,
           overallRanking: 0,
           categoryRankings: {},
+          recentReviews: [],
         };
       }
 
@@ -440,8 +475,8 @@ export class UserRatingService {
       );
 
       // Análisis de feedback
-      const allPositiveFeedback = ratings.flatMap(r => r.positiveFeedback);
-      const allImprovementAreas = ratings.flatMap(r => r.improvementAreas);
+      const allPositiveFeedback = ratings.flatMap(r => r.positiveFeedback || []);
+      const allImprovementAreas = ratings.flatMap(r => r.improvementAreas || []);
 
       const commonPositiveFeedback = this.getMostCommonItems(allPositiveFeedback, 5);
       const commonImprovementAreas = this.getMostCommonItems(allImprovementAreas, 5);
@@ -452,6 +487,24 @@ export class UserRatingService {
 
       // Calcular ranking general (esto sería más complejo en producción)
       const overallRanking = Math.floor(Math.random() * 100) + 1; // Mock para demo
+
+      const recentReviews = ratings.slice(0, 5).map(rating => ({
+        id: rating.id,
+        overallRating: rating.overallRating,
+        comment: rating.comment,
+        response: rating.response,
+        responseDate: rating.responseDate ? rating.responseDate.toISOString() : null,
+        createdAt: rating.createdAt.toISOString(),
+        contextType: rating.contextType,
+        contextId: rating.contextId,
+        fromUser: rating.fromUser
+          ? {
+              id: rating.fromUser.id,
+              name: rating.fromUser.name,
+              avatar: rating.fromUser.avatar,
+            }
+          : null,
+      }));
 
       return {
         userId,
@@ -476,6 +529,7 @@ export class UserRatingService {
           ...(averageQuality && { quality: Math.floor(Math.random() * 100) + 1 }),
           ...(averagePunctuality && { punctuality: Math.floor(Math.random() * 100) + 1 }),
         },
+        recentReviews,
       };
     } catch (error) {
       logger.error('Error obteniendo resumen de calificaciones:', {

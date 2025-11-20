@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { Info, Loader2, Star } from 'lucide-react';
+import { CornerDownRight, Info, Loader2, MessageSquare, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,6 +13,18 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+
+const formatLocaleDate = (value: string) => {
+  try {
+    return new Date(value).toLocaleDateString('es-CL', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return value;
+  }
+};
 
 type RatingSummary = {
   userId: string;
@@ -29,6 +41,20 @@ type RatingSummary = {
   commonImprovementAreas?: string[];
   responseRate?: number;
   verifiedRatingsPercentage?: number;
+  recentReviews?: Array<{
+    id: string;
+    overallRating: number;
+    comment?: string | null;
+    response?: string | null;
+    responseDate?: string | null;
+    createdAt: string;
+    contextType?: string | null;
+    fromUser?: {
+      id: string;
+      name: string;
+      avatar?: string | null;
+    } | null;
+  }>;
 };
 
 type RatingButtonProps = React.ComponentProps<typeof Button>;
@@ -106,6 +132,20 @@ export default function UserRatingInfoButton({
     return entries.filter(entry => !Number.isNaN(entry.label)).sort((a, b) => b.label - a.label);
   }, [summary]);
 
+  const renderStars = (value: number, size: 'sm' | 'md' = 'md') => (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map(star => (
+        <Star
+          key={`${value}-${star}-${size}`}
+          className={cn(
+            size === 'sm' ? 'w-3.5 h-3.5' : 'w-5 h-5',
+            star <= Math.round(value) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+          )}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <>
       <Button
@@ -161,19 +201,7 @@ export default function UserRatingInfoButton({
                       {summary.totalRatings === 1 ? '' : 'es'}
                     </p>
                   </div>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <Star
-                        key={star}
-                        className={cn(
-                          'w-5 h-5',
-                          star <= Math.round(summary.averageRating)
-                            ? 'text-yellow-400 fill-yellow-400'
-                            : 'text-gray-300'
-                        )}
-                      />
-                    ))}
-                  </div>
+                  {renderStars(summary.averageRating)}
                 </div>
 
                 <Separator />
@@ -307,6 +335,70 @@ export default function UserRatingInfoButton({
                           <p className="font-semibold text-gray-800">
                             {Math.round(summary.verifiedRatingsPercentage)}%
                           </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {summary.recentReviews && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Comentarios recientes
+                      </p>
+                      {summary.recentReviews.length === 0 ? (
+                        <p className="text-xs text-gray-500">
+                          No hay comentarios públicos para mostrar todavía.
+                        </p>
+                      ) : (
+                        <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                          {summary.recentReviews.map(review => (
+                            <div
+                              key={review.id}
+                              className="rounded-lg border border-gray-100 bg-gray-50/70 p-3"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">
+                                    {review.fromUser?.name || 'Usuario Rent360'}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {formatLocaleDate(review.createdAt)}
+                                  </p>
+                                </div>
+                                {renderStars(review.overallRating, 'sm')}
+                              </div>
+                              {review.comment ? (
+                                <div className="mt-2 text-sm text-gray-700 whitespace-pre-line">
+                                  <span className="inline-flex items-center text-gray-500 text-xs uppercase tracking-wide mb-1">
+                                    <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                                    Comentario
+                                  </span>
+                                  {review.comment}
+                                </div>
+                              ) : (
+                                <p className="mt-2 text-xs text-gray-500">
+                                  Este usuario no dejó comentarios escritos.
+                                </p>
+                              )}
+                              {review.response && (
+                                <div className="mt-3 border-l-2 border-emerald-200 pl-3 text-sm text-gray-700">
+                                  <p className="text-xs uppercase font-semibold text-emerald-600 flex items-center gap-1">
+                                    <CornerDownRight className="h-3.5 w-3.5" />
+                                    Respuesta del usuario
+                                  </p>
+                                  <p className="mt-1 whitespace-pre-line">{review.response}</p>
+                                  {review.responseDate && (
+                                    <p className="text-[11px] text-gray-500 mt-1">
+                                      {formatLocaleDate(review.responseDate)}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>

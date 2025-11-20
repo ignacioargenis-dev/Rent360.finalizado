@@ -81,87 +81,117 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       propertyRegion: maintenance.property.region,
     });
 
-    // Buscar prestadores disponibles (más flexible - mostrar todos los activos y verificados)
-    // El filtro por especialidad y ubicación se puede hacer opcionalmente
-    const whereClause: any = {
-      isVerified: true,
-      // Aceptar múltiples variantes de estado activo
-      status: {
-        in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
-      },
+    const buildWhereClause = (includeUnverified = false) => {
+      const clause: any = {
+        status: {
+          in: includeUnverified
+            ? ['ACTIVE', 'active', 'VERIFIED', 'verified', 'PENDING', 'pending']
+            : ['ACTIVE', 'active', 'VERIFIED', 'verified'],
+        },
+      };
+
+      if (!includeUnverified) {
+        clause.isVerified = true;
+      }
+
+      if (locationFilter === 'same_city' && maintenance.property.city) {
+        clause.city = maintenance.property.city;
+      } else if (locationFilter === 'same_region' && maintenance.property.region) {
+        const locationOR: any[] = [];
+        if (maintenance.property.city) {
+          locationOR.push({ city: maintenance.property.city });
+        }
+        if (maintenance.property.region) {
+          locationOR.push({ region: maintenance.property.region });
+        }
+
+        if (locationOR.length > 0) {
+          clause.AND = [
+            {
+              ...(clause.isVerified !== undefined ? { isVerified: clause.isVerified } : {}),
+              status: clause.status,
+            },
+            {
+              OR: locationOR,
+            },
+          ];
+          delete clause.isVerified;
+          delete clause.status;
+        }
+      }
+
+      return clause;
     };
 
-    // Aplicar filtro de ubicación según el parámetro (solo si hay datos de ubicación)
-    if (locationFilter === 'same_city' && maintenance.property.city) {
-      // Solo proveedores de la misma ciudad
-      whereClause.city = maintenance.property.city;
-    } else if (locationFilter === 'same_region' && maintenance.property.region) {
-      // Proveedores de la misma región (incluye misma ciudad)
-      // Construir OR solo con los campos que existen
-      const locationOR: any[] = [];
-      if (maintenance.property.city) {
-        locationOR.push({ city: maintenance.property.city });
-      }
-      if (maintenance.property.region) {
-        locationOR.push({ region: maintenance.property.region });
-      }
-
-      // Solo aplicar filtro de ubicación si hay al menos una condición
-      if (locationOR.length > 0) {
-        whereClause.AND = [
-          {
-            isVerified: true,
-            status: {
-              in: ['ACTIVE', 'active', 'VERIFIED', 'verified'],
-            },
-          },
-          {
-            OR: locationOR,
-          },
-        ];
-        // Eliminar las propiedades del nivel superior ya que están en AND
-        delete whereClause.isVerified;
-        delete whereClause.status;
-      }
-    }
-    // Si no hay filtro de ubicación o locationFilter es 'all' o null, mostrar todos los verificados y activos
+    const strictWhereClause = buildWhereClause(false);
 
     logger.info('Filtros aplicados:', {
       maintenanceId,
-      whereClause: JSON.stringify(whereClause),
+      whereClause: JSON.stringify(strictWhereClause),
       locationFilter,
       propertyCity: maintenance.property.city,
       propertyRegion: maintenance.property.region,
     });
 
-    const availableProviders = await db.maintenanceProvider.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        businessName: true,
-        specialty: true,
-        specialties: true,
-        hourlyRate: true,
-        completedJobs: true,
-        responseTime: true,
-        address: true,
-        city: true,
-        region: true,
-        description: true,
-        profileImage: true,
-        availability: true,
-        status: true, // Agregado para logging
-        user: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-          },
+    const providerSelect = {
+      id: true,
+      businessName: true,
+      specialty: true,
+      specialties: true,
+      hourlyRate: true,
+      completedJobs: true,
+      responseTime: true,
+      address: true,
+      city: true,
+      region: true,
+      description: true,
+      profileImage: true,
+      availability: true,
+      status: true,
+      isVerified: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
         },
       },
-      orderBy: [{ completedJobs: 'desc' }, { hourlyRate: 'asc' }],
+    };
+
+    const providerOrderBy = [{ completedJobs: 'desc' as const }, { hourlyRate: 'asc' as const }];
+
+    let availableProviders = await db.maintenanceProvider.findMany({
+      where: strictWhereClause,
+      select: {
+        ...providerSelect,
+      },
+      orderBy: providerOrderBy,
     });
+
+    let appliedFallback = false;
+    const effectiveWhereClause = appliedFallback ? buildWhereClause(true) : strictWhereClause;
+
+    if (availableProviders.length === 0) {
+      const relaxedWhereClause = buildWhereClause(true);
+      const fallbackResult = await db.maintenanceProvider.findMany({
+        where: relaxedWhereClause,
+        select: {
+          ...providerSelect,
+        },
+        orderBy: providerOrderBy,
+      });
+
+      if (fallbackResult.length > 0) {
+        availableProviders = fallbackResult;
+        appliedFallback = true;
+        logger.warn('Aplicando fallback: se incluyen proveedores no verificados/pendientes', {
+          maintenanceId,
+          relaxedWhereClause: JSON.stringify(relaxedWhereClause),
+          fallbackCount: fallbackResult.length,
+        });
+      }
+    }
 
     // Obtener calificaciones unificadas para cada proveedor
     const providerUserIds = availableProviders.map(p => p.user?.id).filter(Boolean) as string[];
@@ -535,7 +565,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           id: p.id,
           businessName: p.businessName,
           status: p.status,
-          isVerified: true, // Ya filtrado
+          isVerified: p.isVerified,
           city: p.city,
           region: p.region,
           specialty: p.specialty,
@@ -564,7 +594,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         totalProvidersInDB: totalProvidersCount,
         verifiedProvidersInDB: verifiedProvidersCount,
         activeVerifiedProvidersInDB: activeVerifiedCount,
-        whereClause: JSON.stringify(whereClause),
+        whereClause: JSON.stringify(effectiveWhereClause),
         locationFilter,
         propertyCity: maintenance.property.city,
         propertyRegion: maintenance.property.region,
@@ -605,6 +635,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         totalProvidersInDB: totalProvidersCount,
         verifiedProvidersInDB: verifiedProvidersCount,
         activeVerifiedProvidersInDB: activeVerifiedCount,
+        appliedFallback,
         message:
           verifiedProvidersCount === 0
             ? 'No hay proveedores verificados en el sistema. Un administrador debe aprobar los proveedores pendientes.'
