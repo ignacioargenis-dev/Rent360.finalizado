@@ -82,8 +82,9 @@ ENV NEXT_TELEMETRY_DISABLED 1
 
 # Health check - Digital Ocean usa 8080 por defecto
 # Aumentar start-period para dar tiempo a que la app inicie
+# Usar node para el health check ya que wget puede no estar disponible
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
+    CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080) + '/api/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
 # Comando de inicio - usar tsx para ejecutar server.ts
 # Digital Ocean App Platform establece PORT automáticamente (normalmente 8080)
