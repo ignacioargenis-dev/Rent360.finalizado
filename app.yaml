@@ -26,12 +26,18 @@ services:
     value: "63bfba64e744e820bee5da89ffeb95851ff1d7d2f696277bc5d76c4b6c238fb8"
   - key: NEXTAUTH_SECRET
     value: "178cc98439d47733e8a07ceea76c1d716bdde0e9d1b83d4600abc39c06c0e05e"
-  - key: PORT
-    value: "3000"
+  # Digital Ocean App Platform establece PORT automáticamente (normalmente 8080)
+  # No establecer PORT manualmente
   health_check:
     http_path: /api/health
+    initial_delay_seconds: 60
+    period_seconds: 10
+    timeout_seconds: 5
+    success_threshold: 1
+    failure_threshold: 3
+  http_port: 8080
   internal_ports:
-  - 3000
+  - 8080
 
 databases:
 - name: rent360-db

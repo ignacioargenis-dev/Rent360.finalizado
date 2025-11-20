@@ -58,6 +58,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 # Copiar archivos de configuración y servidor personalizado
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/server.ts ./
+COPY --from=builder /app/tsconfig.json ./
 COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/scripts ./scripts/
 COPY --from=builder /app/src ./src/
@@ -70,17 +71,20 @@ RUN node scripts/migrate-production.js || echo "Migration script failed, continu
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
-# Configurar puerto
-EXPOSE 3000
+# Configurar puerto - Digital Ocean App Platform usa PORT de env vars
+# Digital Ocean App Platform normalmente usa 8080 para health checks
+EXPOSE 8080
 
 # Configurar variables de entorno
-ENV PORT 3000
+# PORT será establecido por Digital Ocean App Platform (normalmente 8080)
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/api/health || exit 1
+# Health check - Digital Ocean usa 8080 por defecto
+# Aumentar start-period para dar tiempo a que la app inicie
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
 
-# Comando de inicio
-CMD ["node", "server.js"]
+# Comando de inicio - usar tsx para ejecutar server.ts
+# Digital Ocean App Platform establece PORT automáticamente (normalmente 8080)
+CMD ["npx", "tsx", "server.ts"]

@@ -41,7 +41,8 @@ console.log('🔍 [SERVER] PORT:', process.env.PORT);
 console.log('🔍 [SERVER] HOST:', process.env.HOST);
 
 // Usar el puerto que Digital Ocean configura automáticamente
-const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+// Digital Ocean App Platform normalmente usa 8080
+const port = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 console.log('🔍 [SERVER] Final port value:', port);
 console.log('🔍 [SERVER] PORT type:', typeof process.env.PORT);
 console.log('🔍 [SERVER] PORT truthy check:', !!process.env.PORT);
