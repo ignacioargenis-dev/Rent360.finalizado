@@ -40,6 +40,7 @@ import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
 import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
+import UserRatingInfoButton from '@/components/ratings/UserRatingInfoButton';
 
 interface PropertyDetail {
   id: string;
@@ -54,6 +55,7 @@ interface PropertyDetail {
   price: number;
   currency: string;
   status: 'available' | 'rented' | 'maintenance' | 'inactive';
+  ownerId?: string;
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
@@ -61,6 +63,7 @@ interface PropertyDetail {
   features: string[];
   images: string[];
   currentTenant?: {
+    id?: string;
     name: string;
     email: string;
     phone: string;
@@ -91,7 +94,15 @@ interface MaintenanceRecord {
   description: string;
   cost: number;
   status: 'completed' | 'pending' | 'in_progress';
-  provider?: string;
+  provider?:
+    | string
+    | {
+        name?: string;
+        businessName?: string;
+        specialty?: string;
+        rating?: number;
+        userId?: string;
+      };
 }
 
 interface Document {
@@ -277,19 +288,128 @@ export default function BrokerPropertyDetailPage() {
     virtualTourData: null,
   };
 
+  const mapBrokerMaintenanceRecord = (record: any): MaintenanceRecord => ({
+    id: record.id,
+    date: record.date || record.createdAt || new Date().toISOString(),
+    type: record.type || record.category || 'Mantenimiento',
+    description: record.description || 'Sin descripción',
+    cost: Number(record.cost ?? record.estimatedCost ?? 0),
+    status: (record.status || 'pending').toLowerCase() as 'completed' | 'pending' | 'in_progress',
+    provider: record.provider
+      ? typeof record.provider === 'string'
+        ? record.provider
+        : {
+            name: record.provider.name || record.provider.userName,
+            businessName: record.provider.businessName,
+            specialty: record.provider.specialty,
+            rating: record.provider.rating,
+            userId: record.provider.userId,
+          }
+      : record.maintenanceProvider
+        ? {
+            name: record.maintenanceProvider.user?.name,
+            businessName: record.maintenanceProvider.businessName,
+            specialty: record.maintenanceProvider.specialty,
+            rating: record.maintenanceProvider.rating,
+            userId: record.maintenanceProvider.user?.id,
+          }
+        : undefined,
+  });
+
+  const transformBrokerApiProperty = (data: any): PropertyDetail => ({
+    id: data.id,
+    title: data.title || 'Sin título',
+    address: data.address || 'Sin dirección',
+    city: data.city || 'Sin ciudad',
+    region: data.region || 'Sin región',
+    type: data.type || 'Sin tipo',
+    bedrooms: data.bedrooms || 0,
+    bathrooms: data.bathrooms || 0,
+    area: data.area || 0,
+    price: data.price || 0,
+    currency: data.currency || 'CLP',
+    status: (data.status || 'available') as PropertyDetail['status'],
+    ownerId: data.owner?.id || data.ownerId,
+    ownerName: data.owner?.name || data.ownerName || 'Propietario',
+    ownerEmail: data.owner?.email || data.ownerEmail || '',
+    ownerPhone: data.owner?.phone || data.ownerPhone || '',
+    description: data.description || 'Sin descripción',
+    features: Array.isArray(data.features) ? data.features : [],
+    images:
+      Array.isArray(data.images) && data.images.length > 0
+        ? data.images
+        : ['/api/placeholder/600/400'],
+    currentTenant: data.currentTenant
+      ? {
+          id: data.currentTenant.id,
+          name: data.currentTenant.name,
+          email: data.currentTenant.email,
+          phone: data.currentTenant.phone,
+          leaseStart: data.currentTenant.leaseStart,
+          leaseEnd: data.currentTenant.leaseEnd,
+          monthlyRent: data.currentTenant.monthlyRent,
+        }
+      : undefined,
+    maintenanceHistory: Array.isArray(data.maintenanceHistory)
+      ? data.maintenanceHistory.map(mapBrokerMaintenanceRecord)
+      : [],
+    financialData: data.financialData || {
+      monthlyRevenue: data.currentTenant?.monthlyRent || data.price || 0,
+      yearlyRevenue: (data.currentTenant?.monthlyRent || data.price || 0) * 12,
+      occupancyRate: data.status === 'RENTED' ? 100 : 0,
+      averageRating: data.averageRating || 0,
+    },
+    documents: Array.isArray(data.documents) ? data.documents : [],
+    notes: Array.isArray(data.notes) ? data.notes : [],
+    viewings: Array.isArray(data.viewings) ? data.viewings : [],
+    virtualTourEnabled: Boolean(data.virtualTourEnabled),
+    virtualTourData: data.virtualTourData || null,
+  });
+
   useEffect(() => {
     loadPropertyDetails();
   }, [propertyId]);
 
   const loadPropertyDetails = async () => {
-    console.log('🔍 [PROPERTY_DETAIL] Iniciando carga de detalles de la propiedad:', { propertyId });
+    console.log('🔍 [PROPERTY_DETAIL] Iniciando carga de detalles de la propiedad:', {
+      propertyId,
+    });
     setIsLoading(true);
     try {
-      // ✅ CORREGIDO: Cargar datos reales de la API
       const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+
+      // Intentar primero el endpoint especializado para brokers
+      try {
+        const brokerRes = await fetch(`${baseUrl}/api/broker/properties/${propertyId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
+
+        if (brokerRes.ok) {
+          const brokerData = await brokerRes.json();
+          if (brokerData?.success && brokerData.data) {
+            setProperty(transformBrokerApiProperty(brokerData.data));
+            setCanEdit(Boolean(brokerData.canEdit));
+            setError(null);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (brokerError) {
+        logger.warn('No se pudo obtener detalles usando el endpoint de broker', {
+          propertyId,
+          error: brokerError instanceof Error ? brokerError.message : brokerError,
+        });
+      }
+
+      // Fallback al endpoint público
       const url = `${baseUrl}/api/properties/${propertyId}`;
       console.log('🔗 [PROPERTY_DETAIL] URL de la API:', url);
-      
+
       const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
@@ -303,7 +423,7 @@ export default function BrokerPropertyDetailPage() {
         ok: response.ok,
         status: response.status,
         statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
       });
 
       if (response.ok) {
@@ -312,7 +432,7 @@ export default function BrokerPropertyDetailPage() {
           success: responseData.success,
           hasProperty: !!responseData.property,
           propertyId: responseData.property?.id,
-          title: responseData.property?.title
+          title: responseData.property?.title,
         });
 
         if (!responseData.success || !responseData.property) {
@@ -343,11 +463,12 @@ export default function BrokerPropertyDetailPage() {
         // 1. isOwned es true (propiedad propia del broker)
         // 2. isManagedByCurrentUser es true (el broker está gestionando activamente la propiedad)
         // 3. O si la API ya calculó canEdit
-        const propertyCanEdit = propertyData.canEdit !== undefined 
-          ? propertyData.canEdit 
-          : (propertyData.isOwned === true || propertyData.isManagedByCurrentUser === true);
+        const propertyCanEdit =
+          propertyData.canEdit !== undefined
+            ? propertyData.canEdit
+            : propertyData.isOwned === true || propertyData.isManagedByCurrentUser === true;
         setCanEdit(propertyCanEdit);
-        
+
         console.log('✅ [PROPERTY_DETAIL] Propiedad puede editarse:', {
           canEdit: propertyCanEdit,
           isOwned: propertyData.isOwned,
@@ -359,45 +480,7 @@ export default function BrokerPropertyDetailPage() {
           apiCanEdit: propertyData.canEdit,
         });
 
-        // Transformar datos de la API al formato esperado
-        const transformedProperty: PropertyDetail = {
-          id: propertyData.id,
-          title: propertyData.title || 'Sin título',
-          address: propertyData.address || 'Sin dirección',
-          city: propertyData.city || 'Sin ciudad',
-          region: propertyData.region || 'Sin región',
-          type: propertyData.type || 'Sin tipo',
-          bedrooms: propertyData.bedrooms || 0,
-          bathrooms: propertyData.bathrooms || 0,
-          area: propertyData.area || 0,
-          price: propertyData.price || 0,
-          currency: propertyData.currency || 'CLP',
-          status: propertyData.status || 'available',
-          ownerName: propertyData.owner?.name || 'Propietario',
-          ownerEmail: propertyData.owner?.email || '',
-          ownerPhone: propertyData.owner?.phone || '',
-          description: propertyData.description || 'Sin descripción',
-          features: propertyData.features || [],
-          images:
-            propertyData.images && propertyData.images.length > 0
-              ? propertyData.images
-              : ['/api/placeholder/600/400'], // Fallback a placeholder si no hay imágenes
-          currentTenant: propertyData.currentTenant || null,
-          maintenanceHistory: propertyData.maintenanceHistory || [],
-          financialData: propertyData.financialData || {
-            monthlyRevenue: propertyData.price || 0,
-            yearlyRevenue: (propertyData.price || 0) * 12,
-            occupancyRate: propertyData.status === 'rented' ? 100 : 0,
-            averageRating: propertyData.averageRating || 0,
-          },
-          documents: propertyData.documents || [],
-          notes: propertyData.notes || '',
-          viewings: propertyData.viewings || [],
-
-          // Tour virtual
-          virtualTourEnabled: propertyData.virtualTourEnabled || false,
-          virtualTourData: propertyData.virtualTourData || null,
-        };
+        const transformedProperty = transformBrokerApiProperty(propertyData);
 
         logger.info('Propiedad transformada correctamente', {
           id: transformedProperty.id,
@@ -418,15 +501,15 @@ export default function BrokerPropertyDetailPage() {
         } catch {
           errorData = { error: errorText };
         }
-        
+
         console.error('❌ [PROPERTY_DETAIL] Error al cargar propiedad:', {
           status: response.status,
           statusText: response.statusText,
           error: errorData,
           errorText,
-          propertyId
+          propertyId,
         });
-        
+
         logger.error('Error al cargar detalles de la propiedad', {
           status: response.status,
           statusText: response.statusText,
@@ -438,7 +521,7 @@ export default function BrokerPropertyDetailPage() {
       console.error('❌ [PROPERTY_DETAIL] Error crítico:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        propertyId
+        propertyId,
       });
       logger.error('Error al cargar detalles de la propiedad', { error, propertyId });
       setError('Error al cargar los detalles de la propiedad. Intente nuevamente.');
@@ -496,14 +579,18 @@ export default function BrokerPropertyDetailPage() {
   const handleEditProperty = () => {
     if (!canEdit) {
       // Si no se puede editar, mostrar mensaje informativo
-      alert('No tienes permisos para editar esta propiedad. Solo puedes editar propiedades propias o que estás gestionando activamente.');
+      alert(
+        'No tienes permisos para editar esta propiedad. Solo puedes editar propiedades propias o que estás gestionando activamente.'
+      );
       return;
     }
     // ✅ CORREGIDO: Redirigir a página de edición o detalles
     // Por ahora, redirigir a detalles ya que la ruta de edición no existe
     // TODO: Crear ruta /broker/properties/[propertyId]/edit cuando sea necesario
     // Por ahora, mostrar mensaje indicando que la funcionalidad de edición está en desarrollo
-    alert('La funcionalidad de edición está en desarrollo. Por favor, contacta al administrador para editar propiedades.');
+    alert(
+      'La funcionalidad de edición está en desarrollo. Por favor, contacta al administrador para editar propiedades.'
+    );
     // router.push(`/broker/properties/${propertyId}/edit`);
   };
 
@@ -657,11 +744,15 @@ export default function BrokerPropertyDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleEditProperty}
               disabled={!canEdit}
-              title={canEdit ? 'Editar propiedad (propia o gestionada)' : 'Solo se pueden editar propiedades propias o gestionadas activamente'}
+              title={
+                canEdit
+                  ? 'Editar propiedad (propia o gestionada)'
+                  : 'Solo se pueden editar propiedades propias o gestionadas activamente'
+              }
             >
               <Edit className="w-4 h-4 mr-2" />
               Editar
@@ -869,7 +960,15 @@ export default function BrokerPropertyDetailPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="text-lg font-semibold">{property.ownerName}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-semibold">{property.ownerName}</h3>
+                        <UserRatingInfoButton
+                          userId={property.ownerId}
+                          userName={property.ownerName}
+                          size="sm"
+                          variant="ghost"
+                        />
+                      </div>
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <Mail className="w-4 h-4" />
                         {property.ownerEmail}
@@ -968,7 +1067,15 @@ export default function BrokerPropertyDetailPage() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="text-lg font-semibold">{property.currentTenant.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-semibold">{property.currentTenant.name}</h3>
+                          <UserRatingInfoButton
+                            userId={property.currentTenant.id}
+                            userName={property.currentTenant.name}
+                            size="sm"
+                            variant="ghost"
+                          />
+                        </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                           <Mail className="w-4 h-4" />
                           {property.currentTenant.email}
@@ -1077,9 +1184,35 @@ export default function BrokerPropertyDetailPage() {
                           <p className="font-medium">{maintenance.type}</p>
                           <p className="text-sm text-gray-600">{maintenance.description}</p>
                           {maintenance.provider && (
-                            <p className="text-xs text-gray-500">
-                              Proveedor: {maintenance.provider}
-                            </p>
+                            <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
+                              <span>
+                                Proveedor:{' '}
+                                <span className="font-semibold text-gray-700">
+                                  {typeof maintenance.provider === 'string'
+                                    ? maintenance.provider
+                                    : maintenance.provider.businessName ||
+                                      maintenance.provider.name ||
+                                      'Proveedor'}
+                                </span>
+                              </span>
+                              {typeof maintenance.provider !== 'string' && (
+                                <>
+                                  <UserRatingInfoButton
+                                    userId={maintenance.provider.userId}
+                                    userName={
+                                      maintenance.provider.businessName || maintenance.provider.name
+                                    }
+                                    size="sm"
+                                    variant="ghost"
+                                  />
+                                  {maintenance.provider.specialty && (
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {maintenance.provider.specialty}
+                                    </Badge>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
