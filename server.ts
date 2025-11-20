@@ -87,11 +87,13 @@ app.prepare().then(() => {
   // Hacer el WebSocket server disponible globalmente para las notificaciones
   (global as any).websocketServer = websocketServer;
 
-  server.listen(port, (err: Error | null) => {
+  // En producción, escuchar en 0.0.0.0 para que sea accesible desde fuera del contenedor
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+
+  server.listen(port, host, (err: Error | null) => {
     if (err) {
       throw err;
     }
-    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
     console.log(`> Ready on http://${host}:${port}`);
     console.log(`> Environment: ${process.env.NODE_ENV}`);
     console.log(`> WebSocket server initialized`);
