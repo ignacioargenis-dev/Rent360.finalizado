@@ -203,26 +203,53 @@ export default function CalificacionesPage() {
         );
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(parseError => {
+        console.error('🔍 [Owner Ratings Page] Error parsing JSON:', parseError);
+        return { success: false, error: 'Error parsing response' };
+      });
+
+      // Validar que data existe
+      if (!data) {
+        console.error('🔍 [Owner Ratings Page] Data is null or undefined');
+        setRatings([]);
+        setRatingsToGive([]);
+        return;
+      }
 
       // Log para depuración - ANTES de procesar
       console.log('🔍 [Owner Ratings Page] API Response:', {
-        success: data.success,
-        hasData: !!data.data,
-        hasRatings: !!(data.data?.ratings || data.ratings),
-        dataStructure: Object.keys(data),
+        success: data?.success,
+        hasData: !!data?.data,
+        hasRatings: !!(data?.data?.ratings || data?.ratings),
+        dataStructure: data ? Object.keys(data) : [],
+        dataType: typeof data,
+        isArray: Array.isArray(data),
         fullResponse: data,
       });
 
       // La API devuelve { success: true, data: { ratings: [...], total: ... }, pagination: {...} }
       // Asegurarse de que ratingsList siempre sea un array
       let ratingsList: any[] = [];
-      if (data.success && data.data) {
-        ratingsList = Array.isArray(data.data.ratings) ? data.data.ratings : [];
-      } else if (Array.isArray(data.ratings)) {
-        ratingsList = data.ratings;
-      } else if (Array.isArray(data)) {
-        ratingsList = data;
+
+      if (data && typeof data === 'object') {
+        if (data.success && data.data && Array.isArray(data.data.ratings)) {
+          ratingsList = data.data.ratings;
+        } else if (Array.isArray(data.ratings)) {
+          ratingsList = data.ratings;
+        } else if (Array.isArray(data.data)) {
+          ratingsList = data.data;
+        } else if (Array.isArray(data)) {
+          ratingsList = data;
+        }
+      }
+
+      // Asegurarse de que ratingsList es un array válido
+      if (!Array.isArray(ratingsList)) {
+        console.warn(
+          '🔍 [Owner Ratings Page] ratingsList is not an array, defaulting to empty array:',
+          ratingsList
+        );
+        ratingsList = [];
       }
 
       // Log para depuración - DESPUÉS de procesar
@@ -291,8 +318,9 @@ export default function CalificacionesPage() {
       });
 
       if (contractsResponse.ok) {
-        const contractsData = await contractsResponse.json();
-        const ratingsToGive: RatingToGive[] = contractsData.contracts.map((contract: any) => ({
+        const contractsData = await contractsResponse.json().catch(() => ({ contracts: [] }));
+        const contracts = Array.isArray(contractsData.contracts) ? contractsData.contracts : [];
+        const ratingsToGive: RatingToGive[] = contracts.map((contract: any) => ({
           id: `contract-${contract.id}`,
           recipientType: 'tenant',
           recipientName: contract.tenant?.name || 'Inquilino',
@@ -552,107 +580,111 @@ export default function CalificacionesPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {ratings.map(rating => (
-                    <Card key={rating.id} className="border-l-4 border-l-blue-500">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-600">
-                                {rating.tenantName.substring(0, 2).toUpperCase()}
-                              </span>
+                  {Array.isArray(ratings) && ratings.length > 0
+                    ? ratings.map(rating => (
+                        <Card key={rating.id} className="border-l-4 border-l-blue-500">
+                          <CardContent className="pt-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {rating.tenantName.substring(0, 2).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">
+                                    {rating.tenantName}
+                                  </h4>
+                                  <p className="text-sm text-gray-600">{rating.propertyTitle}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  {[1, 2, 3, 4, 5].map(star => (
+                                    <Star
+                                      key={star}
+                                      className={`w-4 h-4 ${
+                                        star <= rating.overallRating
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                  <span className="ml-2 text-sm font-medium">
+                                    {rating.overallRating}.0
+                                  </span>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  {new Date(rating.date).toLocaleDateString('es-CL')}
+                                </Badge>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900">{rating.tenantName}</h4>
-                              <p className="text-sm text-gray-600">{rating.propertyTitle}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              {[1, 2, 3, 4, 5].map(star => (
-                                <Star
-                                  key={star}
-                                  className={`w-4 h-4 ${
-                                    star <= rating.overallRating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                              <span className="ml-2 text-sm font-medium">
-                                {rating.overallRating}.0
-                              </span>
-                            </div>
-                            <Badge variant="outline" className="text-xs">
-                              {new Date(rating.date).toLocaleDateString('es-CL')}
-                            </Badge>
-                          </div>
-                        </div>
 
-                        {rating.comment && (
-                          <p className="text-gray-700 mb-3 italic">{rating.comment}</p>
-                        )}
+                            {rating.comment && (
+                              <p className="text-gray-700 mb-3 italic">{rating.comment}</p>
+                            )}
 
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600">Puntualidad:</span>
-                            <div className="flex">
-                              {[1, 2, 3, 4, 5].map(star => (
-                                <Star
-                                  key={star}
-                                  className={`w-3 h-3 ${
-                                    star <= (rating.punctuality || 0)
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-600">Puntualidad:</span>
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map(star => (
+                                    <Star
+                                      key={star}
+                                      className={`w-3 h-3 ${
+                                        star <= (rating.punctuality || 0)
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-600">Profesionalismo:</span>
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map(star => (
+                                    <Star
+                                      key={star}
+                                      className={`w-3 h-3 ${
+                                        star <= (rating.professionalism || 0)
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-600">Comunicación:</span>
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map(star => (
+                                    <Star
+                                      key={star}
+                                      className={`w-3 h-3 ${
+                                        star <= (rating.communication || 0)
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600">Profesionalismo:</span>
-                            <div className="flex">
-                              {[1, 2, 3, 4, 5].map(star => (
-                                <Star
-                                  key={star}
-                                  className={`w-3 h-3 ${
-                                    star <= (rating.professionalism || 0)
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600">Comunicación:</span>
-                            <div className="flex">
-                              {[1, 2, 3, 4, 5].map(star => (
-                                <Star
-                                  key={star}
-                                  className={`w-3 h-3 ${
-                                    star <= (rating.communication || 0)
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-                          {rating.verified && (
-                            <Badge className="bg-green-100 text-green-800">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Verificada
-                            </Badge>
-                          )}
-                          {rating.anonymous && <Badge variant="secondary">Anónima</Badge>}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+                              {rating.verified && (
+                                <Badge className="bg-green-100 text-green-800">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Verificada
+                                </Badge>
+                              )}
+                              {rating.anonymous && <Badge variant="secondary">Anónima</Badge>}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    : null}
                 </div>
 
                 {ratings.length === 0 && (
@@ -695,66 +727,68 @@ export default function CalificacionesPage() {
 
             {/* Ratings to give list */}
             <div className="space-y-4">
-              {ratingsToGive.map(ratingToGive => {
-                const typeInfo = getRecipientTypeInfo(ratingToGive.recipientType);
-                const Icon = typeInfo.icon;
+              {Array.isArray(ratingsToGive) && ratingsToGive.length > 0
+                ? ratingsToGive.map(ratingToGive => {
+                    const typeInfo = getRecipientTypeInfo(ratingToGive.recipientType);
+                    const Icon = typeInfo.icon;
 
-                return (
-                  <Card key={ratingToGive.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            <Icon className="w-6 h-6 text-gray-600" />
-                          </div>
+                    return (
+                      <Card key={ratingToGive.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                                <Icon className="w-6 h-6 text-gray-600" />
+                              </div>
 
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-gray-900">
-                                {ratingToGive.recipientName}
-                              </h3>
-                              <Badge className={typeInfo.color}>
-                                <Icon className="w-3 h-3 mr-1" />
-                                {typeInfo.label}
-                              </Badge>
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold text-gray-900">
+                                    {ratingToGive.recipientName}
+                                  </h3>
+                                  <Badge className={typeInfo.color}>
+                                    <Icon className="w-3 h-3 mr-1" />
+                                    {typeInfo.label}
+                                  </Badge>
+                                </div>
+
+                                {ratingToGive.propertyTitle && (
+                                  <p className="text-sm text-gray-600 mb-1">
+                                    Propiedad: {ratingToGive.propertyTitle}
+                                  </p>
+                                )}
+
+                                {!ratingToGive.canRate && ratingToGive.reason && (
+                                  <p className="text-xs text-orange-600">{ratingToGive.reason}</p>
+                                )}
+                              </div>
                             </div>
 
-                            {ratingToGive.propertyTitle && (
-                              <p className="text-sm text-gray-600 mb-1">
-                                Propiedad: {ratingToGive.propertyTitle}
-                              </p>
-                            )}
-
-                            {!ratingToGive.canRate && ratingToGive.reason && (
-                              <p className="text-xs text-orange-600">{ratingToGive.reason}</p>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {ratingToGive.canRate ? (
+                                <Button
+                                  onClick={() => handleGiveRating(ratingToGive)}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  <Star className="w-4 h-4 mr-2" />
+                                  Calificar
+                                </Button>
+                              ) : (
+                                <Badge variant="secondary">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  Pendiente
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {ratingToGive.canRate ? (
-                            <Button
-                              onClick={() => handleGiveRating(ratingToGive)}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              <Star className="w-4 h-4 mr-2" />
-                              Calificar
-                            </Button>
-                          ) : (
-                            <Badge variant="secondary">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Pendiente
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                : null}
             </div>
 
-            {ratingsToGive.length === 0 && (
+            {(!Array.isArray(ratingsToGive) || ratingsToGive.length === 0) && (
               <div className="text-center py-12">
                 <ThumbsUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
