@@ -79,11 +79,37 @@ export async function POST(request: NextRequest) {
       whereConditions.push({ paymentNumber: customData.payment_id.toString() });
     }
 
+    // Buscar primero en Payment (para contratos y otros pagos)
     const payment = await db.payment.findFirst({
       where: {
         OR: whereConditions,
       },
     });
+
+    // Si no se encuentra en Payment, buscar en ProviderTransaction (para mantenimiento)
+    let providerTransaction = null;
+    if (!payment && customData.contract_id) {
+      // Si customData.contract_id contiene maintenanceId, buscar en ProviderTransaction
+      providerTransaction = await db.providerTransaction.findFirst({
+        where: {
+          OR: [
+            { reference: paymentId?.toString() || '' },
+            { reference: customData.payment_id?.toString() || '' },
+            { maintenanceId: customData.contract_id },
+          ],
+          providerType: 'MAINTENANCE',
+        },
+        include: {
+          maintenance: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+            },
+          },
+        },
+      });
+    }
 
     if (payment) {
       // Construir objeto de actualización compatible con Prisma
@@ -154,8 +180,67 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    } else if (providerTransaction) {
+      // Manejar ProviderTransaction de mantenimiento
+      const transactionStatus =
+        paymentStatus === 'COMPLETED'
+          ? 'COMPLETED'
+          : paymentStatus === 'FAILED'
+            ? 'FAILED'
+            : 'PROCESSING';
+
+      // Actualizar ProviderTransaction
+      await db.providerTransaction.update({
+        where: { id: providerTransaction.id },
+        data: {
+          status: transactionStatus as any,
+          reference: transactionId?.toString() || providerTransaction.reference,
+          processedAt: paymentStatus === 'COMPLETED' ? new Date() : null,
+          notes: JSON.stringify({
+            ...(providerTransaction.notes ? JSON.parse(providerTransaction.notes) : {}),
+            khipuNotification: {
+              status,
+              paymentId,
+              transactionId,
+              amount,
+              currency,
+              receivedAt: new Date().toISOString(),
+            },
+          }),
+        },
+      });
+
+      logger.info('ProviderTransaction de mantenimiento actualizada:', {
+        transactionId: providerTransaction.id,
+        status: transactionStatus,
+      });
+
+      // Si el pago se completó, procesar el cobro y calcular comisión
+      if (paymentStatus === 'COMPLETED' && providerTransaction.maintenance) {
+        try {
+          const { MaintenancePaymentService } = await import('@/lib/maintenance-payment-service');
+          const chargeResult = await MaintenancePaymentService.chargePayment(
+            providerTransaction.maintenance.id
+          );
+
+          if (chargeResult.success) {
+            logger.info('Pago de mantenimiento procesado desde webhook Khipu:', {
+              maintenanceId: providerTransaction.maintenance.id,
+              transactionId: chargeResult.transactionId,
+            });
+          }
+        } catch (chargeError) {
+          logger.error('Error procesando pago de mantenimiento desde webhook:', {
+            error: chargeError instanceof Error ? chargeError.message : String(chargeError),
+            maintenanceId: providerTransaction.maintenance?.id,
+          });
+        }
+      }
     } else {
-      logger.warn('No se encontró pago para la notificación:', { paymentId, customData });
+      logger.warn('No se encontró pago ni ProviderTransaction para la notificación:', {
+        paymentId,
+        customData,
+      });
     }
 
     // Responder a Khipu que recibimos la notificación

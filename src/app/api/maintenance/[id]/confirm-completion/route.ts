@@ -109,6 +109,32 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       },
     });
 
+    // Procesar el pago del cliente hacia el provider de mantenimiento
+    try {
+      const { MaintenancePaymentService } = await import('@/lib/maintenance-payment-service');
+      const chargeResult = await MaintenancePaymentService.chargePayment(maintenanceId);
+      if (chargeResult.success) {
+        logger.info('Pago de mantenimiento procesado exitosamente al confirmar finalización', {
+          maintenanceId,
+          transactionId: chargeResult.transactionId,
+        });
+      } else {
+        logger.warn('Error procesando pago de mantenimiento al confirmar finalización:', {
+          maintenanceId,
+          error: chargeResult.error,
+        });
+        // No fallar la confirmación si hay error en el pago
+        // El pago se puede procesar después manualmente
+      }
+    } catch (paymentError) {
+      logger.warn('Error procesando pago de mantenimiento (no crítico):', {
+        maintenanceId,
+        error: paymentError instanceof Error ? paymentError.message : String(paymentError),
+      });
+      // No fallar la actualización del trabajo si hay error en el pago
+      // El pago se puede procesar después manualmente
+    }
+
     // Notificar al proveedor que su trabajo fue confirmado
     if (maintenance.maintenanceProvider?.user?.id) {
       try {

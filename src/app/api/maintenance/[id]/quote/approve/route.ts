@@ -75,6 +75,54 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       );
     }
 
+    // Obtener datos del body para el método de pago (opcional)
+    let paymentMethod: 'khipu' | 'stripe' | 'paypal' | 'webpay' | undefined;
+    let paymentMethodId: string | undefined;
+    try {
+      const body = await request.json().catch(() => ({}));
+      paymentMethod = body.paymentMethod;
+      paymentMethodId = body.paymentMethodId;
+    } catch {
+      // Si no hay body, continuar sin autorizar pago (se puede hacer después)
+    }
+
+    // Si se proporciona método de pago, autorizar el pago
+    if (paymentMethod) {
+      try {
+        const { MaintenancePaymentService } = await import('@/lib/maintenance-payment-service');
+        const amount = maintenance.estimatedCost || maintenance.actualCost || 0;
+        if (amount > 0) {
+          const authResult = await MaintenancePaymentService.authorizePayment({
+            maintenanceId,
+            clientId: user.id,
+            amount,
+            paymentMethod,
+            ...(paymentMethodId && { paymentMethodId }),
+          });
+
+          if (!authResult.success) {
+            logger.warn('Error autorizando pago al aprobar cotización:', {
+              maintenanceId,
+              error: authResult.error,
+            });
+            // Continuar con la aprobación aunque falle la autorización del pago
+          } else if (authResult.paymentUrl) {
+            // Si hay URL de pago (Khipu), incluirla en la respuesta
+            logger.info('Pago autorizado exitosamente al aprobar cotización', {
+              maintenanceId,
+              paymentId: authResult.paymentId,
+            });
+          }
+        }
+      } catch (paymentError) {
+        logger.warn('Error autorizando pago (no crítico):', {
+          maintenanceId,
+          error: paymentError instanceof Error ? paymentError.message : String(paymentError),
+        });
+        // Continuar con la aprobación aunque falle la autorización del pago
+      }
+    }
+
     // Actualizar el estado a QUOTE_APPROVED
     const updatedMaintenance = await db.maintenance.update({
       where: { id: maintenanceId },
