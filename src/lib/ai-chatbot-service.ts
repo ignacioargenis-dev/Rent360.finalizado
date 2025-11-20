@@ -3122,27 +3122,68 @@ export class AIChatbotService {
       };
     }
 
-    // 🚀 MEJORADO: Detección específica para registro de proveedores
-    if (
-      input.includes('jardinero') ||
-      input.includes('jardinería') ||
-      input.includes('plomero') ||
-      input.includes('electricista') ||
-      input.includes('carpintero') ||
-      input.includes('pintor') ||
-      (input.includes('ofrecer') && input.includes('servicio')) ||
-      (input.includes('soy') && (input.includes('proveedor') || input.includes('trabajador')))
-    ) {
-      if (
-        input.includes('registro') ||
-        input.includes('registrarse') ||
-        input.includes('crear') ||
-        input.includes('cuenta') ||
-        input.includes('ofrecer')
-      ) {
+    // 🚀 MEJORADO: Detección específica para registro de proveedores - CASOS ESPECÍFICOS
+    // Detectar profesiones específicas
+    const profesiones = [
+      'jardinero',
+      'jardinería',
+      'plomero',
+      'electricista',
+      'carpintero',
+      'pintor',
+      'gasfiter',
+      'albañil',
+      'cerrajero',
+      'mudanza',
+      'mudanzas',
+      'fumigador',
+      'limpieza',
+      'seguridad',
+      'carpintería',
+      'herrería',
+      'techador',
+      'instalador',
+    ];
+
+    const tieneProfesion = profesiones.some(prof => input.includes(prof));
+    const quiereOfrecer =
+      input.includes('ofrecer') ||
+      input.includes('puedo ofrecer') ||
+      input.includes('quiero ofrecer') ||
+      (input.includes('puedo') && input.includes('servicio'));
+    const preguntaRegistro =
+      input.includes('registro') ||
+      input.includes('registrarse') ||
+      input.includes('crear') ||
+      input.includes('cuenta') ||
+      input.includes('usuario') ||
+      input.includes('debería crear');
+    const soyProfesional = input.includes('soy') && tieneProfesion;
+
+    // Caso 1: "soy electricista, puedo ofrecer mis servicios?"
+    if (soyProfesional && (quiereOfrecer || preguntaRegistro)) {
+      const profesionDetectada = profesiones.find(prof => input.includes(prof)) || 'proveedor';
+      return {
+        response: `¡Excelente! Como ${profesionDetectada}, puedes ofrecer tus servicios en Rent360. Te explico cómo empezar:\n\n**Pasos para registrarte como Proveedor de Servicios:**\n\n1. **Crear cuenta**: Ve a "Registrarse" en la página principal y selecciona "Proveedor de Servicios"\n2. **Completar datos básicos**: Nombre, email, teléfono y contraseña\n3. **Verificar email**: Confirma tu cuenta desde el correo que recibirás\n4. **Completar perfil**:\n   - Especifica tu especialidad: ${profesionDetectada}\n   - Describe los servicios específicos que ofreces\n   - Indica las zonas donde trabajas (comunas, ciudades)\n   - Configura tus precios (por hora, por servicio o por proyecto)\n   - Sube fotos de trabajos anteriores para mostrar tu experiencia\n5. **Subir documentos**:\n   - Cédula de identidad (frente y reverso)\n   - Certificaciones profesionales si las tienes (especialmente importante para electricistas)\n   - Certificado de antecedentes\n6. **Esperar verificación**: El administrador revisará tu perfil y documentos\n\n**Una vez verificado podrás:**\n- Recibir solicitudes de trabajo de propietarios e inquilinos\n- Ver detalles de cada solicitud (ubicación, urgencia, descripción, fotos)\n- Aceptar o rechazar trabajos según tu disponibilidad\n- Comunicarte directamente con clientes a través de la plataforma\n- Recibir pagos automáticos y seguros después de completar trabajos\n- Ver tus ganancias, comisiones y estadísticas en tu panel\n- Construir tu reputación con calificaciones y comentarios\n\n**Tip para ${profesionDetectada}s:** Las certificaciones profesionales aumentan tu credibilidad y te ayudan a conseguir más trabajos.\n\n¿Tienes alguna pregunta específica sobre el proceso de registro o los servicios que puedes ofrecer?`,
+        confidence: 0.95,
+      };
+    }
+
+    // Caso 2: "quiero ofrecer servicios de mudanza, que usuario deberia crear?"
+    if ((input.includes('mudanza') || input.includes('mudanzas')) && preguntaRegistro) {
+      return {
+        response:
+          '¡Perfecto! Para ofrecer servicios de mudanza en Rent360, debes crear una cuenta como **Proveedor de Servicios**. Te explico el proceso:\n\n**Pasos para registrarte:**\n\n1. **Crear cuenta**: Ve a "Registrarse" y selecciona "Proveedor de Servicios"\n2. **Completar datos básicos**: Nombre, email, teléfono y contraseña\n3. **Verificar email**: Confirma tu cuenta desde el correo\n4. **Completar perfil de mudanzas**:\n   - **Especialidad**: Indica "Mudanzas" o "Servicios de Mudanza"\n   - **Descripción**: Detalla los servicios (mudanzas residenciales, comerciales, embalaje, desmontaje de muebles, etc.)\n   - **Zonas de cobertura**: Define las comunas o regiones donde ofreces servicios\n   - **Precios**: Configura tarifas (pueden ser por hora, por volumen, o por distancia)\n   - **Portafolio**: Sube fotos de mudanzas anteriores\n5. **Subir documentos**:\n   - Cédula de identidad\n   - Certificado de antecedentes\n   - Si tienes empresa: Certificado de empresa\n   - Seguro de carga (si aplica)\n6. **Esperar verificación**: El administrador revisará tu perfil\n\n**Una vez verificado podrás:**\n- Recibir solicitudes de mudanza de propietarios e inquilinos\n- Ver detalles de cada solicitud (origen, destino, fecha, tipo de mudanza)\n- Aceptar trabajos según tu disponibilidad\n- Comunicarte con clientes para coordinar detalles\n- Recibir pagos automáticos al completar las mudanzas\n- Gestionar tu calendario y disponibilidad\n\n¿Tienes alguna pregunta específica sobre el registro o los servicios de mudanza?',
+        confidence: 0.95,
+      };
+    }
+
+    // Caso 3: Detección general mejorada
+    if (tieneProfesion || (quiereOfrecer && input.includes('servicio'))) {
+      if (preguntaRegistro || quiereOfrecer) {
         return {
           response:
-            '¡Perfecto! Para ofrecer tus servicios en Rent360, necesitas registrarte como Proveedor de Servicios. Te explico el proceso:\n\n**Pasos para registrarte:**\n\n1. **Crear cuenta**: Ve a "Registrarse" en la página principal y selecciona "Proveedor de Servicios"\n2. **Completar datos básicos**: Nombre, email, teléfono y contraseña\n3. **Verificar email**: Confirma tu cuenta desde el correo que recibirás\n4. **Completar perfil**:\n   - Especifica tu especialidad (jardinería, plomería, electricidad, etc.)\n   - Describe los servicios que ofreces\n   - Indica las zonas donde trabajas\n   - Configura tus precios (por hora o por servicio)\n   - Sube fotos de trabajos anteriores\n5. **Subir documentos**: Cédula de identidad y certificaciones si las tienes\n6. **Esperar verificación**: El administrador revisará tu perfil\n\n**Una vez verificado podrás:**\n- Recibir solicitudes de trabajo de propietarios e inquilinos\n- Ver detalles de cada solicitud (ubicación, urgencia, descripción)\n- Aceptar o rechazar trabajos según tu disponibilidad\n- Comunicarte directamente con clientes\n- Recibir pagos automáticos después de completar trabajos\n- Ver tus ganancias y comisiones en tu panel\n\n¿Qué tipo de servicios ofreces? Puedo darte información más específica.',
+            '¡Perfecto! Para ofrecer tus servicios en Rent360, necesitas registrarte como **Proveedor de Servicios**. Te explico el proceso:\n\n**Pasos para registrarte:**\n\n1. **Crear cuenta**: Ve a "Registrarse" en la página principal y selecciona "Proveedor de Servicios"\n2. **Completar datos básicos**: Nombre, email, teléfono y contraseña\n3. **Verificar email**: Confirma tu cuenta desde el correo que recibirás\n4. **Completar perfil**:\n   - Especifica tu especialidad (jardinería, plomería, electricidad, mudanzas, etc.)\n   - Describe los servicios que ofreces en detalle\n   - Indica las zonas donde trabajas\n   - Configura tus precios (por hora, por servicio o por proyecto)\n   - Sube fotos de trabajos anteriores\n5. **Subir documentos**: Cédula de identidad y certificaciones si las tienes\n6. **Esperar verificación**: El administrador revisará tu perfil\n\n**Una vez verificado podrás:**\n- Recibir solicitudes de trabajo de propietarios e inquilinos\n- Ver detalles de cada solicitud (ubicación, urgencia, descripción)\n- Aceptar o rechazar trabajos según tu disponibilidad\n- Comunicarte directamente con clientes\n- Recibir pagos automáticos después de completar trabajos\n- Ver tus ganancias y comisiones en tu panel\n\n¿Qué tipo de servicios ofreces? Puedo darte información más específica.',
           confidence: 0.92,
         };
       }
@@ -3410,7 +3451,8 @@ Respuesta (solo información general y pública):
       return 'Lo siento, no puedo proporcionar información sobre ese tema. Te recomiendo contactar al soporte técnico para obtener ayuda especializada.';
     }
 
-    // Verificar si intenta ejecutar acciones
+    // Verificar si intenta ejecutar acciones REALES (no instrucciones informativas)
+    // Solo bloquear si la respuesta parece ser un comando directo, no una explicación
     const actionKeywords = [
       'eliminar',
       'borrar',
@@ -3425,9 +3467,50 @@ Respuesta (solo información general y pública):
       'update',
       'create',
     ];
-    const hasActionKeywords = actionKeywords.some(keyword => lowerResponse.includes(keyword));
 
-    if (hasActionKeywords && !securityContext.canExecuteActions) {
+    // Contextos que indican que es una instrucción informativa, no un comando
+    const instructionContexts = [
+      'para realizar',
+      'puedes realizar',
+      'debes realizar',
+      'necesitas realizar',
+      'te explico',
+      'pasos para',
+      'cómo realizar',
+      'para ejecutar',
+      'puedes ejecutar',
+      'debes ejecutar',
+      'necesitas ejecutar',
+      'cómo ejecutar',
+      've a',
+      'haz clic',
+      'selecciona',
+      'accede a',
+    ];
+
+    const hasActionKeywords = actionKeywords.some(keyword => lowerResponse.includes(keyword));
+    const isInstruction = instructionContexts.some(context => lowerResponse.includes(context));
+
+    // Solo bloquear si tiene palabras de acción PERO NO es una instrucción informativa
+    if (hasActionKeywords && !isInstruction && !securityContext.canExecuteActions) {
+      // Verificar si es una respuesta informativa del chatbot (contiene "te explico", "pasos", etc.)
+      const isInformativeResponse =
+        lowerResponse.includes('te explico') ||
+        lowerResponse.includes('pasos') ||
+        lowerResponse.includes('cómo') ||
+        lowerResponse.includes('debes') ||
+        lowerResponse.includes('puedes') ||
+        lowerResponse.includes('necesitas') ||
+        lowerResponse.includes('ve a') ||
+        lowerResponse.includes('haz clic') ||
+        lowerResponse.includes('selecciona');
+
+      // Si es informativa, permitirla
+      if (isInformativeResponse) {
+        return response;
+      }
+
+      // Si no es informativa y parece un comando, bloquear
       return 'Para realizar cambios en tu cuenta o ejecutar acciones, por favor accede directamente a las secciones correspondientes del sistema o contacta al soporte.';
     }
 
