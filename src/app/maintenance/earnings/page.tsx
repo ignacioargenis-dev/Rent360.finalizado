@@ -169,10 +169,11 @@ export default function MaintenanceEarningsPage() {
         credentials: 'include',
       });
 
+      let transformedPayments: PaymentRecord[] = [];
       if (paymentsResponse.ok) {
         const paymentsData = await paymentsResponse.json();
         if (paymentsData.success && paymentsData.data) {
-          const transformedPayments = paymentsData.data.map((payment: any) => ({
+          transformedPayments = paymentsData.data.map((payment: any) => ({
             id: payment.id,
             amount: payment.amount || 0,
             status:
@@ -190,41 +191,73 @@ export default function MaintenanceEarningsPage() {
         }
       }
 
-      // Calcular estadísticas mensuales reales desde los pagos
+      // Calcular estadísticas mensuales desde trabajos de mantenimiento completados
+      // Usar una API específica o calcular desde los trabajos directamente
       const monthlyStatsData: MonthlyStats[] = [];
       const now = new Date();
-      const paymentsByMonth = new Map<string, { earnings: number; jobs: number }>();
 
-      // Agrupar pagos por mes
-      payments.forEach(payment => {
-        if (payment.status === 'completed' && payment.date) {
-          const paymentDate = new Date(payment.date);
-          const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
-          const monthName = paymentDate.toLocaleDateString('es-CL', { month: 'long' });
-
-          if (!paymentsByMonth.has(monthKey)) {
-            paymentsByMonth.set(monthKey, { earnings: 0, jobs: 0 });
-          }
-
-          const monthData = paymentsByMonth.get(monthKey)!;
-          monthData.earnings += payment.amount;
-          monthData.jobs += 1;
-        }
-      });
-
-      // Crear estadísticas para los últimos 3 meses
-      for (let i = 2; i >= 0; i--) {
-        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
-        const monthData = paymentsByMonth.get(monthKey) || { earnings: 0, jobs: 0 };
-
-        monthlyStatsData.push({
-          month: monthDate.toLocaleDateString('es-CL', { month: 'long' }),
-          earnings: monthData.earnings,
-          jobs: monthData.jobs,
-          rating: loadedStats.averageRating || 0,
+      // Cargar trabajos de mantenimiento para calcular ganancias mensuales
+      try {
+        const jobsResponse = await fetch('/api/maintenance/jobs', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
         });
+
+        if (jobsResponse.ok) {
+          const jobsData = await jobsResponse.json();
+          if (jobsData.success && jobsData.jobs) {
+            const jobsByMonth = new Map<string, { earnings: number; jobs: number }>();
+
+            // Agrupar trabajos completados por mes según completedDate
+            jobsData.jobs.forEach((job: any) => {
+              if (job.status === 'completed' && job.completedDate) {
+                const completedDate = new Date(job.completedDate);
+                const monthKey = `${completedDate.getFullYear()}-${String(completedDate.getMonth() + 1).padStart(2, '0')}`;
+
+                if (!jobsByMonth.has(monthKey)) {
+                  jobsByMonth.set(monthKey, { earnings: 0, jobs: 0 });
+                }
+
+                const monthData = jobsByMonth.get(monthKey)!;
+                monthData.earnings += job.actualCost || job.estimatedCost || 0;
+                monthData.jobs += 1;
+              }
+            });
+
+            // Crear estadísticas para los últimos 3 meses
+            for (let i = 2; i >= 0; i--) {
+              const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+              const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+              const monthData = jobsByMonth.get(monthKey) || { earnings: 0, jobs: 0 };
+
+              monthlyStatsData.push({
+                month: monthDate.toLocaleDateString('es-CL', { month: 'long' }),
+                earnings: monthData.earnings,
+                jobs: monthData.jobs,
+                rating: loadedStats.averageRating || 0,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading jobs for monthly stats:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Fallback: crear meses vacíos si falla
+        for (let i = 2; i >= 0; i--) {
+          const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          monthlyStatsData.push({
+            month: monthDate.toLocaleDateString('es-CL', { month: 'long' }),
+            earnings: 0,
+            jobs: 0,
+            rating: loadedStats.averageRating || 0,
+          });
+        }
       }
+
       setMonthlyStats(monthlyStatsData);
 
       // Cargar analytics

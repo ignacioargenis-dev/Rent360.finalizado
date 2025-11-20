@@ -639,17 +639,12 @@ Equipo de Mantenimiento Rent360`;
 
               <Dialog open={showAgendaModal} onOpenChange={setShowAgendaModal}>
                 <DialogTrigger asChild>
-                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 group cursor-pointer">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                      <Calendar className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800 mb-2">Próximos Trabajos</h3>
-                    <p className="text-sm text-gray-600 mb-4">Agenda de mantenimientos</p>
-                    <div className="text-blue-600 font-medium text-sm flex items-center">
-                      Ver Agenda
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </div>
-                  </div>
+                  <QuickActionButton
+                    icon={Calendar}
+                    label="Próximos Trabajos"
+                    description="Agenda de mantenimientos"
+                    onClick={() => setShowAgendaModal(true)}
+                  />
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
@@ -1032,146 +1027,6 @@ Equipo de Mantenimiento Rent360`;
                 description="Recargar datos"
                 onClick={loadProperties}
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lista de propiedades */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Propiedades ({filteredProperties.length})</CardTitle>
-            <CardDescription>
-              Propiedades donde has realizado o tienes trabajos de mantenimiento
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredProperties.map(property => (
-                <Card key={property.id} className="border-l-4 border-l-green-500">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-3">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {property.address}
-                          </h3>
-                          {getStatusBadge(property.status)}
-                          {getTypeBadge(property.propertyType)}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <MapPin className="w-4 h-4 text-gray-400" />
-                              <span>
-                                {property.commune}, {property.region}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <User className="w-4 h-4 text-gray-400" />
-                              <span className="font-medium">{property.ownerName}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              <span>{property.ownerPhone}</span>
-                            </div>
-                          </div>
-
-                          <div>
-                            {property.bedrooms && (
-                              <div className="mb-1">
-                                <span className="font-medium">{property.bedrooms} dormitorios</span>
-                              </div>
-                            )}
-                            {property.bathrooms && (
-                              <div className="mb-1">
-                                <span className="font-medium">{property.bathrooms} baños</span>
-                              </div>
-                            )}
-                            <div className="mb-1">
-                              <span className="font-medium">Trabajos: </span>
-                              <span className="text-blue-600">{property.totalJobs} total</span>
-                              {property.activeJobs > 0 && (
-                                <span className="text-orange-600 ml-1">
-                                  ({property.activeJobs} activos)
-                                </span>
-                              )}
-                            </div>
-                            <div>
-                              <span className="font-medium">Ingresos: </span>
-                              <span className="text-green-600 font-semibold">
-                                {formatCurrency(property.totalRevenue)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          {property.lastJobDate && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              <span>
-                                Último trabajo:{' '}
-                                {new Date(property.lastJobDate).toLocaleDateString('es-CL')}
-                              </span>
-                            </div>
-                          )}
-                          {property.nextJobDate && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>
-                                Próximo trabajo:{' '}
-                                {new Date(property.nextJobDate).toLocaleDateString('es-CL')}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewPropertyDetails(property)}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Ver Detalles
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewPropertyJobs(property)}
-                        >
-                          <Wrench className="w-4 h-4 mr-2" />
-                          Ver Trabajos
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleContactOwner(property)}
-                        >
-                          <User className="w-4 h-4 mr-2" />
-                          Contactar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {filteredProperties.length === 0 && (
-                <div className="text-center py-8">
-                  <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No hay propiedades encontradas
-                  </h3>
-                  <p className="text-gray-600">
-                    {properties.length === 0
-                      ? 'Aún no tienes propiedades asignadas para mantenimiento.'
-                      : 'No se encontraron propiedades que coincidan con los filtros aplicados.'}
-                  </p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
