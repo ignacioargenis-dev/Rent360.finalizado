@@ -192,61 +192,90 @@ export default function CalificacionesPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('🔍 [Owner Ratings Page] API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+        throw new Error(
+          `Error ${response.status}: ${errorData.error || errorData.message || response.statusText}`
+        );
       }
 
       const data = await response.json();
 
-      // La API devuelve { success: true, data: { ratings: [...], total: ... }, pagination: {...} }
-      const ratingsList = data.data?.ratings || data.ratings || [];
-
-      // Log para depuración
+      // Log para depuración - ANTES de procesar
       console.log('🔍 [Owner Ratings Page] API Response:', {
         success: data.success,
-        total: data.data?.total || data.total || 0,
-        ratingsCount: ratingsList.length,
+        hasData: !!data.data,
+        hasRatings: !!(data.data?.ratings || data.ratings),
+        dataStructure: Object.keys(data),
         fullResponse: data,
+      });
+
+      // La API devuelve { success: true, data: { ratings: [...], total: ... }, pagination: {...} }
+      // Asegurarse de que ratingsList siempre sea un array
+      let ratingsList: any[] = [];
+      if (data.success && data.data) {
+        ratingsList = Array.isArray(data.data.ratings) ? data.data.ratings : [];
+      } else if (Array.isArray(data.ratings)) {
+        ratingsList = data.ratings;
+      } else if (Array.isArray(data)) {
+        ratingsList = data;
+      }
+
+      // Log para depuración - DESPUÉS de procesar
+      console.log('🔍 [Owner Ratings Page] Processed Ratings:', {
+        ratingsListLength: ratingsList.length,
+        isArray: Array.isArray(ratingsList),
+        firstRating: ratingsList[0],
       });
 
       logger.info('Calificaciones recibidas del API:', {
         total: data.data?.total || data.total || 0,
         ratingsCount: ratingsList.length,
-        ratings: ratingsList.map((r: any) => ({
-          id: r.id,
-          fromUserId: r.fromUserId,
-          fromUser: r.fromUser?.name,
-          toUserId: r.toUserId,
-          toUser: r.toUser?.name,
-          contextType: r.contextType,
-          overallRating: r.overallRating,
-          isPublic: r.isPublic,
-        })),
+        ratings: Array.isArray(ratingsList)
+          ? ratingsList.map((r: any) => ({
+              id: r.id,
+              fromUserId: r.fromUserId,
+              fromUser: r.fromUser?.name,
+              toUserId: r.toUserId,
+              toUser: r.toUser?.name,
+              contextType: r.contextType,
+              overallRating: r.overallRating,
+              isPublic: r.isPublic,
+            }))
+          : [],
       });
 
       // Transform API data to match our interface
-      const transformedRatings: Rating[] = ratingsList.map((rating: any) => ({
-        id: rating.id,
-        tenantName:
-          rating.fromUser?.name ||
-          rating.tenantName ||
-          rating.tenant?.name ||
-          'Usuario no identificado',
-        propertyTitle:
-          rating.property?.title || rating.propertyTitle || 'Propiedad no identificada',
-        overallRating: rating.overallRating || rating.rating || 0,
-        punctuality: rating.punctualityRating || undefined,
-        professionalism: rating.professionalismRating || undefined,
-        communication: rating.communicationRating || undefined,
-        quality: rating.qualityRating || undefined,
-        reliability: rating.reliabilityRating || undefined,
-        comment: rating.comment || 'Sin comentario',
-        positiveFeedback: rating.positiveFeedback || [],
-        improvementAreas: rating.improvementAreas || [],
-        verified: rating.isVerified || rating.verified || false,
-        anonymous: rating.isAnonymous || rating.anonymous || false,
-        date: rating.createdAt || rating.date,
-        contextType: rating.contextType,
-      }));
+      // Asegurarse de que ratingsList es un array antes de hacer map
+      const transformedRatings: Rating[] = Array.isArray(ratingsList)
+        ? ratingsList.map((rating: any) => ({
+            id: rating.id,
+            tenantName:
+              rating.fromUser?.name ||
+              rating.tenantName ||
+              rating.tenant?.name ||
+              'Usuario no identificado',
+            propertyTitle:
+              rating.property?.title || rating.propertyTitle || 'Propiedad no identificada',
+            overallRating: rating.overallRating || rating.rating || 0,
+            punctuality: rating.punctualityRating || undefined,
+            professionalism: rating.professionalismRating || undefined,
+            communication: rating.communicationRating || undefined,
+            quality: rating.qualityRating || undefined,
+            reliability: rating.reliabilityRating || undefined,
+            comment: rating.comment || 'Sin comentario',
+            positiveFeedback: rating.positiveFeedback || [],
+            improvementAreas: rating.improvementAreas || [],
+            verified: rating.isVerified || rating.verified || false,
+            anonymous: rating.isAnonymous || rating.anonymous || false,
+            date: rating.createdAt || rating.date,
+            contextType: rating.contextType,
+          }))
+        : [];
 
       // Usar datos reales o array vacío si no hay calificaciones
       setRatings(transformedRatings);
