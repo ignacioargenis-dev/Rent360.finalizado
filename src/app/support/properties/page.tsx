@@ -121,22 +121,29 @@ export default function SupportPropertiesPage() {
           params.append('search', searchTerm);
         }
 
-        const response = await fetch(`/api/support/properties?${params}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            setProperties(data.data.properties || []);
-            setStats(
-              data.data.stats || {
-                totalProperties: 0,
-                activeProperties: 0,
-                reportedIssues: 0,
-                underMaintenance: 0,
-              }
-            );
-            return;
-          }
+        const response = await fetch(`/api/support/properties?${params}`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar propiedades: ${response.status}`);
         }
+
+        const data = await response.json();
+
+        setProperties(data.properties || []);
+        setTotalProperties(data.pagination?.total || 0);
+        setStats(
+          data.stats || {
+            totalProperties: 0,
+            activeProperties: 0,
+            reportedIssues: 0,
+            underMaintenance: 0,
+          }
+        );
+
+        logger.info('Propiedades cargadas desde API:', { count: data.properties?.length || 0 });
+        return;
       } catch (apiError) {
         console.warn('API no disponible, usando datos simulados:', apiError);
       }

@@ -76,7 +76,6 @@ interface Contract {
 
 export default function SupportSignaturesPage() {
   const [signatures, setSignatures] = useState<SignatureRecord[]>([]);
-  const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,7 +88,6 @@ export default function SupportSignaturesPage() {
 
   useEffect(() => {
     loadSignatures();
-    loadContracts();
   }, []);
 
   const loadSignatures = async () => {
@@ -97,99 +95,48 @@ export default function SupportSignaturesPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for demo - in production this would come from API
-      const mockSignatures: SignatureRecord[] = [
-        {
-          id: '1',
-          contractId: 'contract-001',
-          contractTitle: 'Contrato Arriendo Departamento Las Condes',
-          signerName: 'Carlos Ramírez',
-          signerEmail: 'carlos.ramirez@email.com',
-          signerRole: 'tenant',
-          status: 'signed',
-          signedAt: '2024-03-15T10:30:00Z',
-          expiresAt: '2025-03-15T10:30:00Z',
-          provider: 'TrustFactory',
-          ipAddress: '192.168.1.100',
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-        {
-          id: '2',
-          contractId: 'contract-002',
-          contractTitle: 'Contrato Arriendo Casa Providencia',
-          signerName: 'Ana Martínez',
-          signerEmail: 'ana.martinez@email.com',
-          signerRole: 'owner',
-          status: 'pending',
-          expiresAt: '2024-03-20T15:00:00Z',
-          provider: 'FirmaPro',
-        },
-        {
-          id: '3',
-          contractId: 'contract-003',
-          contractTitle: 'Contrato Arriendo Local Comercial',
-          signerName: 'Pedro Silva',
-          signerEmail: 'pedro.silva@email.com',
-          signerRole: 'tenant',
-          status: 'reset',
-          signedAt: '2024-02-10T09:15:00Z',
-          resetReason: 'Error en la firma digital',
-          resetBy: 'Soporte Técnico',
-          resetAt: '2024-02-11T11:20:00Z',
-          provider: 'TrustFactory',
-        },
-        {
-          id: '4',
-          contractId: 'contract-001',
-          contractTitle: 'Contrato Arriendo Departamento Las Condes',
-          signerName: 'María González',
-          signerEmail: 'maria.gonzalez@email.com',
-          signerRole: 'owner',
-          status: 'expired',
-          signedAt: '2023-03-15T10:30:00Z',
-          expiresAt: '2024-03-15T10:30:00Z',
-          provider: 'TrustFactory',
-        },
-      ];
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
 
-      setSignatures(mockSignatures);
-    } catch (err) {
-      logger.error('Error loading signatures:', {
-        error: err instanceof Error ? err.message : String(err),
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+
+      // Call real API
+      const response = await fetch(`/api/support/signatures?${params}`, {
+        credentials: 'include',
       });
-      setError('Error al cargar las firmas');
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar firmas: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setSignatures(data.signatures || []);
+      setTotalSignatures(data.pagination?.total || 0);
+      setStats(
+        data.stats || {
+          totalSignatures: 0,
+          signed: 0,
+          pending: 0,
+          expired: 0,
+          cancelled: 0,
+        }
+      );
+
+      logger.info('Firmas cargadas desde API:', { count: data.signatures?.length || 0 });
+    } catch (error) {
+      logger.error('Error al cargar firmas:', error);
+      setError(error instanceof Error ? error.message : 'Error desconocido al cargar firmas');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadContracts = async () => {
-    try {
-      // Mock contracts data
-      const mockContracts: Contract[] = [
-        {
-          id: 'contract-001',
-          title: 'Contrato Arriendo Departamento Las Condes',
-          property: { address: 'Av. Apoquindo 3400', city: 'Las Condes' },
-          tenantName: 'Carlos Ramírez',
-          ownerName: 'María González',
-          status: 'ACTIVE',
-        },
-        {
-          id: 'contract-002',
-          title: 'Contrato Arriendo Casa Providencia',
-          property: { address: 'Manuel Montt 123', city: 'Providencia' },
-          tenantName: 'Ana Martínez',
-          ownerName: 'Roberto Díaz',
-          status: 'PENDING',
-        },
-      ];
-
-      setContracts(mockContracts);
-    } catch (err) {
-      logger.error('Error loading contracts:', {
-        error: err instanceof Error ? err.message : String(err),
-      });
     }
   };
 

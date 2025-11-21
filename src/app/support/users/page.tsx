@@ -230,120 +230,51 @@ export default function SupportUsersPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for demo - in production this would come from API
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          name: 'Carlos Ramírez',
-          email: 'carlos.ramirez@email.com',
-          role: UserRoleEnum.TENANT,
-          status: 'ACTIVE',
-          phone: '+56 9 1234 5678',
-          createdAt: '2024-01-15T10:30:00Z',
-          lastLogin: '2024-03-15T14:20:00Z',
-          city: 'Santiago',
-          verified: true,
-          ticketsCount: 3,
-          propertiesCount: 1,
-        },
-        {
-          id: '2',
-          name: 'Ana Martínez',
-          email: 'ana.martinez@email.com',
-          role: UserRoleEnum.OWNER,
-          status: 'ACTIVE',
-          phone: '+56 9 8765 4321',
-          createdAt: '2024-02-10T09:15:00Z',
-          lastLogin: '2024-03-14T16:45:00Z',
-          city: 'Providencia',
-          verified: true,
-          ticketsCount: 1,
-          propertiesCount: 5,
-        },
-        {
-          id: '3',
-          name: 'Pedro Silva',
-          email: 'pedro.silva@email.com',
-          role: UserRoleEnum.BROKER,
-          status: 'PENDING',
-          phone: '+56 9 5555 1234',
-          createdAt: '2024-03-01T11:20:00Z',
-          city: 'Las Condes',
-          verified: false,
-          ticketsCount: 0,
-          propertiesCount: 0,
-        },
-        {
-          id: '4',
-          name: 'María González',
-          email: 'maria.gonzalez@email.com',
-          role: UserRoleEnum.SUPPORT,
-          status: 'ACTIVE',
-          phone: '+56 9 7777 8888',
-          createdAt: '2024-01-01T08:00:00Z',
-          lastLogin: '2024-03-15T09:30:00Z',
-          city: 'Santiago',
-          verified: true,
-          ticketsCount: 0,
-          propertiesCount: 0,
-        },
-        {
-          id: '5',
-          name: 'Roberto Díaz',
-          email: 'roberto.diaz@email.com',
-          role: UserRoleEnum.TENANT,
-          status: 'SUSPENDED',
-          phone: '+56 9 9999 0000',
-          createdAt: '2024-02-20T13:45:00Z',
-          lastLogin: '2024-03-10T11:15:00Z',
-          city: 'Ñuñoa',
-          verified: true,
-          ticketsCount: 2,
-          propertiesCount: 1,
-        },
-      ];
-
-      // Filter users based on search and filters
-      let filteredUsers = mockUsers;
-
-      if (searchTerm) {
-        filteredUsers = filteredUsers.filter(
-          user =>
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.city?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
 
       if (roleFilter !== 'all') {
-        filteredUsers = filteredUsers.filter(user => user.role === roleFilter);
+        params.append('role', roleFilter);
       }
 
       if (statusFilter !== 'all') {
-        filteredUsers = filteredUsers.filter(user => user.status === statusFilter);
+        params.append('status', statusFilter === 'active' ? 'active' : statusFilter);
       }
 
-      setUsers(filteredUsers);
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
 
-      // Calculate stats
-      const newStats: UserStats = {
-        total: mockUsers.length,
-        active: mockUsers.filter(u => u.status === 'ACTIVE').length,
-        pending: mockUsers.filter(u => u.status === 'PENDING').length,
-        suspended: mockUsers.filter(u => u.status === 'SUSPENDED').length,
-        verified: mockUsers.filter(u => u.verified).length,
-        unverified: mockUsers.filter(u => !u.verified).length,
-      };
-
-      setStats(newStats);
-
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 500));
-    } catch (error) {
-      logger.error('Error loading users:', {
-        error: error instanceof Error ? error.message : String(error),
+      // Call real API
+      const response = await fetch(`/api/support/users?${params}`, {
+        credentials: 'include',
       });
-      setError('Error al cargar los usuarios');
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar usuarios: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setUsers(data.users || []);
+      setTotalUsers(data.total || 0);
+      setStats(
+        data.stats || {
+          total: 0,
+          active: 0,
+          pending: 0,
+          suspended: 0,
+          verified: 0,
+          unverified: 0,
+        }
+      );
+
+      logger.info('Usuarios cargados desde API:', { count: data.users?.length || 0 });
+    } catch (error) {
+      logger.error('Error al cargar usuarios:', error);
+      setError(error instanceof Error ? error.message : 'Error desconocido al cargar usuarios');
     } finally {
       setLoading(false);
     }
