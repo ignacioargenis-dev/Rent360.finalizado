@@ -1382,21 +1382,33 @@ export class AIChatbotService {
       {
         intent: 'digital_signature',
         patterns: [
+          // Patrones básicos
           /(?:firma|firmar|firmado|firmas)\s+(?:digital|electronica|electronica|online|en linea|en línea)/i,
-          /(?:se\s+)?(?:pueden|puedo|se\s+puede)\s+(?:hacer|hacer|realizar|firmar)\s+(?:firmas?|firmar|contratos?)\s+(?:digital|electronica|electronica|online|con\s+firma\s+electronica)/i,
-          /(?:hay|tienen|ofrecen|se\s+puede|se\s+pueden)\s+(?:firma|firmas?|firmar)\s+(?:digital|electronica|electronica|online)/i,
-          /(?:como|como)\s+(?:se\s+)?(?:firman|firma|firmar)\s+(?:los\s+)?(?:contratos?|documentos?)/i,
-          /(?:puedo|puede|se\s+puede)\s+(?:firmar|firmas?)\s+(?:online|en linea|en línea|digital|electronica|electronica)/i,
           /(?:firma|firmas?)\s+(?:electronica|electronica|digital|online)/i,
-          /(?:contrato|contratos?|documento|documentos?)\s+(?:digital|electronico|electronico|online)/i,
-          // Patrones mejorados para detectar preguntas sobre firma electrónica
+          // Patrones con "se puede" / "se pueden"
+          /(?:se\s+)?(?:pueden|puedo|se\s+puede)\s+(?:hacer|hacer|realizar|firmar)\s+(?:firmas?|firmar|contratos?)\s+(?:digital|electronica|electronica|online|con\s+firma\s+electronica)/i,
           /(?:se\s+)?(?:puede|pueden)\s+(?:firmar|firmas?)\s+(?:los\s+)?(?:contratos?|documentos?)\s+(?:con\s+)?(?:firma\s+)?(?:electronica|electronica|digital|online)/i,
+          /(?:se\s+)?(?:puede|pueden)\s+(?:hacer|realizar)\s+(?:firmas?|firmar)\s+(?:electronica|electronica|digital|online)/i,
+          // Patrones con "hay" / "tienen" / "ofrecen"
+          /(?:hay|tienen|ofrecen|se\s+puede|se\s+pueden)\s+(?:firma|firmas?|firmar)\s+(?:digital|electronica|electronica|online)/i,
+          // Patrones con "como"
+          /(?:como|como)\s+(?:se\s+)?(?:firman|firma|firmar)\s+(?:los\s+)?(?:contratos?|documentos?)/i,
+          // Patrones con "puedo" / "puede"
+          /(?:puedo|puede|se\s+puede)\s+(?:firmar|firmas?)\s+(?:online|en linea|en línea|digital|electronica|electronica)/i,
+          // Patrones con contratos/documentos + firma
+          /(?:contrato|contratos?|documento|documentos?)\s+(?:digital|electronico|electronico|online)/i,
           /(?:firmar|firmas?)\s+(?:contratos?|documentos?)\s+(?:con\s+)?(?:firma\s+)?(?:electronica|electronica|digital|online)/i,
           /(?:contratos?|documentos?)\s+(?:con\s+)?(?:firma\s+)?(?:electronica|electronica|digital|online)/i,
           /(?:firma\s+)?(?:electronica|electronica|digital|online)\s+(?:para|en|de)\s+(?:contratos?|documentos?)/i,
+          // 🚀 NUEVOS: Patrones más flexibles para capturar variaciones
+          /(?:se\s+)?(?:pueden|puedo|se\s+puede)\s+(?:hacer|realizar)\s+(?:firmas?\s+)?(?:electronica|electronica|digital|online)/i,
+          /(?:firmas?\s+)?(?:electronica|electronica|digital)\s+(?:para|en|de|de\s+los)\s+(?:contratos?|documentos?)/i,
+          /(?:contratos?|documentos?)\s+(?:se\s+)?(?:pueden|puede)\s+(?:firmar|firmas?)\s+(?:electronica|electronica|digital|online)/i,
+          // Patrón específico para "se pueden hacer firmas electronicas"
+          /(?:se\s+)?(?:pueden|puedo|se\s+puede)\s+(?:hacer|realizar)\s+(?:firmas?\s+)?(?:electronica|electronica|digital|online)\s+(?:para|en|de|de\s+los)\s+(?:los\s+)?(?:contratos?|documentos?)/i,
         ],
-        weight: 0.99, // Aumentar peso para mejor detección
-        context: ['contracts', 'signing', 'legal', 'digital', 'trustfactory'],
+        weight: 1.0, // Peso máximo para mejor detección
+        context: ['contracts', 'signing', 'legal', 'digital', 'trustfactory', 'firmapro'],
       },
       // 🚀 NUEVO: Detección específica para contratar corredores (ALTA PRIORIDAD)
       {
@@ -2917,6 +2929,15 @@ export class AIChatbotService {
 
       // 🚀 MODALIDAD HÍBRIDA: Estrategia en 3 niveles
 
+      // 🚀 MEJORADO: Detectar intención primero para logging y mejor procesamiento
+      const intentRecognition = this.recognizeIntent(userMessage, userRole);
+      logger.info('🔍 Intención detectada en processMessageWithTrainingData', {
+        intent: intentRecognition.intent,
+        confidence: intentRecognition.confidence,
+        userRole,
+        userMessage: userMessage.substring(0, 100),
+      });
+
       // NIVEL 1: Intentar con datos de entrenamiento específicos (rápido y preciso)
       const contextualResponse = TrainingDataManager.generateContextualResponse(
         enhancedPrompt,
@@ -2935,6 +2956,12 @@ export class AIChatbotService {
         if (context?.userData) {
           confidence = Math.min(0.95, confidence + 0.1);
         }
+
+        logger.info('📚 Respuesta de entrenamiento encontrada', {
+          confidence,
+          intent: intentRecognition.intent,
+          willUse: confidence >= 0.8,
+        });
 
         // Si la confianza es alta (>= 0.8), usar respuesta de entrenamiento
         if (confidence >= 0.8) {
@@ -3004,10 +3031,116 @@ export class AIChatbotService {
         // Si confianza es media (0.6-0.8), continuar a IA real para mejorar
       }
 
-      // NIVEL 2: Usar IA real (Google AI) si está disponible y confianza de entrenamiento es baja
-      if (this.config?.provider !== 'local' && this.config?.provider !== undefined) {
+      // 🚀 NIVEL 2 MEJORADO: SIEMPRE intentar Google Gemini primero (prioridad máxima)
+      // Intentar con Google AI primero si está disponible, independientemente del proveedor configurado
+      if (this.googleAI && process.env.GOOGLE_AI_API_KEY) {
         try {
-          logger.info('🤖 Usando IA real para generar respuesta', {
+          logger.info('🤖 Usando Google Gemini (prioridad máxima) para generar respuesta', {
+            userRole,
+            intent: this.recognizeIntent(userMessage, userRole).intent,
+          });
+
+          const securityContext = this.createSecurityContext(userRole, userId);
+          const aiPrompt = this.createSecurePrompt(
+            userMessage,
+            securityContext,
+            conversationHistory
+          );
+
+          const aiResult = await this.processWithGoogle(aiPrompt);
+
+          // Validar respuesta de IA por seguridad
+          let validatedAIResponse = this.validateResponse(aiResult.response, securityContext);
+
+          // 🚀 MEJORADO: Si la respuesta es genérica, intentar usar knowledgeBase
+          const intentRecognition = this.recognizeIntent(userMessage, userRole);
+          const intent = intentRecognition.intent;
+
+          // Si detectamos una intención específica pero la respuesta de Google es genérica,
+          // usar el knowledgeBase en su lugar
+          if (
+            intentRecognition.confidence >= 0.6 &&
+            (validatedAIResponse.includes('Puedo ayudarte con') ||
+              validatedAIResponse.includes('Información sobre') ||
+              validatedAIResponse.includes('Ejemplos de preguntas') ||
+              validatedAIResponse.length < 150)
+          ) {
+            logger.info('⚠️ Respuesta de Google parece genérica, usando knowledgeBase', {
+              intent: intent,
+              confidence: intentRecognition.confidence,
+              responseLength: validatedAIResponse.length,
+            });
+
+            const securityContextForKB = this.createSecurityContext(userRole, userId);
+            const smartResponse = this.generateSmartResponse(
+              intentRecognition,
+              userRole,
+              securityContextForKB
+            );
+
+            if (
+              smartResponse.response &&
+              smartResponse.confidence > 0.6 &&
+              !smartResponse.response.includes('Lo siento')
+            ) {
+              validatedAIResponse = smartResponse.response;
+              logger.info('✅ Usando respuesta del knowledgeBase en lugar de respuesta genérica', {
+                intent: intent,
+                confidence: smartResponse.confidence,
+              });
+            }
+          }
+
+          const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
+
+          aiLearningSystem.recordInteraction({
+            userId,
+            userRole,
+            userMessage,
+            botResponse: validatedAIResponse,
+            context: {
+              source: 'google_gemini',
+              provider: 'google',
+              hasRealData: !!context?.userData,
+            },
+            intent: intent || 'unknown',
+            confidence: aiResult.confidence,
+          });
+
+          logger.info('✅ Respuesta generada por Google Gemini', {
+            confidence: aiResult.confidence,
+            userRole,
+            intent,
+          });
+
+          return {
+            response: validatedAIResponse,
+            confidence: aiResult.confidence,
+            intent,
+            suggestions,
+            metadata: {
+              source: 'google_gemini',
+              provider: 'google',
+              model: this.config?.model || 'gemini-pro',
+              timestamp: new Date().toISOString(),
+            },
+          };
+        } catch (googleError) {
+          logger.warn('⚠️ Error usando Google Gemini, intentando otros proveedores', {
+            error: googleError instanceof Error ? googleError.message : String(googleError),
+          });
+          // Continuar a otros proveedores o fallback local
+        }
+      }
+
+      // NIVEL 2B: Usar otros proveedores de IA si Google falló y están disponibles
+      if (
+        this.config?.provider !== 'local' &&
+        this.config?.provider !== undefined &&
+        this.config.provider !== 'google'
+      ) {
+        try {
+          logger.info('🤖 Usando IA alternativa para generar respuesta', {
             provider: this.config.provider,
             userRole,
           });
@@ -3022,9 +3155,6 @@ export class AIChatbotService {
           let aiResult: { response: string; confidence: number };
 
           switch (this.config.provider) {
-            case 'google':
-              aiResult = await this.processWithGoogle(aiPrompt);
-              break;
             case 'openai':
               aiResult = await this.processWithOpenAI(aiPrompt);
               break;
@@ -3056,7 +3186,7 @@ export class AIChatbotService {
             confidence: aiResult.confidence,
           });
 
-          logger.info('✅ Respuesta generada por IA real', {
+          logger.info('✅ Respuesta generada por IA alternativa', {
             provider: this.config.provider,
             confidence: aiResult.confidence,
             userRole,
@@ -3075,7 +3205,7 @@ export class AIChatbotService {
             },
           };
         } catch (error) {
-          logger.error('⚠️ Error usando IA real, usando fallback local', {
+          logger.error('⚠️ Error usando IA alternativa, usando fallback local', {
             error: error instanceof Error ? error.message : String(error),
             provider: this.config?.provider,
           });
@@ -3607,12 +3737,32 @@ export class AIChatbotService {
     // 🚀 MEJORADO: Usar reconocimiento de intenciones mejorado (sistema unificado)
     const intent = this.recognizeIntent(userMessage, userRole);
 
-    // Si tenemos una intención específica con alta confianza, usar la base de conocimiento
-    if (intent.confidence > 0.7) {
+    logger.info('🔍 Intención detectada en lógica local', {
+      intent: intent.intent,
+      confidence: intent.confidence,
+      userRole,
+      userMessage: userMessage.substring(0, 50),
+    });
+
+    // 🚀 MEJORADO: Usar knowledgeBase incluso con confianza media (0.6+) para intenciones importantes
+    const importantIntents = [
+      'digital_signature',
+      'register',
+      'hire_broker',
+      'costs_pricing',
+      'contracts',
+    ];
+    const minConfidenceForKnowledgeBase = importantIntents.includes(intent.intent) ? 0.6 : 0.7;
+
+    if (intent.confidence >= minConfidenceForKnowledgeBase) {
       const securityContext = this.createSecurityContext(userRole, 'anonymous');
       const smartResponse = this.generateSmartResponse(intent, userRole, securityContext);
 
-      if (smartResponse.response && smartResponse.confidence > 0.6) {
+      if (smartResponse.response && smartResponse.confidence > 0.5) {
+        logger.info('✅ Usando respuesta del knowledgeBase', {
+          intent: intent.intent,
+          confidence: smartResponse.confidence,
+        });
         return {
           response: smartResponse.response,
           confidence: smartResponse.confidence,
@@ -3629,11 +3779,33 @@ export class AIChatbotService {
       intent.confidence
     );
     if (specificResponses) {
+      logger.info('✅ Usando respuesta específica de intención', {
+        intent: intent.intent,
+        confidence: specificResponses.confidence,
+      });
       return specificResponses;
     }
 
-    // Respuesta por defecto mejorada para usuarios guest
-    if (userRole === 'guest' || userRole === 'GUEST') {
+    // 🚀 MEJORADO: Si detectamos una intención pero no tenemos respuesta específica,
+    // intentar usar el knowledgeBase de todas formas para intenciones conocidas
+    if (intent.confidence >= 0.5 && intent.intent !== 'support' && intent.intent !== 'unknown') {
+      const securityContext = this.createSecurityContext(userRole, 'anonymous');
+      const smartResponse = this.generateSmartResponse(intent, userRole, securityContext);
+
+      if (smartResponse.response && !smartResponse.response.includes('Lo siento')) {
+        logger.info('✅ Usando respuesta del knowledgeBase (confianza media)', {
+          intent: intent.intent,
+          confidence: smartResponse.confidence,
+        });
+        return {
+          response: smartResponse.response,
+          confidence: Math.max(smartResponse.confidence, 0.65),
+        };
+      }
+    }
+
+    // Respuesta por defecto mejorada para usuarios guest (solo si no detectamos intención clara)
+    if ((userRole === 'guest' || userRole === 'GUEST') && intent.confidence < 0.5) {
       return {
         response:
           '¡Hola! Soy el asistente de Rent360. Puedo ayudarte con:\n\n**Información sobre:**\n- Registro y creación de cuenta\n- Tipos de usuarios (propietario, inquilino, proveedor, corredor)\n- Cómo buscar o publicar propiedades\n- Sistema de pagos\n- Cómo ofrecer servicios\n- Contratos digitales\n- Y mucho más\n\n**Ejemplos de preguntas que puedo responder:**\n- "¿Cómo me registro como proveedor?"\n- "¿Cómo busco propiedades?"\n- "¿Cuánto cuesta usar Rent360?"\n- "Soy jardinero, ¿cómo ofrezco mis servicios?"\n\n¿Sobre qué te gustaría saber? Hazme cualquier pregunta y te ayudo.',
@@ -3861,20 +4033,23 @@ ${securityContext.restrictedTopics.map((topic: string) => `- ${topic}`).join('\n
 **CONTEXTO ESPECÍFICO DE LA PREGUNTA:**
 ${isProviderQuestion ? `- El usuario está preguntando sobre ofrecer servicios como proveedor${serviceType ? ` (específicamente: ${serviceType})` : ''}` : ''}
 ${isRegistrationQuestion ? '- El usuario está interesado en registrarse o crear una cuenta' : ''}
+${messageLower.includes('firma') && (messageLower.includes('electronica') || messageLower.includes('digital') || messageLower.includes('contrato')) ? '- El usuario está preguntando específicamente sobre firmas electrónicas/digitales para contratos' : ''}
 
 **INSTRUCCIONES DE RESPUESTA:**
-1. **SIEMPRE responde de forma específica y directa a la pregunta del usuario.** No uses respuestas genéricas.
-2. Si el usuario pregunta sobre ofrecer servicios (ej: "soy electricista, puedo ofrecer mis servicios?"), responde específicamente sobre cómo registrarse como proveedor de servicios, mencionando el tipo de servicio si fue mencionado.
-3. Si el usuario pregunta sobre registro, proporciona pasos claros y específicos según el tipo de usuario que quiere ser.
-4. Solo proporciona información general sobre funcionalidades de Rent360
-5. NUNCA menciones datos específicos de usuarios, propiedades, contratos o pagos
-6. Si se pregunta por información confidencial, responde: "No puedo acceder a información personal. Para consultas específicas, contacta al soporte."
-7. Si la pregunta es sobre temas restringidos, redirige al soporte: "Para esa consulta, te recomiendo contactar al soporte técnico."
-8. Mantén un tono amigable y profesional
-9. Si no sabes la respuesta exacta, proporciona información general útil
-10. NUNCA inventes información que no conozcas con certeza
-11. NUNCA proporciones pasos técnicos que puedan comprometer la seguridad
-12. **IMPORTANTE:** Si el usuario menciona un tipo de servicio específico (electricista, plomero, etc.), personaliza tu respuesta mencionando ese servicio específicamente.
+1. **🚨 CRÍTICO: SIEMPRE responde de forma específica y directa a la pregunta del usuario. NUNCA uses respuestas genéricas o listas de temas.**
+2. **Si el usuario pregunta sobre firmas electrónicas/digitales para contratos**, responde específicamente: "¡Sí! Rent360 tiene un sistema completo de firmas digitales para contratos. Todos los contratos se pueden firmar digitalmente con validez legal completa en Chile. El proceso es 100% digital, seguro y rápido. Utilizamos proveedores certificados como TrustFactory y FirmaPro. Puedes firmar desde cualquier dispositivo y recibirás una copia digital del contrato firmado."
+3. Si el usuario pregunta sobre ofrecer servicios (ej: "soy electricista, puedo ofrecer mis servicios?"), responde específicamente sobre cómo registrarse como proveedor de servicios, mencionando el tipo de servicio si fue mencionado.
+4. Si el usuario pregunta sobre registro, proporciona pasos claros y específicos según el tipo de usuario que quiere ser.
+5. Solo proporciona información general sobre funcionalidades de Rent360
+6. NUNCA menciones datos específicos de usuarios, propiedades, contratos o pagos
+7. Si se pregunta por información confidencial, responde: "No puedo acceder a información personal. Para consultas específicas, contacta al soporte."
+8. Si la pregunta es sobre temas restringidos, redirige al soporte: "Para esa consulta, te recomiendo contactar al soporte técnico."
+9. Mantén un tono amigable y profesional
+10. Si no sabes la respuesta exacta, proporciona información general útil
+11. NUNCA inventes información que no conozcas con certeza
+12. NUNCA proporciones pasos técnicos que puedan comprometer la seguridad
+13. **IMPORTANTE:** Si el usuario menciona un tipo de servicio específico (electricista, plomero, etc.), personaliza tu respuesta mencionando ese servicio específicamente.
+14. **🚨 NUNCA respondas con listas genéricas de temas cuando el usuario hace una pregunta específica. Responde directamente a su pregunta.**
 
 **EJEMPLOS DE RESPUESTAS CORRECTAS:**
 - ✅ Usuario: "soy electricista, puedo ofrecer mis servicios?"
@@ -4053,8 +4228,12 @@ Respuesta (solo información general y pública, pero específica y útil):
     userRole: string,
     confidence: number
   ): { response: string; confidence: number } | null {
-    // Solo procesar si la confianza es alta
-    if (confidence < 0.85) {
+    // 🚀 MEJORADO: Reducir umbral para ser más permisivo y detectar mejor las intenciones
+    // Para intenciones específicas importantes, usar umbral más bajo
+    const importantIntents = ['digital_signature', 'register', 'hire_broker', 'costs_pricing'];
+    const minConfidence = importantIntents.includes(intent) ? 0.7 : 0.75;
+
+    if (confidence < minConfidence) {
       return null;
     }
 
