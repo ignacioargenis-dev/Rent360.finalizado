@@ -39,20 +39,20 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       whereClause.OR = [
-        { contract: { title: { contains: search, mode: 'insensitive' } } },
+        { contract: { contractNumber: { contains: search, mode: 'insensitive' } } },
         { signer: { name: { contains: search, mode: 'insensitive' } } },
         { signer: { email: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
     // Obtener firmas con información relacionada
-    const signatures = await db.signature.findMany({
+    const signatures = await db.contractSignature.findMany({
       where: whereClause,
       include: {
         contract: {
           select: {
             id: true,
-            title: true,
+            contractNumber: true,
             status: true,
           },
         },
@@ -71,10 +71,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Obtener el total para paginación
-    const totalSignatures = await db.signature.count({ where: whereClause });
+    const totalSignatures = await db.contractSignature.count({ where: whereClause });
 
     // Calcular estadísticas
-    const stats = await db.signature.groupBy({
+    const stats = await db.contractSignature.groupBy({
       by: ['status'],
       _count: {
         status: true,
@@ -93,16 +93,16 @@ export async function GET(request: NextRequest) {
     const transformedSignatures = signatures.map(signature => ({
       id: signature.id,
       contractId: signature.contractId,
-      contractTitle: signature.contract?.title || 'Contrato sin título',
+      contractTitle: signature.contract?.contractNumber || 'Contrato sin título',
       signerName: signature.signer?.name || 'Firmante desconocido',
       signerEmail: signature.signer?.email || 'Sin email',
       signerRole: signature.signer?.role || 'unknown',
       status: signature.status,
       signedAt: signature.signedAt?.toISOString(),
       expiresAt: signature.expiresAt?.toISOString(),
-      provider: signature.provider || 'Desconocido',
-      ipAddress: signature.ipAddress,
-      userAgent: signature.userAgent?.substring(0, 100), // Limitar longitud
+      provider: signature.signatureProvider || 'Desconocido',
+      ipAddress: '', // Campo no disponible en este modelo
+      userAgent: '', // Campo no disponible en este modelo
     }));
 
     return NextResponse.json({

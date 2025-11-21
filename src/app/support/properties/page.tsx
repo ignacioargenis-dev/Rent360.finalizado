@@ -132,10 +132,9 @@ export default function SupportPropertiesPage() {
         const data = await response.json();
 
         setProperties(data.properties || []);
-        setTotalProperties(data.pagination?.total || 0);
         setStats(
           data.stats || {
-            totalProperties: 0,
+            totalProperties: data.pagination?.total || 0,
             activeProperties: 0,
             reportedIssues: 0,
             underMaintenance: 0,

@@ -33,20 +33,20 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       whereClause.OR = [
-        { contract: { title: { contains: search, mode: 'insensitive' } } },
+        { contract: { contractNumber: { contains: search, mode: 'insensitive' } } },
         { signer: { name: { contains: search, mode: 'insensitive' } } },
         { signer: { email: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
     // Obtener todas las firmas para exportación
-    const signatures = await db.signature.findMany({
+    const signatures = await db.contractSignature.findMany({
       where: whereClause,
       include: {
         contract: {
           select: {
             id: true,
-            title: true,
+            contractNumber: true,
             status: true,
             createdAt: true,
           },
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     const csvRows = signatures.map(signature => [
       signature.id,
       signature.contractId,
-      signature.contract?.title || '',
+      signature.contract?.contractNumber || '',
       signature.contract?.status || '',
       signature.signer?.name || '',
       signature.signer?.email || '',
@@ -95,9 +95,9 @@ export async function GET(request: NextRequest) {
       signature.status,
       signature.signedAt?.toISOString() || '',
       signature.expiresAt?.toISOString() || '',
-      signature.provider || '',
-      signature.ipAddress || '',
-      signature.userAgent || '',
+      signature.signatureProvider || '',
+      '', // ipAddress no disponible en este modelo
+      '', // userAgent no disponible en este modelo
       signature.contract?.createdAt?.toISOString() || '',
     ]);
 

@@ -80,6 +80,16 @@ export default function SupportSignaturesPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const [totalSignatures, setTotalSignatures] = useState(0);
+  const [stats, setStats] = useState({
+    totalSignatures: 0,
+    signed: 0,
+    pending: 0,
+    expired: 0,
+    cancelled: 0,
+  });
   const [selectedSignature, setSelectedSignature] = useState<SignatureRecord | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);

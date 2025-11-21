@@ -94,6 +94,9 @@ export default function SupportUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState('');
