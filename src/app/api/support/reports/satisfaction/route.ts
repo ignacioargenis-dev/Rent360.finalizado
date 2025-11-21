@@ -1,0 +1,203 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { logger } from '@/lib/logger-minimal';
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+
+    if (user.role !== 'SUPPORT' && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Acceso denegado. Se requieren permisos de soporte o administrador.' },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || 'month';
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    logger.info('GET /api/support/reports/satisfaction - Generando reporte de satisfacción', {
+      userId: user.id,
+      period,
+      startDate,
+      endDate,
+    });
+
+    // Calcular fechas basadas en el período
+    let dateFilter = {};
+    const now = new Date();
+
+    if (startDate && endDate) {
+      dateFilter = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    } else {
+      switch (period) {
+        case 'week':
+          dateFilter = {
+            gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+          };
+          break;
+        case 'month':
+          dateFilter = {
+            gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+          };
+          break;
+        case 'quarter':
+          dateFilter = {
+            gte: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+          };
+          break;
+        case 'year':
+          dateFilter = {
+            gte: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000),
+          };
+          break;
+      }
+    }
+
+    // Obtener calificaciones de tickets y servicios
+    const ratings = await db.rating.findMany({
+      where: {
+        createdAt: dateFilter,
+      },
+      include: {
+        ticket: {
+          select: {
+            id: true,
+            category: true,
+            priority: true,
+            assignedTo: true,
+            resolvedAt: true,
+          },
+        },
+        serviceJob: {
+          select: {
+            id: true,
+            serviceType: true,
+            completedAt: true,
+          },
+        },
+        reviewer: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
+        reviewee: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Transformar datos al formato esperado
+    const satisfactionData = ratings.map(rating => ({
+      ticketId: rating.ticket?.id || rating.serviceJob?.id || rating.id,
+      category: rating.ticket?.category || rating.serviceJob?.serviceType || 'General',
+      priority: rating.ticket?.priority || 'MEDIUM',
+      resolutionTime: rating.ticket?.resolvedAt
+        ? Math.floor((new Date(rating.ticket.resolvedAt).getTime() - new Date(rating.createdAt).getTime()) / (1000 * 60 * 60))
+        : rating.serviceJob?.completedAt
+        ? Math.floor((new Date(rating.serviceJob.completedAt).getTime() - new Date(rating.createdAt).getTime()) / (1000 * 60 * 60))
+        : 24,
+      satisfactionRating: rating.overallRating,
+      feedbackText: rating.feedback,
+      userType: rating.reviewer?.role?.toUpperCase() || 'USER',
+      agent: rating.reviewee?.name || 'Sistema',
+      resolutionDate: rating.createdAt.toISOString(),
+      followUpRequired: rating.needsFollowUp || false,
+      npsScore: rating.npsScore,
+    }));
+
+    // Calcular estadísticas
+    const totalResponses = satisfactionData.length;
+    const overallRating = totalResponses > 0
+      ? satisfactionData.reduce((sum, item) => sum + item.satisfactionRating, 0) / totalResponses
+      : 0;
+
+    // Calcular NPS
+    const promoters = satisfactionData.filter(item => (item.npsScore || 0) >= 9).length;
+    const passives = satisfactionData.filter(item => (item.npsScore || 0) >= 7 && (item.npsScore || 0) <= 8).length;
+    const detractors = satisfactionData.filter(item => (item.npsScore || 0) <= 6).length;
+    const npsScore = totalResponses > 0 ? ((promoters - detractors) / totalResponses) * 100 : 0;
+
+    // Distribución de calificaciones
+    const ratingDistribution = [1, 2, 3, 4, 5].map(rating => {
+      const count = satisfactionData.filter(item => item.satisfactionRating === rating).length;
+      return {
+        rating,
+        count,
+        percentage: totalResponses > 0 ? (count / totalResponses) * 100 : 0,
+      };
+    });
+
+    // Satisfacción por categoría
+    const categories = [...new Set(satisfactionData.map(item => item.category))];
+    const categorySatisfaction = categories.map(category => {
+      const categoryItems = satisfactionData.filter(item => item.category === category);
+      const avgRating = categoryItems.length > 0
+        ? categoryItems.reduce((sum, item) => sum + item.satisfactionRating, 0) / categoryItems.length
+        : 0;
+      return {
+        category,
+        avgRating: Math.round(avgRating * 10) / 10,
+        responseCount: categoryItems.length,
+      };
+    });
+
+    // Rendimiento por agente
+    const agents = [...new Set(satisfactionData.map(item => item.agent))];
+    const agentPerformance = agents.map(agent => {
+      const agentItems = satisfactionData.filter(item => item.agent === agent);
+      const avgRating = agentItems.length > 0
+        ? agentItems.reduce((sum, item) => sum + item.satisfactionRating, 0) / agentItems.length
+        : 0;
+      return {
+        agent,
+        avgRating: Math.round(avgRating * 10) / 10,
+        ticketCount: agentItems.length,
+      };
+    });
+
+    const stats = {
+      overallRating: Math.round(overallRating * 10) / 10,
+      totalResponses,
+      responseRate: totalResponses > 0 ? 100 : 0, // Simplificado
+      npsScore: Math.round(npsScore),
+      promoters,
+      passives,
+      detractors,
+      ratingDistribution,
+      categorySatisfaction,
+      agentPerformance,
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: satisfactionData,
+      stats,
+      period,
+      dateRange: {
+        start: dateFilter.gte?.toISOString(),
+        end: dateFilter.lte?.toISOString(),
+      },
+    });
+
+  } catch (error) {
+    logger.error('Error en GET /api/support/reports/satisfaction:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}

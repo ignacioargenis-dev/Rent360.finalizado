@@ -72,80 +72,39 @@ export default function SupportTicketsBoardPage() {
 
     const loadTicketData = async () => {
       try {
-        // Mock support tickets data - filtered for support role
-        const mockTickets: SupportTicket[] = [
-          {
-            id: '1',
-            title: 'Problema con pago en línea',
-            description:
-              'El cliente no puede realizar el pago de su arriendo mensual a través de la plataforma',
-            clientName: 'Carlos Ramírez',
-            clientEmail: 'carlos@email.com',
-            clientPhone: '+56912345678',
-            category: 'billing',
-            priority: 'high',
-            status: 'open',
-            assignedTo: 'Soporte Rent360',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
-          },
-          {
-            id: '2',
-            title: 'Error en sistema de calificaciones',
-            description: 'No se pueden calificar a los inquilinos después de finalizar contratos',
-            clientName: 'Ana Martínez',
-            clientEmail: 'ana@email.com',
-            category: 'technical',
-            priority: 'medium',
-            status: 'in_progress',
-            assignedTo: 'Soporte Rent360',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-          },
-          {
-            id: '3',
-            title: 'Solicitud de devolución de depósito',
-            description:
-              'Cliente solicita devolución de depósito por terminación anticipada de contrato',
-            clientName: 'Pedro Silva',
-            clientEmail: 'pedro@email.com',
-            category: 'billing',
-            priority: 'medium',
-            status: 'open',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-          },
-          {
-            id: '4',
-            title: 'Problema de acceso a cuenta',
-            description: 'Usuario no puede iniciar sesión, contraseña olvidada',
-            clientName: 'María López',
-            clientEmail: 'maria@email.com',
-            category: 'account',
-            priority: 'urgent',
-            status: 'resolved',
-            assignedTo: 'Soporte Rent360',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
-            resolutionTime: 4,
-            satisfaction: 5,
-          },
-          {
-            id: '5',
-            title: 'Error en generación de contratos',
-            description: 'Los contratos no se generan correctamente en formato PDF',
-            clientName: 'Roberto Díaz',
-            clientEmail: 'roberto@email.com',
-            category: 'technical',
-            priority: 'high',
-            status: 'escalated',
-            assignedTo: 'Soporte Rent360',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
-          },
-        ];
+        setLoading(true);
+        setError(null);
 
-        setTickets(mockTickets);
+        // Llamar a la API real de tickets
+        const response = await fetch('/api/support/tickets', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar tickets: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Transformar datos al formato esperado por el tablero
+        const transformedTickets = (data.tickets || []).map((ticket: any) => ({
+          id: ticket.id,
+          title: ticket.title,
+          description: ticket.description,
+          clientName: ticket.createdBy?.name || 'Usuario desconocido',
+          clientEmail: ticket.createdBy?.email || '',
+          clientPhone: ticket.createdBy?.phone || '',
+          category: ticket.category || 'general',
+          priority: ticket.priority?.toLowerCase() || 'medium',
+          status: ticket.status?.toLowerCase() || 'open',
+          assignedTo: ticket.assignedTo?.name || 'Sin asignar',
+          createdAt: ticket.createdAt,
+          updatedAt: ticket.updatedAt || ticket.createdAt,
+        }));
+
+        setTickets(transformedTickets);
+
+        logger.info('Tickets del tablero cargados desde API:', { count: transformedTickets.length });
         setLoading(false);
       } catch (error) {
         logger.error('Error loading ticket data:', {

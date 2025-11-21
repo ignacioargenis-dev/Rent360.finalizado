@@ -78,16 +78,27 @@ export default function TiempodeRespuestaPage() {
       setLoading(true);
       setError(null);
 
-      // Generar datos simulados de tiempos de respuesta
-      const mockResponseData: ResponseTimeData[] = generateMockResponseTimeData();
-      setResponseData(mockResponseData);
+      // Llamar a la API real de reportes de tiempos de respuesta
+      const params = new URLSearchParams();
+      params.append('period', selectedPeriod || 'month');
 
-      // Calcular estadísticas
-      const calculatedStats = calculateResponseTimeStats(mockResponseData);
-      setStats(calculatedStats);
+      const response = await fetch(`/api/support/reports/response-time?${params}`, {
+        credentials: 'include',
+      });
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if (!response.ok) {
+        throw new Error(`Error al cargar reportes de tiempos de respuesta: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setResponseData(data.data || []);
+      setStats(data.stats || null);
+
+      logger.info('Reportes de tiempos de respuesta cargados desde API:', {
+        ticketCount: data.data?.length || 0,
+        avgResponseTime: data.stats?.avgFirstResponseTime || 0
+      });
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),

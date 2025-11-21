@@ -111,171 +111,60 @@ export default function SupportDashboard() {
   useEffect(() => {
     const loadSupportData = async () => {
       try {
-        // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
-        const isNewUser =
-          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
+        setLoading(true);
+        setError(null);
 
-        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
-        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
-        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
-          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío
-          setStats({
-            totalTickets: 0,
-            openTickets: 0,
-            resolvedTickets: 0,
-            pendingTickets: 0,
-            averageResponseTime: 0,
-            customerSatisfaction: 0,
-            escalatedTickets: 0,
-          });
-          setRecentTickets([]);
-          setLoading(false);
-          return;
+        // Llamar a la API real del dashboard
+        const response = await fetch('/api/support/dashboard', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar dashboard: ${response.status}`);
         }
 
-        // Solo usuarios seed con @rent360.cl ven datos mock (para testing)
-        setStats({
-          totalTickets: 1247,
-          openTickets: 23,
-          resolvedTickets: 1189,
-          pendingTickets: 35,
-          averageResponseTime: 2.5,
-          customerSatisfaction: 4.6,
-          escalatedTickets: 8,
+        const data = await response.json();
+
+        setStats(data.stats || {
+          totalTickets: 0,
+          openTickets: 0,
+          resolvedTickets: 0,
+          pendingTickets: 0,
+          averageResponseTime: 0,
+          customerSatisfaction: 0,
+          escalatedTickets: 0,
         });
 
-        setRecentTickets([
-          {
-            id: '1',
-            title: 'Problema con pago en línea',
-            description: 'El cliente no puede realizar el pago de su arriendo mensual',
-            clientName: 'Carlos Ramírez',
-            clientEmail: 'carlos@ejemplo.com',
-            category: 'Pagos',
-            priority: 'HIGH',
-            status: 'OPEN',
-            assignedTo: 'María González',
-            createdAt: '2024-03-15 09:30',
-            updatedAt: '2024-03-15 10:15',
-            estimatedResolution: '2024-03-15 18:00',
-          },
-          {
-            id: '2',
-            title: 'Error en sistema de calificaciones',
-            description: 'No puedo calificar a mi inquilino después del contrato',
-            clientName: 'Ana Martínez',
-            clientEmail: 'ana@ejemplo.com',
-            category: 'Sistema',
-            priority: 'MEDIUM',
-            status: 'IN_PROGRESS',
-            assignedTo: 'Juan Pérez',
-            createdAt: '2024-03-15 08:45',
-            updatedAt: '2024-03-15 11:30',
-          },
-          {
-            id: '3',
-            title: 'Solicitud de devolución de depósito',
-            description: 'Cliente solicita devolución de depósito por terminación de contrato',
-            clientName: 'Pedro Silva',
-            clientEmail: 'pedro@ejemplo.com',
-            category: 'Contratos',
-            priority: 'MEDIUM',
-            status: 'OPEN' as any,
-            createdAt: '2024-03-14 16:20',
-            updatedAt: '2024-03-14 16:20',
-          },
-        ]);
+        setRecentTickets(data.recentTickets || []);
 
-        setRecentActivity([
-          {
-            id: '1',
-            type: 'ticket',
-            title: 'Nuevo ticket creado',
-            description: 'Carlos Ramírez reportó problema con pagos',
-            date: '2024-03-15 09:30',
-            status: 'OPEN',
-          },
-          {
-            id: '2',
-            type: 'resolution',
-            title: 'Ticket resuelto',
-            description: 'Problema de inicio de sesión resuelto para María López',
-            date: '2024-03-15 08:45',
-            status: 'RESOLVED',
-          },
-          {
-            id: '3',
-            type: 'escalation',
-            title: 'Ticket escalado',
-            description: 'Problema crítico de sistema escalado a desarrollo',
-            date: '2024-03-14 17:30',
-            status: 'ESCALATED',
-          },
-          {
-            id: '4',
-            type: 'feedback',
-            title: 'Feedback positivo',
-            description: 'Cliente calificó el servicio con 5 estrellas',
-            date: '2024-03-14 16:00',
-          },
-        ]);
+        // Mantener datos vacíos por defecto para otras métricas hasta implementar APIs específicas
+        setRecentActivity([]);
+        setPerformanceMetrics([]);
+        setTeamMembers([]);
 
-        setPerformanceMetrics([
-          {
-            label: 'Tiempo de Respuesta',
-            value: '2.5 horas',
-            target: '< 3 horas',
-            status: 'good',
-          },
-          {
-            label: 'Resolución Primer Contacto',
-            value: '78%',
-            target: '> 80%',
-            status: 'warning',
-          },
-          {
-            label: 'Satisfacción del Cliente',
-            value: '4.6/5',
-            target: '> 4.5',
-            status: 'good',
-          },
-          {
-            label: 'Tickets Abiertos',
-            value: '23',
-            target: '< 25',
-            status: 'good',
-          },
-        ]);
-
-        setTeamMembers([
-          {
-            id: '1',
-            name: 'María González',
-            role: 'Soporte Nivel 2',
-            activeTickets: 8,
-            status: 'available',
-          },
-          {
-            id: '2',
-            name: 'Juan Pérez',
-            role: 'Soporte Nivel 1',
-            activeTickets: 12,
-            status: 'busy',
-          },
-          {
-            id: '3',
-            name: 'Ana Martínez',
-            role: 'Especialista Pagos',
-            activeTickets: 3,
-            status: 'available',
-          },
-        ]);
-
-        setLoading(false);
+        logger.info('Dashboard de soporte cargado desde API:', {
+          ticketCount: data.recentTickets?.length || 0,
+          totalTickets: data.stats?.totalTickets || 0
+        });
       } catch (error) {
-        logger.error('Error loading support data:', {
-          error: error instanceof Error ? error.message : String(error),
+        logger.error('Error al cargar dashboard de soporte:', error);
+        setError(error instanceof Error ? error.message : 'Error desconocido al cargar dashboard');
+
+        // En caso de error, mostrar datos vacíos
+        setStats({
+          totalTickets: 0,
+          openTickets: 0,
+          resolvedTickets: 0,
+          pendingTickets: 0,
+          averageResponseTime: 0,
+          customerSatisfaction: 0,
+          escalatedTickets: 0,
         });
+        setRecentTickets([]);
+        setRecentActivity([]);
+        setPerformanceMetrics([]);
+        setTeamMembers([]);
+      } finally {
         setLoading(false);
       }
     };

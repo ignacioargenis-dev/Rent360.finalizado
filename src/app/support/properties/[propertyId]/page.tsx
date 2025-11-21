@@ -77,63 +77,26 @@ export default function SupportPropertyDetailPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for property detail
-      const mockProperty: PropertyDetail = {
-        id: id,
-        propertyTitle: 'Casa en Las Condes',
-        propertyAddress: 'Av. Las Condes 1234, Las Condes, Santiago',
-        ownerName: 'María González',
-        ownerEmail: 'maria@example.com',
-        ownerPhone: '+56 9 1234 5678',
-        status: 'reported',
-        tenantCount: 1,
-        monthlyRent: 850000,
-        contractStartDate: '2023-01-01',
-        contractEndDate: '2024-12-31',
-        propertyType: 'Casa',
-        bedrooms: 3,
-        bathrooms: 2,
-        area: 120,
-        reportedIssues: [
-          {
-            id: '1',
-            title: 'Fuga de agua en cocina',
-            description:
-              'Se detectó una fuga de agua bajo el lavaplatos de la cocina. Necesita reparación urgente.',
-            status: 'in_progress',
-            priority: 'high',
-            reportedDate: '2024-01-15',
-            assignedTo: 'Juan Pérez (Plomero)',
-          },
-          {
-            id: '2',
-            title: 'Puerta dañada',
-            description: 'La puerta principal tiene daños en el marco y no cierra correctamente.',
-            status: 'open',
-            priority: 'medium',
-            reportedDate: '2024-01-10',
-          },
-          {
-            id: '3',
-            title: 'Sistema eléctrico defectuoso',
-            description: 'Los interruptores del dormitorio principal no funcionan correctamente.',
-            status: 'resolved',
-            priority: 'urgent',
-            reportedDate: '2024-01-05',
-            resolvedDate: '2024-01-08',
-            assignedTo: 'Carlos Rodríguez (Electricista)',
-          },
-        ],
-      };
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setProperty(mockProperty);
-    } catch (error) {
-      logger.error('Error loading property detail:', {
-        error: error instanceof Error ? error.message : String(error),
+      // Llamar a la API real de detalle de propiedad
+      const response = await fetch(`/api/support/properties/${id}`, {
+        credentials: 'include',
       });
-      setError('Error al cargar los detalles de la propiedad');
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar detalle de propiedad: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setProperty(data.property);
+
+      logger.info('Detalle de propiedad cargado desde API:', {
+        propertyId: id,
+        propertyTitle: data.property?.propertyTitle
+      });
+    } catch (error) {
+      logger.error('Error al cargar detalle de propiedad:', error);
+      setError(error instanceof Error ? error.message : 'Error desconocido al cargar propiedad');
     } finally {
       setLoading(false);
     }

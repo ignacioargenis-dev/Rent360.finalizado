@@ -88,16 +88,27 @@ export default function SatisfactionReportsPage() {
       setLoading(true);
       setError(null);
 
-      // Generar datos simulados de satisfacción
-      const mockSatisfactionData: SatisfactionData[] = generateMockSatisfactionData();
-      setSatisfactionData(mockSatisfactionData);
+      // Llamar a la API real de reportes de satisfacción
+      const params = new URLSearchParams();
+      params.append('period', selectedPeriod);
 
-      // Calcular estadísticas
-      const calculatedStats = calculateSatisfactionStats(mockSatisfactionData);
-      setStats(calculatedStats);
+      const response = await fetch(`/api/support/reports/satisfaction?${params}`, {
+        credentials: 'include',
+      });
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if (!response.ok) {
+        throw new Error(`Error al cargar reportes de satisfacción: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setSatisfactionData(data.data || []);
+      setStats(data.stats || null);
+
+      logger.info('Reportes de satisfacción cargados desde API:', {
+        responseCount: data.data?.length || 0,
+        overallRating: data.stats?.overallRating || 0
+      });
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
