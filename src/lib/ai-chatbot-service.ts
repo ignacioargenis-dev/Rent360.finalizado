@@ -2644,8 +2644,28 @@ export class AIChatbotService {
           const intent = this.extractIntent(userMessage);
 
           // Validar respuesta por seguridad antes de retornar
+          // PERO: Si la respuesta viene de datos de entrenamiento con alta confianza,
+          // solo validar información confidencial real, no bloquear por temas generales
           const securityContext = this.createSecurityContext(userRole, userId);
-          const validatedResponse = this.validateResponse(contextualResponse, securityContext);
+          let validatedResponse = this.validateResponse(contextualResponse, securityContext);
+
+          // Si la validación bloqueó una respuesta de entrenamiento con alta confianza,
+          // es probable que sea un falso positivo. Permitir la respuesta original si
+          // no contiene información realmente confidencial.
+          if (
+            validatedResponse.includes('no puedo proporcionar') &&
+            validatedResponse.includes('soporte técnico') &&
+            !this.containsRealConfidentialInfo(contextualResponse)
+          ) {
+            logger.warn(
+              'Validación bloqueó respuesta de entrenamiento, pero no contiene info confidencial real. Permitiendo respuesta original.',
+              {
+                userRole,
+                intent,
+              }
+            );
+            validatedResponse = contextualResponse;
+          }
 
           aiLearningSystem.recordInteraction({
             userId,
@@ -3355,10 +3375,68 @@ export class AIChatbotService {
         context.canExecuteActions = true;
         break;
 
+      case 'GUEST':
+      case 'ANONYMOUS':
+      case 'guest':
+      case 'anonymous':
+        // Usuarios guest pueden hacer preguntas generales sobre la plataforma
+        context.allowedTopics = [
+          'registro',
+          'crear cuenta',
+          'tipos de usuarios',
+          'propiedades',
+          'búsqueda',
+          'pagos',
+          'contratos',
+          'servicios',
+          'proveedores',
+          'corredores',
+          'mantenimiento',
+          'funcionalidades',
+          'comisiones',
+          'costos',
+          'documentos',
+          'verificación',
+          'perfil',
+          'soporte',
+          'ayuda',
+          'información general',
+          'cómo funciona',
+          'qué es rent360',
+        ];
+        context.restrictedTopics = [
+          'datos personales de usuarios',
+          'información financiera específica',
+          'contraseñas',
+          'tokens',
+          'api keys',
+          'estructura de base de datos',
+          'código fuente',
+          'configuraciones internas',
+          'vulnerabilidades',
+        ];
+        context.maxDataAccess = 'public_info_only';
+        context.canExecuteActions = false;
+        break;
+
       default:
-        // Rol desconocido - acceso mínimo
-        context.allowedTopics = ['perfil', 'soporte'];
-        context.restrictedTopics = ['todo'];
+        // Rol desconocido - acceso mínimo pero permitir preguntas generales
+        context.allowedTopics = [
+          'registro',
+          'crear cuenta',
+          'propiedades',
+          'pagos',
+          'contratos',
+          'servicios',
+          'perfil',
+          'soporte',
+          'ayuda',
+        ];
+        context.restrictedTopics = [
+          'datos personales',
+          'información financiera específica',
+          'configuración del sistema',
+        ];
         break;
     }
 
@@ -3469,13 +3547,31 @@ Respuesta (solo información general y pública):
     }
 
     // Verificar si contiene información restringida
-    const hasRestrictedContent = securityContext.restrictedTopics.some((topic: string) =>
-      lowerResponse.includes(topic.toLowerCase())
-    );
+    // Solo bloquear si la respuesta contiene información confidencial REAL, no temas generales
+    const hasRestrictedContent = securityContext.restrictedTopics.some((topic: string) => {
+      const topicLower = topic.toLowerCase();
+      // Solo bloquear si el tema restringido aparece en un contexto que indica información confidencial
+      // No bloquear si es parte de una explicación general
+      const restrictedPatterns = [
+        /\b(tu|su|mi|nuestro|vuestro)\s+\w*\s*(email|teléfono|dirección|rut|cuenta|saldo|pago|contraseña|password|token|api key)\b/gi,
+        /\b(email|teléfono|dirección|rut|cuenta|saldo|pago|contraseña|password|token|api key)\s*(es|está|fue|será|sería)\s*[:=]\s*\S+/gi,
+        /\b(base de datos|database|schema|tabla|endpoint|servidor|server)\s*(es|está|usa|utiliza|tiene)\s*[:=]\s*\S+/gi,
+      ];
+
+      // Si el tema restringido está en la lista pero no en un contexto confidencial, permitir
+      if (lowerResponse.includes(topicLower)) {
+        // Verificar si está en un contexto confidencial
+        const isConfidentialContext = restrictedPatterns.some(pattern => pattern.test(response));
+        return isConfidentialContext;
+      }
+      return false;
+    });
 
     if (hasRestrictedContent) {
-      logger.warn('Respuesta bloqueada por tema restringido', { topic: 'restricted' });
-      return 'Lo siento, no puedo proporcionar información sobre ese tema. Te recomiendo contactar al soporte técnico para obtener ayuda especializada.';
+      logger.warn('Respuesta bloqueada por tema restringido en contexto confidencial', {
+        restrictedTopics: securityContext.restrictedTopics,
+      });
+      return 'Lo siento, no puedo proporcionar información confidencial. Para consultas específicas sobre tu cuenta, inicia sesión o contacta al soporte técnico.';
     }
 
     // Verificar si intenta ejecutar acciones REALES (no instrucciones informativas)
@@ -3780,6 +3876,25 @@ Respuesta (solo información general y pública):
       });
       return false;
     }
+  }
+
+  /**
+   * Verifica si una respuesta contiene información realmente confidencial
+   * (no solo palabras clave, sino datos reales)
+   */
+  private containsRealConfidentialInfo(response: string): boolean {
+    const realConfidentialPatterns = [
+      // RUTs reales (formato específico)
+      /\b\d{1,2}\.\d{3}\.\d{3}[-]?\d{1}\b/g,
+      // Números de tarjeta completos
+      /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
+      // Emails con formato específico de usuario
+      /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/gi,
+      // Contraseñas o tokens visibles
+      /\b(password|contraseña|secret|token|api[_\s]?key)\s*[:=]\s*[^\s]{6,}\b/gi,
+    ];
+
+    return realConfidentialPatterns.some(pattern => pattern.test(response));
   }
 }
 
