@@ -1117,7 +1117,10 @@ export class AIChatbotService {
     userRole: string,
     context: string[] = []
   ): IntentRecognition {
-    const text = message.toLowerCase().trim();
+    // Normalizar texto para mejor detección
+    const normalizedText = this.normalizeText(message);
+    const expandedText = this.expandSynonyms(normalizedText);
+    const text = expandedText.toLowerCase().trim();
 
     // Patrones avanzados de intención con pesos y contexto
     const intentPatterns = [
@@ -1324,6 +1327,160 @@ export class AIChatbotService {
         ],
         weight: 0.7,
         context: ['help', 'support', 'question'],
+      },
+      // 🚀 NUEVO: Detección específica para firmas digitales (ALTA PRIORIDAD)
+      {
+        intent: 'digital_signature',
+        patterns: [
+          /(?:firma|firmar|firmado|firmas)\s+(?:digital|electronica|electronica|online|en linea|en línea)/i,
+          /(?:se\s+)?(?:pueden|puedo|se\s+puede)\s+(?:hacer|hacer|realizar)\s+(?:firmas?|firmar)\s+(?:digital|electronica|electronica|online)/i,
+          /(?:hay|tienen|ofrecen)\s+(?:firma|firmas?)\s+(?:digital|electronica|electronica|online)/i,
+          /(?:como|como)\s+(?:se\s+)?(?:firman|firma|firmar)\s+(?:los\s+)?(?:contratos?|documentos?)/i,
+          /(?:puedo|puede|se\s+puede)\s+(?:firmar|firmas?)\s+(?:online|en linea|en línea|digital)/i,
+          /(?:firma|firmas?)\s+(?:electronica|electronica|digital|online)/i,
+          /(?:contrato|contratos?|documento|documentos?)\s+(?:digital|electronico|electronico|online)/i,
+        ],
+        weight: 0.98,
+        context: ['contracts', 'signing', 'legal', 'digital'],
+      },
+      // 🚀 NUEVO: Detección específica para contratar corredores (ALTA PRIORIDAD)
+      {
+        intent: 'hire_broker',
+        patterns: [
+          /(?:puedo|puede|se\s+puede)\s+(?:comunicarme|comunicarse|contactar|contratar)\s+(?:con\s+)?(?:un\s+)?(?:corredor|broker|agente)/i,
+          /(?:si\s+)?(?:tengo|tiene)\s+(?:una\s+)?(?:casa|departamento|propiedad)\s+(?:para\s+)?(?:arrendar|alquilar|rentar)\s+(?:puedo|puede)\s+(?:comunicarme|contratar)\s+(?:con\s+)?(?:un\s+)?(?:corredor|broker)/i,
+          /(?:pero\s+)?(?:puedo|puede)\s+(?:contratar|comunicarme|contactar)\s+(?:a\s+)?(?:un\s+)?(?:corredor|broker)\s+(?:de\s+)?(?:propiedades?)?/i,
+          /(?:necesito|quiero|deseo)\s+(?:un\s+)?(?:corredor|broker|agente)\s+(?:para\s+)?(?:administrar|gestionar|administracion|gestion)\s+(?:mi|mis)\s+(?:propiedad|propiedades)/i,
+          /(?:corredor|broker)\s+(?:para\s+)?(?:que|que)\s+(?:administre|administrar|gestionar|gestion)/i,
+          /(?:contratar|comunicarme|contactar)\s+(?:corredor|broker|agente)/i,
+          /(?:que|qué)\s+(?:hace|hacen)\s+(?:un\s+)?(?:corredor|broker|agente)/i,
+          /(?:necesito|necesitas)\s+(?:un\s+)?(?:corredor|broker)/i,
+          /(?:puedo|puede)\s+(?:arrendar|alquilar)\s+(?:sin\s+)?(?:corredor|broker)/i,
+        ],
+        weight: 0.97,
+        context: ['broker', 'services', 'property_management'],
+      },
+      // 🚀 NUEVO: Detección para costos y precios
+      {
+        intent: 'costs_pricing',
+        patterns: [
+          /(?:cuanto|cuantos?|cuánto|cuántos?)\s+(?:cuesta|cuestan|vale|valen|se\s+paga|se\s+pagan)/i,
+          /(?:hay|tienen|existe)\s+(?:que|que)\s+(?:pagar|pagar|costos?|precios?)/i,
+          /(?:es|son)\s+(?:gratis|gratuito|sin\s+costo|sin\s+costos?)/i,
+          /(?:cuales?|cuáles?)\s+(?:son\s+)?(?:los\s+)?(?:precios?|costos?|tarifas?)/i,
+          /(?:cuanto|cuantos?|cuánto|cuántos?)\s+(?:cobran|cobra|se\s+cobra|se\s+cobran)/i,
+          /(?:precio|precios?|costo|costos?|tarifa|tarifas?)\s+(?:de|del|de\s+la|de\s+los)/i,
+          /(?:cuanto|cuantos?|cuánto|cuántos?)\s+(?:vale|valen|es|son)\s+(?:el|la|los|las)/i,
+        ],
+        weight: 0.9,
+        context: ['pricing', 'costs', 'fees', 'financial'],
+      },
+      // 🚀 NUEVO: Detección para funcionalidades de la plataforma
+      {
+        intent: 'platform_features',
+        patterns: [
+          /(?:que|qué)\s+(?:puedo|puede|se\s+puede)\s+(?:hacer|hacer|realizar)\s+(?:aqui|aquí|en\s+la\s+plataforma|en\s+rent360)/i,
+          /(?:que|qué)\s+(?:ofrece|ofrecen|tiene|tienen)\s+(?:la\s+plataforma|rent360|el\s+sistema)/i,
+          /(?:que|qué)\s+(?:servicios?|funcionalidades?|caracteristicas?|características?)\s+(?:tiene|tienen|ofrece|ofrecen)/i,
+          /(?:cuales?|cuáles?)\s+(?:son\s+)?(?:las\s+)?(?:funcionalidades?|caracteristicas?|características?|servicios?)/i,
+          /(?:para\s+)?(?:que|qué)\s+(?:sirve|sirven)\s+(?:rent360|la\s+plataforma|el\s+sistema)/i,
+          /(?:que|qué)\s+(?:hace|hacen|puede|pueden)\s+(?:rent360|la\s+plataforma|el\s+sistema)/i,
+        ],
+        weight: 0.85,
+        context: ['features', 'platform', 'capabilities'],
+      },
+      // 🚀 NUEVO: Detección para seguridad y confianza
+      {
+        intent: 'security_trust',
+        patterns: [
+          /(?:es|son)\s+(?:seguro|segura|seguros?|confiable|confiables?)/i,
+          /(?:mis|mi)\s+(?:datos?|informacion|información)\s+(?:estan|están|son)\s+(?:protegidos?|seguros?|seguras?)/i,
+          /(?:puedo|puede)\s+(?:confiar|confiar|confiar)\s+(?:en|en\s+la\s+plataforma|en\s+rent360)/i,
+          /(?:es|son)\s+(?:confiable|confiables?|seguro|segura|seguros?)/i,
+          /(?:como|como)\s+(?:protegen|protege)\s+(?:mis|mi)\s+(?:datos?|informacion|información)/i,
+          /(?:seguridad|proteccion|protección)\s+(?:de\s+)?(?:datos?|informacion|información)/i,
+        ],
+        weight: 0.88,
+        context: ['security', 'trust', 'privacy', 'data_protection'],
+      },
+      // 🚀 NUEVO: Detección para verificación de usuarios
+      {
+        intent: 'verification_time',
+        patterns: [
+          /(?:cuanto|cuantos?|cuánto|cuántos?)\s+(?:tarda|tardan|demora|demoran)\s+(?:la\s+)?(?:verificacion|verificación|aprobacion|aprobación)/i,
+          /(?:cuando|cuándo)\s+(?:estare|estaré|estare|estare)\s+(?:verificado|verificada|aprobado|aprobada)/i,
+          /(?:como|como)\s+(?:se|se)\s+(?:si|sí)\s+(?:estoy|está|esta)\s+(?:verificado|verificada|aprobado|aprobada)/i,
+          /(?:tiempo|tiempos?)\s+(?:de\s+)?(?:verificacion|verificación|aprobacion|aprobación)/i,
+          /(?:cuando|cuándo)\s+(?:me|me)\s+(?:verifican|verifican|aprueban|aprueban)/i,
+        ],
+        weight: 0.9,
+        context: ['verification', 'approval', 'time', 'waiting'],
+      },
+      // 🚀 NUEVO: Detección para Runner360 (qué es, cómo funciona)
+      {
+        intent: 'runner360_info',
+        patterns: [
+          /(?:que|qué)\s+(?:es|es)\s+(?:runner360|runner\s+360|runner)/i,
+          /(?:como|como)\s+(?:funciona|funciona)\s+(?:runner360|runner\s+360|runner)/i,
+          /(?:que|qué)\s+(?:hace|hacen)\s+(?:runner360|runner\s+360|runner)/i,
+          /(?:para\s+)?(?:que|qué)\s+(?:sirve|sirven)\s+(?:runner360|runner\s+360|runner)/i,
+          /(?:cuanto|cuantos?|cuánto|cuántos?)\s+(?:cuesta|cuestan|vale|valen)\s+(?:una\s+)?(?:visita|visitas?)\s+(?:de\s+)?(?:runner360|runner\s+360|runner)/i,
+          /(?:precio|precios?|costo|costos?)\s+(?:de\s+)?(?:runner360|runner\s+360|runner|visita|visitas?)/i,
+        ],
+        weight: 0.92,
+        context: ['runner360', 'visits', 'inspection', 'pricing'],
+      },
+      // 🚀 NUEVO: Detección para renovaciones de contratos
+      {
+        intent: 'contract_renewal',
+        patterns: [
+          /(?:como|como)\s+(?:renuevo|renueva|renuevan)\s+(?:mi|mis|el|la)\s+(?:contrato|contratos?)/i,
+          /(?:puedo|puede|se\s+puede)\s+(?:renovar|renovacion|renovación)\s+(?:automaticamente|automáticamente|automatico|automático)/i,
+          /(?:que|qué)\s+(?:pasa|pasa)\s+(?:si|sí)\s+(?:no|no)\s+(?:renuevo|renueva|renuevan)/i,
+          /(?:renovacion|renovación|renovar)\s+(?:contrato|contratos?)/i,
+          /(?:extender|extender|extender)\s+(?:contrato|contratos?)/i,
+        ],
+        weight: 0.9,
+        context: ['contracts', 'renewal', 'extension'],
+      },
+      // 🚀 NUEVO: Detección para agendar visitas
+      {
+        intent: 'schedule_visit',
+        patterns: [
+          /(?:como|como)\s+(?:agendo|agenda|agendan)\s+(?:una\s+)?(?:visita|visitas?)/i,
+          /(?:puedo|puede|se\s+puede)\s+(?:visitar|visitar|ver)\s+(?:la\s+)?(?:propiedad|propiedades?)/i,
+          /(?:cuanto|cuantos?|cuánto|cuántos?)\s+(?:cuesta|cuestan|vale|valen)\s+(?:una\s+)?(?:visita|visitas?)/i,
+          /(?:agendar|agendar|solicitar)\s+(?:visita|visitas?)/i,
+          /(?:solicitar|solicitar|pedir)\s+(?:visita|visitas?)\s+(?:a\s+)?(?:propiedad|propiedades?)/i,
+        ],
+        weight: 0.88,
+        context: ['visits', 'scheduling', 'property_viewing'],
+      },
+      // 🚀 NUEVO: Detección para calificaciones
+      {
+        intent: 'ratings_info',
+        patterns: [
+          /(?:puedo|puede|se\s+puede)\s+(?:ver|ver|ver)\s+(?:las\s+)?(?:calificaciones?|ratings?|reseñas?|reseñas?)/i,
+          /(?:como|como)\s+(?:me|me)\s+(?:califican|califican|califican)/i,
+          /(?:que|qué)\s+(?:son|son)\s+(?:las\s+)?(?:calificaciones?|ratings?|reseñas?)/i,
+          /(?:calificaciones?|ratings?|reseñas?)\s+(?:de|del|de\s+la|de\s+los)/i,
+          /(?:ver|ver|ver)\s+(?:calificaciones?|ratings?|reseñas?)/i,
+        ],
+        weight: 0.87,
+        context: ['ratings', 'reviews', 'feedback'],
+      },
+      // 🚀 NUEVO: Detección para documentos requeridos
+      {
+        intent: 'required_documents',
+        patterns: [
+          /(?:que|qué)\s+(?:documentos?|papeles?|archivos?)\s+(?:necesito|requiero|debo|necesitas)/i,
+          /(?:que|qué)\s+(?:papeles?|documentos?|archivos?)\s+(?:debo|debo|necesito)\s+(?:subir|cargar|enviar)/i,
+          /(?:cuales?|cuáles?)\s+(?:son\s+)?(?:los\s+)?(?:documentos?|papeles?|archivos?)\s+(?:requeridos?|necesarios?)/i,
+          /(?:necesito|necesitas|requiero|requieres)\s+(?:certificado|certificados?|certificacion|certificación)/i,
+          /(?:documentos?|papeles?)\s+(?:para|para)\s+(?:registrarse|registrar|verificacion|verificación)/i,
+        ],
+        weight: 0.91,
+        context: ['documents', 'requirements', 'registration'],
       },
     ];
 
@@ -2641,7 +2798,8 @@ export class AIChatbotService {
         // Si la confianza es alta (>= 0.8), usar respuesta de entrenamiento
         if (confidence >= 0.8) {
           const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
-          const intent = this.extractIntent(userMessage);
+          const intentRecognition = this.recognizeIntent(userMessage, userRole);
+          const intent = intentRecognition.intent;
 
           // Validar respuesta por seguridad antes de retornar
           // PERO: Si la respuesta viene de datos de entrenamiento con alta confianza,
@@ -2739,7 +2897,8 @@ export class AIChatbotService {
           // Validar respuesta de IA por seguridad
           const validatedAIResponse = this.validateResponse(aiResult.response, securityContext);
 
-          const intent = this.extractIntent(userMessage);
+          const intentRecognition = this.recognizeIntent(userMessage, userRole);
+          const intent = intentRecognition.intent;
           const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
 
           aiLearningSystem.recordInteraction({
@@ -2865,7 +3024,8 @@ export class AIChatbotService {
       const validatedResponse = this.validateResponse(response, securityContext);
 
       // Extraer información adicional
-      const intent = this.extractIntent(userMessage);
+      const intentRecognition = this.recognizeIntent(userMessage, userRole);
+      const intent = intentRecognition.intent;
       const suggestions = this.generateSuggestions(userMessage, userRole);
 
       logger.info('Mensaje procesado por IA', {
@@ -3018,15 +3178,239 @@ export class AIChatbotService {
   }
 
   /**
+   * Normaliza texto para mejor detección (elimina acentos, normaliza mayúsculas, etc.)
+   */
+  private normalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+      .trim();
+  }
+
+  /**
+   * Sistema de sinónimos para mejorar detección
+   */
+  private expandSynonyms(text: string): string {
+    const sinonimosMap: Record<string, string[]> = {
+      // Firmas
+      firmar: [
+        'firma',
+        'firmado',
+        'firmas',
+        'firmación',
+        'firmas digitales',
+        'firma electrónica',
+        'firma electronica',
+      ],
+      firma: ['firmar', 'firmado', 'firmas', 'firmación'],
+      digital: ['electrónica', 'electronica', 'online', 'en línea', 'en linea'],
+      electrónica: ['digital', 'electronica', 'online'],
+      electronica: ['digital', 'electrónica', 'online'],
+
+      // Pagos
+      pago: ['pagar', 'pagos', 'pagado', 'pague', 'pago mensual', 'renta', 'arriendo'],
+      pagar: ['pago', 'pagos', 'pagado', 'pague'],
+      renta: ['arriendo', 'alquiler', 'pago', 'pago mensual'],
+      arriendo: ['renta', 'alquiler', 'pago'],
+      alquiler: ['renta', 'arriendo', 'pago'],
+
+      // Contratos
+      contrato: [
+        'contratos',
+        'contratar',
+        'contratación',
+        'contratacion',
+        'documento',
+        'documentos',
+      ],
+      contratos: ['contrato', 'contratar', 'documento'],
+
+      // Propiedades
+      propiedad: [
+        'propiedades',
+        'inmueble',
+        'inmuebles',
+        'casa',
+        'casas',
+        'departamento',
+        'departamentos',
+      ],
+      propiedades: ['propiedad', 'inmueble', 'inmuebles'],
+      casa: ['casas', 'propiedad', 'vivienda', 'hogar'],
+      departamento: ['departamentos', 'depto', 'propiedad', 'apartamento'],
+
+      // Registro
+      registro: [
+        'registrarse',
+        'registrado',
+        'registrar',
+        'crear cuenta',
+        'darse de alta',
+        'unirse',
+      ],
+      registrarse: ['registro', 'registrar', 'crear cuenta', 'darse de alta'],
+      crear: ['crear cuenta', 'registrar', 'registrarse', 'darse de alta'],
+      cuenta: ['perfil', 'usuario', 'registro'],
+
+      // Servicios/Proveedores
+      servicio: ['servicios', 'trabajo', 'trabajos', 'mantenimiento'],
+      servicios: ['servicio', 'trabajo', 'trabajos'],
+      ofrecer: [
+        'ofrecer servicios',
+        'prestar servicios',
+        'dar servicios',
+        'brindar servicios',
+        'trabajar',
+      ],
+      proveedor: ['proveedores', 'provider', 'técnico', 'tecnico', 'profesional'],
+
+      // Corredores
+      corredor: [
+        'corredores',
+        'broker',
+        'agente',
+        'agente inmobiliario',
+        'corredor de propiedades',
+      ],
+      broker: ['corredor', 'agente', 'agente inmobiliario'],
+      administrar: [
+        'gestionar',
+        'administración',
+        'administracion',
+        'gestion',
+        'gestionar propiedad',
+      ],
+      gestionar: ['administrar', 'gestion', 'administración'],
+
+      // Mantenimiento
+      mantenimiento: [
+        'reparar',
+        'reparación',
+        'reparacion',
+        'arreglar',
+        'arreglo',
+        'problema',
+        'problemas',
+      ],
+      reparar: ['arreglar', 'mantenimiento', 'reparación'],
+      arreglar: ['reparar', 'mantenimiento', 'arreglo'],
+      problema: ['problemas', 'daño', 'daños', 'avería', 'averias'],
+
+      // Comisiones
+      comisión: ['comisiones', 'comision', 'porcentaje', 'retención', 'retencion'],
+      comision: ['comisión', 'comisiones', 'porcentaje'],
+      porcentaje: ['comisión', 'comisiones', 'retención'],
+
+      // Costos
+      costo: [
+        'costos',
+        'precio',
+        'precios',
+        'tarifa',
+        'tarifas',
+        'cuánto cuesta',
+        'cuanto cuesta',
+        'gratis',
+        'gratuito',
+      ],
+      precio: ['costos', 'tarifa', 'cuánto cuesta'],
+      gratis: ['gratuito', 'sin costo', 'sin costos'],
+
+      // Funcionalidades
+      funcionalidad: [
+        'funcionalidades',
+        'características',
+        'caracteristicas',
+        'servicios',
+        'qué ofrece',
+        'que ofrece',
+      ],
+      'qué puedo hacer': ['qué ofrece', 'funcionalidades', 'características'],
+      'qué ofrece': ['funcionalidades', 'características', 'qué puedo hacer'],
+
+      // Seguridad
+      seguro: ['seguridad', 'protegido', 'confiable', 'confianza', 'es seguro'],
+      seguridad: ['seguro', 'protegido', 'confiable'],
+      protegido: ['seguro', 'seguridad', 'confiable'],
+
+      // Verificación
+      verificación: [
+        'verificacion',
+        'verificar',
+        'verificado',
+        'aprobación',
+        'aprobacion',
+        'cuánto tarda',
+        'cuanto tarda',
+      ],
+      verificar: ['verificación', 'verificado', 'aprobación'],
+      verificado: ['verificación', 'verificar', 'aprobado'],
+
+      // Runner360
+      runner: ['runner360', 'runner 360', 'visita', 'visitas', 'recorrido', 'recorridos'],
+      runner360: ['runner', 'runner 360', 'visita profesional'],
+      visita: ['visitas', 'recorrido', 'recorridos', 'runner360'],
+
+      // Calificaciones
+      calificación: [
+        'calificaciones',
+        'calificacion',
+        'rating',
+        'ratings',
+        'reseña',
+        'reseñas',
+        'comentario',
+        'comentarios',
+      ],
+      calificaciones: ['calificación', 'rating', 'reseñas'],
+      rating: ['calificación', 'calificaciones', 'reseña'],
+
+      // Renovaciones
+      renovar: ['renovación', 'renovacion', 'renovaciones', 'renovar contrato', 'extender'],
+      renovación: ['renovar', 'renovaciones', 'extender'],
+
+      // Documentos
+      documento: [
+        'documentos',
+        'papel',
+        'papeles',
+        'archivo',
+        'archivos',
+        'certificado',
+        'certificados',
+      ],
+      documentos: ['documento', 'papeles', 'archivos'],
+      certificado: ['certificados', 'certificación', 'certificacion'],
+    };
+
+    let expandedText = text;
+    for (const [palabra, sinonimosList] of Object.entries(sinonimosMap)) {
+      if (expandedText.includes(palabra)) {
+        // Agregar sinónimos al texto para mejorar detección
+        sinonimosList.forEach((sin: string) => {
+          if (!expandedText.includes(sin)) {
+            expandedText += ' ' + sin;
+          }
+        });
+      }
+    }
+    return expandedText;
+  }
+
+  /**
    * Procesa con lógica local (sin IA externa)
+   * 🚀 REFACTORIZADO: Usa sistema unificado de detección sin duplicación
    */
   private async processWithLocalLogic(
     userMessage: string,
     userRole: string
   ): Promise<{ response: string; confidence: number }> {
-    const input = userMessage.toLowerCase();
+    const normalizedInput = this.normalizeText(userMessage);
+    const expandedInput = this.expandSynonyms(normalizedInput);
+    const input = expandedInput.toLowerCase();
 
-    // 🚀 MEJORADO: Usar reconocimiento de intenciones mejorado
+    // 🚀 MEJORADO: Usar reconocimiento de intenciones mejorado (sistema unificado)
     const intent = this.recognizeIntent(userMessage, userRole);
 
     // Si tenemos una intención específica con alta confianza, usar la base de conocimiento
@@ -3040,6 +3424,18 @@ export class AIChatbotService {
           confidence: smartResponse.confidence,
         };
       }
+    }
+
+    // 🚀 NUEVO: Respuestas específicas para nuevas intenciones detectadas
+    // Estas respuestas tienen prioridad sobre las detecciones generales
+    const specificResponses = this.getSpecificIntentResponses(
+      intent.intent,
+      input,
+      userRole,
+      intent.confidence
+    );
+    if (specificResponses) {
+      return specificResponses;
     }
 
     // 🚀 NUEVO: Detección específica para contratar corredores / servicios de corredor
@@ -3673,31 +4069,101 @@ Respuesta (solo información general y pública):
   }
 
   /**
-   * Extrae intención del mensaje
+   * 🚀 NUEVO: Obtiene respuestas específicas para intenciones detectadas
+   * Este método centraliza las respuestas para evitar duplicación
    */
-  private extractIntent(userMessage: string): string {
-    const input = userMessage.toLowerCase();
-
-    if (input.includes('buscar') || input.includes('encontrar')) {
-      return 'search';
-    }
-    if (input.includes('contrato') || input.includes('arriendo')) {
-      return 'contracts';
-    }
-    if (input.includes('pago') || input.includes('renta')) {
-      return 'payments';
-    }
-    if (input.includes('problema') || input.includes('mantenimiento')) {
-      return 'maintenance';
-    }
-    if (input.includes('configur') || input.includes('ajuste')) {
-      return 'settings';
-    }
-    if (input.includes('ayuda') || input.includes('soporte')) {
-      return 'support';
+  private getSpecificIntentResponses(
+    intent: string,
+    input: string,
+    userRole: string,
+    confidence: number
+  ): { response: string; confidence: number } | null {
+    // Solo procesar si la confianza es alta
+    if (confidence < 0.85) {
+      return null;
     }
 
-    return 'general';
+    switch (intent) {
+      case 'digital_signature':
+        return {
+          response:
+            '¡Sí! Rent360 tiene un sistema completo de **firmas digitales** para contratos. Te explico:\n\n**✅ Firmas Digitales Disponibles:**\n- Los contratos de arriendo se pueden firmar digitalmente\n- Es **legalmente válido** y cumple con la normativa chilena\n- No necesitas imprimir ni escanear documentos\n- Todo el proceso es 100% digital y seguro\n\n**🔐 Seguridad y Validez Legal:**\n- Las firmas digitales tienen validez legal en Chile\n- Utilizamos proveedores certificados (FirmaPro, TrustFactory)\n- Cada firma queda registrada con fecha, hora y ubicación\n- Los documentos firmados son inalterables\n\n**📝 Cómo Funciona:**\n1. **Propietario o Corredor** crea el contrato en el sistema\n2. El sistema genera el documento con todos los términos\n3. Se envía para firma a ambas partes (propietario e inquilino)\n4. Cada parte recibe una notificación por email\n5. Puedes firmar desde cualquier dispositivo (celular, tablet, computador)\n6. Una vez firmado por ambas partes, el contrato queda activo\n7. Recibes una copia digital del contrato firmado\n\n**💡 Ventajas:**\n- Proceso rápido: firmas en minutos, no días\n- Sin necesidad de reunirse presencialmente\n- Documentos almacenados de forma segura en la nube\n- Acceso 24/7 desde cualquier lugar\n- Notificaciones automáticas de cambios o actualizaciones\n\n**📋 Para Propietarios:**\n- Crea contratos desde "Contratos" → "Nuevo Contrato"\n- Envía para firma directamente desde la plataforma\n- Gestiona todos tus contratos en un solo lugar\n\n**🏠 Para Inquilinos:**\n- Recibirás una notificación cuando haya un contrato para firmar\n- Puedes revisar todos los términos antes de firmar\n- Accede a "Mis Contratos" para ver tus documentos firmados\n\n¿Tienes alguna pregunta específica sobre el proceso de firma digital?',
+          confidence: 0.95,
+        };
+
+      case 'hire_broker':
+        return {
+          response:
+            '¡Perfecto! Sí, puedes contratar un corredor inmobiliario en Rent360 para que administre tu propiedad. Te explico cómo:\n\n**Cómo contratar un corredor en Rent360:**\n\n1. **Regístrate como Propietario**: Si aún no tienes cuenta, crea una cuenta como "Propietario"\n2. **Ve a "Servicios de Corredor"**: En tu panel de propietario, busca la sección "Servicios de Corredor" o "Broker Services"\n3. **Busca corredores disponibles**:\n   - Verás una lista de corredores verificados en tu zona\n   - Cada corredor muestra su experiencia, calificaciones y servicios ofrecidos\n   - Puedes ver sus calificaciones y comentarios de otros propietarios\n4. **Selecciona propiedades**: Elige qué propiedades quieres que el corredor administre\n5. **Envía solicitud**: Contacta directamente al corredor desde la plataforma\n6. **Negocia términos**: El corredor te enviará una propuesta con:\n   - Comisión (generalmente entre 3% y 5% del valor del contrato)\n   - Servicios incluidos (publicación, visitas, gestión de contratos, etc.)\n   - Términos y condiciones\n7. **Acepta la propuesta**: Una vez aceptada, el corredor comenzará a gestionar tu propiedad\n\n**Servicios que puede ofrecer el corredor:**\n- Publicar tu propiedad en múltiples plataformas\n- Gestionar visitas y mostrar la propiedad\n- Negociar con inquilinos potenciales\n- Preparar y gestionar contratos de arriendo\n- Realizar verificaciones de antecedentes\n- Gestionar renovaciones y terminaciones\n- Asesoría en precios de mercado\n\n**Beneficios:**\n- Ahorras tiempo en la gestión\n- Acceso a más inquilinos potenciales\n- Gestión profesional de contratos\n- Mayor seguridad en las transacciones\n\n¿Tienes alguna pregunta específica sobre el proceso o los servicios de corredores?',
+          confidence: 0.95,
+        };
+
+      case 'costs_pricing':
+        return {
+          response:
+            '**Costos y Precios en Rent360:**\n\n✅ **Rent360 es GRATIS para usuarios básicos**\n- No hay costos de registro\n- No hay costos mensuales\n- No hay costos por publicar propiedades\n\n💰 **Solo pagas cuando hay transacciones exitosas:**\n\n📊 **Corredores:**\n- Comisión del 3% al 5% del valor del contrato (configurable)\n- Solo se cobra cuando se firma un contrato de arriendo\n\n🔧 **Proveedores de Servicios:**\n- Comisión del 8% del monto del servicio\n- Solo se cobra cuando completas un trabajo\n\n🏃 **Runner360 (Visitas Profesionales):**\n- $15.000 - $25.000 por visita\n- Depende del tipo de visita y ubicación\n\n💳 **Métodos de Pago:**\n- Khipu, Stripe, PayPal, WebPay\n- Sin costos adicionales por usar la plataforma de pagos\n\n**Resumen:**\n- ✅ Registro: GRATIS\n- ✅ Publicar propiedades: GRATIS\n- ✅ Buscar propiedades: GRATIS\n- ✅ Usar la plataforma: GRATIS\n- 💰 Solo pagas comisiones cuando hay transacciones exitosas\n\n¿Tienes alguna pregunta específica sobre los costos?',
+          confidence: 0.9,
+        };
+
+      case 'platform_features':
+        return {
+          response:
+            '**Funcionalidades de Rent360:**\n\n🏠 **Gestión de Propiedades:**\n- Publicar y gestionar propiedades\n- Búsqueda avanzada con filtros\n- Galería de fotos y videos\n- Mapas interactivos\n- Calendario de disponibilidad\n\n📄 **Contratos Digitales:**\n- Crear contratos digitales\n- Firma electrónica legalmente válida\n- Renovaciones automáticas\n- Gestión de documentos\n\n💰 **Sistema de Pagos:**\n- Múltiples métodos de pago (Khipu, Stripe, PayPal, WebPay)\n- Pagos automáticos recurrentes\n- Historial completo de transacciones\n- Reportes financieros\n\n🔧 **Mantenimiento y Servicios:**\n- Solicitar mantenimiento\n- Conectar con proveedores verificados\n- Seguimiento de trabajos\n- Sistema de calificaciones\n\n🏃 **Runner360:**\n- Visitas profesionales a propiedades\n- Reportes detallados con fotos\n- Verificación de estado de propiedades\n\n👥 **Gestión de Usuarios:**\n- Múltiples roles (Propietario, Inquilino, Corredor, Proveedor, Runner)\n- Perfiles verificados\n- Sistema de calificaciones bidireccional\n- Comunicación integrada\n\n📊 **Reportes y Analytics:**\n- Reportes financieros\n- Estadísticas de propiedades\n- Análisis de ingresos\n- Exportación de datos\n\n🔒 **Seguridad:**\n- Encriptación de datos\n- Verificación de usuarios\n- Protección de información personal\n- Cumplimiento legal\n\n¿Qué funcionalidad te interesa más?',
+          confidence: 0.88,
+        };
+
+      case 'security_trust':
+        return {
+          response:
+            '**Seguridad y Confianza en Rent360:**\n\n🔒 **Protección de Datos:**\n- Todos tus datos están encriptados\n- Cumplimos con estándares internacionales de seguridad\n- No compartimos información personal con terceros\n- Acceso seguro con autenticación de dos factores disponible\n\n✅ **Verificación de Usuarios:**\n- Todos los usuarios son verificados\n- Documentos verificados por el equipo administrativo\n- Sistema de calificaciones para confianza\n- Historial de transacciones transparente\n\n💳 **Seguridad en Pagos:**\n- Procesadores de pago certificados (PCI DSS)\n- No almacenamos datos de tarjetas\n- Transacciones encriptadas\n- Protección contra fraudes\n\n📄 **Documentos Seguros:**\n- Contratos digitales con validez legal\n- Firmas electrónicas certificadas\n- Almacenamiento seguro en la nube\n- Acceso controlado a documentos\n\n🛡️ **Privacidad:**\n- Control sobre quién ve tu información\n- Documentos privados solo visibles para administradores\n- Opciones de privacidad configurables\n- Cumplimiento con normativas de protección de datos\n\n**Puedes confiar en Rent360 porque:**\n- ✅ Somos una plataforma establecida y verificada\n- ✅ Procesamos miles de transacciones de forma segura\n- ✅ Cumplimos con todas las normativas legales\n- ✅ Tu información está protegida con tecnología de última generación\n\n¿Tienes alguna pregunta específica sobre seguridad?',
+          confidence: 0.9,
+        };
+
+      case 'verification_time':
+        return {
+          response:
+            '**Tiempo de Verificación en Rent360:**\n\n⏱️ **Tiempos Estimados:**\n- **Propietarios e Inquilinos**: 24-48 horas\n- **Proveedores de Servicios**: 2-5 días hábiles\n- **Corredores**: 3-7 días hábiles\n- **Runners**: 1-3 días hábiles\n\n📋 **Proceso de Verificación:**\n1. **Completar perfil**: Toda la información requerida\n2. **Subir documentos**: Cédula, certificaciones, etc.\n3. **Revisión administrativa**: El equipo revisa tu información\n4. **Aprobación**: Recibirás notificación cuando estés verificado\n\n✅ **Cómo Saber si Estás Verificado:**\n- Recibirás un email de confirmación\n- Verás un badge de "Verificado" en tu perfil\n- Podrás acceder a todas las funcionalidades\n\n💡 **Tips para Verificación Rápida:**\n- Completa todos los campos requeridos\n- Sube documentos claros y legibles\n- Asegúrate de que la información sea correcta\n- Responde rápidamente si hay solicitudes de información adicional\n\n**Si tu verificación tarda más:**\n- Revisa tu email por solicitudes de información adicional\n- Contacta al soporte si han pasado más de 7 días\n- Verifica que todos tus documentos estén correctos\n\n¿Tienes alguna pregunta sobre el proceso de verificación?',
+          confidence: 0.9,
+        };
+
+      case 'runner360_info':
+        return {
+          response:
+            '**¿Qué es Runner360?**\n\n🏃 **Runner360** es nuestro servicio de visitas profesionales a propiedades.\n\n**¿Qué hace Runner360?**\n- Realiza visitas profesionales a propiedades\n- Toma fotos y videos de alta calidad\n- Genera reportes detallados del estado de la propiedad\n- Verifica el estado de mantenimiento\n- Proporciona información objetiva para propietarios e inquilinos\n\n**¿Cuánto cuesta?**\n- **Visita básica**: $15.000 - $20.000\n- **Visita completa con reporte**: $20.000 - $25.000\n- El precio varía según ubicación y tipo de visita\n\n**¿Cómo funciona?**\n1. **Solicita una visita**: Desde tu panel o al contactar un runner\n2. **Agenda la cita**: El runner coordina contigo la fecha y hora\n3. **Visita profesional**: El runner visita la propiedad y documenta todo\n4. **Recibe el reporte**: Obtienes fotos, videos y un reporte detallado\n\n**Beneficios:**\n- ✅ Visitas profesionales y objetivas\n- ✅ Documentación completa de la propiedad\n- ✅ Ahorro de tiempo para propietarios\n- ✅ Transparencia para todas las partes\n- ✅ Reportes detallados con fotos\n\n**¿Quién puede usar Runner360?**\n- Propietarios que quieren documentar sus propiedades\n- Inquilinos que necesitan verificar el estado\n- Corredores que necesitan reportes profesionales\n\n¿Quieres agendar una visita o necesitas más información?',
+          confidence: 0.92,
+        };
+
+      case 'contract_renewal':
+        return {
+          response:
+            '**Renovación de Contratos en Rent360:**\n\n🔄 **Cómo Renovar:**\n1. **Notificación automática**: El sistema te notifica 30 días antes del vencimiento\n2. **Accede a tu contrato**: Ve a "Contratos" → "Contratos Activos"\n3. **Solicita renovación**: Haz clic en "Renovar Contrato"\n4. **Revisa términos**: Puedes actualizar términos si ambas partes están de acuerdo\n5. **Firma digitalmente**: Ambas partes firman el contrato renovado\n\n✅ **Renovación Automática:**\n- Puedes configurar renovación automática\n- El sistema genera el nuevo contrato automáticamente\n- Solo necesitas confirmar y firmar\n\n📋 **Qué Puedes Actualizar:**\n- Precio de arriendo (con acuerdo de ambas partes)\n- Fechas de vencimiento\n- Términos y condiciones\n- Servicios incluidos\n\n⏰ **Plazos:**\n- Notificación: 30 días antes del vencimiento\n- Tiempo para renovar: Hasta 7 días antes del vencimiento\n- Si no renuevas: El contrato expira automáticamente\n\n**¿Qué pasa si no renuevo?**\n- El contrato expira en la fecha de vencimiento\n- Debes desocupar la propiedad si eres inquilino\n- Debes notificar al inquilino si eres propietario\n\n💡 **Tips:**\n- Renueva con anticipación para evitar problemas\n- Comunícate con la otra parte antes de renovar\n- Revisa todos los términos antes de firmar\n\n¿Necesitas ayuda con una renovación específica?',
+          confidence: 0.9,
+        };
+
+      case 'schedule_visit':
+        return {
+          response:
+            '**Cómo Agendar una Visita en Rent360:**\n\n📅 **Pasos para Agendar:**\n1. **Busca la propiedad**: Encuentra la propiedad que te interesa\n2. **Solicita visita**: Haz clic en "Solicitar Visita" o "Agendar Visita"\n3. **Selecciona fecha y hora**: Elige un horario disponible\n4. **Confirma**: El propietario o corredor recibirá tu solicitud\n5. **Recibe confirmación**: Te llegará una notificación cuando se confirme\n\n💰 **Costos:**\n- **Visita estándar**: Generalmente GRATIS\n- **Visita con Runner360**: $15.000 - $25.000 (opcional, más profesional)\n\n⏰ **Tiempos:**\n- Las visitas se confirman generalmente en 24-48 horas\n- Puedes cancelar hasta 24 horas antes\n\n🏠 **Tipos de Visita:**\n- **Visita estándar**: Con el propietario o corredor\n- **Visita Runner360**: Visita profesional con reporte detallado\n\n**Para Propietarios/Corredores:**\n- Recibirás notificaciones de solicitudes de visita\n- Puedes confirmar o sugerir otros horarios\n- El sistema gestiona automáticamente el calendario\n\n**Para Inquilinos:**\n- Puedes solicitar visitas a múltiples propiedades\n- Recibe confirmaciones automáticas\n- Cancela o reprograma fácilmente\n\n¿Quieres agendar una visita o necesitas más información?',
+          confidence: 0.88,
+        };
+
+      case 'ratings_info':
+        return {
+          response:
+            '**Sistema de Calificaciones en Rent360:**\n\n⭐ **¿Qué son las Calificaciones?**\n- Son evaluaciones que los usuarios se dan entre sí después de interactuar\n- Ayudan a construir confianza y reputación en la plataforma\n- Son públicas y visibles para todos los usuarios\n\n👥 **¿Quién Puede Calificar?**\n- **Propietarios** pueden calificar a inquilinos, corredores, proveedores y runners\n- **Inquilinos** pueden calificar a propietarios, corredores, proveedores y runners\n- **Corredores** pueden calificar a propietarios, inquilinos y proveedores\n- **Proveedores** pueden calificar a clientes (propietarios e inquilinos)\n- **Runners** pueden calificar a propietarios e inquilinos\n\n📊 **¿Qué se Califica?**\n- Calidad del servicio\n- Puntualidad\n- Comunicación\n- Profesionalismo\n- Calificación general (1-5 estrellas)\n\n👀 **¿Dónde Puedo Verlas?**\n- En los perfiles de los usuarios\n- En las tarjetas de información pública\n- Al interactuar con otros usuarios\n- En los resultados de búsqueda\n\n💬 **Comentarios y Respuestas:**\n- Puedes dejar comentarios con tu calificación\n- El usuario calificado puede responder a los comentarios\n- Todo es público y transparente\n\n✅ **Beneficios:**\n- Construyes tu reputación en la plataforma\n- Ayudas a otros usuarios a tomar decisiones informadas\n- Recibes feedback para mejorar\n\n¿Tienes alguna pregunta sobre las calificaciones?',
+          confidence: 0.87,
+        };
+
+      case 'required_documents':
+        return {
+          response:
+            '**Documentos Requeridos en Rent360:**\n\n📋 **Para Todos los Usuarios:**\n- **Cédula de Identidad**: Frente y reverso\n- **Email verificado**: Debes verificar tu correo electrónico\n\n👤 **Para Propietarios:**\n- Cédula de identidad\n- Comprobante de propiedad (opcional, para verificación)\n\n🏠 **Para Inquilinos:**\n- Cédula de identidad\n- Certificado de antecedentes (recomendado)\n- Comprobantes de ingresos (opcional)\n\n🔧 **Para Proveedores de Servicios:**\n- Cédula de identidad (frente y reverso)\n- Certificado de antecedentes\n- Certificaciones profesionales (si aplica)\n- Certificado de empresa (si tienes empresa)\n- Seguro de responsabilidad civil (recomendado)\n\n📊 **Para Corredores:**\n- Cédula de identidad\n- Certificado de corredor inmobiliario\n- Certificado de antecedentes\n- Certificado de empresa (si aplica)\n\n🏃 **Para Runners:**\n- Cédula de identidad\n- Certificado de antecedentes\n- Certificación de conducción (si aplica)\n\n**Proceso:**\n1. Sube los documentos desde "Configuración" → "Documentos"\n2. El equipo administrativo los revisa\n3. Recibirás notificación cuando estén aprobados\n\n**Importante:**\n- Los documentos deben estar claros y legibles\n- Deben estar vigentes\n- La información debe coincidir con tu perfil\n\n¿Qué tipo de usuario eres? Puedo darte información más específica.',
+          confidence: 0.91,
+        };
+
+      default:
+        return null;
+    }
   }
 
   /**
