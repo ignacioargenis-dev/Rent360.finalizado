@@ -2988,6 +2988,10 @@ export class AIChatbotService {
         confidence: intentRecognition.confidence,
         userRole,
         userMessage: userMessage.substring(0, 100),
+        configProvider: this.config?.provider,
+        hasGoogleAI: !!this.googleAI,
+        hasOpenAI: !!this.openai,
+        hasAnthropic: !!this.anthropic,
       });
 
       // NIVEL 1: Intentar con datos de entrenamiento específicos (rápido y preciso)
@@ -3615,6 +3619,48 @@ export class AIChatbotService {
   }
 
   /**
+   * DEBUG: Función para probar detección de intenciones
+   */
+  public debugIntentRecognition(userMessage: string, userRole: string = 'guest'): any {
+    const intent = this.recognizeIntent(userMessage, userRole);
+    const normalizedInput = this.normalizeText(userMessage);
+    const expandedInput = this.expandSynonyms(normalizedInput);
+
+    console.log('🔍 DEBUG - Intent Recognition:', {
+      originalMessage: userMessage,
+      normalizedInput,
+      expandedInput,
+      detectedIntent: intent.intent,
+      confidence: intent.confidence,
+      entities: intent.entities,
+      userRole,
+    });
+
+    return intent;
+  }
+
+  /**
+   * DEBUG: Función para probar generateSmartResponse
+   */
+  public debugGenerateSmartResponse(userMessage: string, userRole: string = 'guest'): any {
+    const intent = this.recognizeIntent(userMessage, userRole);
+    const securityContext = this.createSecurityContext(userRole, 'debug_user');
+    const smartResponse = this.generateSmartResponse(intent, userRole, securityContext);
+
+    console.log('🔍 DEBUG - Smart Response:', {
+      userMessage,
+      detectedIntent: intent.intent,
+      intentConfidence: intent.confidence,
+      responseLength: smartResponse.response?.length || 0,
+      responseConfidence: smartResponse.confidence,
+      hasResponse: !!smartResponse.response,
+      responsePreview: smartResponse.response?.substring(0, 200),
+    });
+
+    return smartResponse;
+  }
+
+  /**
    * Sistema de sinónimos para mejorar detección
    */
   private expandSynonyms(text: string): string {
@@ -3856,21 +3902,83 @@ export class AIChatbotService {
     ];
     const minConfidenceForKnowledgeBase = importantIntents.includes(intent.intent) ? 0.6 : 0.7;
 
+    logger.info('🔍 processWithLocalLogic: Evaluando uso de knowledgeBase', {
+      intent: intent.intent,
+      confidence: intent.confidence,
+      minConfidenceForKnowledgeBase,
+      isImportantIntent: importantIntents.includes(intent.intent),
+      userRole,
+      shouldUseKnowledgeBase: intent.confidence >= minConfidenceForKnowledgeBase,
+    });
+
     if (intent.confidence >= minConfidenceForKnowledgeBase) {
       const securityContext = this.createSecurityContext(userRole, 'anonymous');
       const smartResponse = this.generateSmartResponse(intent, userRole, securityContext);
+
+      logger.info('🔍 processWithLocalLogic: Respuesta del generateSmartResponse', {
+        hasResponse: !!smartResponse.response,
+        responseConfidence: smartResponse.confidence,
+        responseLength: smartResponse.response?.length || 0,
+        shouldUse: smartResponse.response && smartResponse.confidence > 0.5,
+      });
 
       if (smartResponse.response && smartResponse.confidence > 0.5) {
         logger.info('✅ Usando respuesta del knowledgeBase', {
           intent: intent.intent,
           confidence: smartResponse.confidence,
+          responsePreview: smartResponse.response.substring(0, 100),
         });
         return {
           response: smartResponse.response,
           confidence: smartResponse.confidence,
         };
+      } else {
+        logger.warn('⚠️ generateSmartResponse no devolvió respuesta válida', {
+          intent: intent.intent,
+          smartResponseConfidence: smartResponse.confidence,
+          hasResponse: !!smartResponse.response,
+          responseLength: smartResponse.response?.length || 0,
+        });
       }
     }
+
+    // 🚀 DEBUG: Logging adicional para intenciones importantes
+    if (intent.intent === 'digital_signature') {
+      logger.warn('🔥 DEBUG: Intención digital_signature detectada en processWithLocalLogic', {
+        confidence: intent.confidence,
+        userMessage,
+        userRole,
+        normalizedInput,
+        expandedInput,
+        input,
+        willUseSpecificResponse: intent.confidence >= 0.6,
+      });
+    }
+
+    // 🚀 DEBUG: Logging para todas las intenciones detectadas
+    logger.info('🔍 DEBUG: Intención detectada en processWithLocalLogic', {
+      intent: intent.intent,
+      confidence: intent.confidence,
+      userMessage: userMessage.substring(0, 50),
+      userRole,
+      importantIntents: ['digital_signature', 'register', 'hire_broker', 'costs_pricing'],
+      isImportant: ['digital_signature', 'register', 'hire_broker', 'costs_pricing'].includes(
+        intent.intent
+      ),
+      minConfidenceForKnowledgeBase: [
+        'digital_signature',
+        'register',
+        'hire_broker',
+        'costs_pricing',
+      ].includes(intent.intent)
+        ? 0.6
+        : 0.7,
+      willUseKnowledgeBase:
+        intent.confidence >=
+        (['digital_signature', 'register', 'hire_broker', 'costs_pricing'].includes(intent.intent)
+          ? 0.6
+          : 0.7),
+    });
 
     // 🚀 NUEVO: Respuestas específicas para nuevas intenciones detectadas
     // Estas respuestas tienen prioridad sobre las detecciones generales
@@ -4341,7 +4449,7 @@ Respuesta (solo información general y pública, pero específica y detallada):
     // 🚀 MEJORADO: Reducir umbral para ser más permisivo y detectar mejor las intenciones
     // Para intenciones específicas importantes, usar umbral más bajo
     const importantIntents = ['digital_signature', 'register', 'hire_broker', 'costs_pricing'];
-    const minConfidence = importantIntents.includes(intent) ? 0.7 : 0.75;
+    const minConfidence = importantIntents.includes(intent) ? 0.6 : 0.75; // 🔥 TEMPORAL: Bajado de 0.7 a 0.6 para digital_signature
 
     if (confidence < minConfidence) {
       return null;
