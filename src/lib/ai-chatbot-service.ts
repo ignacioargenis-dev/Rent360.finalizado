@@ -589,6 +589,19 @@ export class AIChatbotService {
         suggestions: ['Ver requisitos completos', 'Comenzar registro', 'Contactar soporte'],
         links: ['/provider/services/new', '/auth/register?role=provider'],
       },
+      guest: {
+        responses: [
+          '¡Perfecto! Sí, puedes ofrecer tus servicios en Rent360. Para registrarte como proveedor de servicios, necesitas: 1) Cédula de identidad (frente y reverso) 2) Certificado de antecedentes penales 3) Certificaciones profesionales si aplican (para electricistas, plomeros, etc.) 4) Comprobante de experiencia laboral (opcional pero recomendado). El registro es gratuito y una vez verificado, aparecerás en búsquedas cuando propietarios necesiten servicios. Puedes ganar dinero ofreciendo tus servicios a la comunidad.',
+          '¡Claro que sí! Rent360 es una plataforma donde puedes ofrecer tus servicios profesionales (electricidad, plomería, jardinería, limpieza, mantenimiento, etc.) a propietarios que los necesiten. El proceso es simple: 1) Regístrate como proveedor 2) Sube tus documentos (cédula, antecedentes, certificaciones si las tienes) 3) Define qué servicios ofreces y en qué zonas 4) Establece tus precios 5) Una vez verificado, comenzarás a recibir solicitudes de trabajo. Los pagos son automáticos y seguros. ¿Quieres que te guíe paso a paso en el registro?',
+          'Sí, definitivamente puedes ofrecer tus servicios en Rent360. Es una excelente oportunidad para generar ingresos trabajando con propietarios que necesitan servicios profesionales. El registro es gratuito y el proceso es rápido. Una vez verificado, aparecerás en búsquedas y podrás recibir solicitudes de trabajo directamente. Los pagos son automáticos y la plataforma retiene una pequeña comisión (generalmente 8%) por cada trabajo completado. ¿Te gustaría saber más sobre cómo funciona o prefieres comenzar el registro ahora?',
+        ],
+        suggestions: [
+          'Comenzar registro como proveedor',
+          'Ver requisitos completos',
+          'Contactar soporte',
+        ],
+        links: ['/auth/register?role=provider', '/help', '/contact'],
+      },
     },
 
     // Búsqueda y visualización de propiedades
@@ -1130,16 +1143,20 @@ export class AIChatbotService {
           /(?:como|dónde|quiero|necesito)\s+(?:registrarme|crear cuenta|darme de alta)/,
           /(?:registro|registrar|unirme|empezar)/,
           /(?:ser|convertirme en|quiero ser)\s+(?:propietario|inquilino|corredor|proveedor|runner)/,
-          /(?:soy|trabajo como|me dedico a)\s+(?:jardinero|plomero|electricista|gasfiter|limpieza|seguridad|mantenimiento)/,
+          /(?:soy|trabajo como|me dedico a)\s+(?:jardinero|plomero|electricista|electrico|gasfiter|limpieza|seguridad|mantenimiento|pintor|carpintero)/,
           /(?:puedo|podría|quiero)\s+(?:publicar|ofrecer|prestar)\s+(?:mis\s+)?servicios/,
+          /(?:soy|trabajo como|me dedico a)\s+(?:jardinero|plomero|electricista|electrico|gasfiter|limpieza|seguridad|mantenimiento|pintor|carpintero).*?(?:puedo|podría|quiero)\s+(?:ofrecer|prestar|publicar)/i,
           /(?:como|dónde)\s+(?:ofrecer|brindar|dar)\s+(?:servicios|mantenimiento|trabajo)/,
           /(?:como|dónde)\s+(?:creo|crear|registrar|darme de alta)\s+(?:una\s+)?(?:cuenta|perfil)/,
           /(?:cuenta|perfil|registro)\s+(?:para|de)\s+(?:ofrecer|brindar|dar)\s+servicios/,
           /(?:para|necesito|debo tener|requiero)\s+(?:documento|certificación|certificado|licencia|registro)/,
           /(?:qué|cuáles)\s+(?:documentos|requisitos|certificaciones)\s+(?:necesito|requiero|debo)/,
           /(?:ofrecer|dar|prestar)\s+(?:servicios|mantenimiento)\s+(?:debo|necesito|requiero)/,
+          // Patrones mejorados para detectar proveedores de servicios específicos
+          /(?:soy|trabajo como|me dedico a)\s+(?:electricista|electrico|plomero|gasfiter|jardinero|limpieza|pintor|carpintero|mantenimiento|seguridad).*?(?:puedo|podría|quiero)\s+(?:ofrecer|prestar|publicar|brindar|dar)\s+(?:mis\s+)?servicios/i,
+          /(?:puedo|podría|quiero)\s+(?:ofrecer|prestar|publicar|brindar|dar)\s+(?:mis\s+)?servicios.*?(?:soy|trabajo como|me dedico a)\s+(?:electricista|electrico|plomero|gasfiter|jardinero|limpieza|pintor|carpintero|mantenimiento|seguridad)/i,
         ],
-        weight: 1.0,
+        weight: 1.2, // Aumentar peso para mejor detección
         context: ['auth', 'signup', 'join', 'provider', 'services', 'documents', 'certifications'],
       },
       {
@@ -1725,29 +1742,34 @@ export class AIChatbotService {
       }
     }
 
-    // Extraer tipos de servicios mencionados
+    // Extraer tipos de servicios mencionados (con variantes comunes)
     const serviceTypes = [
-      'jardineria',
-      'jardinero',
-      'plomeria',
-      'plomero',
-      'electricidad',
-      'electricista',
-      'limpieza',
-      'pintura',
-      'carpinteria',
-      'mantenimiento',
-      'seguridad',
-      'gasfiter',
+      { keywords: ['jardineria', 'jardinero', 'jardinería'], type: 'jardinero' },
+      { keywords: ['plomeria', 'plomero', 'plomería', 'gasfiter', 'gasfitería'], type: 'plomero' },
+      {
+        keywords: ['electricidad', 'electricista', 'electrico', 'eléctrico', 'electrico'],
+        type: 'electricista',
+      },
+      { keywords: ['limpieza', 'limpiador', 'aseo'], type: 'limpieza' },
+      { keywords: ['pintura', 'pintor'], type: 'pintura' },
+      { keywords: ['carpinteria', 'carpintero', 'carpintería'], type: 'carpinteria' },
+      { keywords: ['mantenimiento', 'mantenedor'], type: 'mantenimiento' },
+      { keywords: ['seguridad', 'guardia', 'vigilante'], type: 'seguridad' },
     ];
     const foundServices: string[] = [];
     for (const service of serviceTypes) {
-      if (text.includes(service)) {
-        foundServices.push(service);
+      // Buscar cualquiera de las palabras clave
+      const found = service.keywords.some(keyword => text.includes(keyword));
+      if (found) {
+        foundServices.push(service.type);
       }
     }
     if (foundServices.length > 0) {
       entities.services = foundServices;
+      // Si se detecta un servicio, también marcar como proveedor
+      if (intent === 'register') {
+        entities.role = 'proveedor';
+      }
     }
 
     // Extraer palabras clave relacionadas con registro/servicios
@@ -1810,15 +1832,47 @@ export class AIChatbotService {
     }
 
     // Obtener respuestas específicas del rol
-    const roleResponses = intentKnowledge[userRole] || intentKnowledge['general'];
+    // Si es guest y quiere registrarse como proveedor, usar respuestas de guest
+    let roleResponses = intentKnowledge[userRole] || intentKnowledge['general'];
+
+    // Si es guest preguntando sobre proveedores, asegurar que tenemos respuestas de guest
+    if (
+      userRole === 'guest' &&
+      mainIntent === 'register' &&
+      (entities.services || entities.role === 'proveedor')
+    ) {
+      roleResponses = intentKnowledge['guest'] || roleResponses;
+    }
+
+    // Si no hay respuestas para el rol pero hay respuestas de guest y el usuario pregunta sobre registro, usar guest
+    if (!roleResponses && mainIntent === 'register' && intentKnowledge['guest']) {
+      roleResponses = intentKnowledge['guest'];
+    }
+
     if (!roleResponses) {
       return this.generateFallbackResponse(userRole);
     }
 
     // Seleccionar respuesta basada en entidades y contexto
+    // Si hay servicios detectados y hay múltiples respuestas, elegir una más específica
     let selectedResponse = roleResponses.responses[0];
     let suggestions = roleResponses.suggestions || [];
     let links = roleResponses.links || [];
+
+    // Si se detectó un servicio específico y hay respuestas más específicas, usar una de ellas
+    if (entities.services && entities.services.length > 0 && roleResponses.responses.length > 1) {
+      // Preferir respuestas que mencionen servicios específicos
+      const serviceSpecificResponse = roleResponses.responses.find(
+        (resp: string) =>
+          resp.toLowerCase().includes('servicios') || resp.toLowerCase().includes('proveedor')
+      );
+      if (serviceSpecificResponse) {
+        selectedResponse = serviceSpecificResponse;
+      } else {
+        // Usar la segunda respuesta que suele ser más detallada
+        selectedResponse = roleResponses.responses[1] || selectedResponse;
+      }
+    }
 
     // Personalizar respuesta basada en entidades detectadas
     if (entities.role && entities.role !== userRole) {
@@ -1831,6 +1885,54 @@ export class AIChatbotService {
 
     if (entities.amount) {
       selectedResponse = this.personalizePriceResponse(selectedResponse, entities.amount);
+    }
+
+    // Personalizar respuesta basada en tipo de servicio mencionado
+    if (entities.services && entities.services.length > 0 && mainIntent === 'register') {
+      const serviceType = entities.services[0];
+      const serviceNames: Record<string, string> = {
+        electricista: 'electricidad',
+        electricidad: 'electricidad',
+        plomero: 'plomería',
+        plomeria: 'plomería',
+        gasfiter: 'gasfitería',
+        jardinero: 'jardinería',
+        jardineria: 'jardinería',
+        limpieza: 'limpieza',
+        pintura: 'pintura',
+        carpinteria: 'carpintería',
+        mantenimiento: 'mantenimiento',
+        seguridad: 'seguridad',
+      };
+
+      const serviceName = serviceNames[serviceType] || serviceType;
+
+      // Si es un guest preguntando sobre servicios específicos, usar respuesta más personalizada
+      if (userRole === 'guest' && roleResponses.responses.length > 1) {
+        // Seleccionar una respuesta que mencione servicios específicos
+        selectedResponse = roleResponses.responses[1] || selectedResponse;
+      }
+
+      // Personalizar la respuesta mencionando el servicio específico
+      if (selectedResponse.includes('servicios') || selectedResponse.includes('proveedor')) {
+        selectedResponse = selectedResponse.replace(
+          /(servicios|proveedor de servicios)/gi,
+          `servicios de ${serviceName}`
+        );
+      }
+
+      // Agregar información específica sobre el servicio
+      if (serviceType === 'electricista' || serviceType === 'electricidad') {
+        selectedResponse +=
+          '\n\n💡 **Para electricistas:** Si tienes certificación profesional o licencia, súbela durante el registro. Esto aumenta tu credibilidad y te permite aparecer en búsquedas prioritarias.';
+      } else if (
+        serviceType === 'plomero' ||
+        serviceType === 'plomeria' ||
+        serviceType === 'gasfiter'
+      ) {
+        selectedResponse +=
+          '\n\n🔧 **Para plomeros/gasfiteros:** Las certificaciones profesionales son muy valoradas. Si tienes experiencia comprobable, inclúyela en tu perfil para atraer más clientes.';
+      }
     }
 
     // Agregar contexto específico si hay sub-intención
@@ -3621,6 +3723,21 @@ export class AIChatbotService {
     securityContext: any,
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
   ): string {
+    // Analizar el mensaje para detectar contexto específico
+    const messageLower = userMessage.toLowerCase();
+    const isProviderQuestion =
+      /(?:soy|trabajo como|me dedico a|puedo ofrecer|quiero ofrecer|ofrezco)\s+(?:electricista|plomero|gasfiter|jardinero|limpieza|pintura|carpintero|mantenimiento|seguridad|servicios)/i.test(
+        userMessage
+      );
+    const isRegistrationQuestion =
+      /(?:registro|registrarme|crear cuenta|darme de alta|unirme|empezar|comenzar|como|dónde|donde)/i.test(
+        userMessage
+      );
+    const serviceType =
+      messageLower.match(
+        /(?:soy|trabajo como|me dedico a)\s+(electricista|plomero|gasfiter|jardinero|limpieza|pintura|carpintero|mantenimiento|seguridad)/i
+      )?.[1] || '';
+
     const systemPrompt = `
 Eres un asistente virtual especializado en Rent360, una plataforma de gestión inmobiliaria.
 
@@ -3649,17 +3766,28 @@ ${securityContext.allowedTopics.map((topic: string) => `- ${topic}`).join('\n')}
 **TEMAS RESTRINGIDOS (NUNCA RESPONDER):**
 ${securityContext.restrictedTopics.map((topic: string) => `- ${topic}`).join('\n')}
 
+**CONTEXTO ESPECÍFICO DE LA PREGUNTA:**
+${isProviderQuestion ? `- El usuario está preguntando sobre ofrecer servicios como proveedor${serviceType ? ` (específicamente: ${serviceType})` : ''}` : ''}
+${isRegistrationQuestion ? '- El usuario está interesado en registrarse o crear una cuenta' : ''}
+
 **INSTRUCCIONES DE RESPUESTA:**
-1. Solo proporciona información general sobre funcionalidades de Rent360
-2. NUNCA menciones datos específicos de usuarios, propiedades, contratos o pagos
-3. Si se pregunta por información confidencial, responde: "No puedo acceder a información personal. Para consultas específicas, contacta al soporte."
-4. Si la pregunta es sobre temas restringidos, redirige al soporte: "Para esa consulta, te recomiendo contactar al soporte técnico."
-5. Mantén un tono amigable y profesional
-6. Si no sabes la respuesta exacta, proporciona información general útil
-7. NUNCA inventes información que no conozcas con certeza
-8. NUNCA proporciones pasos técnicos que puedan comprometer la seguridad
+1. **SIEMPRE responde de forma específica y directa a la pregunta del usuario.** No uses respuestas genéricas.
+2. Si el usuario pregunta sobre ofrecer servicios (ej: "soy electricista, puedo ofrecer mis servicios?"), responde específicamente sobre cómo registrarse como proveedor de servicios, mencionando el tipo de servicio si fue mencionado.
+3. Si el usuario pregunta sobre registro, proporciona pasos claros y específicos según el tipo de usuario que quiere ser.
+4. Solo proporciona información general sobre funcionalidades de Rent360
+5. NUNCA menciones datos específicos de usuarios, propiedades, contratos o pagos
+6. Si se pregunta por información confidencial, responde: "No puedo acceder a información personal. Para consultas específicas, contacta al soporte."
+7. Si la pregunta es sobre temas restringidos, redirige al soporte: "Para esa consulta, te recomiendo contactar al soporte técnico."
+8. Mantén un tono amigable y profesional
+9. Si no sabes la respuesta exacta, proporciona información general útil
+10. NUNCA inventes información que no conozcas con certeza
+11. NUNCA proporciones pasos técnicos que puedan comprometer la seguridad
+12. **IMPORTANTE:** Si el usuario menciona un tipo de servicio específico (electricista, plomero, etc.), personaliza tu respuesta mencionando ese servicio específicamente.
 
 **EJEMPLOS DE RESPUESTAS CORRECTAS:**
+- ✅ Usuario: "soy electricista, puedo ofrecer mis servicios?"
+  Respuesta: "¡Claro que sí! Puedes registrarte como proveedor de servicios de electricidad en Rent360. El proceso es simple: 1) Ve a 'Crear cuenta' y selecciona 'Proveedor de Servicios', 2) Completa tus datos personales, 3) Sube tu cédula de identidad y certificado de antecedentes, 4) Si tienes certificación profesional de electricista, súbela también, 5) Define qué servicios de electricidad ofreces y en qué zonas trabajas. Una vez verificado, aparecerás en búsquedas cuando propietarios necesiten servicios eléctricos. Los pagos son automáticos y seguros. ¿Quieres que te guíe paso a paso?"
+
 - ✅ "Para registrarte como proveedor, ve a Registrarse y selecciona Proveedor de Servicios"
 - ✅ "Los pagos se procesan de forma segura con múltiples métodos disponibles"
 - ❌ "Tu saldo actual es $500.000" (NUNCA - información confidencial)
@@ -3676,9 +3804,9 @@ ${
     : ''
 }
 
-Recuerda: SIEMPRE prioriza la seguridad y privacidad. Si hay duda, redirige al soporte.
+Recuerda: SIEMPRE prioriza la seguridad y privacidad. Si hay duda, redirige al soporte. **RESPONDE DE FORMA ESPECÍFICA Y DIRECTA A LA PREGUNTA, NO USES RESPUESTAS GENÉRICAS.**
 
-Respuesta (solo información general y pública):
+Respuesta (solo información general y pública, pero específica y útil):
 `;
 
     return systemPrompt;
