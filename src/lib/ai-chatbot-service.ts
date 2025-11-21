@@ -3085,6 +3085,22 @@ export class AIChatbotService {
       };
     }
 
+    // 🚀 NUEVO: Detección específica para firmas digitales/electrónicas (ANTES de detección general de contratos)
+    if (
+      (input.includes('firma') || input.includes('firmar')) &&
+      (input.includes('digital') ||
+        input.includes('electrónica') ||
+        input.includes('electronica') ||
+        input.includes('contrato') ||
+        input.includes('documento'))
+    ) {
+      return {
+        response:
+          '¡Sí! Rent360 tiene un sistema completo de **firmas digitales** para contratos. Te explico:\n\n**✅ Firmas Digitales Disponibles:**\n- Los contratos de arriendo se pueden firmar digitalmente\n- Es **legalmente válido** y cumple con la normativa chilena\n- No necesitas imprimir ni escanear documentos\n- Todo el proceso es 100% digital y seguro\n\n**🔐 Seguridad y Validez Legal:**\n- Las firmas digitales tienen validez legal en Chile\n- Utilizamos proveedores certificados (FirmaPro, TrustFactory)\n- Cada firma queda registrada con fecha, hora y ubicación\n- Los documentos firmados son inalterables\n\n**📝 Cómo Funciona:**\n1. **Propietario o Corredor** crea el contrato en el sistema\n2. El sistema genera el documento con todos los términos\n3. Se envía para firma a ambas partes (propietario e inquilino)\n4. Cada parte recibe una notificación por email\n5. Puedes firmar desde cualquier dispositivo (celular, tablet, computador)\n6. Una vez firmado por ambas partes, el contrato queda activo\n7. Recibes una copia digital del contrato firmado\n\n**💡 Ventajas:**\n- Proceso rápido: firmas en minutos, no días\n- Sin necesidad de reunirse presencialmente\n- Documentos almacenados de forma segura en la nube\n- Acceso 24/7 desde cualquier lugar\n- Notificaciones automáticas de cambios o actualizaciones\n\n**📋 Para Propietarios:**\n- Crea contratos desde "Contratos" → "Nuevo Contrato"\n- Envía para firma directamente desde la plataforma\n- Gestiona todos tus contratos en un solo lugar\n\n**🏠 Para Inquilinos:**\n- Recibirás una notificación cuando haya un contrato para firmar\n- Puedes revisar todos los términos antes de firmar\n- Accede a "Mis Contratos" para ver tus documentos firmados\n\n¿Tienes alguna pregunta específica sobre el proceso de firma digital?',
+        confidence: 0.95,
+      };
+    }
+
     if (
       input.includes('contrato') ||
       input.includes('arriendo') ||
