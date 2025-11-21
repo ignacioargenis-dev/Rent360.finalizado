@@ -651,6 +651,34 @@ export class AIChatbotService {
       },
     },
 
+    // 🚀 NUEVO: Servicios de mudanza (intención específica)
+    moving_services: {
+      general: {
+        responses: [
+          '¡Claro que sí! Rent360 tiene un sistema específico para **servicios de mudanza** que conecta directamente a inquilinos con empresas de mudanzas verificadas. Las mudanzas son diferentes a los servicios de mantenimiento - van dirigidas a inquilinos que necesitan ayuda para trasladarse, no a propietarios.',
+          '**Servicios de Mudanza en Rent360:**\n\n🏠 **¿Qué son?**\nLos servicios de mudanza conectan a inquilinos que se mudan con empresas profesionales de traslados verificadas.\n\n👥 **¿Para quién son?**\n- Para **inquilinos** que necesitan mudarse\n- Para **empresas de mudanzas** que quieren ofrecer sus servicios\n\n🔧 **Diferencia con mantenimiento:**\n- **Mantenimiento**: Servicios para propietarios (electricidad, plomería, jardinería, etc.)\n- **Mudanzas**: Servicios para inquilinos (traslados, embalaje, transporte de muebles)\n\n**Proceso para empresas de mudanzas:**\n1. Regístrate como "Proveedor de Servicios"\n2. Selecciona "Mudanzas" como tipo de servicio\n3. Sube documentos de tu empresa (cédula, antecedentes, certificación de empresa)\n4. Define zonas de cobertura y precios\n5. Una vez verificado, aparecerás cuando inquilinos busquen mudanzas\n\n**Ventajas:**\n- Conexión directa con inquilinos que se mudan\n- Sistema de pagos seguro\n- Calificaciones y reseñas\n- Gestión automática de solicitudes\n\n¿Quieres registrarte como empresa de mudanzas o tienes alguna pregunta específica?',
+        ],
+        suggestions: ['Registrarse como proveedor', 'Ver zonas disponibles', 'Contactar soporte'],
+        links: ['/auth/register?role=provider', '/help', '/contact'],
+      },
+      guest: {
+        responses: [
+          '¡Sí! Rent360 tiene un sistema específico para **servicios de mudanza** que conecta directamente a inquilinos con empresas de mudanzas verificadas. Importante: las mudanzas son diferentes a los servicios de mantenimiento - van dirigidas a inquilinos que necesitan ayuda para trasladarse, no a propietarios.',
+          '**Servicios de Mudanza en Rent360:**\n\n🏠 **¿En qué consiste?**\nConectamos inquilinos que se mudan con empresas profesionales de traslados verificadas.\n\n👥 **¿Para quién?**\n- **Inquilinos**: Buscan empresas de mudanza para su traslado\n- **Empresas de mudanzas**: Ofrecen servicios profesionales de traslados\n\n🔧 **Diferencia clave:**\n- **Servicios de mantenimiento**: Electricidad, plomería, jardinería, etc. (para propietarios)\n- **Servicios de mudanza**: Traslados, embalaje, transporte de muebles (para inquilinos)\n\n**Para registrarte como empresa de mudanzas:**\n1. Ve a "Crear cuenta" → "Proveedor de Servicios"\n2. Selecciona "Mudanzas" como especialidad\n3. Sube: Cédula de identidad, antecedentes, certificación de empresa\n4. Define precios y zonas de cobertura\n5. Una vez verificado, recibirás solicitudes de inquilinos\n\n**Beneficios:**\n- Conexión directa con clientes que necesitan mudarse\n- Pagos seguros y automáticos\n- Sistema de calificaciones\n- Gestión simplificada de trabajos\n\n¿Quieres registrarte como proveedor de mudanzas?',
+        ],
+        suggestions: ['Registrarse', 'Ver más información', 'Contactar soporte'],
+        links: ['/auth/register?role=provider', '/help', '/contact'],
+      },
+      provider: {
+        responses: [
+          '¡Perfecto! Si ofreces servicios de mudanza, Rent360 tiene un sistema específico para conectar empresas de mudanzas con inquilinos. Es diferente a los servicios de mantenimiento - las mudanzas van directamente a inquilinos.',
+          '**Servicios de Mudanza para Proveedores:**\n\n🏠 **¿Cómo funciona?**\nConectamos tu empresa directamente con inquilinos que necesitan mudarse.\n\n📋 **Proceso de registro:**\n1. Asegúrate de estar registrado como "Proveedor de Servicios"\n2. En tu perfil, selecciona "Mudanzas" como especialidad\n3. Sube documentos específicos para empresas de mudanza\n4. Define precios por tipo de mudanza y zona\n5. Configura disponibilidad y capacidad\n\n🔧 **Diferencia con mantenimiento:**\n- **Mantenimiento**: Solicitudes de propietarios para reparaciones\n- **Mudanzas**: Solicitudes directas de inquilinos para traslados\n\n**Ventajas del sistema:**\n- Inquilinos te contactan directamente\n- Sistema de reservas y pagos automático\n- Calificaciones y reseñas públicas\n- Gestión de horarios y capacidad\n- Cobertura geográfica amplia\n\n¿Ya estás registrado como proveedor? ¿Necesitas ayuda configurando tus servicios de mudanza?',
+        ],
+        suggestions: ['Configurar servicios', 'Ver solicitudes', 'Actualizar perfil'],
+        links: ['/provider/services', '/provider/profile', '/provider/dashboard'],
+      },
+    },
+
     // Firmas digitales (intención específica)
     digital_signature: {
       general: {
@@ -1199,6 +1227,20 @@ export class AIChatbotService {
         weight: 1.2, // Aumentar peso para mejor detección
         context: ['auth', 'signup', 'join', 'provider', 'services', 'documents', 'certifications'],
       },
+      // 🚀 NUEVO: Detección específica para servicios de mudanza
+      {
+        intent: 'moving_services',
+        patterns: [
+          /(?:mudanza|mudanzas|traslado|traslados|mover|moverme|cambiar|cambiarme)/i,
+          /(?:servicio|servicios)\s+(?:de\s+)?(?:mudanza|mudanzas|traslado|traslados)/i,
+          /(?:como|dónde|puedo)\s+(?:ofrecer|hacer|brindar|dar)\s+(?:servicio|servicios)\s+(?:de\s+)?(?:mudanza|mudanzas|traslado|traslados)/i,
+          /(?:soy|trabajo como|me dedico a)\s+(?:mudancero|empresa de mudanzas|servicio de mudanzas).*?(?:puedo|podría|quiero)\s+(?:ofrecer|prestar|brindar|dar)\s+(?:servicio|servicios)/i,
+          /(?:puedo|podría|quiero)\s+(?:ofrecer|prestar|brindar|dar)\s+(?:servicio|servicios).*?(?:mudanza|mudanzas|traslado|traslados)/i,
+          /(?:como|dónde)\s+(?:trabajar|ofrecer|brindar)\s+(?:en\s+)?(?:mudanzas|traslados)/i,
+        ],
+        weight: 1.1, // Alto peso para priorizar sobre register
+        context: ['moving', 'relocation', 'services', 'tenant_services'],
+      },
       {
         intent: 'property_search',
         patterns: [
@@ -1685,6 +1727,7 @@ export class AIChatbotService {
       ],
       guest: [
         'register',
+        'moving_services',
         'property_search',
         'navigation',
         'how_to',
@@ -3923,6 +3966,7 @@ export class AIChatbotService {
     const importantIntents = [
       'digital_signature',
       'register',
+      'moving_services',
       'hire_broker',
       'costs_pricing',
       'contracts',
@@ -3989,13 +4033,20 @@ export class AIChatbotService {
       confidence: intent.confidence,
       userMessage: userMessage.substring(0, 50),
       userRole,
-      importantIntents: ['digital_signature', 'register', 'hire_broker', 'costs_pricing'],
+      importantIntents: [
+        'digital_signature',
+        'register',
+        'moving_services',
+        'hire_broker',
+        'costs_pricing',
+      ],
       isImportant: ['digital_signature', 'register', 'hire_broker', 'costs_pricing'].includes(
         intent.intent
       ),
       minConfidenceForKnowledgeBase: [
         'digital_signature',
         'register',
+        'moving_services',
         'hire_broker',
         'costs_pricing',
       ].includes(intent.intent)
@@ -4003,7 +4054,13 @@ export class AIChatbotService {
         : 0.7,
       willUseKnowledgeBase:
         intent.confidence >=
-        (['digital_signature', 'register', 'hire_broker', 'costs_pricing'].includes(intent.intent)
+        ([
+          'digital_signature',
+          'register',
+          'moving_services',
+          'hire_broker',
+          'costs_pricing',
+        ].includes(intent.intent)
           ? 0.6
           : 0.7),
     });
@@ -4476,7 +4533,13 @@ Respuesta (solo información general y pública, pero específica y detallada):
   ): { response: string; confidence: number } | null {
     // 🚀 MEJORADO: Reducir umbral para ser más permisivo y detectar mejor las intenciones
     // Para intenciones específicas importantes, usar umbral más bajo
-    const importantIntents = ['digital_signature', 'register', 'hire_broker', 'costs_pricing'];
+    const importantIntents = [
+      'digital_signature',
+      'register',
+      'moving_services',
+      'hire_broker',
+      'costs_pricing',
+    ];
     const minConfidence = importantIntents.includes(intent) ? 0.6 : 0.75; // 🔥 TEMPORAL: Bajado de 0.7 a 0.6 para digital_signature
 
     if (confidence < minConfidence) {
@@ -4531,6 +4594,13 @@ Respuesta (solo información general y pública, pero específica y detallada):
           response:
             '**¿Qué es Runner360?**\n\n🏃 **Runner360** es nuestro servicio de visitas profesionales a propiedades.\n\n**¿Qué hace Runner360?**\n- Realiza visitas profesionales a propiedades\n- Toma fotos y videos de alta calidad\n- Genera reportes detallados del estado de la propiedad\n- Verifica el estado de mantenimiento\n- Proporciona información objetiva para propietarios e inquilinos\n\n**¿Cuánto cuesta?**\n- **Visita básica**: $15.000 - $20.000\n- **Visita completa con reporte**: $20.000 - $25.000\n- El precio varía según ubicación y tipo de visita\n\n**¿Cómo funciona?**\n1. **Solicita una visita**: Desde tu panel o al contactar un runner\n2. **Agenda la cita**: El runner coordina contigo la fecha y hora\n3. **Visita profesional**: El runner visita la propiedad y documenta todo\n4. **Recibe el reporte**: Obtienes fotos, videos y un reporte detallado\n\n**Beneficios:**\n- ✅ Visitas profesionales y objetivas\n- ✅ Documentación completa de la propiedad\n- ✅ Ahorro de tiempo para propietarios\n- ✅ Transparencia para todas las partes\n- ✅ Reportes detallados con fotos\n\n**¿Quién puede usar Runner360?**\n- Propietarios que quieren documentar sus propiedades\n- Inquilinos que necesitan verificar el estado\n- Corredores que necesitan reportes profesionales\n\n¿Quieres agendar una visita o necesitas más información?',
           confidence: 0.92,
+        };
+
+      case 'moving_services':
+        return {
+          response:
+            '¡Claro que sí! Rent360 tiene un sistema específico para **servicios de mudanza** que conecta directamente a inquilinos con empresas de mudanzas profesionales. Es importante destacar que las mudanzas son diferentes a los servicios de mantenimiento.\n\n**Diferencia clave:**\n- **Servicios de mantenimiento**: Electricidad, plomería, jardinería, etc. (solicitados por propietarios)\n- **Servicios de mudanza**: Traslados, embalaje, transporte de muebles (solicitados por inquilinos)\n\n**Para registrarte como empresa de mudanzas:**\n1. Ve a "Crear cuenta" y selecciona "Proveedor de Servicios"\n2. En el formulario, indica que ofreces "Mudanzas" como especialidad\n3. Sube los documentos requeridos: Cédula de identidad, antecedentes penales, certificación de empresa de mudanzas\n4. Define tus precios por tipo de mudanza (departamento pequeño, mediano, grande, casa, etc.)\n5. Especifica las zonas donde trabajas\n6. Una vez verificado por el equipo administrativo, aparecerás en búsquedas cuando inquilinos necesiten mudanzas\n\n**Cómo funciona el sistema:**\n- Los inquilinos buscan empresas de mudanzas desde su panel\n- Ven tu perfil, precios y calificaciones\n- Pueden contactarte directamente o agendar una cotización\n- Los pagos se procesan de forma segura a través de Rent360\n- Tú marcas el trabajo como completado y recibes el pago automáticamente\n\n**Beneficios:**\n- Conexión directa con clientes que necesitan mudarse\n- Sistema de reservas y pagos automático\n- Calificaciones públicas que generan confianza\n- Gestión simplificada de solicitudes y horarios\n- Cobertura geográfica amplia\n\n¿Quieres que te guíe paso a paso en el registro como proveedor de mudanzas?',
+          confidence: 0.95,
         };
 
       case 'contract_renewal':
