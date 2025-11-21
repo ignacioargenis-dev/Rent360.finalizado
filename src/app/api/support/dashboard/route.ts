@@ -98,10 +98,10 @@ export async function GET(request: NextRequest) {
 
     const stats = {
       totalTickets:
-        ticketStatusMap['OPEN'] +
-          ticketStatusMap['IN_PROGRESS'] +
-          ticketStatusMap['RESOLVED'] +
-          ticketStatusMap['CLOSED'] || 0,
+        (ticketStatusMap['OPEN'] || 0) +
+        (ticketStatusMap['IN_PROGRESS'] || 0) +
+        (ticketStatusMap['RESOLVED'] || 0) +
+        (ticketStatusMap['CLOSED'] || 0),
       openTickets: ticketStatusMap['OPEN'] || 0,
       resolvedTickets: ticketStatusMap['RESOLVED'] || 0,
       pendingTickets: ticketStatusMap['IN_PROGRESS'] || 0,

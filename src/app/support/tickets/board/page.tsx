@@ -54,6 +54,7 @@ export default function SupportTicketsBoardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -104,7 +105,9 @@ export default function SupportTicketsBoardPage() {
 
         setTickets(transformedTickets);
 
-        logger.info('Tickets del tablero cargados desde API:', { count: transformedTickets.length });
+        logger.info('Tickets del tablero cargados desde API:', {
+          count: transformedTickets.length,
+        });
         setLoading(false);
       } catch (error) {
         logger.error('Error loading ticket data:', {

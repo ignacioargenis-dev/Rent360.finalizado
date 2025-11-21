@@ -3,10 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { propertyId: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { propertyId: string } }) {
   try {
     const user = await requireAuth(request);
 
@@ -68,10 +65,7 @@ export async function GET(
     });
 
     if (!property) {
-      return NextResponse.json(
-        { error: 'Propiedad no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
 
     // Transformar datos al formato esperado
@@ -92,16 +86,16 @@ export async function GET(
       bathrooms: property.bathrooms || 0,
       area: property.area || 0,
       furnished: property.furnished || false,
-      parking: property.parking || false,
-      elevator: property.elevator || false,
-      concierge: property.concierge || false,
-      pool: property.pool || false,
-      gym: property.gym || false,
-      terrace: property.terrace || false,
-      storage: property.storage || false,
+      parking: (property.parkingSpaces || 0) > 0,
+      elevator: false, // Campo no disponible en el modelo
+      concierge: false, // Campo no disponible en el modelo
+      pool: false, // Campo no disponible en el modelo
+      gym: false, // Campo no disponible en el modelo
+      terrace: false, // Campo no disponible en el modelo
+      storage: false, // Campo no disponible en el modelo
       recentIssues: property.maintenance.slice(0, 3).map(m => ({
         id: m.id,
-        type: m.type,
+        type: m.category,
         description: m.description,
         status: m.status,
         priority: m.priority,
@@ -112,7 +106,7 @@ export async function GET(
         .slice(0, 3)
         .map(v => ({
           id: v.id,
-          type: v.type,
+          type: 'Visita programada',
           scheduledAt: v.scheduledAt.toISOString(),
           status: v.status,
         })),
@@ -137,12 +131,8 @@ export async function GET(
       success: true,
       property: transformedProperty,
     });
-
   } catch (error) {
     logger.error('Error en GET /api/support/properties/[propertyId]:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -112,7 +112,6 @@ export default function SupportDashboard() {
     const loadSupportData = async () => {
       try {
         setLoading(true);
-        setError(null);
 
         // Llamar a la API real del dashboard
         const response = await fetch('/api/support/dashboard', {
@@ -125,15 +124,17 @@ export default function SupportDashboard() {
 
         const data = await response.json();
 
-        setStats(data.stats || {
-          totalTickets: 0,
-          openTickets: 0,
-          resolvedTickets: 0,
-          pendingTickets: 0,
-          averageResponseTime: 0,
-          customerSatisfaction: 0,
-          escalatedTickets: 0,
-        });
+        setStats(
+          data.stats || {
+            totalTickets: 0,
+            openTickets: 0,
+            resolvedTickets: 0,
+            pendingTickets: 0,
+            averageResponseTime: 0,
+            customerSatisfaction: 0,
+            escalatedTickets: 0,
+          }
+        );
 
         setRecentTickets(data.recentTickets || []);
 
@@ -144,11 +145,13 @@ export default function SupportDashboard() {
 
         logger.info('Dashboard de soporte cargado desde API:', {
           ticketCount: data.recentTickets?.length || 0,
-          totalTickets: data.stats?.totalTickets || 0
+          totalTickets: data.stats?.totalTickets || 0,
         });
       } catch (error) {
         logger.error('Error al cargar dashboard de soporte:', error);
-        setError(error instanceof Error ? error.message : 'Error desconocido al cargar dashboard');
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Error desconocido al cargar dashboard'
+        );
 
         // En caso de error, mostrar datos vacíos
         setStats({
