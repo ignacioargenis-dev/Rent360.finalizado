@@ -100,6 +100,25 @@ export const ownerDataset: TrainingDataset = {
   category: 'owner_specialized',
   examples: [
     {
+      input:
+        'si tengo una casa para arrendar puedo comunicarme con un corredor para que la administre?',
+      output:
+        '¡Sí, absolutamente! Puedes contratar un corredor inmobiliario en Rent360 para que administre tu propiedad. Te explico cómo:\n\n**Cómo contratar un corredor en Rent360:**\n\n1. **Regístrate como Propietario**: Si aún no tienes cuenta, crea una cuenta como "Propietario"\n2. **Ve a "Servicios de Corredor"**: En tu panel de propietario, busca la sección "Servicios de Corredor" o "Broker Services"\n3. **Busca corredores disponibles**:\n   - Verás una lista de corredores verificados en tu zona\n   - Cada corredor muestra su experiencia, calificaciones y servicios ofrecidos\n   - Puedes ver sus calificaciones y comentarios de otros propietarios\n4. **Selecciona propiedades**: Elige qué propiedades quieres que el corredor administre\n5. **Envía solicitud**: Contacta directamente al corredor desde la plataforma\n6. **Negocia términos**: El corredor te enviará una propuesta con:\n   - Comisión (generalmente entre 3% y 5% del valor del contrato)\n   - Servicios incluidos (publicación, visitas, gestión de contratos, etc.)\n   - Términos y condiciones\n7. **Acepta la propuesta**: Una vez aceptada, el corredor comenzará a gestionar tu propiedad\n\n**Servicios que puede ofrecer el corredor:**\n- Publicar tu propiedad en múltiples plataformas\n- Gestionar visitas y mostrar la propiedad\n- Negociar con inquilinos potenciales\n- Preparar y gestionar contratos de arriendo\n- Realizar verificaciones de antecedentes\n- Gestionar renovaciones y terminaciones\n- Asesoría en precios de mercado\n\n**Beneficios:**\n- Ahorras tiempo en la gestión\n- Acceso a más inquilinos potenciales\n- Gestión profesional de contratos\n- Mayor seguridad en las transacciones\n\n¿Tienes alguna pregunta específica sobre el proceso o los servicios de corredores?',
+      intent: 'hire_broker',
+      category: 'broker_services',
+      context: 'owner_wanting_to_hire_broker',
+      confidence: 0.98,
+    },
+    {
+      input: 'pero puedo contratar a un corredor de propiedades?',
+      output:
+        '¡Sí, por supuesto! Puedes contratar un corredor inmobiliario en Rent360 para que administre y gestione tu propiedad. Te explico el proceso:\n\n**Cómo contratar un corredor:**\n\n1. **Regístrate como Propietario** (si aún no tienes cuenta)\n2. **Ve a "Servicios de Corredor"** en tu panel\n3. **Busca corredores disponibles** en tu zona\n4. **Revisa sus perfiles**: Verás experiencia, calificaciones y servicios\n5. **Contacta al corredor** directamente desde la plataforma\n6. **Recibe una propuesta** con comisión y servicios incluidos\n7. **Acepta la propuesta** y el corredor comenzará a gestionar tu propiedad\n\n**El corredor puede ayudarte con:**\n- Publicar tu propiedad\n- Gestionar visitas\n- Negociar con inquilinos\n- Preparar contratos\n- Verificaciones de antecedentes\n- Renovaciones y terminaciones\n\n**Comisión típica:** Entre 3% y 5% del valor del contrato (configurable)\n\n¿Quieres más detalles sobre algún paso específico?',
+      intent: 'hire_broker',
+      category: 'broker_services',
+      context: 'owner_asking_about_hiring_broker',
+      confidence: 0.98,
+    },
+    {
       input: '¿Cómo agrego una nueva propiedad?',
       output:
         'Para agregar una nueva propiedad, ve al panel de propietario y haz clic en "Agregar Propiedad". Completa la información básica (dirección, tipo, precio), sube fotos y especifica las características. Una vez guardada, podrás gestionar contratos y pagos.',

@@ -3022,14 +3022,41 @@ export class AIChatbotService {
       }
     }
 
-    // 🚀 MEJORADO: Detección mejorada de búsqueda de propiedades
+    // 🚀 NUEVO: Detección específica para contratar corredores / servicios de corredor
+    const quiereContratarCorredor =
+      (input.includes('corredor') || input.includes('broker')) &&
+      (input.includes('contratar') ||
+        input.includes('comunicarme') ||
+        input.includes('contactar') ||
+        input.includes('administre') ||
+        input.includes('administrar') ||
+        input.includes('administración') ||
+        input.includes('gestionar') ||
+        input.includes('gestion') ||
+        input.includes('servicio'));
+
+    const tienePropiedadParaArrendar =
+      (input.includes('casa') || input.includes('departamento') || input.includes('propiedad')) &&
+      (input.includes('arrendar') || input.includes('alquilar') || input.includes('rentar'));
+
+    if (quiereContratarCorredor || (tienePropiedadParaArrendar && input.includes('corredor'))) {
+      return {
+        response:
+          '¡Perfecto! Sí, puedes contratar un corredor inmobiliario en Rent360 para que administre tu propiedad. Te explico cómo:\n\n**Cómo contratar un corredor en Rent360:**\n\n1. **Regístrate como Propietario**: Si aún no tienes cuenta, crea una cuenta como "Propietario"\n2. **Ve a "Servicios de Corredor"**: En tu panel de propietario, busca la sección "Servicios de Corredor" o "Broker Services"\n3. **Busca corredores disponibles**:\n   - Verás una lista de corredores verificados en tu zona\n   - Cada corredor muestra su experiencia, calificaciones y servicios ofrecidos\n   - Puedes ver sus calificaciones y comentarios de otros propietarios\n4. **Selecciona propiedades**: Elige qué propiedades quieres que el corredor administre\n5. **Envía solicitud**: Contacta directamente al corredor desde la plataforma\n6. **Negocia términos**: El corredor te enviará una propuesta con:\n   - Comisión (generalmente entre 3% y 5% del valor del contrato)\n   - Servicios incluidos (publicación, visitas, gestión de contratos, etc.)\n   - Términos y condiciones\n7. **Acepta la propuesta**: Una vez aceptada, el corredor comenzará a gestionar tu propiedad\n\n**Servicios que puede ofrecer el corredor:**\n- Publicar tu propiedad en múltiples plataformas\n- Gestionar visitas y mostrar la propiedad\n- Negociar con inquilinos potenciales\n- Preparar y gestionar contratos de arriendo\n- Realizar verificaciones de antecedentes\n- Gestionar renovaciones y terminaciones\n- Asesoría en precios de mercado\n\n**Beneficios:**\n- Ahorras tiempo en la gestión\n- Acceso a más inquilinos potenciales\n- Gestión profesional de contratos\n- Mayor seguridad en las transacciones\n\n¿Tienes alguna pregunta específica sobre el proceso o los servicios de corredores?',
+        confidence: 0.95,
+      };
+    }
+
+    // 🚀 MEJORADO: Detección mejorada de búsqueda de propiedades (solo si NO es sobre contratar corredor)
     if (
-      input.includes('propiedad') ||
-      input.includes('casa') ||
-      input.includes('departamento') ||
-      input.includes('arrendar') ||
-      input.includes('buscar') ||
-      (input.includes('quiero') && (input.includes('vivir') || input.includes('alquilar')))
+      (input.includes('propiedad') ||
+        input.includes('casa') ||
+        input.includes('departamento') ||
+        input.includes('arrendar') ||
+        input.includes('buscar') ||
+        (input.includes('quiero') && (input.includes('vivir') || input.includes('alquilar')))) &&
+      !quiereContratarCorredor &&
+      !input.includes('corredor')
     ) {
       return {
         response:
