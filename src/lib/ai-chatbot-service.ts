@@ -644,6 +644,39 @@ export class AIChatbotService {
       },
     },
 
+    // Firmas digitales (intención específica)
+    digital_signature: {
+      general: {
+        responses: [
+          '¡Sí! Rent360 tiene un sistema completo de **firmas digitales** para contratos. Todos los contratos se pueden firmar digitalmente con validez legal completa en Chile. El proceso es 100% digital, seguro y rápido. Utilizamos proveedores certificados como TrustFactory y FirmaPro. Puedes firmar desde cualquier dispositivo (celular, tablet, computador) y recibirás una copia digital del contrato firmado. No necesitas imprimir ni escanear documentos.',
+          '**Firmas Digitales en Rent360:**\n\n✅ **Sí, puedes firmar contratos con firma electrónica**\n- Validez legal completa en Chile\n- Proceso 100% digital y seguro\n- Firmas desde cualquier dispositivo\n- Proveedores certificados (TrustFactory, FirmaPro)\n\n**Cómo funciona:**\n1. El contrato se genera en el sistema\n2. Se envía para firma a ambas partes\n3. Recibes notificación por email\n4. Firmas desde tu dispositivo\n5. Una vez firmado por ambas partes, el contrato queda activo\n6. Recibes copia digital del contrato firmado\n\n**Ventajas:**\n- Proceso rápido (minutos, no días)\n- Sin necesidad de reunirse presencialmente\n- Documentos almacenados de forma segura\n- Acceso 24/7 desde cualquier lugar',
+        ],
+        suggestions: ['Ver contratos', 'Firmar contrato', 'Más información sobre firmas'],
+        links: ['/signatures', '/tenant/contracts', '/owner/contracts'],
+      },
+      tenant: {
+        responses: [
+          '¡Sí! Puedes firmar tus contratos de arriendo con firma electrónica en Rent360. Es legalmente válido, seguro y muy rápido. Recibirás una notificación cuando haya un contrato para firmar, puedes revisarlo completo antes de firmar, y firmar desde cualquier dispositivo. Una vez firmado, recibirás una copia digital del contrato.',
+        ],
+        suggestions: ['Ver mis contratos', 'Firmar contrato pendiente'],
+        links: ['/tenant/contracts', '/signatures'],
+      },
+      owner: {
+        responses: [
+          'Sí, todos los contratos en Rent360 se firman digitalmente. Puedes crear contratos desde tu panel, enviarlos para firma a los inquilinos, y gestionar todo el proceso de forma digital. Las firmas electrónicas tienen validez legal completa y el proceso es mucho más rápido que los contratos tradicionales.',
+        ],
+        suggestions: ['Crear contrato', 'Ver contratos activos'],
+        links: ['/owner/contracts', '/owner/contracts/new'],
+      },
+      guest: {
+        responses: [
+          '¡Sí! Rent360 tiene un sistema completo de **firmas digitales** para contratos. Todos los contratos de arriendo se pueden firmar digitalmente con validez legal completa en Chile. El proceso es 100% digital, seguro y rápido. No necesitas imprimir ni escanear documentos. Puedes firmar desde cualquier dispositivo (celular, tablet, computador) y recibirás una copia digital del contrato firmado. Utilizamos proveedores certificados como TrustFactory y FirmaPro para garantizar la seguridad y validez legal.',
+        ],
+        suggestions: ['Registrarse', 'Ver más información', 'Contactar soporte'],
+        links: ['/auth/register', '/help', '/contact'],
+      },
+    },
+
     // Pagos y finanzas
     payments: {
       tenant: {
@@ -1350,15 +1383,20 @@ export class AIChatbotService {
         intent: 'digital_signature',
         patterns: [
           /(?:firma|firmar|firmado|firmas)\s+(?:digital|electronica|electronica|online|en linea|en línea)/i,
-          /(?:se\s+)?(?:pueden|puedo|se\s+puede)\s+(?:hacer|hacer|realizar)\s+(?:firmas?|firmar)\s+(?:digital|electronica|electronica|online)/i,
-          /(?:hay|tienen|ofrecen)\s+(?:firma|firmas?)\s+(?:digital|electronica|electronica|online)/i,
+          /(?:se\s+)?(?:pueden|puedo|se\s+puede)\s+(?:hacer|hacer|realizar|firmar)\s+(?:firmas?|firmar|contratos?)\s+(?:digital|electronica|electronica|online|con\s+firma\s+electronica)/i,
+          /(?:hay|tienen|ofrecen|se\s+puede|se\s+pueden)\s+(?:firma|firmas?|firmar)\s+(?:digital|electronica|electronica|online)/i,
           /(?:como|como)\s+(?:se\s+)?(?:firman|firma|firmar)\s+(?:los\s+)?(?:contratos?|documentos?)/i,
-          /(?:puedo|puede|se\s+puede)\s+(?:firmar|firmas?)\s+(?:online|en linea|en línea|digital)/i,
+          /(?:puedo|puede|se\s+puede)\s+(?:firmar|firmas?)\s+(?:online|en linea|en línea|digital|electronica|electronica)/i,
           /(?:firma|firmas?)\s+(?:electronica|electronica|digital|online)/i,
           /(?:contrato|contratos?|documento|documentos?)\s+(?:digital|electronico|electronico|online)/i,
+          // Patrones mejorados para detectar preguntas sobre firma electrónica
+          /(?:se\s+)?(?:puede|pueden)\s+(?:firmar|firmas?)\s+(?:los\s+)?(?:contratos?|documentos?)\s+(?:con\s+)?(?:firma\s+)?(?:electronica|electronica|digital|online)/i,
+          /(?:firmar|firmas?)\s+(?:contratos?|documentos?)\s+(?:con\s+)?(?:firma\s+)?(?:electronica|electronica|digital|online)/i,
+          /(?:contratos?|documentos?)\s+(?:con\s+)?(?:firma\s+)?(?:electronica|electronica|digital|online)/i,
+          /(?:firma\s+)?(?:electronica|electronica|digital|online)\s+(?:para|en|de)\s+(?:contratos?|documentos?)/i,
         ],
-        weight: 0.98,
-        context: ['contracts', 'signing', 'legal', 'digital'],
+        weight: 0.99, // Aumentar peso para mejor detección
+        context: ['contracts', 'signing', 'legal', 'digital', 'trustfactory'],
       },
       // 🚀 NUEVO: Detección específica para contratar corredores (ALTA PRIORIDAD)
       {
@@ -2760,44 +2798,11 @@ export class AIChatbotService {
 
   /**
    * Inicializa los proveedores de IA disponibles
+   * PRIORIDAD: Google Gemini primero, luego fallback a lógica local
    */
   private async initializeAIProviders(): Promise<void> {
     try {
-      // Intentar inicializar OpenAI
-      const openaiKey = process.env.OPENAI_API_KEY;
-      if (openaiKey) {
-        this.openai = new OpenAI({
-          apiKey: openaiKey,
-        });
-        this.config = {
-          provider: 'openai',
-          apiKey: openaiKey,
-          model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-          maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1000'),
-          temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
-        };
-        logger.info('OpenAI inicializado para chatbot');
-        return;
-      }
-
-      // Intentar inicializar Anthropic (Claude)
-      const anthropicKey = process.env.ANTHROPIC_API_KEY;
-      if (anthropicKey) {
-        this.anthropic = new Anthropic({
-          apiKey: anthropicKey,
-        });
-        this.config = {
-          provider: 'anthropic',
-          apiKey: anthropicKey,
-          model: process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229',
-          maxTokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS || '1000'),
-          temperature: parseFloat(process.env.ANTHROPIC_TEMPERATURE || '0.7'),
-        };
-        logger.info('Anthropic inicializado para chatbot');
-        return;
-      }
-
-      // Intentar inicializar Google AI (prioridad alta para modalidad híbrida)
+      // 🚀 PRIORIDAD 1: Intentar inicializar Google AI primero (recomendado)
       const googleKey = process.env.GOOGLE_AI_API_KEY;
       if (googleKey && googleKey.trim().length > 0) {
         try {
@@ -2809,7 +2814,7 @@ export class AIChatbotService {
             maxTokens: parseInt(process.env.GOOGLE_MAX_TOKENS || '1500'),
             temperature: parseFloat(process.env.GOOGLE_TEMPERATURE || '0.7'),
           };
-          logger.info('✅ Google AI (Gemini) inicializado correctamente para chatbot', {
+          logger.info('✅ Google AI (Gemini) inicializado como proveedor principal para chatbot', {
             model: this.config.model,
             maxTokens: this.config.maxTokens,
           });
@@ -2822,7 +2827,41 @@ export class AIChatbotService {
         }
       }
 
-      // Si no hay proveedores externos, usar lógica local (modalidad híbrida - fallback)
+      // PRIORIDAD 2: Intentar inicializar OpenAI (fallback)
+      const openaiKey = process.env.OPENAI_API_KEY;
+      if (openaiKey) {
+        this.openai = new OpenAI({
+          apiKey: openaiKey,
+        });
+        this.config = {
+          provider: 'openai',
+          apiKey: openaiKey,
+          model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+          maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1000'),
+          temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
+        };
+        logger.info('OpenAI inicializado para chatbot (fallback)');
+        return;
+      }
+
+      // PRIORIDAD 3: Intentar inicializar Anthropic (Claude) (fallback)
+      const anthropicKey = process.env.ANTHROPIC_API_KEY;
+      if (anthropicKey) {
+        this.anthropic = new Anthropic({
+          apiKey: anthropicKey,
+        });
+        this.config = {
+          provider: 'anthropic',
+          apiKey: anthropicKey,
+          model: process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229',
+          maxTokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS || '1000'),
+          temperature: parseFloat(process.env.ANTHROPIC_TEMPERATURE || '0.7'),
+        };
+        logger.info('Anthropic inicializado para chatbot (fallback)');
+        return;
+      }
+
+      // PRIORIDAD 4: Si no hay proveedores externos, usar lógica local (fallback final)
       this.config = {
         provider: 'local',
         apiKey: '',
@@ -2830,7 +2869,7 @@ export class AIChatbotService {
         maxTokens: 1000,
         temperature: 0.7,
       };
-      logger.info('⚠️ Usando lógica local mejorada para chatbot (modalidad híbrida - fallback)');
+      logger.info('⚠️ Usando lógica local mejorada para chatbot (fallback final)');
     } catch (error) {
       logger.error('Error inicializando proveedores de IA:', {
         error: error instanceof Error ? error.message : String(error),
@@ -3101,25 +3140,61 @@ export class AIChatbotService {
 
       let response: string;
       let confidence: number;
+      let providerUsed: 'openai' | 'anthropic' | 'google' | 'local' = this.config.provider;
 
-      // Usar el proveedor de IA configurado
-      switch (this.config.provider) {
-        case 'openai':
-          ({ response, confidence } = await this.processWithOpenAI(prompt));
-          break;
-
-        case 'anthropic':
-          ({ response, confidence } = await this.processWithAnthropic(prompt));
-          break;
-
-        case 'google':
+      // 🚀 ESTRATEGIA HÍBRIDA: Intentar primero con Google Gemini, si falla usar lógica local
+      // Prioridad 1: Intentar con Google AI si está disponible
+      if (this.googleAI && process.env.GOOGLE_AI_API_KEY) {
+        try {
           ({ response, confidence } = await this.processWithGoogle(prompt));
-          break;
-
-        case 'local':
-        default:
+          providerUsed = 'google';
+          logger.info('Mensaje procesado con Google Gemini');
+        } catch (googleError) {
+          logger.warn('Error con Google Gemini, usando fallback:', {
+            error: googleError instanceof Error ? googleError.message : String(googleError),
+          });
+          // Fallback a lógica local
           ({ response, confidence } = await this.processWithLocalLogic(userMessage, userRole));
-          break;
+          providerUsed = 'local';
+        }
+      } else {
+        // Si Google no está disponible, usar el proveedor configurado o lógica local
+        switch (this.config.provider) {
+          case 'openai':
+            try {
+              ({ response, confidence } = await this.processWithOpenAI(prompt));
+            } catch (error) {
+              logger.warn('Error con OpenAI, usando lógica local:', { error });
+              ({ response, confidence } = await this.processWithLocalLogic(userMessage, userRole));
+              providerUsed = 'local';
+            }
+            break;
+
+          case 'anthropic':
+            try {
+              ({ response, confidence } = await this.processWithAnthropic(prompt));
+            } catch (error) {
+              logger.warn('Error con Anthropic, usando lógica local:', { error });
+              ({ response, confidence } = await this.processWithLocalLogic(userMessage, userRole));
+              providerUsed = 'local';
+            }
+            break;
+
+          case 'google':
+            try {
+              ({ response, confidence } = await this.processWithGoogle(prompt));
+            } catch (error) {
+              logger.warn('Error con Google, usando lógica local:', { error });
+              ({ response, confidence } = await this.processWithLocalLogic(userMessage, userRole));
+              providerUsed = 'local';
+            }
+            break;
+
+          case 'local':
+          default:
+            ({ response, confidence } = await this.processWithLocalLogic(userMessage, userRole));
+            break;
+        }
       }
 
       // Validar respuesta por seguridad
@@ -3135,7 +3210,7 @@ export class AIChatbotService {
         userRole,
         intent,
         confidence,
-        provider: this.config.provider,
+        provider: providerUsed,
       });
 
       return {
@@ -3144,7 +3219,7 @@ export class AIChatbotService {
         intent,
         suggestions,
         metadata: {
-          provider: this.config.provider,
+          provider: providerUsed,
           model: this.config.model,
           processingTime: Date.now(),
         },
@@ -3154,13 +3229,30 @@ export class AIChatbotService {
         error: error instanceof Error ? error.message : String(error),
       });
 
-      // Respuesta de fallback segura
-      return {
-        response:
-          'Lo siento, tuve un problema procesando tu consulta. ¿Podrías reformular tu pregunta?',
-        confidence: 0,
-        suggestions: ['Buscar propiedades', 'Ver contratos', 'Contactar soporte'],
-      };
+      // Último fallback: intentar con lógica local
+      try {
+        const fallbackResponse = await this.processWithLocalLogic(userMessage, userRole);
+        return {
+          response: fallbackResponse.response,
+          confidence: fallbackResponse.confidence,
+          intent: this.recognizeIntent(userMessage, userRole).intent,
+          suggestions: this.generateSuggestions(userMessage, userRole),
+          metadata: {
+            provider: 'local' as const,
+            model: 'local-logic',
+            processingTime: Date.now(),
+          },
+        };
+      } catch (fallbackError) {
+        logger.error('Error incluso con fallback local:', { error: fallbackError });
+        // Respuesta de fallback segura final
+        return {
+          response:
+            'Lo siento, tuve un problema procesando tu consulta. ¿Podrías reformular tu pregunta?',
+          confidence: 0,
+          suggestions: ['Buscar propiedades', 'Ver contratos', 'Contactar soporte'],
+        };
+      }
     }
   }
 
