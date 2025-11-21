@@ -642,6 +642,13 @@ export class AIChatbotService {
         suggestions: ['Crear contrato', 'Ver activos', 'Configurar renovaciones'],
         links: ['/owner/contracts', '/owner/contracts/new'],
       },
+      guest: {
+        responses: [
+          '¡Sí! Rent360 tiene un sistema completo de contratos digitales con firmas electrónicas válidas legalmente en Chile. Todos los contratos se pueden firmar digitalmente desde cualquier dispositivo. Utilizamos proveedores certificados como TrustFactory y FirmaPro para garantizar la seguridad y validez legal.',
+        ],
+        suggestions: ['Registrarse', 'Ver contratos de ejemplo', 'Más información'],
+        links: ['/auth/register', '/help', '/contact'],
+      },
     },
 
     // Firmas digitales (intención específica)
@@ -1209,7 +1216,7 @@ export class AIChatbotService {
           /(?:como|dónde)\s+(?:firmar|ver|descargar)\s+contrato/,
           /(?:trustfactory|firma electronica|contrato digital)/,
         ],
-        weight: 0.95,
+        weight: 0.85, // Reducido para dar prioridad a digital_signature cuando aplique
         context: ['legal', 'contracts', 'signing'],
       },
       {
@@ -1578,6 +1585,26 @@ export class AIChatbotService {
             bestEntities = this.extractEntities(text, pattern.intent);
           }
         }
+      }
+    }
+
+    // 🔥 CRÍTICO: Lógica especial para priorizar digital_signature sobre contracts
+    // cuando se mencionan ambas intenciones (ej: "firmar contratos digitalmente")
+    if (bestIntent === 'contracts') {
+      // Verificar si también coincide con digital_signature
+      const digitalSignatureMatch = intentPatterns
+        .find(p => p.intent === 'digital_signature')
+        ?.patterns.some(pattern => pattern.test(text));
+
+      if (digitalSignatureMatch) {
+        logger.info('🔄 Priorizando digital_signature sobre contracts', {
+          originalIntent: bestIntent,
+          originalConfidence: bestConfidence,
+          message: text,
+        });
+        bestIntent = 'digital_signature';
+        bestConfidence = Math.min(bestConfidence + 0.1, 1.0); // Aumentar ligeramente la confianza
+        bestEntities = this.extractEntities(text, bestIntent);
       }
     }
 
@@ -3900,7 +3927,7 @@ export class AIChatbotService {
       'costs_pricing',
       'contracts',
     ];
-    const minConfidenceForKnowledgeBase = importantIntents.includes(intent.intent) ? 0.6 : 0.7;
+    const minConfidenceForKnowledgeBase = importantIntents.includes(intent.intent) ? 0.5 : 0.7; // 🔥 REDUCIDO a 0.5 para intenciones críticas
 
     logger.info('🔍 processWithLocalLogic: Evaluando uso de knowledgeBase', {
       intent: intent.intent,
@@ -3922,7 +3949,8 @@ export class AIChatbotService {
         shouldUse: smartResponse.response && smartResponse.confidence > 0.5,
       });
 
-      if (smartResponse.response && smartResponse.confidence > 0.5) {
+      if (smartResponse.response && smartResponse.confidence > 0.4) {
+        // 🔥 REDUCIDO de 0.5 a 0.4
         logger.info('✅ Usando respuesta del knowledgeBase', {
           intent: intent.intent,
           confidence: smartResponse.confidence,
