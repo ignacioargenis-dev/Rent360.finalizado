@@ -1877,13 +1877,52 @@ export class AIChatbotService {
 
     // Obtener conocimiento base para la intención
     const intentKnowledge = this.knowledgeBase[mainIntent];
+    logger.info('🔍 generateSmartResponse: Buscando conocimiento base', {
+      intent: mainIntent,
+      confidence,
+      userRole,
+      hasKnowledge: !!intentKnowledge,
+      knowledgeKeys: intentKnowledge ? Object.keys(intentKnowledge) : [],
+    });
+
     if (!intentKnowledge) {
+      logger.warn('❌ generateSmartResponse: No hay conocimiento base para intención', {
+        intent: mainIntent,
+        userRole,
+      });
       return this.generateFallbackResponse(userRole);
     }
 
     // Obtener respuestas específicas del rol
     // Si es guest y quiere registrarse como proveedor, usar respuestas de guest
     let roleResponses = intentKnowledge[userRole] || intentKnowledge['general'];
+
+    logger.info('🔍 generateSmartResponse: Seleccionando respuestas por rol', {
+      intent: mainIntent,
+      userRole,
+      initialRoleResponses: !!roleResponses,
+      availableRoles: Object.keys(intentKnowledge),
+      hasGeneral: !!intentKnowledge['general'],
+      hasGuest: !!intentKnowledge['guest'],
+      hasDefault: !!intentKnowledge['default'],
+    });
+
+    // 🔥 CRÍTICO: Si no hay respuestas específicas para el rol, intentar fallback a 'default' o 'general'
+    if (!roleResponses) {
+      if (intentKnowledge['default']) {
+        roleResponses = intentKnowledge['default'];
+        logger.info('✅ generateSmartResponse: Usando respuestas de fallback "default"', {
+          intent: mainIntent,
+          userRole,
+        });
+      } else if (intentKnowledge['general']) {
+        roleResponses = intentKnowledge['general'];
+        logger.info('✅ generateSmartResponse: Usando respuestas de fallback "general"', {
+          intent: mainIntent,
+          userRole,
+        });
+      }
+    }
 
     // Si es guest preguntando sobre proveedores, asegurar que tenemos respuestas de guest
     if (
@@ -1900,8 +1939,21 @@ export class AIChatbotService {
     }
 
     if (!roleResponses) {
+      logger.error('❌ generateSmartResponse: No se encontraron respuestas para ningún rol', {
+        intent: mainIntent,
+        userRole,
+        availableRoles: Object.keys(intentKnowledge),
+      });
       return this.generateFallbackResponse(userRole);
     }
+
+    logger.info('✅ generateSmartResponse: Respuestas seleccionadas exitosamente', {
+      intent: mainIntent,
+      userRole,
+      hasResponses: !!roleResponses.responses,
+      responseCount: roleResponses.responses?.length || 0,
+      hasSuggestions: !!roleResponses.suggestions,
+    });
 
     // Seleccionar respuesta basada en entidades y contexto
     // Si hay servicios detectados y hay múltiples respuestas, elegir una más específica
@@ -3056,19 +3108,57 @@ export class AIChatbotService {
           const intentRecognition = this.recognizeIntent(userMessage, userRole);
           const intent = intentRecognition.intent;
 
+          // 🔥 CRÍTICO: Función mejorada para detectar respuestas genéricas
+          const isGenericResponse = (response: string): boolean => {
+            const genericPatterns = [
+              'Soy tu asistente',
+              'Puedo ayudarte con',
+              'Información sobre',
+              'Ejemplos de preguntas',
+              '¿Sobre qué te gustaría saber?',
+              '¿Te fue útil?',
+              '👍 Sí',
+              '👎 No',
+              'Puedes seguir preguntando',
+              '¿En qué puedo ayudarte hoy?',
+              'estoy aquí para ayudarte',
+              'asistente en Rent360',
+              'propiedades, contratos, pagos, mantenimiento y soporte',
+            ];
+
+            const lowerResponse = response.toLowerCase();
+            const isTooShort = response.length < 200;
+            const hasGenericPattern = genericPatterns.some(pattern =>
+              lowerResponse.includes(pattern.toLowerCase())
+            );
+
+            // 🚀 DETECCIÓN ESPECÍFICA: Si la intención es digital_signature pero la respuesta no menciona firma digital
+            const isDigitalSignatureIntent = intent === 'digital_signature';
+            const mentionsDigitalSignature =
+              lowerResponse.includes('firma') &&
+              (lowerResponse.includes('digital') ||
+                lowerResponse.includes('electrónica') ||
+                lowerResponse.includes('electronica'));
+
+            return (
+              isTooShort ||
+              hasGenericPattern ||
+              (isDigitalSignatureIntent && !mentionsDigitalSignature)
+            );
+          };
+
           // Si detectamos una intención específica pero la respuesta de Google es genérica,
-          // usar el knowledgeBase en su lugar
+          // usar el knowledgeBase en su lugar (MÁS AGRESIVO)
           if (
-            intentRecognition.confidence >= 0.6 &&
-            (validatedAIResponse.includes('Puedo ayudarte con') ||
-              validatedAIResponse.includes('Información sobre') ||
-              validatedAIResponse.includes('Ejemplos de preguntas') ||
-              validatedAIResponse.length < 150)
+            intentRecognition.confidence >= 0.5 && // Reducido de 0.6 a 0.5
+            isGenericResponse(validatedAIResponse)
           ) {
-            logger.info('⚠️ Respuesta de Google parece genérica, usando knowledgeBase', {
+            logger.warn('⚠️ Respuesta de Google es genérica, forzando uso de knowledgeBase', {
               intent: intent,
               confidence: intentRecognition.confidence,
               responseLength: validatedAIResponse.length,
+              isDigitalSignature: intent === 'digital_signature',
+              mentionsDigitalSignature: validatedAIResponse.toLowerCase().includes('firma'),
             });
 
             const securityContextForKB = this.createSecurityContext(userRole, userId);
@@ -3080,14 +3170,26 @@ export class AIChatbotService {
 
             if (
               smartResponse.response &&
-              smartResponse.confidence > 0.6 &&
-              !smartResponse.response.includes('Lo siento')
+              smartResponse.confidence > 0.4 && // Reducido de 0.6 a 0.4
+              !smartResponse.response.includes('Lo siento') &&
+              !smartResponse.response.includes('no puedo proporcionar')
             ) {
               validatedAIResponse = smartResponse.response;
-              logger.info('✅ Usando respuesta del knowledgeBase en lugar de respuesta genérica', {
+              logger.info('✅ FORZADO: Usando respuesta específica del knowledgeBase', {
                 intent: intent,
                 confidence: smartResponse.confidence,
+                originalResponseLength: aiResult.response.length,
+                knowledgeBaseResponseLength: smartResponse.response.length,
               });
+            } else {
+              logger.warn(
+                '❌ No se pudo usar knowledgeBase, respuesta no disponible o de baja calidad',
+                {
+                  intent: intent,
+                  smartResponseConfidence: smartResponse.confidence,
+                  hasResponse: !!smartResponse.response,
+                }
+              );
             }
           }
 
@@ -4071,9 +4173,17 @@ ${
     : ''
 }
 
-Recuerda: SIEMPRE prioriza la seguridad y privacidad. Si hay duda, redirige al soporte. **RESPONDE DE FORMA ESPECÍFICA Y DIRECTA A LA PREGUNTA, NO USES RESPUESTAS GENÉRICAS.**
+Recuerda: SIEMPRE prioriza la seguridad y privacidad. Si hay duda, redirige al soporte.
 
-Respuesta (solo información general y pública, pero específica y útil):
+**INSTRUCCIONES CRÍTICAS:**
+- **RESPONDE SIEMPRE DE FORMA ESPECÍFICA Y DIRECTA A LA PREGUNTA**
+- **NUNCA uses respuestas genéricas como "Soy tu asistente..." o "Puedo ayudarte con..."**
+- **Si la pregunta es sobre firmas digitales, explica específicamente cómo funcionan en Rent360**
+- **Si la pregunta es sobre contratos, explica específicamente el proceso de firma digital**
+- **Si la pregunta es sobre registro, explica específicamente cómo registrarse como proveedor**
+- **Da respuestas completas, útiles y específicas, no frases vagas**
+
+Respuesta (solo información general y pública, pero específica y detallada):
 `;
 
     return systemPrompt;
