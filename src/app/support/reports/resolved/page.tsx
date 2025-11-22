@@ -83,7 +83,35 @@ export default function TicketsResueltosPage() {
       setLoading(true);
       setError(null);
 
-      // Generar datos simulados de tickets resueltos
+      // Intentar obtener datos reales de la API
+      try {
+        const params = new URLSearchParams();
+        if (selectedPeriod !== 'all') {
+          params.append('period', selectedPeriod);
+        }
+
+        const response = await fetch(`/api/support/reports/resolved?${params}`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar reportes resueltos: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setResolvedTickets(data.data || []);
+        setStats(data.stats || calculateResolutionStats([]));
+
+        logger.info('Reportes de tickets resueltos cargados desde API:', {
+          ticketCount: data.data?.length || 0,
+        });
+        return;
+      } catch (apiError) {
+        console.warn('API no disponible, usando datos simulados:', apiError);
+      }
+
+      // Fallback a datos simulados si la API no está disponible
       const mockResolvedTickets: ResolvedTicket[] = generateMockResolvedTickets();
       setResolvedTickets(mockResolvedTickets);
 
@@ -91,8 +119,9 @@ export default function TicketsResueltosPage() {
       const calculatedStats = calculateResolutionStats(mockResolvedTickets);
       setStats(calculatedStats);
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 800));
+      logger.info('Reportes de tickets resueltos cargados (datos simulados):', {
+        ticketCount: mockResolvedTickets.length,
+      });
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),

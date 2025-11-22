@@ -163,10 +163,10 @@ export default function SupportPropertiesPage() {
       if (searchTerm) {
         filteredProperties = filteredProperties.filter(
           property =>
-            property.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            property.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            property.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            property.ownerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+            (property.propertyTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (property.ownerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (property.propertyAddress?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (property.ownerEmail?.toLowerCase() || '').includes(searchTerm.toLowerCase())
         );
       }
 
@@ -466,9 +466,10 @@ export default function SupportPropertiesPage() {
 
   const filteredProperties = properties.filter(property => {
     const matchesSearch =
-      property.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
+      !searchTerm ||
+      (property.propertyTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (property.ownerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (property.propertyAddress?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || property.priority === priorityFilter;
     return matchesSearch && matchesStatus && matchesPriority;

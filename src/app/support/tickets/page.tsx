@@ -118,7 +118,7 @@ export default function SupportTicketsPage() {
   const loadTickets = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/tickets', {
+      const response = await fetch('/api/support/tickets', {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -156,7 +156,7 @@ export default function SupportTicketsPage() {
     setValidationError('');
 
     try {
-      const response = await fetch('/api/tickets', {
+      const response = await fetch('/api/support/tickets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

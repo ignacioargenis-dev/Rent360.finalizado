@@ -88,6 +88,27 @@ export async function GET(request: NextRequest) {
     // Obtener el total para paginación
     const totalUsers = await db.user.count({ where: whereClause });
 
+    // Calcular estadísticas
+    const allUsers = await db.user.findMany({
+      where: {},
+      select: {
+        isActive: true,
+        emailVerified: true,
+        role: true,
+        kycStatus: true,
+      },
+    });
+
+    const stats = {
+      total: allUsers.length,
+      active: allUsers.filter(u => u.isActive).length,
+      inactive: allUsers.filter(u => !u.isActive).length,
+      verified: allUsers.filter(u => u.emailVerified).length,
+      unverified: allUsers.filter(u => !u.emailVerified).length,
+      pending: allUsers.filter(u => u.kycStatus === 'PENDING').length,
+      suspended: allUsers.filter(u => u.kycStatus === 'REJECTED').length,
+    };
+
     // Transformar datos para el formato esperado por el frontend
     const transformedUsers = users.map(user => ({
       id: user.id,
@@ -117,6 +138,7 @@ export async function GET(request: NextRequest) {
         hasNext: page * limit < totalUsers,
         hasPrev: page > 1,
       },
+      stats,
     });
   } catch (error) {
     logger.error('Error obteniendo usuarios para soporte:', error);

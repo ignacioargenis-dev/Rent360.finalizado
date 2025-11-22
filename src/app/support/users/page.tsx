@@ -172,6 +172,14 @@ export default function SupportUsersPage() {
     }
   };
 
+  const handleViewUser = (userId: string) => {
+    router.push(`/support/users/${userId}`);
+  };
+
+  const handleEditUser = (userId: string) => {
+    router.push(`/support/users/${userId}/edit`);
+  };
+
   const handleExportUsers = () => {
     logger.info('Abriendo opciones de exportación de usuarios de soporte');
     setShowExportDialog(true);
@@ -660,11 +668,19 @@ export default function SupportUsersPage() {
                         </div>
 
                         <div className="flex flex-col gap-2 ml-4">
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewUser(user.id)}
+                          >
                             <Eye className="w-4 h-4 mr-1" />
                             Ver
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditUser(user.id)}
+                          >
                             <Edit className="w-4 h-4 mr-1" />
                             Editar
                           </Button>

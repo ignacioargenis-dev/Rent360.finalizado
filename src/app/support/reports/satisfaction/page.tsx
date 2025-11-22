@@ -76,7 +76,20 @@ export default function SatisfactionReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [satisfactionData, setSatisfactionData] = useState<SatisfactionData[]>([]);
-  const [stats, setStats] = useState<SatisfactionStats | null>(null);
+  const [stats, setStats] = useState<SatisfactionStats | null>({
+    overallRating: 0,
+    totalResponses: 0,
+    responseRate: 0,
+    npsScore: 0,
+    promoters: 0,
+    passives: 0,
+    detractors: 0,
+    ratingDistribution: [],
+    categorySatisfaction: [],
+    agentPerformance: [],
+    monthlyTrends: [],
+    prioritySatisfaction: [],
+  });
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   useEffect(() => {
@@ -107,7 +120,7 @@ export default function SatisfactionReportsPage() {
 
       logger.info('Reportes de satisfacción cargados desde API:', {
         responseCount: data.data?.length || 0,
-        overallRating: data.stats?.overallRating || 0
+        overallRating: data.stats?.overallRating || 0,
       });
     } catch (error) {
       logger.error('Error loading page data:', {
