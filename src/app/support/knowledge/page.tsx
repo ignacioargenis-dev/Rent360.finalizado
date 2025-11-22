@@ -81,6 +81,8 @@ interface KnowledgeStats {
 export default function SupportKnowledgePage() {
   const { user } = useAuth();
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<KnowledgeStats>({
     totalArticles: 0,
     publishedArticles: 0,
@@ -89,7 +91,6 @@ export default function SupportKnowledgePage() {
     totalViews: 0,
     averageRating: 0,
   });
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -113,8 +114,49 @@ export default function SupportKnowledgePage() {
   const loadKnowledgeData = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // Simular carga de datos de base de conocimiento
+      // Intentar obtener datos reales de la API
+      try {
+        const params = new URLSearchParams();
+        if (filterCategory !== 'all') {
+          params.append('category', filterCategory);
+        }
+        if (filterStatus !== 'all') {
+          params.append('status', filterStatus);
+        }
+
+        const response = await fetch(`/api/support/knowledge?${params}`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar artículos: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setArticles(data.articles || []);
+        setStats(
+          data.stats || {
+            totalArticles: 0,
+            publishedArticles: 0,
+            draftArticles: 0,
+            featuredArticles: 0,
+            totalViews: 0,
+            totalHelpful: 0,
+          }
+        );
+
+        logger.info('Artículos de conocimiento cargados desde API:', {
+          count: data.articles?.length || 0,
+        });
+        return;
+      } catch (apiError) {
+        console.warn('API no disponible, usando datos simulados:', apiError);
+      }
+
+      // Fallback a datos simulados si la API no está disponible
       const mockArticles: KnowledgeArticle[] = [
         {
           id: '1',

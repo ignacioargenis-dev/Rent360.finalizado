@@ -94,8 +94,9 @@ export async function GET(request: NextRequest) {
       select: {
         isActive: true,
         emailVerified: true,
+        phoneVerified: true,
+        rutVerified: true,
         role: true,
-        kycStatus: true,
       },
     });
 
@@ -103,10 +104,11 @@ export async function GET(request: NextRequest) {
       total: allUsers.length,
       active: allUsers.filter(u => u.isActive).length,
       inactive: allUsers.filter(u => !u.isActive).length,
-      verified: allUsers.filter(u => u.emailVerified).length,
-      unverified: allUsers.filter(u => !u.emailVerified).length,
-      pending: allUsers.filter(u => u.kycStatus === 'PENDING').length,
-      suspended: allUsers.filter(u => u.kycStatus === 'REJECTED').length,
+      verified: allUsers.filter(u => u.emailVerified && u.phoneVerified && u.rutVerified).length,
+      unverified: allUsers.filter(u => !u.emailVerified || !u.phoneVerified || !u.rutVerified)
+        .length,
+      pending: allUsers.filter(u => !u.rutVerified).length,
+      suspended: allUsers.filter(u => !u.isActive).length,
     };
 
     // Transformar datos para el formato esperado por el frontend

@@ -80,6 +80,8 @@ interface EmailStats {
 export default function SupportEmailsPage() {
   const { user } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<EmailStats>({
     totalEmails: 0,
     unreadEmails: 0,
@@ -87,7 +89,6 @@ export default function SupportEmailsPage() {
     draftEmails: 0,
     importantEmails: 0,
   });
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -110,8 +111,44 @@ export default function SupportEmailsPage() {
   const loadEmailsData = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // Simular carga de datos de emails
+      // Intentar obtener datos reales de la API
+      try {
+        const params = new URLSearchParams();
+        if (filterStatus !== 'all') {
+          params.append('status', filterStatus);
+        }
+
+        const response = await fetch(`/api/support/emails?${params}`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar emails: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setEmails(data.emails || []);
+        setStats(
+          data.stats || {
+            totalEmails: 0,
+            unreadEmails: 0,
+            sentEmails: 0,
+            draftEmails: 0,
+            importantEmails: 0,
+            starredEmails: 0,
+          }
+        );
+
+        logger.info('Emails cargados desde API:', { count: data.emails?.length || 0 });
+        return;
+      } catch (apiError) {
+        console.warn('API no disponible, usando datos simulados:', apiError);
+      }
+
+      // Fallback a datos simulados si la API no está disponible
       const mockEmails: Email[] = [
         {
           id: '1',
@@ -216,12 +253,12 @@ export default function SupportEmailsPage() {
         totalEmails,
         unreadEmails,
         sentEmails,
-        draftEmails,
       });
     } catch (error) {
-      logger.error('Error cargando datos de emails:', {
+      logger.error('Error loading emails data:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setError('Error al cargar los datos de emails');
     } finally {
       setLoading(false);
     }

@@ -126,8 +126,9 @@ export async function GET(request: NextRequest) {
         if (!acc[ticket.category]) {
           acc[ticket.category] = { count: 0, totalTime: 0 };
         }
-        acc[ticket.category].count++;
-        acc[ticket.category].totalTime += ticket.resolutionTime;
+        const categoryStat = acc[ticket.category]!;
+        categoryStat.count++;
+        categoryStat.totalTime += ticket.resolutionTime;
         return acc;
       },
       {} as Record<string, { count: number; totalTime: number }>

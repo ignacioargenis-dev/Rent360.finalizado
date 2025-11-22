@@ -7,10 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AlertCircle, 
+import {
+  AlertCircle,
   Loader2,
   Settings,
   FileText,
@@ -23,19 +29,54 @@ import {
   Ticket,
   Mail,
   Phone,
-  Send
+  Send,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const categories = [
-  { value: 'technical', label: 'Soporte Técnico', icon: Settings, description: 'Problemas con la plataforma, errores, acceso' },
-  { value: 'billing', label: 'Facturación y Pagos', icon: CreditCard, description: 'Problemas con pagos, facturas, suscripciones' },
-  { value: 'account', label: 'Cuenta y Perfil', icon: Users, description: 'Problemas con la cuenta, verificación, datos personales' },
-  { value: 'property', label: 'Propiedades', icon: Home, description: 'Problemas con propiedades, publicaciones, reservas' },
-  { value: 'contract', label: 'Contratos', icon: FileText, description: 'Problemas con contratos, firmas, términos' },
-  { value: 'security', label: 'Seguridad', icon: Shield, description: 'Reportes de seguridad, acceso no autorizado' },
-  { value: 'other', label: 'Otro', icon: AlertCircle, description: 'Otras consultas o sugerencias' },
+  {
+    value: 'technical',
+    label: 'Soporte Técnico',
+    icon: Settings,
+    description: 'Problemas con la plataforma, errores, acceso',
+  },
+  {
+    value: 'billing',
+    label: 'Facturación y Pagos',
+    icon: CreditCard,
+    description: 'Problemas con pagos, facturas, suscripciones',
+  },
+  {
+    value: 'account',
+    label: 'Cuenta y Perfil',
+    icon: Users,
+    description: 'Problemas con la cuenta, verificación, datos personales',
+  },
+  {
+    value: 'property',
+    label: 'Propiedades',
+    icon: Home,
+    description: 'Problemas con propiedades, publicaciones, reservas',
+  },
+  {
+    value: 'contract',
+    label: 'Contratos',
+    icon: FileText,
+    description: 'Problemas con contratos, firmas, términos',
+  },
+  {
+    value: 'security',
+    label: 'Seguridad',
+    icon: Shield,
+    description: 'Reportes de seguridad, acceso no autorizado',
+  },
+  {
+    value: 'other',
+    label: 'Otro',
+    icon: AlertCircle,
+    description: 'Otras consultas o sugerencias',
+  },
 ];
 
 export default function NewTicketPage() {
@@ -58,7 +99,7 @@ export default function NewTicketPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.category || !formData.description) {
       setError('Por favor completa todos los campos requeridos');
       return;
@@ -68,7 +109,7 @@ export default function NewTicketPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/tickets', {
+      const response = await fetch('/api/support/tickets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,14 +123,15 @@ export default function NewTicketPage() {
 
       const data = await response.json();
       setSuccess(true);
-      
+
       // Redirect to tickets list after 2 seconds
       setTimeout(() => {
         router.push('/support/tickets');
       }, 2000);
-
     } catch (err) {
-      logger.error('Error creating ticket:', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Error creating ticket:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       setError('Error al crear el ticket. Por favor intenta nuevamente.');
     } finally {
       setLoading(false);
@@ -132,9 +174,7 @@ export default function NewTicketPage() {
             <p className="text-gray-600 mb-4">
               Tu ticket ha sido creado exitosamente y será atendido pronto.
             </p>
-            <p className="text-sm text-gray-500">
-              Serás redirigido a la lista de tickets...
-            </p>
+            <p className="text-sm text-gray-500">Serás redirigido a la lista de tickets...</p>
           </CardContent>
         </Card>
       </div>
@@ -174,7 +214,7 @@ export default function NewTicketPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categories.map((category) => (
+                  {categories.map(category => (
                     <div
                       key={category.value}
                       className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
@@ -210,7 +250,7 @@ export default function NewTicketPage() {
                   <Input
                     placeholder="Breve descripción del problema"
                     value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    onChange={e => handleInputChange('title', e.target.value)}
                     required
                   />
                 </div>
@@ -220,7 +260,10 @@ export default function NewTicketPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Prioridad
                     </label>
-                    <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+                    <Select
+                      value={formData.priority}
+                      onValueChange={value => handleInputChange('priority', value)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -231,9 +274,7 @@ export default function NewTicketPage() {
                         <SelectItem value="low">Baja</SelectItem>
                       </SelectContent>
                     </Select>
-                    <div className="mt-2">
-                      {getPriorityBadge(formData.priority)}
-                    </div>
+                    <div className="mt-2">{getPriorityBadge(formData.priority)}</div>
                   </div>
 
                   <div>
@@ -260,7 +301,7 @@ export default function NewTicketPage() {
                   <Textarea
                     placeholder="Describe en detalle el problema que estás experimentando..."
                     value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    onChange={e => handleInputChange('description', e.target.value)}
                     rows={6}
                     required
                   />

@@ -72,6 +72,7 @@ export default function SupportCallsPage() {
     totalDuration: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
@@ -98,30 +99,53 @@ export default function SupportCallsPage() {
   const loadCallsData = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // Simular carga de datos de llamadas
+      // Intentar obtener datos reales de la API
+      try {
+        const params = new URLSearchParams();
+        if (filterStatus !== 'all') {
+          params.append('status', filterStatus);
+        }
+        if (filterType !== 'all') {
+          params.append('type', filterType);
+        }
+
+        const response = await fetch(`/api/support/calls?${params}`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar llamadas: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setCalls(data.calls || []);
+        setStats(
+          data.stats || {
+            totalCalls: 0,
+            activeCalls: 0,
+            missedCalls: 0,
+            answeredCalls: 0,
+            totalDuration: 0,
+            averageDuration: 0,
+          }
+        );
+
+        logger.info('Llamadas cargadas desde API:', { count: data.calls?.length || 0 });
+        return;
+      } catch (apiError) {
+        console.warn('API no disponible, usando datos simulados:', apiError);
+      }
+
+      // Fallback a datos simulados si la API no está disponible
       const mockCalls: Call[] = [
         {
           id: '1',
           clientName: 'María González',
           clientPhone: '+56 9 1234 5678',
-          clientEmail: 'maria@example.com',
           type: 'incoming',
-          status: 'ended',
-          duration: 420,
-          startTime: '2024-01-15T10:30:00Z',
-          endTime: '2024-01-15T10:37:00Z',
-          notes: 'Consulta sobre facturación',
-          ticketId: 'TKT-001',
-          priority: 'medium',
-          category: 'billing',
-        },
-        {
-          id: '2',
-          clientName: 'Carlos Ramírez',
-          clientPhone: '+56 9 8765 4321',
-          clientEmail: 'carlos@example.com',
-          type: 'outgoing',
           status: 'ended',
           duration: 180,
           startTime: '2024-01-15T11:15:00Z',
@@ -180,9 +204,10 @@ export default function SupportCallsPage() {
         missedCalls,
       });
     } catch (error) {
-      logger.error('Error cargando datos de llamadas:', {
+      logger.error('Error loading calls data:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setError('Error al cargar los datos de llamadas');
     } finally {
       setLoading(false);
     }

@@ -89,6 +89,7 @@ export default function SatisfactionReportsPage() {
     agentPerformance: [],
     monthlyTrends: [],
     prioritySatisfaction: [],
+    followUpRequired: 0,
   });
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 

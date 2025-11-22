@@ -51,7 +51,7 @@ export default function TicketDetailsPage() {
   const fetchTicketDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/tickets/${ticketId}`);
+      const response = await fetch(`/api/support/tickets/${ticketId}`);
       if (!response.ok) {
         throw new Error('Error al cargar los detalles del ticket');
       }
@@ -86,7 +86,7 @@ export default function TicketDetailsPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/tickets/${ticketId}/comments`, {
+      const response = await fetch(`/api/support/tickets/${ticketId}/responses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -472,7 +472,7 @@ export default function TicketDetailsPage() {
                         )
                       ) {
                         try {
-                          const response = await fetch(`/api/tickets/${params?.id}`, {
+                          const response = await fetch(`/api/support/tickets/${params?.id}`, {
                             method: 'DELETE',
                           });
 

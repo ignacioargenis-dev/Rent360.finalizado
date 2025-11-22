@@ -109,8 +109,29 @@ export default function SupportSettingsPage() {
       setLoading(true);
       setError(null);
 
-      // Generar datos de configuración simulados
-      const mockConfig: SupportConfig = {
+      // Intentar obtener configuración real de la API
+      try {
+        const response = await fetch('/api/support/settings', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar configuración: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.config) {
+          setConfig(data.config);
+          logger.info('Configuración cargada desde API');
+          return;
+        }
+      } catch (apiError) {
+        console.warn('API no disponible, usando configuración por defecto:', apiError);
+      }
+
+      // Fallback a configuración por defecto si la API no está disponible
+      const defaultConfig: SupportConfig = {
         general: {
           workingHours: { start: '09:00', end: '18:00', timezone: 'America/Santiago' },
           autoAssignEnabled: true,
@@ -145,7 +166,8 @@ export default function SupportSettingsPage() {
             name: 'Confirmación de recepción',
             trigger: 'ticket_created',
             subject: 'Ticket recibido - #{ticketId}',
-            message: 'Hemos recibido tu solicitud y estamos trabajando en ella. Te mantendremos informado del progreso.',
+            message:
+              'Hemos recibido tu solicitud y estamos trabajando en ella. Te mantendremos informado del progreso.',
             enabled: true,
           },
           {
@@ -153,7 +175,8 @@ export default function SupportSettingsPage() {
             name: 'Actualización de progreso',
             trigger: 'ticket_updated',
             subject: 'Actualización de tu ticket #{ticketId}',
-            message: 'Tu ticket ha sido actualizado. Puedes revisar los detalles en tu panel de soporte.',
+            message:
+              'Tu ticket ha sido actualizado. Puedes revisar los detalles en tu panel de soporte.',
             enabled: true,
           },
           {
@@ -161,14 +184,16 @@ export default function SupportSettingsPage() {
             name: 'SLA próximo a vencer',
             trigger: 'sla_warning',
             subject: 'Urgente: Tu ticket #{ticketId} requiere atención inmediata',
-            message: 'Tu solicitud está próxima a vencer el tiempo de respuesta garantizado. Estamos trabajando para resolverla.',
+            message:
+              'Tu solicitud está próxima a vencer el tiempo de respuesta garantizado. Estamos trabajando para resolverla.',
             enabled: true,
           },
         ],
       };
 
-      setConfig(mockConfig);
-      await new Promise(resolve => setTimeout(resolve, 800));
+      setConfig(defaultConfig);
+
+      logger.debug('Configuración por defecto cargada');
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -205,7 +230,9 @@ export default function SupportSettingsPage() {
   };
 
   const updateSLA = (priority: keyof SLAConfig, type: 'response' | 'resolution', value: number) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     const newSLA = {
       ...config.sla,
@@ -219,7 +246,9 @@ export default function SupportSettingsPage() {
   };
 
   const addTemplate = () => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     const newTemplate: AutoResponseTemplate = {
       id: Date.now().toString(),
@@ -239,7 +268,9 @@ export default function SupportSettingsPage() {
   };
 
   const updateTemplate = (templateId: string, updates: Partial<AutoResponseTemplate>) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     const updatedTemplates = config.templates.map(template =>
       template.id === templateId ? { ...template, ...updates } : template
@@ -249,14 +280,18 @@ export default function SupportSettingsPage() {
   };
 
   const deleteTemplate = (templateId: string) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     const filteredTemplates = config.templates.filter(template => template.id !== templateId);
     setConfig({ ...config, templates: filteredTemplates });
   };
 
   const exportSettings = () => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     const settingsJson = JSON.stringify(config, null, 2);
     const blob = new Blob([settingsJson], { type: 'application/json' });
@@ -272,7 +307,10 @@ export default function SupportSettingsPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Configuración Avanzada de Soporte" subtitle="Cargando configuraciones...">
+      <UnifiedDashboardLayout
+        title="Configuración Avanzada de Soporte"
+        subtitle="Cargando configuraciones..."
+      >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -366,14 +404,17 @@ export default function SupportSettingsPage() {
                       <Input
                         type="time"
                         value={config?.general.workingHours.start || ''}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (config) {
                             setConfig({
                               ...config,
                               general: {
                                 ...config.general,
-                                workingHours: { ...config.general.workingHours, start: e.target.value }
-                              }
+                                workingHours: {
+                                  ...config.general.workingHours,
+                                  start: e.target.value,
+                                },
+                              },
                             });
                           }
                         }}
@@ -384,14 +425,17 @@ export default function SupportSettingsPage() {
                       <Input
                         type="time"
                         value={config?.general.workingHours.end || ''}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (config) {
                             setConfig({
                               ...config,
                               general: {
                                 ...config.general,
-                                workingHours: { ...config.general.workingHours, end: e.target.value }
-                              }
+                                workingHours: {
+                                  ...config.general.workingHours,
+                                  end: e.target.value,
+                                },
+                              },
                             });
                           }
                         }}
@@ -401,14 +445,14 @@ export default function SupportSettingsPage() {
                       <Label>Zona Horaria</Label>
                       <Select
                         value={config?.general.workingHours.timezone || ''}
-                        onValueChange={(value) => {
+                        onValueChange={value => {
                           if (config) {
                             setConfig({
                               ...config,
                               general: {
                                 ...config.general,
-                                workingHours: { ...config.general.workingHours, timezone: value }
-                              }
+                                workingHours: { ...config.general.workingHours, timezone: value },
+                              },
                             });
                           }
                         }}
@@ -434,15 +478,17 @@ export default function SupportSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Asignación Automática de Tickets</Label>
-                      <p className="text-sm text-gray-500">Distribuir tickets automáticamente entre agentes</p>
+                      <p className="text-sm text-gray-500">
+                        Distribuir tickets automáticamente entre agentes
+                      </p>
                     </div>
                     <Switch
                       checked={config?.general.autoAssignEnabled || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            general: { ...config.general, autoAssignEnabled: checked }
+                            general: { ...config.general, autoAssignEnabled: checked },
                           });
                         }
                       }}
@@ -455,11 +501,14 @@ export default function SupportSettingsPage() {
                       <Input
                         type="number"
                         value={config?.general.maxTicketsPerAgent || 25}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (config) {
                             setConfig({
                               ...config,
-                              general: { ...config.general, maxTicketsPerAgent: parseInt(e.target.value) }
+                              general: {
+                                ...config.general,
+                                maxTicketsPerAgent: parseInt(e.target.value),
+                              },
                             });
                           }
                         }}
@@ -469,11 +518,11 @@ export default function SupportSettingsPage() {
                       <Label>Idioma del Sistema</Label>
                       <Select
                         value={config?.general.language || 'es'}
-                        onValueChange={(value) => {
+                        onValueChange={value => {
                           if (config) {
                             setConfig({
                               ...config,
-                              general: { ...config.general, language: value }
+                              general: { ...config.general, language: value },
                             });
                           }
                         }}
@@ -514,15 +563,24 @@ export default function SupportSettingsPage() {
                     {Object.entries(config.sla).map(([priority, times]) => (
                       <div key={priority} className="p-4 border rounded-lg">
                         <div className="flex items-center gap-3 mb-3">
-                          <Badge className={`${
-                            priority === 'urgent' ? 'bg-red-100 text-red-800' :
-                            priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                            priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {priority === 'urgent' ? 'Urgente' :
-                             priority === 'high' ? 'Alta' :
-                             priority === 'medium' ? 'Media' : 'Baja'}
+                          <Badge
+                            className={`${
+                              priority === 'urgent'
+                                ? 'bg-red-100 text-red-800'
+                                : priority === 'high'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : priority === 'medium'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {priority === 'urgent'
+                              ? 'Urgente'
+                              : priority === 'high'
+                                ? 'Alta'
+                                : priority === 'medium'
+                                  ? 'Media'
+                                  : 'Baja'}
                           </Badge>
                         </div>
 
@@ -532,7 +590,13 @@ export default function SupportSettingsPage() {
                             <Input
                               type="number"
                               value={times.response}
-                              onChange={(e) => updateSLA(priority as keyof SLAConfig, 'response', parseInt(e.target.value))}
+                              onChange={e =>
+                                updateSLA(
+                                  priority as keyof SLAConfig,
+                                  'response',
+                                  parseInt(e.target.value)
+                                )
+                              }
                             />
                           </div>
                           <div>
@@ -540,14 +604,21 @@ export default function SupportSettingsPage() {
                             <Input
                               type="number"
                               value={times.resolution}
-                              onChange={(e) => updateSLA(priority as keyof SLAConfig, 'resolution', parseInt(e.target.value))}
+                              onChange={e =>
+                                updateSLA(
+                                  priority as keyof SLAConfig,
+                                  'resolution',
+                                  parseInt(e.target.value)
+                                )
+                              }
                             />
                           </div>
                         </div>
 
                         <div className="mt-2 text-sm text-gray-600">
-                          Primera respuesta: {Math.floor(times.response / 60)}h {times.response % 60}min |
-                          Resolución completa: {Math.floor(times.resolution / 60)}h {times.resolution % 60}min
+                          Primera respuesta: {Math.floor(times.response / 60)}h{' '}
+                          {times.response % 60}min | Resolución completa:{' '}
+                          {Math.floor(times.resolution / 60)}h {times.resolution % 60}min
                         </div>
                       </div>
                     ))}
@@ -569,22 +640,26 @@ export default function SupportSettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Automatización de Procesos</CardTitle>
-                <CardDescription>Reglas automáticas para optimizar el flujo de trabajo</CardDescription>
+                <CardDescription>
+                  Reglas automáticas para optimizar el flujo de trabajo
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Cierre Automático de Tickets Resueltos</Label>
-                      <p className="text-sm text-gray-500">Cerrar automáticamente tickets marcados como resueltos</p>
+                      <p className="text-sm text-gray-500">
+                        Cerrar automáticamente tickets marcados como resueltos
+                      </p>
                     </div>
                     <Switch
                       checked={config?.automation.autoCloseResolved || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            automation: { ...config.automation, autoCloseResolved: checked }
+                            automation: { ...config.automation, autoCloseResolved: checked },
                           });
                         }
                       }}
@@ -597,11 +672,14 @@ export default function SupportSettingsPage() {
                       <Input
                         type="number"
                         value={config.automation.autoCloseDays}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (config) {
                             setConfig({
                               ...config,
-                              automation: { ...config.automation, autoCloseDays: parseInt(e.target.value) }
+                              automation: {
+                                ...config.automation,
+                                autoCloseDays: parseInt(e.target.value),
+                              },
                             });
                           }
                         }}
@@ -612,15 +690,17 @@ export default function SupportSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Escalamiento Automático</Label>
-                      <p className="text-sm text-gray-500">Escalar tickets que excedan el tiempo límite</p>
+                      <p className="text-sm text-gray-500">
+                        Escalar tickets que excedan el tiempo límite
+                      </p>
                     </div>
                     <Switch
                       checked={config?.automation.escalationEnabled || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            automation: { ...config.automation, escalationEnabled: checked }
+                            automation: { ...config.automation, escalationEnabled: checked },
                           });
                         }
                       }}
@@ -633,11 +713,14 @@ export default function SupportSettingsPage() {
                       <Input
                         type="number"
                         value={config.automation.escalationHours}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (config) {
                             setConfig({
                               ...config,
-                              automation: { ...config.automation, escalationHours: parseInt(e.target.value) }
+                              automation: {
+                                ...config.automation,
+                                escalationHours: parseInt(e.target.value),
+                              },
                             });
                           }
                         }}
@@ -648,15 +731,17 @@ export default function SupportSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Reasignación de Tickets Estancados</Label>
-                      <p className="text-sm text-gray-500">Reasignar tickets sin actividad reciente</p>
+                      <p className="text-sm text-gray-500">
+                        Reasignar tickets sin actividad reciente
+                      </p>
                     </div>
                     <Switch
                       checked={config?.automation.reassignStaleTickets || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            automation: { ...config.automation, reassignStaleTickets: checked }
+                            automation: { ...config.automation, reassignStaleTickets: checked },
                           });
                         }
                       }}
@@ -669,11 +754,14 @@ export default function SupportSettingsPage() {
                       <Input
                         type="number"
                         value={config.automation.staleTicketHours}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (config) {
                             setConfig({
                               ...config,
-                              automation: { ...config.automation, staleTicketHours: parseInt(e.target.value) }
+                              automation: {
+                                ...config.automation,
+                                staleTicketHours: parseInt(e.target.value),
+                              },
                             });
                           }
                         }}
@@ -699,7 +787,9 @@ export default function SupportSettingsPage() {
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle>Plantillas de Respuesta Automática</CardTitle>
-                    <CardDescription>Plantillas para respuestas automáticas del sistema</CardDescription>
+                    <CardDescription>
+                      Plantillas para respuestas automáticas del sistema
+                    </CardDescription>
                   </div>
                   <Button onClick={() => setShowAddTemplate(true)}>
                     <Plus className="w-4 h-4 mr-2" />
@@ -708,7 +798,7 @@ export default function SupportSettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {config?.templates.map((template) => (
+                {config?.templates.map(template => (
                   <div key={template.id} className="p-4 border rounded-lg">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -720,8 +810,12 @@ export default function SupportSettingsPage() {
                           <Badge variant="outline">{template.trigger}</Badge>
                         </div>
                         <div className="space-y-2 text-sm text-gray-600">
-                          <p><strong>Asunto:</strong> {template.subject}</p>
-                          <p><strong>Mensaje:</strong> {template.message.substring(0, 100)}...</p>
+                          <p>
+                            <strong>Asunto:</strong> {template.subject}
+                          </p>
+                          <p>
+                            <strong>Mensaje:</strong> {template.message.substring(0, 100)}...
+                          </p>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -766,15 +860,17 @@ export default function SupportSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Notificaciones por Email</Label>
-                      <p className="text-sm text-gray-500">Enviar notificaciones por correo electrónico</p>
+                      <p className="text-sm text-gray-500">
+                        Enviar notificaciones por correo electrónico
+                      </p>
                     </div>
                     <Switch
                       checked={config?.notifications.emailEnabled || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            notifications: { ...config.notifications, emailEnabled: checked }
+                            notifications: { ...config.notifications, emailEnabled: checked },
                           });
                         }
                       }}
@@ -784,15 +880,17 @@ export default function SupportSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Notificaciones por SMS</Label>
-                      <p className="text-sm text-gray-500">Enviar notificaciones por mensaje de texto</p>
+                      <p className="text-sm text-gray-500">
+                        Enviar notificaciones por mensaje de texto
+                      </p>
                     </div>
                     <Switch
                       checked={config?.notifications.smsEnabled || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            notifications: { ...config.notifications, smsEnabled: checked }
+                            notifications: { ...config.notifications, smsEnabled: checked },
                           });
                         }
                       }}
@@ -802,15 +900,17 @@ export default function SupportSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Notificaciones Push</Label>
-                      <p className="text-sm text-gray-500">Enviar notificaciones push en la aplicación</p>
+                      <p className="text-sm text-gray-500">
+                        Enviar notificaciones push en la aplicación
+                      </p>
                     </div>
                     <Switch
                       checked={config?.notifications.pushEnabled || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            notifications: { ...config.notifications, pushEnabled: checked }
+                            notifications: { ...config.notifications, pushEnabled: checked },
                           });
                         }
                       }}
@@ -820,15 +920,17 @@ export default function SupportSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Integración con Slack</Label>
-                      <p className="text-sm text-gray-500">Enviar notificaciones al canal de Slack</p>
+                      <p className="text-sm text-gray-500">
+                        Enviar notificaciones al canal de Slack
+                      </p>
                     </div>
                     <Switch
                       checked={config?.notifications.slackEnabled || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         if (config) {
                           setConfig({
                             ...config,
-                            notifications: { ...config.notifications, slackEnabled: checked }
+                            notifications: { ...config.notifications, slackEnabled: checked },
                           });
                         }
                       }}
@@ -843,15 +945,17 @@ export default function SupportSettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label>Alertas de Escalamiento</Label>
-                        <p className="text-sm text-gray-500">Notificar cuando un ticket es escalado</p>
+                        <p className="text-sm text-gray-500">
+                          Notificar cuando un ticket es escalado
+                        </p>
                       </div>
                       <Switch
                         checked={config?.notifications.escalationAlerts || false}
-                        onCheckedChange={(checked) => {
+                        onCheckedChange={checked => {
                           if (config) {
                             setConfig({
                               ...config,
-                              notifications: { ...config.notifications, escalationAlerts: checked }
+                              notifications: { ...config.notifications, escalationAlerts: checked },
                             });
                           }
                         }}
@@ -861,15 +965,17 @@ export default function SupportSettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label>Alertas de SLA</Label>
-                        <p className="text-sm text-gray-500">Notificar cuando un SLA está próximo a vencerse</p>
+                        <p className="text-sm text-gray-500">
+                          Notificar cuando un SLA está próximo a vencerse
+                        </p>
                       </div>
                       <Switch
                         checked={config?.notifications.slaAlerts || false}
-                        onCheckedChange={(checked) => {
+                        onCheckedChange={checked => {
                           if (config) {
                             setConfig({
                               ...config,
-                              notifications: { ...config.notifications, slaAlerts: checked }
+                              notifications: { ...config.notifications, slaAlerts: checked },
                             });
                           }
                         }}
@@ -895,7 +1001,9 @@ export default function SupportSettingsPage() {
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">
-                  {editingTemplate.id.startsWith('template-') ? 'Nueva Plantilla' : 'Editar Plantilla'}
+                  {editingTemplate.id.startsWith('template-')
+                    ? 'Nueva Plantilla'
+                    : 'Editar Plantilla'}
                 </h3>
                 <Button variant="ghost" size="sm" onClick={() => setEditingTemplate(null)}>
                   <X className="w-4 h-4" />
@@ -907,7 +1015,7 @@ export default function SupportSettingsPage() {
                   <Label>Nombre de la Plantilla</Label>
                   <Input
                     value={editingTemplate.name}
-                    onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
+                    onChange={e => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
                   />
                 </div>
 
@@ -915,7 +1023,9 @@ export default function SupportSettingsPage() {
                   <Label>Disparador</Label>
                   <Select
                     value={editingTemplate.trigger}
-                    onValueChange={(value) => setEditingTemplate({ ...editingTemplate, trigger: value })}
+                    onValueChange={value =>
+                      setEditingTemplate({ ...editingTemplate, trigger: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -934,7 +1044,9 @@ export default function SupportSettingsPage() {
                   <Label>Asunto del Email</Label>
                   <Input
                     value={editingTemplate.subject}
-                    onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                    onChange={e =>
+                      setEditingTemplate({ ...editingTemplate, subject: e.target.value })
+                    }
                   />
                 </div>
 
@@ -943,7 +1055,9 @@ export default function SupportSettingsPage() {
                   <Textarea
                     rows={6}
                     value={editingTemplate.message}
-                    onChange={(e) => setEditingTemplate({ ...editingTemplate, message: e.target.value })}
+                    onChange={e =>
+                      setEditingTemplate({ ...editingTemplate, message: e.target.value })
+                    }
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     Puedes usar variables como {'{ticketId}'}, {'{userName}'}, etc.
@@ -953,7 +1067,9 @@ export default function SupportSettingsPage() {
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={editingTemplate.enabled}
-                    onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enabled: checked })}
+                    onCheckedChange={checked =>
+                      setEditingTemplate({ ...editingTemplate, enabled: checked })
+                    }
                   />
                   <Label>Plantilla activa</Label>
                 </div>
@@ -963,10 +1079,12 @@ export default function SupportSettingsPage() {
                 <Button variant="outline" onClick={() => setEditingTemplate(null)}>
                   Cancelar
                 </Button>
-                <Button onClick={() => {
-                  updateTemplate(editingTemplate.id, editingTemplate);
-                  setEditingTemplate(null);
-                }}>
+                <Button
+                  onClick={() => {
+                    updateTemplate(editingTemplate.id, editingTemplate);
+                    setEditingTemplate(null);
+                  }}
+                >
                   <Save className="w-4 h-4 mr-2" />
                   Guardar Plantilla
                 </Button>
@@ -992,7 +1110,7 @@ export default function SupportSettingsPage() {
                   <Input
                     placeholder="Ej: Confirmación de recepción"
                     value={editingTemplate?.name || ''}
-                    onChange={(e) => {
+                    onChange={e => {
                       if (editingTemplate) {
                         setEditingTemplate({ ...editingTemplate, name: e.target.value });
                       }
@@ -1004,7 +1122,7 @@ export default function SupportSettingsPage() {
                   <Label>Disparador</Label>
                   <Select
                     value={editingTemplate?.trigger || 'ticket_created'}
-                    onValueChange={(value) => {
+                    onValueChange={value => {
                       if (editingTemplate) {
                         setEditingTemplate({ ...editingTemplate, trigger: value });
                       }

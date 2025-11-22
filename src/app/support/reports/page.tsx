@@ -116,7 +116,74 @@ export default function SupportReportsPage() {
 
     const loadReportsData = async () => {
       try {
-        // Mock support stats
+        // Intentar obtener datos reales de las APIs
+        try {
+          // Obtener estadísticas de dashboard de soporte
+          const dashboardResponse = await fetch('/api/support/dashboard', {
+            credentials: 'include',
+          });
+
+          if (dashboardResponse.ok) {
+            const dashboardData = await dashboardResponse.json();
+            const dashboardStats = dashboardData.stats;
+
+            // Obtener estadísticas de tiempos de respuesta
+            const responseTimeResponse = await fetch('/api/support/reports/response-time', {
+              credentials: 'include',
+            });
+
+            let responseTimeStats = null;
+            if (responseTimeResponse.ok) {
+              const responseTimeData = await responseTimeResponse.json();
+              responseTimeStats = responseTimeData.stats;
+            }
+
+            // Obtener estadísticas de satisfacción
+            const satisfactionResponse = await fetch('/api/support/reports/satisfaction', {
+              credentials: 'include',
+            });
+
+            let satisfactionStats = null;
+            if (satisfactionResponse.ok) {
+              const satisfactionData = await satisfactionResponse.json();
+              satisfactionStats = satisfactionData.stats;
+            }
+
+            // Combinar estadísticas
+            const combinedStats: SupportStats = {
+              totalTickets: dashboardStats.totalTickets || 0,
+              openTickets: dashboardStats.openTickets || 0,
+              closedTickets: dashboardStats.resolvedTickets || 0,
+              avgResponseTime: responseTimeStats
+                ? `${Math.round(responseTimeStats.avgFirstResponseTime)}h ${Math.round((responseTimeStats.avgFirstResponseTime % 1) * 60)}m`
+                : 'N/A',
+              avgResolutionTime: responseTimeStats
+                ? `${Math.round(responseTimeStats.avgResolutionTime)}h ${Math.round((responseTimeStats.avgResolutionTime % 1) * 60)}m`
+                : 'N/A',
+              customerSatisfaction: satisfactionStats
+                ? Math.round(satisfactionStats.overallRating)
+                : 0,
+              ticketsByPriority: {
+                low: 0, // Se necesitaría una API específica para esto
+                medium: 0,
+                high: 0,
+                urgent: 0,
+              },
+              ticketsByStatus: {
+                open: dashboardStats.openTickets || 0,
+                inProgress: dashboardStats.pendingTickets || 0,
+                resolved: dashboardStats.resolvedTickets || 0,
+                closed: 0,
+              },
+            };
+
+            setStats(combinedStats);
+          }
+        } catch (apiError) {
+          console.warn('APIs no disponibles, usando datos simulados:', apiError);
+        }
+
+        // Fallback a datos simulados si las APIs no están disponibles
         const mockStats: SupportStats = {
           totalTickets: 1247,
           openTickets: 89,
@@ -180,11 +247,11 @@ export default function SupportReportsPage() {
 
         setStats(mockStats);
         setAgents(mockAgents);
-        setLoading(false);
       } catch (error) {
         logger.error('Error loading reports data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+      } finally {
         setLoading(false);
       }
     };
