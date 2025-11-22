@@ -598,7 +598,7 @@ export default function SatisfactionReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {stats.monthlyTrends.map((month, index) => (
+                      {stats?.monthlyTrends?.map((month, index) => (
                         <div key={month.month} className="p-4 border rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-medium">{month.month}</h4>
@@ -630,7 +630,7 @@ export default function SatisfactionReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {stats.ratingDistribution.map((rating, index) => (
+                      {stats?.ratingDistribution?.map((rating, index) => (
                         <div
                           key={rating.rating}
                           className="flex items-center justify-between p-3 border rounded-lg"
@@ -672,7 +672,7 @@ export default function SatisfactionReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {stats.prioritySatisfaction.map((priority, index) => (
+                      {stats?.prioritySatisfaction?.map((priority, index) => (
                         <div
                           key={priority.priority}
                           className="flex items-center justify-between p-3 border rounded-lg"
@@ -717,7 +717,7 @@ export default function SatisfactionReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {stats.categorySatisfaction.map((category, index) => (
+                      {stats?.categorySatisfaction?.map((category, index) => (
                         <div
                           key={category.category}
                           className="flex items-center justify-between p-3 border rounded-lg"
@@ -754,7 +754,7 @@ export default function SatisfactionReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {stats.agentPerformance.map((agent, index) => (
+                      {stats?.agentPerformance?.map((agent, index) => (
                         <div
                           key={agent.agent}
                           className="flex items-center justify-between p-3 border rounded-lg"

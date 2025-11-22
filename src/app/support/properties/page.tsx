@@ -144,49 +144,11 @@ export default function SupportPropertiesPage() {
         logger.info('Propiedades cargadas desde API:', { count: data.properties?.length || 0 });
         return;
       } catch (apiError) {
-        console.warn('API no disponible, usando datos simulados:', apiError);
+        logger.error('Error al cargar propiedades desde la API:', {
+          error: apiError instanceof Error ? apiError.message : String(apiError),
+        });
+        throw apiError; // Re-throw para que llegue al catch principal
       }
-
-      // Usar datos simulados si la API no está disponible
-      const mockProperties: PropertyReport[] = generateMockProperties();
-
-      const mockStats: PropertyStats = {
-        totalProperties: mockProperties.length,
-        activeProperties: mockProperties.filter(p => p.status === 'active').length,
-        reportedIssues: mockProperties.filter(p => p.reportedIssues.length > 0).length,
-        underMaintenance: mockProperties.filter(p => p.status === 'maintenance').length,
-      };
-
-      // Filter properties based on search and filters
-      let filteredProperties = mockProperties;
-
-      if (searchTerm) {
-        filteredProperties = filteredProperties.filter(
-          property =>
-            (property.propertyTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (property.ownerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (property.propertyAddress?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (property.ownerEmail?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-        );
-      }
-
-      if (statusFilter !== 'all') {
-        filteredProperties = filteredProperties.filter(
-          property => property.status === statusFilter
-        );
-      }
-
-      if (priorityFilter !== 'all') {
-        filteredProperties = filteredProperties.filter(
-          property => property.priority === priorityFilter
-        );
-      }
-
-      setProperties(filteredProperties);
-      setStats(mockStats);
-
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
       logger.error('Error loading support properties:', {
         error: error instanceof Error ? error.message : String(error),
@@ -195,81 +157,6 @@ export default function SupportPropertiesPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateMockProperties = (): PropertyReport[] => {
-    const properties: PropertyReport[] = [];
-    const propertyTypes = ['Casa', 'Departamento', 'Oficina', 'Local comercial', 'Bodega'];
-    const communes = [
-      'Las Condes',
-      'Vitacura',
-      'Providencia',
-      'Ñuñoa',
-      'La Reina',
-      'Santiago Centro',
-      'Maipú',
-      'Pudahuel',
-    ];
-    const issues = [
-      'Fuga de agua',
-      'Puerta dañada',
-      'Sistema eléctrico defectuoso',
-      'Techo con filtraciones',
-      'Calefacción no funciona',
-      'Puerta de garage atascada',
-      'Ventanas rotas',
-      'Paredes agrietadas',
-      'Problemas de plomería',
-      'Sistema de alarma defectuoso',
-    ];
-    const statuses: PropertyReport['status'][] = ['active', 'inactive', 'reported', 'maintenance'];
-    const priorities: PropertyReport['priority'][] = ['low', 'medium', 'high', 'urgent'];
-
-    for (let i = 0; i < 150; i++) {
-      const propertyType = propertyTypes[Math.floor(Math.random() * propertyTypes.length)];
-      const commune = communes[Math.floor(Math.random() * communes.length)];
-      const status = statuses[Math.floor(Math.random() * statuses.length)] || 'active';
-      const priority = priorities[Math.floor(Math.random() * priorities.length)] || 'low';
-
-      // Generate random issues based on status
-      const reportedIssues: string[] = [];
-      if (status === 'reported' || status === 'maintenance') {
-        const numIssues = Math.floor(Math.random() * 3) + 1;
-        for (let j = 0; j < numIssues; j++) {
-          const issue = issues[Math.floor(Math.random() * issues.length)];
-          if (issue && !reportedIssues.includes(issue)) {
-            reportedIssues.push(issue);
-          }
-        }
-      }
-
-      const lastReportedDate =
-        reportedIssues.length > 0
-          ? new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000)
-              .toISOString()
-              .split('T')[0]
-          : undefined;
-
-      const propertyData: PropertyReport = {
-        id: String(i + 1),
-        propertyTitle: `${propertyType} en ${commune}`,
-        propertyAddress: `Calle ${Math.floor(Math.random() * 1000) + 1}, ${commune}`,
-        ownerName: `Propietario ${i + 1}`,
-        ownerEmail: `propietario${i + 1}@example.com`,
-        reportedIssues,
-        status,
-        priority,
-        tenantCount: Math.floor(Math.random() * 5),
-      };
-
-      if (lastReportedDate) {
-        propertyData.lastReportedDate = lastReportedDate;
-      }
-
-      properties.push(propertyData);
-    }
-
-    return properties;
   };
 
   const handleViewProperty = (propertyId: string) => {

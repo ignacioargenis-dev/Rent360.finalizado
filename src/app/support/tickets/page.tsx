@@ -77,9 +77,7 @@ export default function SupportTicketsPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [validationError, setValidationError] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showTicketDialog, setShowTicketDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -98,12 +96,6 @@ export default function SupportTicketsPage() {
   });
 
   // Formulario para crear ticket
-  const [newTicket, setNewTicket] = useState({
-    subject: '',
-    description: '',
-    priority: 'medium' as const,
-    category: 'general' as const,
-  });
 
   // Formulario para responder ticket
   const [newResponse, setNewResponse] = useState('');
@@ -142,52 +134,6 @@ export default function SupportTicketsPage() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreateTicket = async () => {
-    // Validar que la descripción tenga al menos 10 caracteres
-    if (!newTicket.description || newTicket.description.trim().length < 10) {
-      setValidationError('La descripción debe tener al menos 10 caracteres');
-      return;
-    }
-
-    // Limpiar error de validación si pasa la validación
-    setValidationError('');
-
-    try {
-      const response = await fetch('/api/support/tickets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          title: newTicket.subject,
-          description: newTicket.description,
-          priority: newTicket.priority,
-          category: newTicket.category,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setShowCreateDialog(false);
-        setNewTicket({ subject: '', description: '', priority: 'medium', category: 'general' });
-        loadTickets();
-        logger.info('Ticket creado exitosamente');
-      } else {
-        logger.error('Error creando ticket:', { error: data.error });
-      }
-    } catch (error) {
-      logger.error('Error creando ticket:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
     }
   };
 
@@ -410,107 +356,11 @@ export default function SupportTicketsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Tickets de Soporte</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Administración de Tickets</h1>
             <p className="text-gray-600 mt-2">
-              Gestiona tus solicitudes de ayuda y soporte técnico
+              Gestiona todos los tickets del sistema y brinda soporte técnico
             </p>
           </div>
-
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Nuevo Ticket
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Crear Nuevo Ticket</DialogTitle>
-                <DialogDescription>
-                  Describe tu problema o consulta y nuestro equipo de soporte te ayudará.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="subject">Asunto</Label>
-                  <Input
-                    id="subject"
-                    placeholder="Resumen breve del problema"
-                    value={newTicket.subject}
-                    onChange={e => setNewTicket(prev => ({ ...prev, subject: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="category">Categoría</Label>
-                  <Select
-                    value={newTicket.category}
-                    onValueChange={(value: any) =>
-                      setNewTicket(prev => ({ ...prev, category: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="technical">Técnico</SelectItem>
-                      <SelectItem value="billing">Facturación</SelectItem>
-                      <SelectItem value="bug_report">Reporte de Error</SelectItem>
-                      <SelectItem value="feature_request">Solicitud de Funcionalidad</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="priority">Prioridad</Label>
-                  <Select
-                    value={newTicket.priority}
-                    onValueChange={(value: any) =>
-                      setNewTicket(prev => ({ ...prev, priority: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Baja</SelectItem>
-                      <SelectItem value="medium">Media</SelectItem>
-                      <SelectItem value="high">Alta</SelectItem>
-                      <SelectItem value="urgent">Urgente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Descripción</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe detalladamente tu problema o consulta..."
-                    rows={6}
-                    value={newTicket.description}
-                    onChange={e => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                  {validationError && (
-                    <p className="text-sm text-red-600 mt-1">{validationError}</p>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleCreateTicket}
-                    disabled={!newTicket.subject.trim() || !newTicket.description.trim()}
-                  >
-                    Crear Ticket
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Filtros */}
@@ -612,7 +462,7 @@ export default function SupportTicketsPage() {
                 statusFilter === 'all' &&
                 priorityFilter === 'all' &&
                 categoryFilter === 'all' && (
-                  <Button onClick={() => setShowCreateDialog(true)}>Crear tu primer ticket</Button>
+                  <p className="text-gray-500">No hay tickets en el sistema actualmente.</p>
                 )}
             </CardContent>
           </Card>

@@ -543,7 +543,7 @@ export default function TicketsResueltosPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {stats.monthlyResolved.slice(-6).map((month, index) => (
+                      {stats?.monthlyResolved?.slice(-6).map((month, index) => (
                         <div key={month.month} className="p-4 border rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-medium">{month.month}</h4>
@@ -803,7 +803,7 @@ export default function TicketsResueltosPage() {
               <CardContent>
                 <ScrollArea className="h-[600px]">
                   <div className="space-y-3">
-                    {resolvedTickets.slice(0, 50).map(ticket => (
+                    {(resolvedTickets || []).slice(0, 50).map(ticket => (
                       <div
                         key={ticket.id}
                         className="p-4 border rounded-lg hover:shadow-md transition-shadow"

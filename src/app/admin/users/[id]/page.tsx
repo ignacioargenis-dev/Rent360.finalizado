@@ -100,12 +100,17 @@ export default function UserDetailPage() {
       ADMIN: { label: 'Administrador', className: 'bg-red-100 text-red-800' },
       OWNER: { label: 'Propietario', className: 'bg-blue-100 text-blue-800' },
       TENANT: { label: 'Arrendatario', className: 'bg-green-100 text-green-800' },
+      SUPPORT: { label: 'Soporte', className: 'bg-indigo-100 text-indigo-800' },
       BROKER: { label: 'Corredor', className: 'bg-purple-100 text-purple-800' },
       PROVIDER: { label: 'Proveedor', className: 'bg-orange-100 text-orange-800' },
       MAINTENANCE: { label: 'Mantenimiento', className: 'bg-yellow-100 text-yellow-800' },
+      RUNNER: { label: 'Corredor', className: 'bg-cyan-100 text-cyan-800' },
     };
 
-    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.TENANT;
+    const config = roleConfig[role as keyof typeof roleConfig] || {
+      label: role,
+      className: 'bg-gray-100 text-gray-800',
+    };
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 

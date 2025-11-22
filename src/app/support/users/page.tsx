@@ -28,9 +28,10 @@ import {
   Search,
   Filter,
   Download,
-  Shield,
   Eye,
   Edit,
+  X,
+  Shield,
   Mail,
   Phone,
   Calendar,
@@ -38,7 +39,6 @@ import {
   Building,
   Tag,
   ChevronRight,
-  X,
   Loader2,
   CheckCircle,
   AlertCircle,
@@ -49,7 +49,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -99,6 +101,14 @@ export default function SupportUsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
   const [totalUsers, setTotalUsers] = useState(0);
+
+  // Estados para los modales
+  const [selectedUserForView, setSelectedUserForView] = useState<any>(null);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<any>(null);
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
+  const [userDetailError, setUserDetailError] = useState<string | null>(null);
+  const [showUserDetailModal, setShowUserDetailModal] = useState(false);
+  const [showUserEditModal, setShowUserEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState('');
@@ -174,12 +184,102 @@ export default function SupportUsersPage() {
     }
   };
 
-  const handleViewUser = (userId: string) => {
-    router.push(`/support/users/${userId}`);
+  const handleViewUser = async (userId: string) => {
+    try {
+      setUserDetailLoading(true);
+      setUserDetailError(null);
+
+      const response = await fetch(`/api/users/${userId}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar detalles del usuario: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success !== false) {
+        setSelectedUserForView(data.user || data);
+        setShowUserDetailModal(true);
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error al cargar detalles del usuario:', error);
+      setUserDetailError(error instanceof Error ? error.message : 'Error desconocido');
+    } finally {
+      setUserDetailLoading(false);
+    }
   };
 
-  const handleEditUser = (userId: string) => {
-    router.push(`/support/users/${userId}/edit`);
+  const handleEditUser = async (userId: string) => {
+    try {
+      setUserDetailLoading(true);
+      setUserDetailError(null);
+
+      const response = await fetch(`/api/users/${userId}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar detalles del usuario: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success !== false) {
+        setSelectedUserForEdit(data.user || data);
+        setShowUserEditModal(true);
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error al cargar detalles del usuario:', error);
+      setUserDetailError(error instanceof Error ? error.message : 'Error desconocido');
+    } finally {
+      setUserDetailLoading(false);
+    }
+  };
+
+  const handleUpdateUserStatus = async (userId: string, isActive: boolean) => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          id: userId,
+          isActive,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al actualizar usuario: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success !== false) {
+        // Actualizar la lista de usuarios
+        setUsers(prevUsers =>
+          prevUsers.map(user => (user.id === userId ? { ...user, isActive } : user))
+        );
+
+        // Cerrar modal
+        setShowUserEditModal(false);
+        setSelectedUserForEdit(null);
+
+        logger.info('Usuario actualizado exitosamente');
+      } else {
+        throw new Error(data.error || 'Error al actualizar usuario');
+      }
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+      setUserDetailError(error instanceof Error ? error.message : 'Error desconocido');
+    }
   };
 
   const handleExportUsers = () => {
@@ -962,6 +1062,289 @@ export default function SupportUsersPage() {
                 Exportar
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para ver detalles del usuario */}
+      <Dialog open={showUserDetailModal} onOpenChange={setShowUserDetailModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Detalles del Usuario
+            </DialogTitle>
+            <DialogDescription>Información completa del usuario seleccionado</DialogDescription>
+          </DialogHeader>
+
+          {userDetailLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Cargando información del usuario...</span>
+            </div>
+          ) : userDetailError ? (
+            <div className="text-center py-8">
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600">{userDetailError}</p>
+            </div>
+          ) : selectedUserForView ? (
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Información Personal</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Nombre Completo</Label>
+                      <p className="text-gray-900">
+                        {selectedUserForView.name || 'No especificado'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Email</Label>
+                      <p className="text-gray-900">
+                        {selectedUserForView.email || 'No especificado'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Teléfono</Label>
+                      <p className="text-gray-900">
+                        {selectedUserForView.phone || 'No especificado'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">RUT</Label>
+                      <p className="text-gray-900">
+                        {selectedUserForView.rut || 'No especificado'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Dirección</Label>
+                      <p className="text-gray-900">
+                        {selectedUserForView.address || 'No especificado'}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Información del Sistema</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Rol</Label>
+                      <div className="mt-1">{getRoleBadge(selectedUserForView.role)}</div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Estado</Label>
+                      <div className="mt-1">
+                        <Badge
+                          className={
+                            selectedUserForView.isActive
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }
+                        >
+                          {selectedUserForView.isActive ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Email Verificado</Label>
+                      <div className="mt-1">
+                        <Badge
+                          className={
+                            selectedUserForView.emailVerified
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }
+                        >
+                          {selectedUserForView.emailVerified ? 'Verificado' : 'Pendiente'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">RUT Verificado</Label>
+                      <div className="mt-1">
+                        <Badge
+                          className={
+                            selectedUserForView.rutVerified
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }
+                        >
+                          {selectedUserForView.rutVerified ? 'Verificado' : 'Pendiente'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Fecha de Registro</Label>
+                      <p className="text-gray-900">
+                        {selectedUserForView.createdAt
+                          ? new Date(selectedUserForView.createdAt).toLocaleDateString('es-ES')
+                          : 'No disponible'}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Información adicional si existe */}
+              {(selectedUserForView.bio ||
+                selectedUserForView.emergencyContact ||
+                selectedUserForView.phoneSecondary) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Información Adicional</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {selectedUserForView.bio && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Biografía</Label>
+                        <p className="text-gray-900">{selectedUserForView.bio}</p>
+                      </div>
+                    )}
+                    {selectedUserForView.phoneSecondary && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Teléfono Secundario
+                        </Label>
+                        <p className="text-gray-900">{selectedUserForView.phoneSecondary}</p>
+                      </div>
+                    )}
+                    {selectedUserForView.emergencyContact && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Contacto de Emergencia
+                        </Label>
+                        <p className="text-gray-900">{selectedUserForView.emergencyContact}</p>
+                      </div>
+                    )}
+                    {selectedUserForView.emergencyPhone && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Teléfono de Emergencia
+                        </Label>
+                        <p className="text-gray-900">{selectedUserForView.emergencyPhone}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : null}
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setShowUserDetailModal(false)}>
+              Cerrar
+            </Button>
+            {selectedUserForView && (
+              <Button
+                onClick={() => {
+                  setShowUserDetailModal(false);
+                  handleEditUser(selectedUserForView.id);
+                }}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Usuario
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para editar usuario */}
+      <Dialog open={showUserEditModal} onOpenChange={setShowUserEditModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Editar Usuario
+            </DialogTitle>
+            <DialogDescription>Modificar el estado del usuario</DialogDescription>
+          </DialogHeader>
+
+          {userDetailLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Cargando información del usuario...</span>
+            </div>
+          ) : userDetailError ? (
+            <div className="text-center py-8">
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600">{userDetailError}</p>
+            </div>
+          ) : selectedUserForEdit ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Nombre</Label>
+                  <p className="text-gray-900 mt-1">{selectedUserForEdit.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Email</Label>
+                  <p className="text-gray-900 mt-1">{selectedUserForEdit.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Rol</Label>
+                  <div className="mt-1">{getRoleBadge(selectedUserForEdit.role)}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Estado Actual</Label>
+                  <div className="mt-1">
+                    <Badge
+                      className={
+                        selectedUserForEdit.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }
+                    >
+                      {selectedUserForEdit.isActive ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Cambiar Estado del Usuario</h3>
+                <p className="text-sm text-gray-600">
+                  Puede activar o desactivar la cuenta del usuario. Un usuario desactivado no podrá
+                  acceder al sistema.
+                </p>
+
+                <div className="flex gap-4">
+                  <Button
+                    variant={selectedUserForEdit.isActive ? 'default' : 'outline'}
+                    onClick={() => handleUpdateUserStatus(selectedUserForEdit.id, true)}
+                    disabled={selectedUserForEdit.isActive}
+                    className="flex-1"
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Activar Usuario
+                  </Button>
+                  <Button
+                    variant={!selectedUserForEdit.isActive ? 'destructive' : 'outline'}
+                    onClick={() => handleUpdateUserStatus(selectedUserForEdit.id, false)}
+                    disabled={!selectedUserForEdit.isActive}
+                    className="flex-1"
+                  >
+                    <UserX className="h-4 w-4 mr-2" />
+                    Desactivar Usuario
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setShowUserEditModal(false)}>
+              Cancelar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
