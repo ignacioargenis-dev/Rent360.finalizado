@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -130,6 +131,45 @@ export class CloudStorageService {
       }
       console.error('Error checking file existence:', error);
       return false;
+    }
+  }
+
+  /**
+   * Descarga un archivo del cloud storage
+   */
+  async downloadFile(key: string): Promise<Buffer> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+
+      const response = await this.client.send(command);
+
+      if (!response.Body) {
+        throw new Error('No body in response');
+      }
+
+      const chunks: Uint8Array[] = [];
+      const reader = response.Body.transformToWebStream().getReader();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        if (value) {
+          chunks.push(value);
+        }
+      }
+
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+      const buffer = Buffer.concat(chunks.map(chunk => Buffer.from(chunk)));
+
+      return buffer;
+    } catch (error) {
+      console.error('Error downloading from cloud storage:', error);
+      throw new Error('Failed to download file from cloud storage');
     }
   }
 

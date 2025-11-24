@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger-minimal';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import { getCloudStorageService } from '@/lib/cloud-storage';
 
 /**
  * GET /api/documents/[id]/access
@@ -72,7 +73,62 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    // Verificar que el archivo existe
+    // Verificar si el filePath es una URL de cloud storage
+    if (document.filePath.startsWith('http://') || document.filePath.startsWith('https://')) {
+      logger.info('Documento está en cloud storage, redirigiendo:', {
+        documentId,
+        filePath: document.filePath,
+      });
+
+      // Redirigir directamente a la URL de cloud storage
+      return NextResponse.redirect(document.filePath);
+    }
+
+    // Si el filePath parece ser una key de cloud storage, intentar descargar desde cloud storage
+    // Solo intentar si tenemos configuración de cloud storage
+    if (process.env.DO_SPACES_ACCESS_KEY && process.env.DO_SPACES_SECRET_KEY) {
+      try {
+        const cloudStorage = getCloudStorageService();
+        // Extraer la key del filePath
+        // Si es /uploads/documents/..., convertir a documents/...
+        let key = document.filePath;
+        if (key.startsWith('/uploads/')) {
+          key = key.replace('/uploads/', '');
+        } else if (key.startsWith('/')) {
+          key = key.substring(1);
+        }
+
+        logger.info('Intentando descargar desde cloud storage:', {
+          key,
+          originalFilePath: document.filePath,
+        });
+
+        const buffer = await cloudStorage.downloadFile(key);
+
+        logger.info('Archivo descargado desde cloud storage:', {
+          documentId,
+          size: buffer.length,
+        });
+
+        return new NextResponse(buffer, {
+          status: 200,
+          headers: {
+            'Content-Type': document.mimeType || 'application/octet-stream',
+            'Content-Length': buffer.length.toString(),
+            'Content-Disposition': `inline; filename="${document.fileName}"`,
+            'Cache-Control': 'private, max-age=3600',
+          },
+        });
+      } catch (cloudError) {
+        logger.warn('Error descargando desde cloud storage, intentando sistema de archivos:', {
+          documentId,
+          error: cloudError instanceof Error ? cloudError.message : String(cloudError),
+        });
+        // Continuar con el intento de sistema de archivos local
+      }
+    }
+
+    // Verificar que el archivo existe en el sistema de archivos local
     // El filePath se guarda como /uploads/... pero debe leerse desde public/uploads/...
     let filePath: string;
     if (document.filePath.startsWith('/uploads/')) {
