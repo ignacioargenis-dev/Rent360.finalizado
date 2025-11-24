@@ -101,17 +101,87 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.redirect(document.filePath);
     }
 
-    // Si el filePath empieza con /uploads/, es un archivo local - ir directo al sistema de archivos
-    // Solo intentar cloud storage si NO es una ruta local
+    // Verificar si tenemos configuración de cloud storage disponible
+    const hasCloudStorage = process.env.DO_SPACES_ACCESS_KEY && process.env.DO_SPACES_SECRET_KEY;
+
+    // Si el filePath empieza con /uploads/, es un archivo local
     const isLocalFile =
       document.filePath.startsWith('/uploads/') || document.filePath.startsWith('uploads/');
 
-    // Si el filePath parece ser una key de cloud storage (no es local), intentar descargar desde cloud storage
-    // Solo intentar si tenemos configuración de cloud storage Y el archivo NO es local
+    // ESTRATEGIA: Primero verificar si existe localmente, si no, intentar cloud storage como fallback
+    if (isLocalFile && hasCloudStorage) {
+      // Construir path local para verificación
+      const localFilePath = document.filePath.startsWith('/uploads/')
+        ? path.join(process.cwd(), 'public', document.filePath)
+        : path.join(process.cwd(), 'public', 'uploads', document.filePath);
+
+      // Si el archivo NO existe localmente, intentar cloud storage como fallback
+      if (!existsSync(localFilePath)) {
+        logger.info('Archivo no existe localmente, intentando cloud storage como fallback:', {
+          documentId,
+          originalFilePath: document.filePath,
+          triedLocalPath: localFilePath,
+        });
+
+        try {
+          const cloudStorage = getCloudStorageService();
+          // Convertir path local a key de cloud storage
+          let key = document.filePath;
+
+          // Si es /uploads/documents/..., convertir a documents/...
+          if (key.startsWith('/uploads/')) {
+            key = key.replace('/uploads/', '');
+          } else if (key.startsWith('uploads/')) {
+            // Ya está en formato correcto
+            key = key.replace('uploads/', '');
+          }
+
+          logger.info('Verificando existencia en cloud storage:', {
+            key,
+            originalFilePath: document.filePath,
+          });
+
+          // Verificar si el archivo existe en cloud storage
+          const existsInCloud = await cloudStorage.fileExists(key);
+
+          if (existsInCloud) {
+            logger.info('✅ Archivo encontrado en cloud storage (fallback exitoso):', { key });
+            const buffer = await cloudStorage.downloadFile(key);
+
+            logger.info('Archivo descargado desde cloud storage:', {
+              documentId,
+              size: buffer.length,
+            });
+
+            return new NextResponse(new Uint8Array(buffer), {
+              status: 200,
+              headers: {
+                'Content-Type': document.mimeType || 'application/octet-stream',
+                'Content-Length': buffer.length.toString(),
+                'Content-Disposition': `inline; filename="${document.fileName}"`,
+                'Cache-Control': 'private, max-age=3600',
+              },
+            });
+          } else {
+            logger.warn('Archivo no existe ni localmente ni en cloud storage:', {
+              documentId,
+              key,
+              originalFilePath: document.filePath,
+            });
+          }
+        } catch (cloudError) {
+          logger.warn('Error intentando fallback a cloud storage:', {
+            documentId,
+            error: cloudError instanceof Error ? cloudError.message : String(cloudError),
+          });
+        }
+      }
+    }
+
+    // Si el filePath parece ser una key de cloud storage directa (no local), intentar descargar
     if (
       !isLocalFile &&
-      process.env.DO_SPACES_ACCESS_KEY &&
-      process.env.DO_SPACES_SECRET_KEY &&
+      hasCloudStorage &&
       (document.filePath.startsWith('documents/') ||
         document.filePath.startsWith('properties/') ||
         document.filePath.includes('digitaloceanspaces.com'))
@@ -125,9 +195,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         if (key.startsWith('http://') || key.startsWith('https://')) {
           const urlObj = new URL(key);
           key = urlObj.pathname.substring(1); // Remover leading slash
-        } else if (key.startsWith('/uploads/')) {
-          // Si es /uploads/documents/..., convertir a documents/...
-          key = key.replace('/uploads/', '');
         } else if (key.startsWith('/')) {
           key = key.substring(1);
         }

@@ -6,6 +6,7 @@ import { writeFile } from 'fs/promises';
 import path from 'path';
 import { db } from '@/lib/db';
 import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
+import { getCloudStorageService } from '@/lib/cloud-storage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -154,17 +155,77 @@ export async function POST(request: NextRequest) {
 
       // Determinar directorio según el tipo de archivo
       const uploadDir = validationType === 'images' ? 'images' : 'documents';
-      const filePath = path.join(process.cwd(), 'public', 'uploads', uploadDir, fileName);
 
-      // Crear directorio si no existe
-      const fs = await import('fs');
-      const dir = path.dirname(filePath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      // Detectar si estamos en producción y si cloud storage está disponible
+      const isProduction =
+        process.env.NODE_ENV === 'production' || !!process.env.DIGITALOCEAN_APP_ID;
+      const hasCloudStorage = process.env.DO_SPACES_ACCESS_KEY && process.env.DO_SPACES_SECRET_KEY;
+
+      let finalFilePath: string;
+      let fileUrl: string;
+
+      // Usar cloud storage en producción, almacenamiento local en desarrollo
+      if (isProduction && hasCloudStorage) {
+        logger.info('Producción detectada: usando cloud storage', {
+          uploadDir,
+          fileName,
+          isProduction,
+          hasCloudStorage,
+        });
+
+        try {
+          const cloudStorage = getCloudStorageService();
+          const cloudKey = `${uploadDir}/${fileName}`;
+
+          const result = await cloudStorage.uploadFile(buffer, cloudKey, file.type, {
+            originalName: file.name,
+            uploadedBy: user.id,
+            uploadTimestamp: new Date().toISOString(),
+          });
+
+          finalFilePath = result.url; // URL completa de cloud storage
+          fileUrl = result.url;
+
+          logger.info('Archivo subido exitosamente a cloud storage:', {
+            cloudKey,
+            url: result.url,
+            fileName,
+          });
+        } catch (cloudError) {
+          logger.error('Error subiendo a cloud storage:', {
+            error: cloudError instanceof Error ? cloudError.message : String(cloudError),
+            fileName,
+          });
+          throw new Error('Error al subir archivo a cloud storage');
+        }
+      } else {
+        logger.info('Desarrollo o cloud storage no disponible: usando almacenamiento local', {
+          uploadDir,
+          fileName,
+          isProduction,
+          hasCloudStorage,
+        });
+
+        const filePath = path.join(process.cwd(), 'public', 'uploads', uploadDir, fileName);
+
+        // Crear directorio si no existe
+        const fs = await import('fs');
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Guardar archivo localmente
+        await writeFile(filePath, buffer);
+
+        finalFilePath = `/uploads/${uploadDir}/${fileName}`;
+        fileUrl = `/uploads/${uploadDir}/${fileName}`;
+
+        logger.info('Archivo guardado localmente:', {
+          filePath,
+          fileName,
+        });
       }
-
-      // Guardar archivo
-      await writeFile(filePath, buffer);
 
       // Preparar metadatos adicionales
       const metadata = {
@@ -205,7 +266,7 @@ export async function POST(request: NextRequest) {
         name: title || file.name, // Nombre descriptivo del documento
         type: normalizedType,
         fileName: fileName, // Nombre único del archivo generado
-        filePath: `/uploads/${uploadDir}/${fileName}`,
+        filePath: finalFilePath, // URL de cloud storage o path local según el entorno
         fileSize: file.size,
         mimeType: file.type,
         uploadedById: user.id,
@@ -254,7 +315,7 @@ export async function POST(request: NextRequest) {
         id: document.id,
         name: document.name, // Usar el nombre descriptivo, no el fileName
         fileName: document.fileName,
-        url: `/uploads/${uploadDir}/${fileName}`,
+        url: fileUrl, // URL de cloud storage o path local según el entorno
         size: document.fileSize,
         status: 'completed',
         validation: validationResult,
