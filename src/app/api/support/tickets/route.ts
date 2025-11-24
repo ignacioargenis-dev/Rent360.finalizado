@@ -23,12 +23,13 @@ const updateTicketSchema = z.object({
 // GET /api/support/tickets - Obtener tickets
 export async function GET(request: NextRequest) {
   try {
-    // Obtener usuario del middleware (ya validado)
-    const user = (request as any).user;
+    const user = await requireAuth(request);
 
-    if (!user) {
-      logger.error('No se encontró información de usuario en la request');
-      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    if (user.role !== 'SUPPORT' && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Acceso denegado. Se requieren permisos de soporte o administrador.' },
+        { status: 403 }
+      );
     }
     const { searchParams } = new URL(request.url);
 

@@ -127,6 +127,10 @@ export default function TicketsResueltosPage() {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar los datos');
+
+      // Asegurar que los estados estén inicializados incluso en caso de error
+      setResolvedTickets([]);
+      setStats(calculateResolutionStats([]));
     } finally {
       setLoading(false);
     }

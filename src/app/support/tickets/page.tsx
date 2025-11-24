@@ -31,6 +31,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
+  RefreshCw,
   Filter,
   Search,
   Check,
@@ -77,6 +79,7 @@ export default function SupportTicketsPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [showTicketDialog, setShowTicketDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,6 +113,7 @@ export default function SupportTicketsPage() {
   const loadTickets = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch('/api/support/tickets', {
         method: 'GET',
         credentials: 'include',
@@ -132,6 +136,8 @@ export default function SupportTicketsPage() {
       logger.error('Error cargando tickets:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setTickets([]); // Asegurar que tickets sea un array vacío en caso de error
+      setError('Error al cargar los tickets. Verifica tu conexión e intenta nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -346,6 +352,30 @@ export default function SupportTicketsPage() {
           <p className="text-gray-600">
             Debes iniciar sesión para acceder a los tickets de soporte.
           </p>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <UnifiedDashboardLayout>
+        <div className="container mx-auto px-4 py-8">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Error al cargar tickets
+                </h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <Button onClick={loadTickets}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reintentar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </UnifiedDashboardLayout>
     );
