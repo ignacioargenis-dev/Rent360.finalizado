@@ -488,11 +488,42 @@ export default function TenantSettingsPage() {
     setTimeout(() => setSuccessMessage(''), 2000);
   };
 
-  const handleDeleteDocument = (documentId: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este documento?')) {
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este documento?')) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setErrorMessage('');
+
+      const response = await fetch(`/api/documents/${documentId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al eliminar el documento');
+      }
+
       setSuccessMessage('Documento eliminado exitosamente.');
-      setTimeout(() => setSuccessMessage(''), 2000);
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // ✅ Recargar documentos desde la API para asegurar consistencia
+      await loadDocuments();
+    } catch (error) {
+      logger.error('Error eliminando documento:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al eliminar el documento. Por favor, inténtalo nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setSaving(false);
     }
   };
 

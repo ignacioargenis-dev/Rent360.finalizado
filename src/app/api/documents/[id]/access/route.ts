@@ -25,7 +25,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Buscar el documento
     const document = await db.document.findUnique({
       where: { id: documentId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        fileName: true,
+        filePath: true,
+        fileSize: true,
+        mimeType: true,
+        type: true,
+        uploadedById: true, // ✅ Asegurar que uploadedById esté incluido
+        propertyId: true,
+        createdAt: true,
+        updatedAt: true,
         property: {
           select: {
             id: true,
@@ -54,6 +65,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       fileName: document.fileName,
       filePath: document.filePath,
       propertyId: document.propertyId,
+      uploadedById: document.uploadedById,
+      uploadedBy: document.uploadedBy
+        ? { id: document.uploadedBy.id, name: document.uploadedBy.name }
+        : null,
     });
 
     // Verificar permisos de acceso
@@ -65,6 +80,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         userId: user.id,
         userRole: user.role,
         propertyId: document.propertyId,
+        uploadedById: document.uploadedById,
+        documentType: document.type,
       });
 
       return NextResponse.json(
@@ -284,8 +301,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * Verificar si un usuario tiene permisos para acceder a un documento
  */
 async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
+  logger.info('Verificando acceso a documento:', {
+    userId: user.id,
+    userRole: user.role,
+    documentId: document.id,
+    uploadedById: document.uploadedById,
+    propertyId: document.propertyId,
+  });
+
   // Admins tienen acceso a todo
   if (user.role === 'ADMIN') {
+    logger.info('Acceso concedido: usuario es ADMIN');
     return true;
   }
 
@@ -293,12 +319,17 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
   if (user.role === 'SUPPORT' || user.role === 'support') {
     // Si el documento está asociado a un usuario (a través de uploadedBy), permitir acceso
     if (document.uploadedById) {
+      logger.info('Acceso concedido: usuario SUPPORT y documento tiene uploadedById');
       return true;
     }
     // También permitir acceso a documentos de propiedades para resolución de tickets
     if (document.propertyId) {
+      logger.info('Acceso concedido: usuario SUPPORT y documento tiene propertyId');
       return true;
     }
+    logger.warn(
+      'Acceso denegado: usuario SUPPORT pero documento no tiene uploadedById ni propertyId'
+    );
   }
 
   // El usuario que subió el documento siempre tiene acceso

@@ -627,12 +627,13 @@ export default function MaintenanceSettingsPage() {
           fileUrl: uploadedFile.url,
         };
 
-        setDocuments(prev => [...prev, newDocument]);
-
         logger.info('Documento subido', { fileName: file.name, fileSize: file.size });
 
         setSuccessMessage('Documento subido exitosamente y enviado para revisión');
         setTimeout(() => setSuccessMessage(''), 5000);
+
+        // ✅ Recargar documentos desde la API para asegurar consistencia
+        await loadUserSettings();
       } else {
         throw new Error('No se recibió información del archivo subido');
       }
