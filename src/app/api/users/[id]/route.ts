@@ -9,19 +9,20 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/users/[id]
  * Obtiene información completa de un usuario por ID
- * Requiere autenticación y rol ADMIN
+ * Requiere autenticación y rol ADMIN o SUPPORT
  */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     // Verificar autenticación y permisos
     const currentUser = await requireAuth(request);
 
-    // Solo admins pueden ver detalles completos de usuarios
-    if (currentUser.role !== 'ADMIN') {
+    // Solo admins y soporte pueden ver detalles completos de usuarios
+    if (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPPORT') {
       return NextResponse.json(
         {
           success: false,
-          error: 'No autorizado. Solo administradores pueden ver detalles de usuarios.',
+          error:
+            'No autorizado. Solo administradores y personal de soporte pueden ver detalles de usuarios.',
         },
         { status: 403 }
       );
