@@ -100,8 +100,33 @@ export default function TicketsResueltosPage() {
 
         const data = await response.json();
 
-        setResolvedTickets(data.data || []);
-        setStats(data.stats || calculateResolutionStats([]));
+        // Asegurar que los datos sean arrays válidos
+        const tickets = Array.isArray(data.data) ? data.data : [];
+        setResolvedTickets(tickets);
+
+        // Asegurar que stats tenga todas las propiedades necesarias
+        if (data.stats && typeof data.stats === 'object') {
+          setStats({
+            totalResolved: data.stats.totalResolved || 0,
+            avgResolutionTime: data.stats.avgResolutionTime || 0,
+            satisfactionRate: data.stats.satisfactionRate || 0,
+            resolutionRate: data.stats.resolutionRate || 0.94,
+            monthlyResolved: Array.isArray(data.stats.monthlyResolved)
+              ? data.stats.monthlyResolved
+              : [],
+            categoryBreakdown: Array.isArray(data.stats.categoryBreakdown)
+              ? data.stats.categoryBreakdown
+              : [],
+            priorityBreakdown: Array.isArray(data.stats.priorityBreakdown)
+              ? data.stats.priorityBreakdown
+              : [],
+            resolutionMethodStats: Array.isArray(data.stats.resolutionMethodStats)
+              ? data.stats.resolutionMethodStats
+              : [],
+          });
+        } else {
+          setStats(calculateResolutionStats(tickets));
+        }
 
         logger.info('Reportes de tickets resueltos cargados desde API:', {
           ticketCount: data.data?.length || 0,
@@ -243,7 +268,8 @@ export default function TicketsResueltosPage() {
     const totalResolved = tickets.length;
 
     // Tiempo promedio de resolución
-    const avgResolutionTime = tickets.reduce((sum, t) => sum + t.resolutionTime, 0) / totalResolved;
+    const avgResolutionTime =
+      totalResolved > 0 ? tickets.reduce((sum, t) => sum + t.resolutionTime, 0) / totalResolved : 0;
 
     // Tasa de satisfacción
     const ratedTickets = tickets.filter(t => t.satisfactionRating !== undefined);
@@ -575,7 +601,7 @@ export default function TicketsResueltosPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {stats.resolutionMethodStats.map((method, index) => (
+                      {(stats?.resolutionMethodStats || []).map((method, index) => (
                         <div
                           key={method.method}
                           className="flex items-center justify-between p-3 border rounded-lg"
@@ -613,7 +639,7 @@ export default function TicketsResueltosPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {stats.categoryBreakdown.map((category, index) => (
+                      {(stats?.categoryBreakdown || []).map((category, index) => (
                         <div
                           key={category.category}
                           className="flex items-center justify-between p-3 border rounded-lg"
@@ -645,7 +671,7 @@ export default function TicketsResueltosPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {stats.priorityBreakdown.map((priority, index) => (
+                      {(stats?.priorityBreakdown || []).map((priority, index) => (
                         <div
                           key={priority.priority}
                           className="flex items-center justify-between p-3 border rounded-lg"

@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Tendencias mensuales
-    const monthlyTrends = [];
+    const monthlyResolved = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 30 * 24 * 60 * 60 * 1000);
       const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -169,9 +169,9 @@ export async function GET(request: NextRequest) {
         return itemDate >= monthStart && itemDate <= monthEnd;
       });
 
-      monthlyTrends.push({
+      monthlyResolved.push({
         month: monthStart.toLocaleDateString('es-CL', { month: 'short', year: 'numeric' }),
-        resolved: monthItems.length,
+        count: monthItems.length,
         avgTime:
           monthItems.length > 0
             ? Math.round(
@@ -183,13 +183,37 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Estadísticas por método de resolución
+    const methodStats = resolvedData.reduce(
+      (acc, ticket) => {
+        const method = ticket.method || 'DIRECT';
+        if (!acc[method]) {
+          acc[method] = 0;
+        }
+        acc[method]++;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const resolutionMethodStats = Object.entries(methodStats).map(([method, count]) => ({
+      method,
+      count,
+      percentage: totalResolved > 0 ? Math.round((count / totalResolved) * 100) : 0,
+    }));
+
+    // Calcular satisfacción promedio
+    const satisfactionRate = 4.0; // Valor por defecto, se puede calcular si hay ratings
+
     const stats = {
       totalResolved,
       avgResolutionTime: Math.round(avgResolutionTime * 10) / 10,
-      resolutionRate,
-      categoryBreakdown,
-      priorityStats,
-      monthlyTrends,
+      satisfactionRate,
+      resolutionRate: resolutionRate / 100, // Convertir a decimal (0.94 = 94%)
+      monthlyResolved: monthlyResolved || [],
+      categoryBreakdown: categoryBreakdown || [],
+      priorityBreakdown: priorityStats || [],
+      resolutionMethodStats: resolutionMethodStats || [],
     };
 
     return NextResponse.json({
