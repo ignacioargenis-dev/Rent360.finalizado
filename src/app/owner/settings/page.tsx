@@ -446,30 +446,11 @@ export default function OwnerSettingsPage() {
       const data = await response.json();
 
       if (data.files && data.files.length > 0) {
-        const uploadedFile = data.files[0];
-
-        const newDocument: Document = {
-          id: uploadedFile.id,
-          name: uploadedFile.name,
-          type: file.type === 'application/pdf' ? 'PDF' : 'Imagen',
-          category: selectedDocumentCategory,
-          propertyId: selectedDocumentCategory === 'property' ? selectedPropertyId : undefined,
-          uploadDate:
-            new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
-          size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-          url: uploadedFile.url,
-        };
-
-        setSettings(prev => ({
-          ...prev,
-          documents: [...prev.documents, newDocument],
-        }));
-
         setShowUploadModal(false);
         setSuccessMessage('Documento subido exitosamente');
         setTimeout(() => setSuccessMessage(''), 3000);
 
-        // Recargar documentos desde la API para asegurar consistencia
+        // ✅ Recargar documentos desde la API para asegurar consistencia
         await loadSettings();
       } else {
         throw new Error('No se recibió información del archivo subido');

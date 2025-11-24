@@ -124,6 +124,44 @@ export default function TenantSettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Función para cargar documentos del usuario
+  const loadDocuments = async () => {
+    try {
+      const documentsResponse = await fetch('/api/documents/upload?limit=100', {
+        credentials: 'include',
+      });
+
+      if (documentsResponse.ok) {
+        const documentsData = await documentsResponse.json();
+        const loadedDocuments: Document[] = documentsData.documents.map((doc: any) => ({
+          id: doc.id,
+          name: doc.name,
+          category:
+            doc.type === 'IDENTIFICATION'
+              ? 'identification'
+              : doc.type === 'INCOME_PROOF'
+                ? 'income'
+                : doc.type === 'LEASE_DOCUMENT'
+                  ? 'lease'
+                  : 'other',
+          uploadDate: new Date(doc.createdAt).toISOString().split('T')[0],
+          size: formatFileSize(doc.fileSize),
+          url: doc.filePath,
+        }));
+
+        setDocuments(loadedDocuments);
+      } else {
+        logger.warn('No se pudieron cargar los documentos');
+        setDocuments([]);
+      }
+    } catch (error) {
+      logger.error('Error loading documents:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setDocuments([]);
+    }
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -173,6 +211,9 @@ export default function TenantSettingsPage() {
               },
             }));
           }
+
+          // ✅ Cargar documentos del usuario
+          await loadDocuments();
         }
       } catch (error) {
         logger.error('Error loading user data:', {
@@ -303,22 +344,12 @@ export default function TenantSettingsPage() {
       const data = await response.json();
 
       if (data.files && data.files.length > 0) {
-        const uploadedFile = data.files[0];
-
-        const newDocument: Document = {
-          id: uploadedFile.id,
-          name: uploadedFile.name,
-          category: selectedDocumentCategory,
-          size: formatFileSize(file.size),
-          uploadDate:
-            new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
-          url: uploadedFile.url,
-        };
-
-        setDocuments(prev => [...prev, newDocument]);
         setShowUploadModal(false);
         setSuccessMessage('Documento subido exitosamente.');
         setTimeout(() => setSuccessMessage(''), 3000);
+
+        // ✅ Recargar documentos desde la API para asegurar consistencia
+        await loadDocuments();
       } else {
         throw new Error('No se recibió información del archivo subido');
       }

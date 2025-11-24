@@ -126,10 +126,16 @@ export class CloudStorageService {
       await this.client.send(command);
       return true;
     } catch (error: any) {
-      if (error.name === 'NotFound') {
+      // NoSuchKey es el error específico de AWS S3/DigitalOcean Spaces cuando el archivo no existe
+      if (
+        error.name === 'NotFound' ||
+        error.name === 'NoSuchKey' ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
         return false;
       }
-      console.error('Error checking file existence:', error);
+      // Para otros errores, loguear pero retornar false para que se intente sistema de archivos local
+      console.error('Error checking file existence in cloud storage:', error);
       return false;
     }
   }

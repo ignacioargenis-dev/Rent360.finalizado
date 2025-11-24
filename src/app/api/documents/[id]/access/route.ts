@@ -73,7 +73,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    // Verificar si el filePath es una URL de cloud storage
+    // Verificar si el filePath es una URL de cloud storage (http/https)
     if (document.filePath.startsWith('http://') || document.filePath.startsWith('https://')) {
       logger.info('Documento está en cloud storage, redirigiendo:', {
         documentId,
@@ -84,15 +84,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.redirect(document.filePath);
     }
 
-    // Si el filePath parece ser una key de cloud storage, intentar descargar desde cloud storage
-    // Solo intentar si tenemos configuración de cloud storage Y el archivo parece estar en cloud storage
-    // (los documentos guardados localmente tienen filePath como /uploads/... y no se suben a cloud)
+    // Si el filePath empieza con /uploads/, es un archivo local - ir directo al sistema de archivos
+    // Solo intentar cloud storage si NO es una ruta local
+    const isLocalFile =
+      document.filePath.startsWith('/uploads/') || document.filePath.startsWith('uploads/');
+
+    // Si el filePath parece ser una key de cloud storage (no es local), intentar descargar desde cloud storage
+    // Solo intentar si tenemos configuración de cloud storage Y el archivo NO es local
     if (
+      !isLocalFile &&
       process.env.DO_SPACES_ACCESS_KEY &&
       process.env.DO_SPACES_SECRET_KEY &&
-      (document.filePath.startsWith('http://') ||
-        document.filePath.startsWith('https://') ||
-        document.filePath.startsWith('documents/') ||
+      (document.filePath.startsWith('documents/') ||
         document.filePath.startsWith('properties/') ||
         document.filePath.includes('digitaloceanspaces.com'))
     ) {
