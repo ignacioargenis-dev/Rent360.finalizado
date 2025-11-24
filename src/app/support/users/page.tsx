@@ -42,6 +42,9 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  FileText,
+  Star,
+  ExternalLink,
 } from 'lucide-react';
 import {
   Dialog,
@@ -405,6 +408,59 @@ export default function SupportUsersPage() {
       MAINTENANCE: 'bg-yellow-100 text-yellow-800',
     };
     return roleColors[role] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    switch (role?.toUpperCase()) {
+      case 'ADMIN':
+        return 'Administrador';
+      case 'OWNER':
+        return 'Propietario';
+      case 'TENANT':
+        return 'Inquilino';
+      case 'BROKER':
+        return 'Corredor';
+      case 'RUNNER':
+        return 'Runner360';
+      case 'SUPPORT':
+        return 'Soporte';
+      case 'MAINTENANCE':
+        return 'Servicio de Mantenimiento';
+      case 'PROVIDER':
+        return 'Proveedor de Servicios';
+      default:
+        return role || 'No especificado';
+    }
+  };
+
+  const formatBio = (bio: any): string => {
+    if (!bio) {
+      return 'No especificado';
+    }
+    if (typeof bio === 'string') {
+      // Intentar parsear si es JSON
+      try {
+        const parsed = JSON.parse(bio);
+        // Si es un objeto, mostrar solo valores relevantes
+        if (typeof parsed === 'object') {
+          return JSON.stringify(parsed, null, 2);
+        }
+        return bio;
+      } catch {
+        return bio;
+      }
+    }
+    return String(bio);
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) {
+      return '0 B';
+    }
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   const getStatusBadge = (status: string) => {
@@ -1136,7 +1192,11 @@ export default function SupportUsersPage() {
                   <CardContent className="space-y-3">
                     <div>
                       <Label className="text-sm font-medium text-gray-700">Rol</Label>
-                      <div className="mt-1">{getRoleBadge(selectedUserForView.role)}</div>
+                      <div className="mt-1">
+                        <Badge className={getRoleBadge(selectedUserForView.role)}>
+                          {getRoleDisplayName(selectedUserForView.role)}
+                        </Badge>
+                      </div>
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-gray-700">Estado</Label>
@@ -1204,7 +1264,11 @@ export default function SupportUsersPage() {
                     {selectedUserForView.bio && (
                       <div>
                         <Label className="text-sm font-medium text-gray-700">Biografía</Label>
-                        <p className="text-gray-900">{selectedUserForView.bio}</p>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md max-h-32 overflow-y-auto">
+                          <pre className="text-sm text-gray-700 whitespace-pre-wrap break-words">
+                            {formatBio(selectedUserForView.bio)}
+                          </pre>
+                        </div>
                       </div>
                     )}
                     {selectedUserForView.phoneSecondary && (
@@ -1234,6 +1298,192 @@ export default function SupportUsersPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Documentos del usuario */}
+              {selectedUserForView.documents && selectedUserForView.documents.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Documentos ({selectedUserForView.documents.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {selectedUserForView.documents.map((doc: any) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 truncate">{doc.name}</p>
+                              <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                                <span>{doc.type}</span>
+                                {doc.fileSize && <span>• {formatFileSize(doc.fileSize)}</span>}
+                                {doc.createdAt && (
+                                  <span>
+                                    • {new Date(doc.createdAt).toLocaleDateString('es-ES')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {doc.filePath && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(doc.filePath, '_blank')}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              Ver
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Calificaciones recibidas */}
+              {selectedUserForView.ratingsReceived &&
+                selectedUserForView.ratingsReceived.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Star className="h-5 w-5 text-yellow-500" />
+                        Calificaciones Recibidas ({selectedUserForView.ratingsReceived.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {selectedUserForView.ratingsReceived.map((rating: any) => (
+                          <div
+                            key={rating.id}
+                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-4 w-4 ${
+                                        i < Math.round(rating.overallRating || 0)
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="font-semibold text-gray-900">
+                                  {rating.overallRating?.toFixed(1) || 'N/A'}
+                                </span>
+                              </div>
+                              {rating.createdAt && (
+                                <span className="text-sm text-gray-500">
+                                  {new Date(rating.createdAt).toLocaleDateString('es-ES')}
+                                </span>
+                              )}
+                            </div>
+                            {rating.fromUser && (
+                              <p className="text-sm text-gray-600 mb-2">
+                                De: {rating.fromUser.name || rating.fromUser.email}
+                              </p>
+                            )}
+                            {rating.comment && (
+                              <p className="text-sm text-gray-700 mt-2">{rating.comment}</p>
+                            )}
+                            {rating.property && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                Propiedad: {rating.property.title || rating.property.address}
+                              </p>
+                            )}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs text-gray-600">
+                              {rating.communicationRating && (
+                                <div>
+                                  <span className="font-medium">Comunicación:</span>{' '}
+                                  {rating.communicationRating}/5
+                                </div>
+                              )}
+                              {rating.reliabilityRating && (
+                                <div>
+                                  <span className="font-medium">Confiabilidad:</span>{' '}
+                                  {rating.reliabilityRating}/5
+                                </div>
+                              )}
+                              {rating.professionalismRating && (
+                                <div>
+                                  <span className="font-medium">Profesionalismo:</span>{' '}
+                                  {rating.professionalismRating}/5
+                                </div>
+                              )}
+                              {rating.qualityRating && (
+                                <div>
+                                  <span className="font-medium">Calidad:</span>{' '}
+                                  {rating.qualityRating}/5
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+              {/* Resumen de calificaciones */}
+              {selectedUserForView.ratingsReceived &&
+                selectedUserForView.ratingsReceived.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Resumen de Calificaciones</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-900">
+                            {(
+                              selectedUserForView.ratingsReceived.reduce(
+                                (sum: number, r: any) => sum + (r.overallRating || 0),
+                                0
+                              ) / selectedUserForView.ratingsReceived.length
+                            ).toFixed(1)}
+                          </p>
+                          <p className="text-sm text-gray-600">Promedio General</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-900">
+                            {selectedUserForView.ratingsReceived.length}
+                          </p>
+                          <p className="text-sm text-gray-600">Total Calificaciones</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-900">
+                            {
+                              selectedUserForView.ratingsReceived.filter(
+                                (r: any) => r.overallRating >= 4
+                              ).length
+                            }
+                          </p>
+                          <p className="text-sm text-gray-600">Calificaciones Altas (4+)</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-900">
+                            {
+                              selectedUserForView.ratingsReceived.filter(
+                                (r: any) => r.overallRating < 3
+                              ).length
+                            }
+                          </p>
+                          <p className="text-sm text-gray-600">Calificaciones Bajas (&lt;3)</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
             </div>
           ) : null}
 
@@ -1290,7 +1540,11 @@ export default function SupportUsersPage() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Rol</Label>
-                  <div className="mt-1">{getRoleBadge(selectedUserForEdit.role)}</div>
+                  <div className="mt-1">
+                    <Badge className={getRoleBadge(selectedUserForEdit.role)}>
+                      {getRoleDisplayName(selectedUserForEdit.role)}
+                    </Badge>
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Estado Actual</Label>
