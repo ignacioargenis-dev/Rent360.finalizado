@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 
 /**
@@ -13,6 +14,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     const user = await requireAuth(request);
     const documentId = params.id;
+
+    logger.info('Acceso a documento solicitado:', {
+      documentId,
+      userId: user.id,
+      userRole: user.role,
+    });
 
     // Buscar el documento
     const document = await db.document.findUnique({
@@ -37,8 +44,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     });
 
     if (!document) {
+      logger.warn('Documento no encontrado en la base de datos:', { documentId });
       return NextResponse.json({ error: 'Documento no encontrado' }, { status: 404 });
     }
+
+    logger.info('Documento encontrado:', {
+      documentId,
+      fileName: document.fileName,
+      filePath: document.filePath,
+      propertyId: document.propertyId,
+    });
 
     // Verificar permisos de acceso
     const hasAccess = await checkDocumentAccess(user, document);
@@ -58,7 +73,49 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verificar que el archivo existe
-    const filePath = path.join(process.cwd(), document.filePath);
+    // El filePath se guarda como /uploads/... pero debe leerse desde public/uploads/...
+    let filePath: string;
+    if (document.filePath.startsWith('/uploads/')) {
+      // Si es una ruta relativa que empieza con /uploads/, agregar 'public' al inicio
+      filePath = path.join(process.cwd(), 'public', document.filePath);
+    } else if (document.filePath.startsWith('uploads/')) {
+      // Si es una ruta relativa que empieza con uploads/, agregar 'public' al inicio
+      filePath = path.join(process.cwd(), 'public', document.filePath);
+    } else if (document.filePath.startsWith('/')) {
+      // Si es una ruta absoluta, usar directamente
+      filePath = path.join(process.cwd(), document.filePath);
+    } else {
+      // Si es una ruta relativa sin /, asumir que está en public/uploads
+      filePath = path.join(process.cwd(), 'public', 'uploads', document.filePath);
+    }
+
+    // Verificar que el archivo existe antes de intentar leerlo
+    if (!existsSync(filePath)) {
+      logger.error('Archivo no encontrado:', {
+        documentId,
+        filePath,
+        originalFilePath: document.filePath,
+        cwd: process.cwd(),
+      });
+
+      // Intentar alternativa: usar la ruta API de uploads
+      // Si el filePath es /uploads/..., podemos redirigir a /api/uploads/...
+      if (document.filePath.startsWith('/uploads/')) {
+        const apiPath = document.filePath.replace('/uploads/', '');
+        const redirectUrl = `/api/uploads/${apiPath}`;
+        logger.info('Redirigiendo a ruta API alternativa:', { redirectUrl });
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
+      }
+
+      return NextResponse.json(
+        {
+          error: 'Archivo no encontrado en el servidor',
+          details: `Ruta buscada: ${filePath}`,
+        },
+        { status: 404 }
+      );
+    }
+
     let fileBuffer: Buffer;
 
     try {
@@ -67,10 +124,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       logger.error('Error leyendo archivo:', {
         documentId,
         filePath,
+        originalFilePath: document.filePath,
         error: error instanceof Error ? error.message : String(error),
       });
 
-      return NextResponse.json({ error: 'Archivo no encontrado en el servidor' }, { status: 404 });
+      return NextResponse.json({ error: 'Error al leer el archivo del servidor' }, { status: 500 });
     }
 
     // Registrar acceso para auditoría
