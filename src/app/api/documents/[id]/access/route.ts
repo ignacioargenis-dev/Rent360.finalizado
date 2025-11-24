@@ -110,7 +110,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           size: buffer.length,
         });
 
-        return new NextResponse(buffer, {
+        return new NextResponse(new Uint8Array(buffer), {
           status: 200,
           headers: {
             'Content-Type': document.mimeType || 'application/octet-stream',
