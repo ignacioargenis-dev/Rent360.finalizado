@@ -91,29 +91,53 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Verificar que el archivo existe antes de intentar leerlo
     if (!existsSync(filePath)) {
-      logger.error('Archivo no encontrado:', {
+      logger.warn('Archivo no encontrado en ruta principal, intentando rutas alternativas:', {
         documentId,
         filePath,
         originalFilePath: document.filePath,
         cwd: process.cwd(),
       });
 
-      // Intentar alternativa: usar la ruta API de uploads
-      // Si el filePath es /uploads/..., podemos redirigir a /api/uploads/...
+      // Intentar rutas alternativas
+      const alternativePaths: string[] = [];
+
+      // Si el filePath original es /uploads/..., intentar diferentes variaciones
       if (document.filePath.startsWith('/uploads/')) {
-        const apiPath = document.filePath.replace('/uploads/', '');
-        const redirectUrl = `/api/uploads/${apiPath}`;
-        logger.info('Redirigiendo a ruta API alternativa:', { redirectUrl });
-        return NextResponse.redirect(new URL(redirectUrl, request.url));
+        const pathWithoutLeading = document.filePath.substring(1); // Remover el / inicial
+        alternativePaths.push(path.join(process.cwd(), 'public', pathWithoutLeading));
+        alternativePaths.push(path.join(process.cwd(), pathWithoutLeading));
+      } else if (document.filePath.startsWith('uploads/')) {
+        alternativePaths.push(path.join(process.cwd(), 'public', document.filePath));
+        alternativePaths.push(path.join(process.cwd(), document.filePath));
       }
 
-      return NextResponse.json(
-        {
-          error: 'Archivo no encontrado en el servidor',
-          details: `Ruta buscada: ${filePath}`,
-        },
-        { status: 404 }
-      );
+      // Buscar en rutas alternativas
+      let foundPath: string | null = null;
+      for (const altPath of alternativePaths) {
+        if (existsSync(altPath)) {
+          foundPath = altPath;
+          logger.info('Archivo encontrado en ruta alternativa:', { altPath });
+          break;
+        }
+      }
+
+      if (!foundPath) {
+        logger.error('Archivo no encontrado en ninguna ruta:', {
+          documentId,
+          originalFilePath: document.filePath,
+          triedPaths: [filePath, ...alternativePaths],
+        });
+
+        return NextResponse.json(
+          {
+            error: 'Archivo no encontrado en el servidor',
+            details: `Rutas buscadas: ${[filePath, ...alternativePaths].join(', ')}`,
+          },
+          { status: 404 }
+        );
+      }
+
+      filePath = foundPath;
     }
 
     let fileBuffer: Buffer;
