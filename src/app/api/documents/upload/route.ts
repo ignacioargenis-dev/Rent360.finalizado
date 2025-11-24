@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     const uploadedFiles: Array<{
       id: string;
       name: string;
+      fileName?: string;
       url: string;
       size: number;
       status: string;
@@ -181,29 +182,78 @@ export async function POST(request: NextRequest) {
         uploadTimestamp: new Date().toISOString(),
       };
 
+      // Normalizar el tipo de documento
+      // Mapear categorías comunes a tipos de documento válidos
+      let normalizedType = documentType || 'OTHER_DOCUMENT';
+
+      // Si no hay documentType pero hay category, intentar mapear
+      if (!documentType && category) {
+        const categoryMap: Record<string, string> = {
+          identification: 'IDENTIFICATION',
+          income: 'INCOME_PROOF',
+          property: 'PROPERTY_DOCUMENT',
+          personal: 'IDENTIFICATION',
+          legal: 'OTHER_DOCUMENT',
+          contracts: 'LEASE_DOCUMENT',
+          other: 'OTHER_DOCUMENT',
+        };
+        normalizedType = categoryMap[category.toLowerCase()] || 'OTHER_DOCUMENT';
+      }
+
       // Guardar información en la base de datos
       const documentData = {
-        name: title || file.name,
-        type: documentType || category || 'OTHER_DOCUMENT',
-        fileName: fileName, // Usar el nombre único generado
+        name: title || file.name, // Nombre descriptivo del documento
+        type: normalizedType,
+        fileName: fileName, // Nombre único del archivo generado
         filePath: `/uploads/${uploadDir}/${fileName}`,
         fileSize: file.size,
         mimeType: file.type,
         uploadedById: user.id,
-        propertyId: propertyId || null, // ✅ AGREGADO: Asociar con propiedad si se proporciona
+        propertyId: propertyId || null,
       };
 
-      logger.info('Creando documento en la base de datos:', documentData);
+      logger.info('Creando documento en la base de datos:', {
+        ...documentData,
+        userId: user.id,
+        userName: user.name,
+      });
 
       const document = await db.document.create({
         data: documentData,
       });
 
-      logger.info('Documento creado exitosamente:', { documentId: document.id });
+      logger.info('Documento creado exitosamente:', {
+        documentId: document.id,
+        fileName: document.fileName,
+        filePath: document.filePath,
+        uploadedById: document.uploadedById,
+      });
+
+      // Verificar que el documento se guardó correctamente
+      const verifyDocument = await db.document.findUnique({
+        where: { id: document.id },
+        select: {
+          id: true,
+          name: true,
+          fileName: true,
+          filePath: true,
+          uploadedById: true,
+        },
+      });
+
+      if (!verifyDocument) {
+        logger.error('ERROR CRÍTICO: Documento no encontrado después de crear:', {
+          documentId: document.id,
+        });
+        throw new Error('Error al verificar documento guardado');
+      }
+
+      logger.info('Documento verificado en base de datos:', verifyDocument);
 
       uploadedFiles.push({
         id: document.id,
-        name: document.fileName,
+        name: document.name, // Usar el nombre descriptivo, no el fileName
+        fileName: document.fileName,
         url: `/uploads/${uploadDir}/${fileName}`,
         size: document.fileSize,
         status: 'completed',
