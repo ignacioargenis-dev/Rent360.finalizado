@@ -92,13 +92,50 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Verificar si el filePath es una URL de cloud storage (http/https)
     if (document.filePath.startsWith('http://') || document.filePath.startsWith('https://')) {
-      logger.info('Documento está en cloud storage, redirigiendo:', {
+      logger.info('Documento está en cloud storage, descargando para servir:', {
         documentId,
         filePath: document.filePath,
       });
 
-      // Redirigir directamente a la URL de cloud storage
-      return NextResponse.redirect(document.filePath);
+      try {
+        // En lugar de redirigir (que causa problemas de CORS), descargar y servir el archivo
+        const response = await fetch(document.filePath);
+
+        if (!response.ok) {
+          throw new Error(`Error al descargar archivo: ${response.status}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        logger.info('Archivo descargado desde cloud storage y servido:', {
+          documentId,
+          size: buffer.length,
+        });
+
+        return new NextResponse(buffer, {
+          status: 200,
+          headers: {
+            'Content-Type': document.mimeType || 'application/octet-stream',
+            'Content-Length': buffer.length.toString(),
+            'Content-Disposition': `inline; filename="${document.fileName}"`,
+            'Cache-Control': 'private, max-age=3600',
+            // Agregar headers CORS para evitar problemas
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET',
+          },
+        });
+      } catch (error) {
+        logger.error('Error descargando archivo desde cloud storage:', {
+          documentId,
+          filePath: document.filePath,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return NextResponse.json(
+          { error: 'Error al descargar el archivo desde cloud storage' },
+          { status: 500 }
+        );
+      }
     }
 
     // Verificar si tenemos configuración de cloud storage disponible
