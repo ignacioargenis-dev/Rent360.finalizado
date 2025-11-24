@@ -114,6 +114,18 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
     return true;
   }
 
+  // Usuarios de soporte tienen acceso a documentos de usuarios para resolución de problemas
+  if (user.role === 'SUPPORT' || user.role === 'support') {
+    // Si el documento está asociado a un usuario (a través de uploadedBy), permitir acceso
+    if (document.uploadedById) {
+      return true;
+    }
+    // También permitir acceso a documentos de propiedades para resolución de tickets
+    if (document.propertyId) {
+      return true;
+    }
+  }
+
   // El usuario que subió el documento siempre tiene acceso
   if (document.uploadedById === user.id) {
     return true;
@@ -240,13 +252,6 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
         return true;
       }
     }
-  }
-
-  // Soporte técnico tiene acceso limitado para resolución de problemas
-  if (user.role === 'support') {
-    // Los usuarios de soporte solo pueden acceder a documentos de propiedades que están resolviendo tickets
-    // Por ahora, denegar acceso hasta implementar lógica más específica
-    return false;
   }
 
   return false;

@@ -1330,15 +1330,73 @@ export default function SupportUsersPage() {
                               </div>
                             </div>
                           </div>
-                          {doc.filePath && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(doc.filePath, '_blank')}
-                            >
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              Ver
-                            </Button>
+                          {doc.id && (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(
+                                      `/api/documents/${doc.id}/access`,
+                                      {
+                                        credentials: 'include',
+                                        method: 'GET',
+                                      }
+                                    );
+                                    if (!response.ok) {
+                                      throw new Error('Error al acceder al documento');
+                                    }
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    window.open(url, '_blank');
+                                    // Limpiar la URL después de un tiempo
+                                    setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                                  } catch (error) {
+                                    alert(
+                                      'Error al abrir el documento. Por favor, verifica tus permisos.'
+                                    );
+                                    console.error('Error abriendo documento:', error);
+                                  }
+                                }}
+                              >
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                Ver
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(
+                                      `/api/documents/${doc.id}/access`,
+                                      {
+                                        credentials: 'include',
+                                        method: 'GET',
+                                      }
+                                    );
+                                    if (!response.ok) {
+                                      throw new Error('Error al descargar el documento');
+                                    }
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = doc.fileName || `documento-${doc.id}`;
+                                    link.click();
+                                    window.URL.revokeObjectURL(url);
+                                  } catch (error) {
+                                    alert(
+                                      'Error al descargar el documento. Por favor, verifica tus permisos.'
+                                    );
+                                    console.error('Error descargando documento:', error);
+                                  }
+                                }}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Descargar
+                              </Button>
+                            </div>
                           )}
                         </div>
                       ))}
