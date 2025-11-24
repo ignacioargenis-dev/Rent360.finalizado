@@ -309,27 +309,11 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
     propertyId: document.propertyId,
   });
 
-  // Admins tienen acceso a todo
-  if (user.role === 'ADMIN') {
-    logger.info('Acceso concedido: usuario es ADMIN');
+  // Admins y usuarios de soporte tienen acceso a todos los documentos
+  // SUPPORT necesita acceso completo para poder dar soporte técnico y resolver problemas
+  if (user.role === 'ADMIN' || user.role === 'SUPPORT' || user.role === 'support') {
+    logger.info(`Acceso concedido: usuario es ${user.role}`);
     return true;
-  }
-
-  // Usuarios de soporte tienen acceso a documentos de usuarios para resolución de problemas
-  if (user.role === 'SUPPORT' || user.role === 'support') {
-    // Si el documento está asociado a un usuario (a través de uploadedBy), permitir acceso
-    if (document.uploadedById) {
-      logger.info('Acceso concedido: usuario SUPPORT y documento tiene uploadedById');
-      return true;
-    }
-    // También permitir acceso a documentos de propiedades para resolución de tickets
-    if (document.propertyId) {
-      logger.info('Acceso concedido: usuario SUPPORT y documento tiene propertyId');
-      return true;
-    }
-    logger.warn(
-      'Acceso denegado: usuario SUPPORT pero documento no tiene uploadedById ni propertyId'
-    );
   }
 
   // El usuario que subió el documento siempre tiene acceso
