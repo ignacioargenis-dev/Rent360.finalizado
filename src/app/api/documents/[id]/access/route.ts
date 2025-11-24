@@ -85,42 +85,67 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Si el filePath parece ser una key de cloud storage, intentar descargar desde cloud storage
-    // Solo intentar si tenemos configuración de cloud storage
-    if (process.env.DO_SPACES_ACCESS_KEY && process.env.DO_SPACES_SECRET_KEY) {
+    // Solo intentar si tenemos configuración de cloud storage Y el archivo parece estar en cloud storage
+    // (los documentos guardados localmente tienen filePath como /uploads/... y no se suben a cloud)
+    if (
+      process.env.DO_SPACES_ACCESS_KEY &&
+      process.env.DO_SPACES_SECRET_KEY &&
+      (document.filePath.startsWith('http://') ||
+        document.filePath.startsWith('https://') ||
+        document.filePath.startsWith('documents/') ||
+        document.filePath.startsWith('properties/') ||
+        document.filePath.includes('digitaloceanspaces.com'))
+    ) {
       try {
         const cloudStorage = getCloudStorageService();
         // Extraer la key del filePath
-        // Si es /uploads/documents/..., convertir a documents/...
         let key = document.filePath;
-        if (key.startsWith('/uploads/')) {
+
+        // Si es una URL, extraer la key de la URL
+        if (key.startsWith('http://') || key.startsWith('https://')) {
+          const urlObj = new URL(key);
+          key = urlObj.pathname.substring(1); // Remover leading slash
+        } else if (key.startsWith('/uploads/')) {
+          // Si es /uploads/documents/..., convertir a documents/...
           key = key.replace('/uploads/', '');
         } else if (key.startsWith('/')) {
           key = key.substring(1);
         }
 
-        logger.info('Intentando descargar desde cloud storage:', {
+        logger.info('Verificando existencia en cloud storage:', {
           key,
           originalFilePath: document.filePath,
         });
 
-        const buffer = await cloudStorage.downloadFile(key);
+        // Verificar primero si el archivo existe en cloud storage
+        const existsInCloud = await cloudStorage.fileExists(key);
 
-        logger.info('Archivo descargado desde cloud storage:', {
-          documentId,
-          size: buffer.length,
-        });
+        if (existsInCloud) {
+          logger.info('Archivo encontrado en cloud storage, descargando:', { key });
+          const buffer = await cloudStorage.downloadFile(key);
 
-        return new NextResponse(new Uint8Array(buffer), {
-          status: 200,
-          headers: {
-            'Content-Type': document.mimeType || 'application/octet-stream',
-            'Content-Length': buffer.length.toString(),
-            'Content-Disposition': `inline; filename="${document.fileName}"`,
-            'Cache-Control': 'private, max-age=3600',
-          },
-        });
+          logger.info('Archivo descargado desde cloud storage:', {
+            documentId,
+            size: buffer.length,
+          });
+
+          return new NextResponse(new Uint8Array(buffer), {
+            status: 200,
+            headers: {
+              'Content-Type': document.mimeType || 'application/octet-stream',
+              'Content-Length': buffer.length.toString(),
+              'Content-Disposition': `inline; filename="${document.fileName}"`,
+              'Cache-Control': 'private, max-age=3600',
+            },
+          });
+        } else {
+          logger.info('Archivo no existe en cloud storage, usando sistema de archivos local:', {
+            key,
+            originalFilePath: document.filePath,
+          });
+        }
       } catch (cloudError) {
-        logger.warn('Error descargando desde cloud storage, intentando sistema de archivos:', {
+        logger.warn('Error verificando cloud storage, intentando sistema de archivos:', {
           documentId,
           error: cloudError instanceof Error ? cloudError.message : String(cloudError),
         });
@@ -180,14 +205,23 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       if (!foundPath) {
         logger.error('Archivo no encontrado en ninguna ruta:', {
           documentId,
+          fileName: document.fileName,
           originalFilePath: document.filePath,
           triedPaths: [filePath, ...alternativePaths],
+          uploadedAt: document.createdAt,
+          uploadedBy: document.uploadedById,
         });
 
         return NextResponse.json(
           {
             error: 'Archivo no encontrado en el servidor',
-            details: `Rutas buscadas: ${[filePath, ...alternativePaths].join(', ')}`,
+            message:
+              'El archivo físico no existe. Puede haber sido eliminado o nunca se subió correctamente.',
+            details: {
+              fileName: document.fileName,
+              filePath: document.filePath,
+              triedPaths: [filePath, ...alternativePaths],
+            },
           },
           { status: 404 }
         );
