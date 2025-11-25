@@ -655,7 +655,7 @@ export default function OwnerPropertyDetailPage() {
         }
       }
     },
-    [fetchWithHandling, propertyId, mockProperty]
+    [fetchWithHandling, propertyId]
   );
 
   useEffect(() => {
