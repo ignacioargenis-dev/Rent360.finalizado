@@ -68,6 +68,7 @@ export default function BrokerAnalyticsPage() {
   const [trendData, setTrendData] = useState<TrendData[]>([]);
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
+  const [marketSummary, setMarketSummary] = useState<any>(null);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -153,9 +154,36 @@ export default function BrokerAnalyticsPage() {
       }
     };
 
+    const loadMarketSummary = async () => {
+      try {
+        const response = await fetch('/api/broker/market-analysis/summary', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setMarketSummary(result.data);
+            logger.info('Resumen de mercado cargado', {
+              totalProperties: result.data.totalProperties,
+            });
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading market summary:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
     loadUserData();
     loadDashboardData();
     loadAnalyticsData();
+    loadMarketSummary();
   }, []);
 
   const formatCurrency = (amount: number) => {
@@ -565,6 +593,121 @@ export default function BrokerAnalyticsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Market Summary */}
+        {marketSummary && (
+          <Card className="mt-6">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Resumen del Mercado Nacional</CardTitle>
+                  <CardDescription>
+                    Estadísticas en tiempo real del mercado inmobiliario chileno
+                  </CardDescription>
+                </div>
+                <Link href="/broker/analytics/market-analysis">
+                  <Button variant="outline" size="sm">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Ver Análisis Completo
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building className="w-5 h-5 text-blue-600" />
+                    <span className="text-sm text-gray-600">Total Propiedades</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {marketSummary.totalProperties.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                    <span className="text-sm text-gray-600">Arriendo Promedio</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(marketSummary.averageRent)}
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-5 h-5 text-purple-600" />
+                    <span className="text-sm text-gray-600">Tasa de Ocupación</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {marketSummary.occupancyRate.toFixed(1)}%
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-5 h-5 text-orange-600" />
+                    <span className="text-sm text-gray-600">Tendencia</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    {marketSummary.marketTrends.priceChange > 0 ? '+' : ''}
+                    {marketSummary.marketTrends.priceChange.toFixed(1)}%
+                    {marketSummary.marketTrends.priceChange > 0 ? (
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-600" />
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-3">Regiones con Mayor Actividad</h4>
+                  <div className="space-y-2">
+                    {marketSummary.topRegions.slice(0, 3).map((region: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                      >
+                        <span className="text-sm font-medium">{region.region}</span>
+                        <div className="text-right">
+                          <span className="text-sm text-gray-600">{region.count} props</span>
+                          <span className="text-xs text-gray-500 ml-2">
+                            {formatCurrency(region.avgRent)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-3">Tipos de Propiedad Más Demandados</h4>
+                  <div className="space-y-2">
+                    {marketSummary.propertyTypeDistribution
+                      .slice(0, 3)
+                      .map((type: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                        >
+                          <span className="text-sm font-medium">{type.type}</span>
+                          <div className="text-right">
+                            <span className="text-sm text-gray-600">{type.count} props</span>
+                            <span className="text-xs text-gray-500 ml-2">
+                              ({type.percentage.toFixed(1)}%)
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Action Items */}
         <Card className="mt-6">

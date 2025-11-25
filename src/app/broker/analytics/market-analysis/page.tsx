@@ -45,6 +45,8 @@ interface MarketData {
   commune: string;
   regionCode: string;
   population: number;
+  totalProperties?: number;
+  activeProperties?: number;
   averageRent: number;
   demandLevel: 'low' | 'medium' | 'high' | 'very_high';
   occupancyRate: number;
@@ -52,6 +54,9 @@ interface MarketData {
   trendPercentage: number;
   competitorCount: number;
   averageResponseTime: number;
+  averageViews?: number;
+  averageInquiries?: number;
+  avgDaysToRent?: number;
   popularPropertyTypes: string[];
   economicIndex: number; // 0-100, basado en actividad económica
   tourismIndex: number; // 0-100, atractivo turístico
@@ -1240,6 +1245,7 @@ export default function MarketAnalysisPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [selectedCommune, setSelectedCommune] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -1256,23 +1262,49 @@ export default function MarketAnalysisPage() {
 
     const loadMarketData = async () => {
       try {
-        // Datos realistas basados en análisis de mercado chileno 2024
-        const mockMarketData: MarketData[] = generateChileMarketData();
+        // Cargar datos reales desde la API
+        const params = new URLSearchParams();
+        if (selectedRegion !== 'all') {
+          params.append('region', selectedRegion);
+        }
+        if (selectedCommune !== 'all') {
+          params.append('commune', selectedCommune);
+        }
 
-        const mockInsights: MarketInsight[] = generateChileMarketInsights(mockMarketData);
+        const response = await fetch(`/api/broker/market-analysis?${params.toString()}`);
 
-        setMarketData(mockMarketData);
-        setInsights(mockInsights);
+        if (!response.ok) {
+          throw new Error('Error al cargar datos de mercado');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          setMarketData(result.data.marketData);
+          setInsights(result.data.insights);
+          logger.info('Datos de mercado reales cargados', {
+            totalLocations: result.data.marketData.length,
+            totalInsights: result.data.insights.length,
+          });
+        } else {
+          throw new Error(result.error || 'Error desconocido');
+        }
+
         setLoading(false);
       } catch (error) {
         logger.error('Error loading market data:', { error });
+        // Fallback a datos mock si la API falla
+        const mockMarketData: MarketData[] = generateChileMarketData();
+        const mockInsights: MarketInsight[] = generateChileMarketInsights(mockMarketData);
+        setMarketData(mockMarketData);
+        setInsights(mockInsights);
         setLoading(false);
       }
     };
 
     loadUserData();
     loadMarketData();
-  }, []);
+  }, [selectedRegion, selectedCommune]);
 
   const getDemandColor = (level: string) => {
     switch (level) {
@@ -1344,18 +1376,57 @@ export default function MarketAnalysisPage() {
     return regionMatch && communeMatch;
   });
 
+  const handleRefreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedRegion !== 'all') {
+        params.append('region', selectedRegion);
+      }
+      if (selectedCommune !== 'all') {
+        params.append('commune', selectedCommune);
+      }
+      params.append('forceRefresh', 'true');
+
+      const response = await fetch(`/api/broker/market-analysis?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar datos de mercado');
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setMarketData(result.data.marketData);
+        setInsights(result.data.insights);
+        logger.info('Datos de mercado actualizados', {
+          totalLocations: result.data.marketData.length,
+        });
+      }
+    } catch (error) {
+      logger.error('Error refreshing market data:', { error });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleExportAnalysis = () => {
     const csvData = filteredData.map(item => ({
       Región: item.region,
       Comuna: item.commune,
       'Código Región': item.regionCode,
       Población: item.population.toLocaleString('es-CL'),
+      'Total Propiedades': item.totalProperties || 0,
+      'Propiedades Activas': item.activeProperties || 0,
       'Arriendo Promedio': formatCurrency(item.averageRent),
       'Nivel de Demanda': getDemandText(item.demandLevel),
       'Tasa de Ocupación': `${item.occupancyRate}%`,
       'Tendencia de Precio': item.priceTrend,
       'Porcentaje de Cambio': `${item.trendPercentage}%`,
       Competidores: item.competitorCount,
+      'Vistas Promedio': item.averageViews || 0,
+      'Consultas Promedio': item.averageInquiries || 0,
+      'Días Promedio para Arrendar': item.avgDaysToRent || 'N/A',
       'Tiempo de Respuesta Promedio': `${item.averageResponseTime}h`,
       'Índice Económico': item.economicIndex,
       'Índice Turístico': item.tourismIndex,
@@ -1422,11 +1493,15 @@ export default function MarketAnalysisPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Análisis de Mercado Nacional</h1>
               <p className="text-gray-600">
-                Cobertura completa de 16 regiones y 346 comunas en Chile
+                Datos en tiempo real basados en {marketData.length} ubicaciones
               </p>
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={handleRefreshData} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+            </Button>
             <Select
               value={selectedRegion}
               onValueChange={value => {
@@ -1576,6 +1651,11 @@ export default function MarketAnalysisPage() {
                         <span className="font-medium">{item.commune}</span>
                         <div className="text-xs text-gray-500 mt-1">
                           {item.regionCode} • {item.population.toLocaleString('es-CL')} hab.
+                          {item.totalProperties && item.totalProperties > 0 && (
+                            <span className="ml-2 text-blue-600">
+                              • {item.totalProperties} props
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4 font-semibold">
