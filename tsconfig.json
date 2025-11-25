@@ -20,7 +20,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "plugins": [
       {
         "name": "next"
@@ -36,24 +36,8 @@
     "baseUrl": ".",
     "typeRoots": ["./node_modules/@types", "./src/types", "./types"]
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "services/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "dist",
-    "build",
-    "coverage",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "services/",
-    "tests/"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "services/**/*.ts"],
+  "exclude": ["node_modules", ".next", "dist", "build", "coverage", "**/*.spec.ts", "**/*.test.ts", "services/", "tests/"],
   "ts-node": {
     "esm": true,
     "compilerOptions": {

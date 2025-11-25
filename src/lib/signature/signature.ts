@@ -1,8 +1,16 @@
 // Sistema de firma electrónica unificado
 import { logger } from '../logger';
 import { db } from '../db';
-import { TrustFactoryProvider, FirmaProProvider, DigitalSignProvider } from './providers';
+import {
+  TrustFactoryProvider,
+  FirmaProProvider,
+  DigitalSignProvider,
+  ESignProvider,
+  FirmaSimpleProvider,
+  FirmaChileProvider,
+} from './providers';
 import { SignatureResult, SignatureStatus } from './types';
+import { IntegrationConfigService } from '../integration-config-service';
 
 // Re-exportar tipos desde el archivo de tipos
 export * from './types';
@@ -10,7 +18,10 @@ export * from './types';
 // Tipo base para proveedores de firma
 export interface SignatureProvider {
   name: string;
-  createSignatureRequest(documentId: string, signers: Array<{ email: string; name: string; role?: string }>): Promise<SignatureResult>;
+  createSignatureRequest(
+    documentId: string,
+    signers: Array<{ email: string; name: string; role?: string }>
+  ): Promise<SignatureResult>;
   getSignatureStatus(requestId: string): Promise<SignatureStatus>;
   cancelSignatureRequest(requestId: string): Promise<void>;
   downloadSignedDocument(signatureId: string): Promise<Buffer | null>;
@@ -26,13 +37,17 @@ export class SignatureService {
   }
 
   private async ensureInitialized() {
-    if (this.initialized) return;
+    if (this.initialized) {
+      return;
+    }
 
     try {
       await this.loadProviders();
       this.initialized = true;
     } catch (error) {
-      logger.error('Error inicializando SignatureService:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error inicializando SignatureService:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Fallback: inicializar con configuración básica
       this.initializeFallbackProviders();
     }
@@ -40,69 +55,153 @@ export class SignatureService {
 
   private async loadProviders() {
     try {
-      // Cargar proveedores desde la base de datos o usar configuración por defecto
-      // Nota: savedConfigs se cargaría aquí si fuera necesario en el futuro
+      // ✅ ACTUALIZADO: Cargar configuraciones desde el admin (BD) con fallback a process.env
 
-      // Configuración por defecto de proveedores autorizados por SII
-      const defaultProviders = [
+      // Proveedores soportados con sus IDs de integración
+      const providerConfigs = [
+        {
+          name: 'eSign',
+          integrationId: 'esign',
+          envKeys: {
+            apiKey: 'ESIGN_API_KEY',
+            secretKey: 'ESIGN_SECRET_KEY',
+            apiUrl: 'ESIGN_API_URL',
+            environment: 'ESIGN_ENVIRONMENT',
+          },
+        },
+        {
+          name: 'FirmaSimple',
+          integrationId: 'firmasimple',
+          envKeys: {
+            apiKey: 'FIRMASIMPLE_API_KEY',
+            clientId: 'FIRMASIMPLE_CLIENT_ID',
+            apiUrl: 'FIRMASIMPLE_API_URL',
+            callbackUrl: 'FIRMASIMPLE_CALLBACK_URL',
+          },
+        },
+        {
+          name: 'FirmaChile',
+          integrationId: 'firmachile',
+          envKeys: {
+            apiKey: 'FIRMACHILE_API_KEY',
+            certificateAuthority: 'FIRMACHILE_CERTIFICATE_AUTHORITY',
+            apiUrl: 'FIRMACHILE_API_URL',
+          },
+        },
         {
           name: 'TrustFactory',
-          config: {
-            apiKey: process.env.TRUSTFACTORY_API_KEY,
-            apiSecret: process.env.TRUSTFACTORY_API_SECRET,
-            certificateId: process.env.TRUSTFACTORY_CERTIFICATE_ID,
-            baseUrl: process.env.TRUSTFACTORY_BASE_URL,
+          integrationId: 'trustfactory',
+          envKeys: {
+            apiKey: 'TRUSTFACTORY_API_KEY',
+            apiSecret: 'TRUSTFACTORY_API_SECRET',
+            certificateId: 'TRUSTFACTORY_CERTIFICATE_ID',
+            baseUrl: 'TRUSTFACTORY_BASE_URL',
           },
-          enabled: !!process.env.TRUSTFACTORY_API_KEY,
         },
         {
           name: 'FirmaPro',
-          config: {
-            apiKey: process.env.FIRMAPRO_API_KEY,
-            apiSecret: process.env.FIRMAPRO_API_SECRET,
-            certificateId: process.env.FIRMAPRO_CERTIFICATE_ID,
-            baseUrl: process.env.FIRMAPRO_BASE_URL,
+          integrationId: 'firmapro',
+          envKeys: {
+            apiKey: 'FIRMAPRO_API_KEY',
+            apiSecret: 'FIRMAPRO_API_SECRET',
+            certificateId: 'FIRMAPRO_CERTIFICATE_ID',
+            baseUrl: 'FIRMAPRO_BASE_URL',
           },
-          enabled: !!process.env.FIRMAPRO_API_KEY,
         },
         {
           name: 'DigitalSign',
-          config: {
-            apiKey: process.env.DIGITALSIGN_API_KEY,
-            apiSecret: process.env.DIGITALSIGN_API_SECRET,
-            certificateId: process.env.DIGITALSIGN_CERTIFICATE_ID,
-            bankIntegration: process.env.DIGITALSIGN_BANK_INTEGRATION === 'true',
-            baseUrl: process.env.DIGITALSIGN_BASE_URL,
+          integrationId: 'digitalsign',
+          envKeys: {
+            apiKey: 'DIGITALSIGN_API_KEY',
+            apiSecret: 'DIGITALSIGN_API_SECRET',
+            certificateId: 'DIGITALSIGN_CERTIFICATE_ID',
+            bankIntegration: 'DIGITALSIGN_BANK_INTEGRATION',
+            baseUrl: 'DIGITALSIGN_BASE_URL',
           },
-          enabled: !!process.env.DIGITALSIGN_API_KEY,
         },
       ];
 
-      // Inicializar proveedores disponibles
-      for (const provider of defaultProviders) {
-        if (provider.enabled) {
-          switch (provider.name) {
-            case 'TrustFactory':
-              this.providers.push(new TrustFactoryProvider(provider.config));
-              break;
-            case 'FirmaPro':
-              this.providers.push(new FirmaProProvider(provider.config));
-              break;
-            case 'DigitalSign':
-              this.providers.push(new DigitalSignProvider(provider.config));
-              break;
+      // Cargar cada proveedor desde BD o env vars
+      for (const providerConfig of providerConfigs) {
+        try {
+          // ✅ Intentar cargar desde BD primero
+          const integration = await IntegrationConfigService.getIntegrationConfig(
+            providerConfig.integrationId
+          );
+
+          let config: Record<string, any>;
+          let enabled = false;
+
+          if (integration && integration.isEnabled && integration.isConfigured) {
+            // ✅ Usar configuración del admin
+            config = integration.config;
+            enabled = true;
+
+            logger.info(`✅ ${providerConfig.name} cargado desde configuración del admin`, {
+              integrationId: providerConfig.integrationId,
+              hasConfig: !!config,
+            });
+          } else {
+            // ⚠️ Fallback a variables de entorno
+            config = {};
+            for (const [key, envVar] of Object.entries(providerConfig.envKeys)) {
+              const envValue = process.env[envVar];
+              if (envValue) {
+                config[key] = envValue;
+              }
+            }
+
+            // Solo habilitar si tiene las credenciales mínimas
+            enabled = !!(config.apiKey && config.apiSecret && config.certificateId);
+
+            if (enabled) {
+              logger.warn(`⚠️ ${providerConfig.name} usando fallback de variables de entorno`, {
+                integrationId: providerConfig.integrationId,
+                hint: 'Configure en /admin/settings/enhanced > Integraciones',
+              });
+            }
           }
+
+          // Crear instancia del proveedor si está habilitado
+          if (enabled) {
+            switch (providerConfig.name) {
+              case 'eSign':
+                this.providers.push(new ESignProvider(config));
+                break;
+              case 'FirmaSimple':
+                this.providers.push(new FirmaSimpleProvider(config));
+                break;
+              case 'FirmaChile':
+                this.providers.push(new FirmaChileProvider(config));
+                break;
+              case 'TrustFactory':
+                this.providers.push(new TrustFactoryProvider(config));
+                break;
+              case 'FirmaPro':
+                this.providers.push(new FirmaProProvider(config));
+                break;
+              case 'DigitalSign':
+                this.providers.push(new DigitalSignProvider(config));
+                break;
+            }
+          } else {
+            logger.debug(`${providerConfig.name} no habilitado - configuración faltante`);
+          }
+        } catch (providerError) {
+          logger.error(`Error cargando proveedor ${providerConfig.name}:`, {
+            error: providerError instanceof Error ? providerError.message : String(providerError),
+          });
         }
       }
 
-      logger.info('Signature providers loaded', {
+      logger.info('✅ Signature providers loaded successfully', {
         count: this.providers.length,
-        providers: this.providers.map(p => p.name)
+        providers: this.providers.map(p => p.name),
+        source: 'admin_config_with_env_fallback',
       });
-
     } catch (error) {
       logger.error('Error loading signature providers:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -113,7 +212,7 @@ export class SignatureService {
       apiKey: process.env.TRUSTFACTORY_API_KEY || '',
       apiSecret: process.env.TRUSTFACTORY_API_SECRET || '',
       certificateId: process.env.TRUSTFACTORY_CERTIFICATE_ID || '',
-      baseUrl: 'https://api.trustfactory.cl/v2'
+      baseUrl: 'https://api.trustfactory.cl/v2',
     };
 
     if (fallbackConfig.apiKey && fallbackConfig.apiSecret && fallbackConfig.certificateId) {
@@ -122,7 +221,7 @@ export class SignatureService {
         logger.warn('SignatureService inicializado con configuración fallback');
       } catch (error) {
         logger.error('Error en fallback de proveedores:', {
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     } else {
@@ -152,9 +251,7 @@ export class SignatureService {
 
     try {
       // Seleccionar proveedor (por defecto el primero disponible)
-      const provider = providerName
-        ? await this.getProvider(providerName)
-        : this.providers[0];
+      const provider = providerName ? await this.getProvider(providerName) : this.providers[0];
 
       if (!provider) {
         return {
@@ -163,7 +260,7 @@ export class SignatureService {
           signatureId: '',
           status: SignatureStatus.FAILED,
           provider: '',
-          timestamp: new Date()
+          timestamp: new Date(),
         };
       }
 
@@ -182,7 +279,7 @@ export class SignatureService {
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
           metadata: JSON.stringify({
             createdBy: 'system',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           }),
           signers: {
             create: signers.map((signer, index) => ({
@@ -192,21 +289,21 @@ export class SignatureService {
               status: SignatureStatus.PENDING,
               metadata: JSON.stringify({
                 order: index + 1,
-                isRequired: true
-              })
-            }))
-          }
+                isRequired: true,
+              }),
+            })),
+          },
         },
         include: {
-          signers: true
-        }
+          signers: true,
+        },
       });
 
       logger.info('Signature request created', {
         signatureId,
         documentId,
         provider: provider.name,
-        signersCount: signers.length
+        signersCount: signers.length,
       });
 
       return {
@@ -218,13 +315,12 @@ export class SignatureService {
         timestamp: new Date(),
         metadata: {
           databaseId: dbRecord.id,
-          expiresAt: dbRecord.expiresAt?.toISOString()
-        }
+          expiresAt: dbRecord.expiresAt?.toISOString(),
+        },
       };
-
     } catch (error) {
       logger.error('Error creating signature request:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return {
         success: false,
@@ -232,7 +328,7 @@ export class SignatureService {
         signatureId: '',
         status: SignatureStatus.FAILED,
         provider: '',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
@@ -242,7 +338,7 @@ export class SignatureService {
     try {
       const signatureRequest = await db.signatureRequest.findUnique({
         where: { id: requestId },
-        include: { signers: true }
+        include: { signers: true },
       });
 
       if (!signatureRequest) {
@@ -259,14 +355,13 @@ export class SignatureService {
       // Actualizar estado en base de datos
       await db.signatureRequest.update({
         where: { id: requestId },
-        data: { status }
+        data: { status },
       });
 
       return status;
-
     } catch (error) {
       logger.error('Error getting signature status:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -277,7 +372,7 @@ export class SignatureService {
     try {
       const signatureRequest = await db.signatureRequest.findUnique({
         where: { id: requestId },
-        include: { signers: true }
+        include: { signers: true },
       });
 
       if (!signatureRequest) {
@@ -296,20 +391,21 @@ export class SignatureService {
 
       // Intentar descargar desde el proveedor
       try {
-        const documentBuffer = await provider.downloadSignedDocument(signatureRequest.providerRequestId || '');
+        const documentBuffer = await provider.downloadSignedDocument(
+          signatureRequest.providerRequestId || ''
+        );
         return documentBuffer;
       } catch (error) {
         logger.error('Error downloading from provider:', {
           error: error instanceof Error ? error.message : String(error),
           provider: signatureRequest.provider,
-          requestId
+          requestId,
         });
         return null;
       }
-
     } catch (error) {
       logger.error('Error downloading signed document:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return null;
     }
@@ -319,7 +415,7 @@ export class SignatureService {
   async cancelSignatureRequest(requestId: string): Promise<void> {
     try {
       const signatureRequest = await db.signatureRequest.findUnique({
-        where: { id: requestId }
+        where: { id: requestId },
       });
 
       if (!signatureRequest) {
@@ -336,14 +432,13 @@ export class SignatureService {
       // Actualizar estado en base de datos
       await db.signatureRequest.update({
         where: { id: requestId },
-        data: { status: SignatureStatus.CANCELLED }
+        data: { status: SignatureStatus.CANCELLED },
       });
 
       logger.info('Signature request cancelled', { requestId });
-
     } catch (error) {
       logger.error('Error cancelling signature request:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }

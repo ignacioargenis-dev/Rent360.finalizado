@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger-minimal';
+import { googleMapsService, type Coordinates as GMCoordinates } from '@/lib/google-maps-service';
 
 /**
  * Coordenadas geográficas
@@ -92,9 +93,9 @@ export class GeolocationService {
     const deltaLatRad = this.toRadians(coord2.latitude - coord1.latitude);
     const deltaLngRad = this.toRadians(coord2.longitude - coord1.longitude);
 
-    const a = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
-              Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-              Math.sin(deltaLngRad / 2) * Math.sin(deltaLngRad / 2);
+    const a =
+      Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
+      Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(deltaLngRad / 2) * Math.sin(deltaLngRad / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -164,7 +165,7 @@ export class GeolocationService {
       logger.info('Buscando proveedores cercanos:', {
         location: criteria.location,
         serviceType: criteria.serviceType,
-        maxDistance: criteria.maxDistance
+        maxDistance: criteria.maxDistance,
       });
 
       const results: ProviderSearchResult[] = [];
@@ -181,7 +182,9 @@ export class GeolocationService {
         }
 
         // Calcular distancia
-        if (!provider.location.coordinates) continue;
+        if (!provider.location.coordinates) {
+          continue;
+        }
         const distance = this.calculateDistance(criteria.location, provider.location.coordinates);
 
         // Filtrar por distancia máxima
@@ -204,7 +207,7 @@ export class GeolocationService {
           provider,
           distance: Math.round(distance * 10) / 10, // Redondear a 1 decimal
           estimatedTime,
-          matchScore
+          matchScore,
         });
       }
 
@@ -214,9 +217,10 @@ export class GeolocationService {
       logger.info(`Encontrados ${results.length} proveedores cercanos`);
 
       return results.slice(0, 20); // Máximo 20 resultados
-
     } catch (error) {
-      logger.error('Error buscando proveedores cercanos', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error buscando proveedores cercanos', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -228,7 +232,7 @@ export class GeolocationService {
     try {
       const providerLocation: ProviderLocation = {
         ...providerData,
-        isActive: true
+        isActive: true,
       };
 
       this.providers.set(providerData.providerId, providerLocation);
@@ -236,11 +240,12 @@ export class GeolocationService {
       logger.info('Ubicación de proveedor registrada:', {
         providerId: providerData.providerId,
         location: providerData.location.city,
-        serviceRadius: providerData.serviceRadius
+        serviceRadius: providerData.serviceRadius,
       });
-
     } catch (error) {
-      logger.error('Error registrando ubicación de proveedor', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error registrando ubicación de proveedor', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -248,7 +253,10 @@ export class GeolocationService {
   /**
    * Actualiza la ubicación de un proveedor
    */
-  async updateProviderLocation(providerId: string, updates: Partial<ProviderLocation>): Promise<void> {
+  async updateProviderLocation(
+    providerId: string,
+    updates: Partial<ProviderLocation>
+  ): Promise<void> {
     try {
       const existingProvider = this.providers.get(providerId);
       if (!existingProvider) {
@@ -259,9 +267,10 @@ export class GeolocationService {
       this.providers.set(providerId, updatedProvider);
 
       logger.info('Ubicación de proveedor actualizada:', { providerId });
-
     } catch (error) {
-      logger.error('Error actualizando ubicación de proveedor', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error actualizando ubicación de proveedor', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -273,7 +282,9 @@ export class GeolocationService {
     const providers: ProviderLocation[] = [];
 
     for (const [providerId, provider] of this.providers) {
-      if (!provider.isActive || !provider.location.coordinates) continue;
+      if (!provider.isActive || !provider.location.coordinates) {
+        continue;
+      }
 
       const distance = this.calculateDistance(center, provider.location.coordinates);
       if (distance <= radiusKm) {
@@ -289,12 +300,29 @@ export class GeolocationService {
    */
   async geocodeAddress(address: string): Promise<Location> {
     try {
-      // En una implementación real, usaríamos una API como Google Maps, Mapbox, etc.
-      // Por ahora simulamos geocodificación basada en direcciones chilenas conocidas
-
       logger.info('Geocodificando dirección:', { address });
 
-      // Simulación de geocodificación para Chile
+      // Intentar usar Google Maps si está configurado
+      if (googleMapsService.getConfig()) {
+        try {
+          const result = await googleMapsService.geocodeAddress(address);
+          return {
+            coordinates: result.coordinates,
+            address: result.addressComponents.street || address,
+            city: result.addressComponents.city || 'Santiago',
+            region: result.addressComponents.region || 'Región Metropolitana',
+            country: result.addressComponents.country || 'Chile',
+            postalCode: result.addressComponents.postalCode || '',
+            formattedAddress: result.formattedAddress,
+          };
+        } catch (gmError) {
+          logger.warn('Google Maps no disponible, usando fallback', {
+            error: gmError instanceof Error ? gmError.message : String(gmError),
+          });
+        }
+      }
+
+      // Fallback: Simulación de geocodificación para Chile
       const mockLocations: Record<string, Location> = {
         'Santiago Centro': {
           coordinates: { latitude: -33.4489, longitude: -70.6693 },
@@ -302,15 +330,15 @@ export class GeolocationService {
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Santiago Centro, Región Metropolitana, Chile'
+          formattedAddress: 'Santiago Centro, Región Metropolitana, Chile',
         },
-        'Providencia': {
+        Providencia: {
           coordinates: { latitude: -33.4314, longitude: -70.6093 },
           address: 'Providencia',
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Providencia, Santiago, Región Metropolitana, Chile'
+          formattedAddress: 'Providencia, Santiago, Región Metropolitana, Chile',
         },
         'Las Condes': {
           coordinates: { latitude: -33.4155, longitude: -70.5831 },
@@ -318,8 +346,8 @@ export class GeolocationService {
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Las Condes, Santiago, Región Metropolitana, Chile'
-        }
+          formattedAddress: 'Las Condes, Santiago, Región Metropolitana, Chile',
+        },
       };
 
       // Buscar por coincidencia parcial
@@ -336,13 +364,14 @@ export class GeolocationService {
         city: 'Santiago',
         region: 'Región Metropolitana',
         country: 'Chile',
-        formattedAddress: `${address}, Santiago, Región Metropolitana, Chile`
+        formattedAddress: `${address}, Santiago, Región Metropolitana, Chile`,
       };
 
       return defaultLocation;
-
     } catch (error) {
-      logger.error('Error geocodificando dirección', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error geocodificando dirección', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw new Error('No se pudo geocodificar la dirección');
     }
   }
@@ -352,12 +381,29 @@ export class GeolocationService {
    */
   async reverseGeocode(coordinates: Coordinates): Promise<Location> {
     try {
-      // En una implementación real, usaríamos una API de geocodificación inversa
-      // Por ahora simulamos basado en coordenadas conocidas
-
       logger.info('Reverse geocoding', { coordinates });
 
-      // Simular reverse geocoding para Santiago
+      // Intentar usar Google Maps si está configurado
+      if (googleMapsService.getConfig()) {
+        try {
+          const result = await googleMapsService.reverseGeocode(coordinates);
+          return {
+            coordinates: result.coordinates,
+            address: result.addressComponents.street || result.address,
+            city: result.addressComponents.city || 'Santiago',
+            region: result.addressComponents.region || 'Región Metropolitana',
+            country: result.addressComponents.country || 'Chile',
+            postalCode: result.addressComponents.postalCode || '',
+            formattedAddress: result.formattedAddress,
+          };
+        } catch (gmError) {
+          logger.warn('Google Maps no disponible, usando fallback', {
+            error: gmError instanceof Error ? gmError.message : String(gmError),
+          });
+        }
+      }
+
+      // Fallback: Simular reverse geocoding para Santiago
       const locations = [
         {
           coordinates: { latitude: -33.4489, longitude: -70.6693 },
@@ -365,7 +411,7 @@ export class GeolocationService {
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Plaza de Armas, Santiago Centro, Región Metropolitana, Chile'
+          formattedAddress: 'Plaza de Armas, Santiago Centro, Región Metropolitana, Chile',
         },
         {
           coordinates: { latitude: -33.4314, longitude: -70.6093 },
@@ -373,8 +419,8 @@ export class GeolocationService {
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Providencia, Santiago, Región Metropolitana, Chile'
-        }
+          formattedAddress: 'Providencia, Santiago, Región Metropolitana, Chile',
+        },
       ];
 
       // Encontrar la ubicación más cercana
@@ -388,7 +434,9 @@ export class GeolocationService {
       let minDistance = this.calculateDistance(coordinates, closestLocation.coordinates);
 
       for (const location of locations.slice(1)) {
-        if (!location.coordinates) continue;
+        if (!location.coordinates) {
+          continue;
+        }
         const distance = this.calculateDistance(coordinates, location.coordinates);
         if (distance < minDistance) {
           minDistance = distance;
@@ -397,9 +445,10 @@ export class GeolocationService {
       }
 
       return closestLocation;
-
     } catch (error) {
-      logger.error('Error en reverse geocoding', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error en reverse geocoding', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw new Error('No se pudo obtener la dirección');
     }
   }
@@ -415,18 +464,19 @@ export class GeolocationService {
         businessName: 'Mantenimiento Express',
         location: {
           coordinates: { latitude: -33.4489, longitude: -70.6693 },
-          address: 'Av. Libertador Bernardo O\'Higgins 123',
+          address: "Av. Libertador Bernardo O'Higgins 123",
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Av. Libertador Bernardo O\'Higgins 123, Santiago Centro, Región Metropolitana, Chile'
+          formattedAddress:
+            "Av. Libertador Bernardo O'Higgins 123, Santiago Centro, Región Metropolitana, Chile",
         },
         serviceRadius: 20,
         serviceAreas: ['Santiago Centro', 'Estación Central', 'Independencia'],
         isActive: true,
         rating: 4.5,
         totalJobs: 150,
-        specialties: ['plomeria', 'electricidad', 'carpinteria']
+        specialties: ['plomeria', 'electricidad', 'carpinteria'],
       },
       {
         providerId: 'prov_002',
@@ -438,14 +488,14 @@ export class GeolocationService {
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Providencia 456, Providencia, Región Metropolitana, Chile'
+          formattedAddress: 'Providencia 456, Providencia, Región Metropolitana, Chile',
         },
         serviceRadius: 15,
         serviceAreas: ['Providencia', 'Las Condes', 'Vitacura'],
         isActive: true,
         rating: 4.8,
         totalJobs: 200,
-        specialties: ['limpieza', 'jardineria', 'fumigacion']
+        specialties: ['limpieza', 'jardineria', 'fumigacion'],
       },
       {
         providerId: 'prov_003',
@@ -457,15 +507,15 @@ export class GeolocationService {
           city: 'Santiago',
           region: 'Región Metropolitana',
           country: 'Chile',
-          formattedAddress: 'Las Condes 789, Las Condes, Región Metropolitana, Chile'
+          formattedAddress: 'Las Condes 789, Las Condes, Región Metropolitana, Chile',
         },
         serviceRadius: 25,
         serviceAreas: ['Las Condes', 'Vitacura', 'Lo Barnechea'],
         isActive: true,
         rating: 4.2,
         totalJobs: 95,
-        specialties: ['aire_acondicionado', 'electrodomesticos', 'seguridad']
-      }
+        specialties: ['aire_acondicionado', 'electrodomesticos', 'seguridad'],
+      },
     ];
 
     mockProviders.forEach(provider => {
@@ -487,19 +537,18 @@ export class GeolocationService {
     const providers = Array.from(this.providers.values());
     const activeProviders = providers.filter(p => p.isActive);
 
-    const averageRadius = activeProviders.length > 0
-      ? activeProviders.reduce((sum, p) => sum + p.serviceRadius, 0) / activeProviders.length
-      : 0;
+    const averageRadius =
+      activeProviders.length > 0
+        ? activeProviders.reduce((sum, p) => sum + p.serviceRadius, 0) / activeProviders.length
+        : 0;
 
-    const coverageAreas = [...new Set(
-      activeProviders.flatMap(p => p.serviceAreas)
-    )];
+    const coverageAreas = [...new Set(activeProviders.flatMap(p => p.serviceAreas))];
 
     return {
       totalProviders: providers.length,
       activeProviders: activeProviders.length,
       averageServiceRadius: Math.round(averageRadius),
-      coverageAreas
+      coverageAreas,
     };
   }
 }

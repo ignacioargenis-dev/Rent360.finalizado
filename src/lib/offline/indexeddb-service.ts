@@ -1,7 +1,10 @@
 // IndexedDB Service para Rent360
 // Gestión robusta de almacenamiento offline con capacidad ilimitada
-// @ts-nocheck - Incompatibilidad con idb DBSchema y exactOptionalPropertyTypes
 
+// @ts-nocheck
+// Nota: La librería 'idb' tiene incompatibilidades de tipos con DBSchema
+// que generan errores incluso con configuraciones estándar de TypeScript.
+// Esto es un problema conocido: https://github.com/jakearchibald/idb/issues/352
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { logger } from '@/lib/logger-minimal';
 

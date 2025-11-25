@@ -116,6 +116,13 @@ const getMenuItems = (): RoleMenuItems => ({
       badgeVariant: 'destructive',
     },
     {
+      title: 'Verificación KYC',
+      url: '/admin/kyc',
+      icon: Shield,
+      badge: 'Seguridad',
+      badgeVariant: 'secondary',
+    },
+    {
       title: 'Propiedades',
       url: '/admin/properties',
       icon: Building,
