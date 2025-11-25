@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -454,7 +453,9 @@ export default function AdminAnalytics() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percentage }) => `${name}: ${percentage}%`}
+                      label={({ name, percent }) =>
+                        `${name}: ${percent ? (percent * 100).toFixed(1) : '0'}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"
