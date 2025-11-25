@@ -178,15 +178,15 @@ export async function GET(request: NextRequest) {
 
     for (const broker of brokers) {
       try {
-        const brokerStats = await CommissionService.getBrokerCommissionStats(broker.id);
-        totalCommissions += brokerStats.totalCommissionValue;
-        totalActiveContracts += brokerStats.totalContracts;
+        const brokerStats = await CommissionService.getCommissionStats(broker.id);
+        totalCommissions += brokerStats.totalAmount;
+        totalActiveContracts += brokerStats.totalCommissions;
 
         brokerCommissions.push({
           id: broker.id,
           name: broker.name,
-          commissions: brokerStats.totalCommissionValue,
-          activeContracts: brokerStats.totalContracts,
+          commissions: brokerStats.totalAmount,
+          activeContracts: brokerStats.totalCommissions,
         });
       } catch (error) {
         logger.warn('Error calculating broker stats', { brokerId: broker.id, error });

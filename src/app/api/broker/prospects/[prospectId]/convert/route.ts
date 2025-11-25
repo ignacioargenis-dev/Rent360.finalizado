@@ -225,6 +225,14 @@ export async function POST(request: NextRequest, { params }: { params: { prospec
       propertiesManaged: validatedData.propertyIds?.length || 0,
     });
 
+    // Ejecutar hooks de conversión
+    const { ProspectHooks } = await import('@/lib/prospect-hooks');
+    ProspectHooks.onStatusChanged(prospectId, 'NEGOTIATING', 'CONVERTED', user.id).catch(error => {
+      logger.error('Error en hook onStatusChanged para conversión', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+
     console.log('✅ [CONVERT_PROSPECT] Prospecto convertido exitosamente:', result.id);
 
     return NextResponse.json({

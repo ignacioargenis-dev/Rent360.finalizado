@@ -242,6 +242,7 @@ model Property {
 
   // Relaciones del sistema de prospects
   sharedWithProspects ProspectPropertyShare[]    @relation("SharedWithProspects")
+  prospectViews       ProspectPropertyView[]     @relation("PropertyViews")
   managedByBroker     BrokerPropertyManagement[] @relation("ManagedByBroker")
 
   @@index([ownerId])
@@ -373,9 +374,12 @@ model Payment {
   amount        Float
   dueDate       DateTime
   paidDate      DateTime?
+  paidAt        DateTime? // Alias para paidDate, mantiene compatibilidad
   status        String    @default("PENDING")
   method        String?
+  paymentMethod String?   // Alias para method, mantiene compatibilidad
   transactionId String?
+  reference     String?   // Referencia del pago
   notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -674,6 +678,7 @@ model Notification {
   link      String? // Link to redirect when clicked
   priority  String    @default("medium") // low, medium, high
   isRead    Boolean   @default(false)
+  read      Boolean   @default(false) // Alias para isRead (compatibilidad)
   readAt    DateTime? // When was marked as read
   metadata  String? // JSON for additional structured data
   createdAt DateTime  @default(now())
@@ -682,6 +687,10 @@ model Notification {
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
   @@map("notifications")
 }
 
@@ -1940,6 +1949,7 @@ model BrokerProspect {
   // Actividades relacionadas
   activities       ProspectActivity[]
   sharedProperties ProspectPropertyShare[]
+  propertyViews    ProspectPropertyView[]
   convertedClient  BrokerClient?           @relation("ConvertedProspect", fields: [convertedToClientId], references: [id], onDelete: SetNull)
 
   // Sistema de captación
@@ -2086,6 +2096,8 @@ model ProspectActivity {
   title       String
   description String?
   outcome     String? // successful, unsuccessful, pending, scheduled
+  duration    Int?    // Duración en minutos
+  notes       String? // Notas adicionales sobre la actividad
 
   // Scheduling (para actividades futuras)
   scheduledFor DateTime?
@@ -2146,9 +2158,10 @@ model ProspectPropertyShare {
   brokerId   String
 
   // Tracking
-  sharedAt  DateTime  @default(now())
-  viewedAt  DateTime?
-  viewCount Int       @default(0)
+  sharedAt     DateTime  @default(now())
+  viewedAt     DateTime?
+  lastViewedAt DateTime? // Última vez que se vio
+  viewCount    Int       @default(0)
 
   // Mensaje personalizado
   message String?
@@ -2164,15 +2177,50 @@ model ProspectPropertyShare {
   updatedAt DateTime @updatedAt
 
   // Relaciones
-  prospect BrokerProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
-  property Property       @relation("SharedWithProspects", fields: [propertyId], references: [id], onDelete: Cascade)
-  broker   User           @relation("BrokerPropertyShares", fields: [brokerId], references: [id], onDelete: Cascade)
+  prospect BrokerProspect         @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  property Property               @relation("SharedWithProspects", fields: [propertyId], references: [id], onDelete: Cascade)
+  broker   User                   @relation("BrokerPropertyShares", fields: [brokerId], references: [id], onDelete: Cascade)
+  views    ProspectPropertyView[]
 
   @@index([prospectId])
   @@index([propertyId])
   @@index([brokerId])
   @@index([sharedAt])
   @@map("prospect_property_shares")
+}
+
+// Tracking detallado de visualizaciones de propiedades
+model ProspectPropertyView {
+  id         String @id @default(cuid())
+  prospectId String
+  propertyId String
+  shareId    String // Referencia al share específico
+
+  // Timestamp
+  viewedAt DateTime @default(now())
+
+  // Duración de la visualización
+  durationSeconds Int @default(0)
+
+  // Información de tracking
+  userAgent String?
+  ipAddress String?
+
+  // Metadata adicional
+  metadata Json? // Información adicional (device, browser, etc.)
+
+  createdAt DateTime @default(now())
+
+  // Relaciones
+  prospect BrokerProspect        @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  property Property              @relation("PropertyViews", fields: [propertyId], references: [id], onDelete: Cascade)
+  share    ProspectPropertyShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId])
+  @@index([propertyId])
+  @@index([shareId])
+  @@index([viewedAt])
+  @@map("prospect_property_views")
 }
 
 // Enums para el sistema de prospects

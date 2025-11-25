@@ -2,16 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { ProspectHooks } from '@/lib/prospect-hooks';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 // Forzar renderizado dinámico
 export const dynamic = 'force-dynamic';
 
+// Schema de validación para crear actividad
 const createActivitySchema = z.object({
   activityType: z.enum([
-    'email',
     'call',
     'meeting',
+    'email',
+    'message',
     'property_view',
     'proposal',
     'note',
@@ -20,8 +24,10 @@ const createActivitySchema = z.object({
   ]),
   title: z.string().min(1, 'Título es requerido'),
   description: z.string().optional(),
-  outcome: z.enum(['successful', 'unsuccessful', 'pending', 'scheduled']).optional(),
   scheduledFor: z.string().datetime().optional(),
+  duration: z.number().optional(),
+  outcome: z.enum(['successful', 'unsuccessful', 'pending']).optional(),
+  notes: z.string().optional(),
   metadata: z.record(z.any()).optional(),
 });
 
@@ -31,10 +37,6 @@ const createActivitySchema = z.object({
  */
 export async function GET(request: NextRequest, { params }: { params: { prospectId: string } }) {
   try {
-    console.log(
-      '🔍 [PROSPECT_ACTIVITIES] Iniciando GET /api/broker/prospects/[prospectId]/activities'
-    );
-
     const user = await requireAuth(request);
 
     if (user.role !== 'BROKER') {
@@ -46,14 +48,14 @@ export async function GET(request: NextRequest, { params }: { params: { prospect
 
     const prospectId = params.prospectId;
 
-    // Verificar que el prospect existe y pertenece al corredor
+    // Verificar que el prospect pertenece al broker
     const prospect = await db.brokerProspect.findUnique({
       where: { id: prospectId },
       select: { id: true, brokerId: true },
     });
 
     if (!prospect) {
-      return NextResponse.json({ error: 'Prospecto no encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'Prospect no encontrado' }, { status: 404 });
     }
 
     if (prospect.brokerId !== user.id) {
@@ -63,35 +65,28 @@ export async function GET(request: NextRequest, { params }: { params: { prospect
     // Obtener actividades
     const activities = await db.prospectActivity.findMany({
       where: { prospectId },
-      include: {
-        broker: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-      },
       orderBy: {
         createdAt: 'desc',
       },
     });
-
-    console.log('✅ [PROSPECT_ACTIVITIES] Actividades encontradas:', activities.length);
 
     return NextResponse.json({
       success: true,
       data: activities,
     });
   } catch (error) {
-    console.error('❌ [PROSPECT_ACTIVITIES] Error:', error);
     logger.error('Error obteniendo actividades del prospect:', {
       error: error instanceof Error ? error.message : String(error),
       prospectId: params.prospectId,
     });
 
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Error interno del servidor',
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -101,10 +96,6 @@ export async function GET(request: NextRequest, { params }: { params: { prospect
  */
 export async function POST(request: NextRequest, { params }: { params: { prospectId: string } }) {
   try {
-    console.log(
-      '🔍 [CREATE_ACTIVITY] Iniciando POST /api/broker/prospects/[prospectId]/activities'
-    );
-
     const user = await requireAuth(request);
 
     if (user.role !== 'BROKER') {
@@ -115,91 +106,59 @@ export async function POST(request: NextRequest, { params }: { params: { prospec
     }
 
     const prospectId = params.prospectId;
-    const body = await request.json();
-    console.log('📋 [CREATE_ACTIVITY] Datos recibidos:', body);
 
-    // Validar datos
-    const validatedData = createActivitySchema.parse(body);
-
-    // Verificar que el prospect existe y pertenece al corredor
+    // Verificar que el prospect pertenece al broker
     const prospect = await db.brokerProspect.findUnique({
       where: { id: prospectId },
-      select: { id: true, brokerId: true, contactCount: true, emailsSent: true },
+      select: { id: true, brokerId: true },
     });
 
     if (!prospect) {
-      return NextResponse.json({ error: 'Prospecto no encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'Prospect no encontrado' }, { status: 404 });
     }
 
     if (prospect.brokerId !== user.id) {
       return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
     }
 
-    // Crear la actividad
-    const activityData: any = {
-      prospectId,
-      brokerId: user.id,
-      activityType: validatedData.activityType,
-      title: validatedData.title,
-      description: validatedData.description ?? null,
-      outcome: validatedData.outcome || 'pending',
-      scheduledFor: validatedData.scheduledFor ? new Date(validatedData.scheduledFor) : null,
-      completedAt:
-        validatedData.outcome === 'successful' || validatedData.outcome === 'unsuccessful'
-          ? new Date()
-          : null,
-    };
+    // Validar datos
+    const body = await request.json();
+    const validatedData = createActivitySchema.parse(body);
 
-    // Solo incluir metadata si tiene valor
-    if (validatedData.metadata) {
-      activityData.metadata = validatedData.metadata;
-    }
+    // Preparar metadata (solo para campos adicionales que no tienen campo propio)
+    const metadataObj: any = validatedData.metadata || {};
 
+    // Crear actividad
     const activity = await db.prospectActivity.create({
-      data: activityData,
-      include: {
-        broker: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
+      data: {
+        prospectId,
+        brokerId: user.id,
+        activityType: validatedData.activityType,
+        title: validatedData.title,
+        description: validatedData.description || null,
+        duration: validatedData.duration || null,
+        notes: validatedData.notes || null,
+        scheduledFor: validatedData.scheduledFor ? new Date(validatedData.scheduledFor) : null,
+        outcome: validatedData.outcome || 'pending',
+        metadata:
+          Object.keys(metadataObj).length > 0 ? JSON.stringify(metadataObj) : Prisma.JsonNull,
+        completedAt: validatedData.outcome !== 'pending' ? new Date() : null,
       },
-    });
-
-    // Actualizar métricas del prospect
-    const updateData: any = {
-      lastContactDate: new Date(),
-    };
-
-    // Incrementar contadores según el tipo de actividad
-    if (['email', 'call', 'meeting'].includes(validatedData.activityType)) {
-      updateData.contactCount = prospect.contactCount + 1;
-    }
-    if (validatedData.activityType === 'email') {
-      updateData.emailsSent = prospect.emailsSent + 1;
-    }
-
-    // Si es follow_up programado, actualizar nextFollowUpDate
-    if (validatedData.activityType === 'follow_up' && validatedData.scheduledFor) {
-      updateData.nextFollowUpDate = new Date(validatedData.scheduledFor);
-    }
-
-    await db.brokerProspect.update({
-      where: { id: prospectId },
-      data: updateData,
     });
 
     logger.info('Actividad creada para prospect', {
       brokerId: user.id,
       prospectId,
       activityId: activity.id,
-      activityType: validatedData.activityType,
+      activityType: activity.activityType,
     });
 
-    console.log('✅ [CREATE_ACTIVITY] Actividad creada exitosamente:', activity.id);
+    // Ejecutar hooks automáticos
+    ProspectHooks.onActivityCreated(prospectId, validatedData.activityType).catch(error => {
+      logger.error('Error en hook onActivityCreated', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
 
     return NextResponse.json({
       success: true,
@@ -208,7 +167,6 @@ export async function POST(request: NextRequest, { params }: { params: { prospec
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('❌ [CREATE_ACTIVITY] Error de validación:', error.errors);
       return NextResponse.json(
         {
           success: false,
@@ -219,9 +177,9 @@ export async function POST(request: NextRequest, { params }: { params: { prospec
       );
     }
 
-    console.error('❌ [CREATE_ACTIVITY] Error:', error);
     logger.error('Error creando actividad:', {
       error: error instanceof Error ? error.message : String(error),
+      prospectId: params.prospectId,
     });
 
     return NextResponse.json(

@@ -197,15 +197,68 @@ export async function POST(request: NextRequest, { params }: { params: { prospec
       },
     });
 
-    // TODO: Enviar email si sendEmail es true
+    // Enviar email si sendEmail es true
     if (validatedData.sendEmail && prospect.email) {
-      // Aquí iría la lógica de envío de email
-      logger.info('Email de propiedad compartida pendiente de envío', {
-        prospectEmail: prospect.email,
-        propertyId: property.id,
-        shareLink,
-      });
+      try {
+        const { EmailService } = await import('@/lib/email-service');
+
+        // Obtener datos del broker
+        const broker = await db.user.findUnique({
+          where: { id: user.id },
+          select: { name: true },
+        });
+
+        const success = await EmailService.sendTemplateEmail(prospect.email, 'shared-property', {
+          prospectName: prospect.name,
+          brokerName: broker?.name || 'Tu asesor',
+          property: {
+            title: property.title,
+            address: property.address,
+            price: property.price,
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            area: property.area,
+            images: property.images ? JSON.parse(property.images as string) : [],
+          },
+          shareLink,
+          message: validatedData.message,
+        });
+
+        if (success) {
+          logger.info('Email de propiedad compartida enviado exitosamente', {
+            prospectEmail: prospect.email,
+            propertyId: property.id,
+            shareLink,
+          });
+
+          // Registrar envío de email usando hook
+          const { ProspectHooks } = await import('@/lib/prospect-hooks');
+          ProspectHooks.onEmailSent(prospectId).catch(error => {
+            logger.error('Error en hook onEmailSent', {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          });
+        } else {
+          logger.warn('Error enviando email de propiedad compartida', {
+            prospectEmail: prospect.email,
+          });
+        }
+      } catch (emailError) {
+        logger.error('Error en servicio de email', {
+          error: emailError instanceof Error ? emailError.message : String(emailError),
+          prospectEmail: prospect.email,
+        });
+        // No fallar la request si el email falla
+      }
     }
+
+    // Ejecutar hook de propiedad compartida
+    const { ProspectHooks } = await import('@/lib/prospect-hooks');
+    ProspectHooks.onPropertyShared(prospectId, validatedData.propertyId, user.id).catch(error => {
+      logger.error('Error en hook onPropertyShared', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
 
     logger.info('Propiedad compartida con prospect', {
       brokerId: user.id,

@@ -6,7 +6,7 @@ import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * POST /api/admin/commissions/payouts
- * Genera un payout de comisiones para un broker
+ * Genera un reporte de comisiones para un broker en un período
  */
 export async function POST(request: NextRequest) {
   try {
@@ -29,19 +29,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const payout = await CommissionService.generateCommissionPayout(
+    // Obtener todas las comisiones del broker
+    const allCommissions = await CommissionService.getBrokerCommissions(brokerId);
+
+    // Filtrar por fecha
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const commissionsInPeriod = allCommissions.filter(commission => {
+      const commissionDate = commission.dueDate;
+      return commissionDate >= start && commissionDate <= end;
+    });
+
+    // Calcular totales
+    const totalAmount = commissionsInPeriod.reduce((sum, c) => sum + c.commissionAmount, 0);
+    const paidAmount = commissionsInPeriod
+      .filter(c => c.paymentStatus === 'PAID')
+      .reduce((sum, c) => sum + c.commissionAmount, 0);
+    const pendingAmount = commissionsInPeriod
+      .filter(c => c.paymentStatus === 'PENDING')
+      .reduce((sum, c) => sum + c.commissionAmount, 0);
+
+    const payout = {
       brokerId,
-      new Date(startDate),
-      new Date(endDate)
-    );
+      period: { startDate, endDate },
+      commissions: commissionsInPeriod,
+      summary: {
+        total: commissionsInPeriod.length,
+        totalAmount,
+        paidAmount,
+        pendingAmount,
+        avgCommissionRate:
+          commissionsInPeriod.length > 0
+            ? commissionsInPeriod.reduce((sum, c) => sum + c.commissionRate, 0) /
+              commissionsInPeriod.length
+            : 0,
+      },
+    };
 
     return NextResponse.json({
       success: true,
       data: payout,
-      message: 'Payout de comisión generado exitosamente',
+      message: 'Reporte de comisiones generado exitosamente',
     });
   } catch (error) {
-    logger.error('Error generando payout de comisión:', {
+    logger.error('Error generando reporte de comisiones:', {
       error: error instanceof Error ? error.message : String(error),
     });
     const errorResponse = handleApiError(error);

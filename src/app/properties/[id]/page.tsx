@@ -30,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import { logger } from '@/lib/logger-minimal';
+import VirtualTourSection from '@/components/virtual-tour/VirtualTourSection';
 
 interface Property {
   id: string;
@@ -585,6 +586,9 @@ export default function PublicPropertyDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Tour Virtual 360° */}
+            <VirtualTourSection propertyId={propertyId} />
 
             {/* Property Details */}
             <Card>

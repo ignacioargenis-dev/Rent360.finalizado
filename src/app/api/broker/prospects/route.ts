@@ -325,6 +325,14 @@ export async function POST(request: NextRequest) {
       leadScore,
     });
 
+    // Ejecutar hooks automáticos
+    const { ProspectHooks } = await import('@/lib/prospect-hooks');
+    ProspectHooks.onProspectCreated(prospect.id, user.id).catch(error => {
+      logger.error('Error en hook onProspectCreated', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+
     console.log('✅ [PROSPECTS] Prospect creado exitosamente:', prospect.id);
 
     return NextResponse.json({

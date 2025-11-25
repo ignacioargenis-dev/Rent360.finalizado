@@ -5,8 +5,8 @@ import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 
 /**
- * GET /api/admin/commissions/config
- * Obtiene la configuración actual de comisiones
+ * GET /api/admin/commissions
+ * Obtiene estadísticas globales de comisiones (todos los brokers)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +19,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const config = await CommissionService.getCommissionConfig();
+    // Para admin, podríamos retornar config por defecto
+    const config = {
+      defaultCommissionRate: 5.0,
+      paymentTermDays: 30,
+      currency: 'CLP',
+      description: 'Configuración de comisiones del sistema',
+    };
 
     return NextResponse.json({
       success: true,
@@ -56,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ID de contrato requerido' }, { status: 400 });
     }
 
-    const calculation = await CommissionService.calculateCommission(contractId, brokerId);
+    const calculation = await CommissionService.calculateCommission(contractId);
 
     return NextResponse.json({
       success: true,
