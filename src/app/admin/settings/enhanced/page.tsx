@@ -120,6 +120,9 @@ import {
   Truck,
   Wrench,
   X,
+  Map,
+  FileSignature,
+  Fingerprint,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { User as UserType } from '@/types';
@@ -3839,24 +3842,12 @@ El equipo de Rent360`,
 
       const data = await response.json();
 
-      // Filtrar integraciones: excluir pagos y firmas, y mapear a formato de UI
+      // Filtrar integraciones: excluir solo pagos (tienen su propia pestaña)
       const filteredIntegrations: Integration[] = data.integrations
         .filter((integration: any) => {
-          // Excluir pagos y firmas
-          return (
-            integration.category !== 'payments' &&
-            integration.category !== 'signature' &&
-            // Incluir solo las integraciones de terceros
-            [
-              'twilio',
-              'sendgrid',
-              'google-analytics',
-              'aws-s3',
-              'digitalocean-spaces',
-              'pusher',
-              'socket-io',
-            ].includes(integration.id)
-          );
+          // Excluir solo pagos (tienen su propia pestaña de Payments)
+          // Incluir TODO lo demás: identity (KYC), maps, communication, storage, signature, analytics, etc.
+          return integration.category !== 'payments';
         })
         .map((integration: any) => {
           // Determinar estado basado en configuración
@@ -4118,6 +4109,12 @@ El equipo de Rent360`,
         return <BarChart3 className="w-5 h-5 text-green-600" />;
       case 'storage':
         return <Cloud className="w-5 h-5 text-purple-600" />;
+      case 'identity':
+        return <ShieldCheck className="w-5 h-5 text-indigo-600" />;
+      case 'maps':
+        return <Map className="w-5 h-5 text-red-600" />;
+      case 'signature':
+        return <FileSignature className="w-5 h-5 text-amber-600" />;
       default:
         return <Settings className="w-5 h-5 text-gray-600" />;
     }
@@ -4381,7 +4378,13 @@ El equipo de Rent360`,
                               ? 'Analytics'
                               : integration.type === 'storage'
                                 ? 'Almacenamiento'
-                                : integration.type}
+                                : integration.type === 'identity'
+                                  ? 'Verificación KYC'
+                                  : integration.type === 'maps'
+                                    ? 'Mapas'
+                                    : integration.type === 'signature'
+                                      ? 'Firma Electrónica'
+                                      : integration.type}
                         </Badge>
                       </TableCell>
                       <TableCell>{getStatusBadge(integration.status)}</TableCell>
