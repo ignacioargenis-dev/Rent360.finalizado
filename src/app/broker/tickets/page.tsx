@@ -37,6 +37,18 @@ import {
   Check,
   X,
   Download,
+  HelpCircle,
+  BookOpen,
+  Video,
+  FileText,
+  Lightbulb,
+  Target,
+  Building,
+  DollarSign,
+  BarChart3,
+  Users,
+  TrendingUp,
+  Calendar,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -75,6 +87,7 @@ interface SupportTicketResponse {
 export default function BrokerTicketsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('tickets');
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [validationError, setValidationError] = useState<string>('');
@@ -85,6 +98,8 @@ export default function BrokerTicketsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [faqSearchTerm, setFaqSearchTerm] = useState('');
+  const [guideSearchTerm, setGuideSearchTerm] = useState('');
 
   // Estados para el diálogo de exportación
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -397,12 +412,12 @@ export default function BrokerTicketsPage() {
   if (!user) {
     return (
       <UnifiedDashboardLayout
-        title="Mis Tickets"
-        subtitle="Gestiona tus consultas sobre corretaje y soporte"
+        title="Soporte y Ayuda"
+        subtitle="Tickets, FAQs, guías y tutoriales para corredores"
       >
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Acceso Denegado</h1>
-          <p className="text-gray-600">Debes iniciar sesión para acceder a tus tickets.</p>
+          <p className="text-gray-600">Debes iniciar sesión para acceder al centro de ayuda.</p>
         </div>
       </UnifiedDashboardLayout>
     );
@@ -410,10 +425,33 @@ export default function BrokerTicketsPage() {
 
   return (
     <UnifiedDashboardLayout
-      title="Mis Tickets"
-      subtitle="Gestiona tus consultas sobre corretaje y soporte"
+      title="Soporte y Ayuda"
+      subtitle="Tickets, FAQs, guías y tutoriales para corredores"
     >
       <div className="container mx-auto px-4 py-8">
+        {/* Tabs de navegación */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger value="tickets" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Mis Tickets
+            </TabsTrigger>
+            <TabsTrigger value="faqs" className="flex items-center gap-2">
+              <HelpCircle className="h-4 w-4" />
+              Preguntas Frecuentes
+            </TabsTrigger>
+            <TabsTrigger value="guides" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Guías Rápidas
+            </TabsTrigger>
+            <TabsTrigger value="tutorials" className="flex items-center gap-2">
+              <Video className="h-4 w-4" />
+              Tutoriales
+            </TabsTrigger>
+          </TabsList>
+
+          {/* TAB: MIS TICKETS */}
+          <TabsContent value="tickets">
         <div className="flex justify-between items-center mb-8">
           <div></div>
 
@@ -820,6 +858,778 @@ export default function BrokerTicketsPage() {
             )}
           </DialogContent>
         </Dialog>
+
+          </TabsContent>
+
+          {/* TAB: PREGUNTAS FRECUENTES */}
+          <TabsContent value="faqs">
+            <div className="space-y-6">
+              {/* Buscador de FAQs */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      placeholder="Buscar en preguntas frecuentes..."
+                      value={faqSearchTerm}
+                      onChange={e => setFaqSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* FAQs por categoría */}
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 h-5 text-blue-600" />
+                      Sistema de Prospects
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-l-4 border-blue-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo creo un nuevo prospect?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Ve a <strong>Clientes → Potenciales</strong> y haz click en "Nuevo Prospect". Completa la información básica: nombre, email, teléfono y tipo (propietario o inquilino). El sistema automáticamente asignará un lead score basado en la información proporcionada.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-blue-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Qué es el Lead Score?</h4>
+                      <p className="text-gray-600 text-sm">
+                        El Lead Score es una puntuación automática de 0-100 que indica la probabilidad de que un prospect se convierta en cliente. Se basa en: información de contacto completa, interacciones registradas, propiedades compartidas, tiempo de respuesta y estado del prospect.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-blue-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo comparto propiedades con tracking?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Dentro del detalle del prospect, ve a la sección "Compartir Propiedades". Selecciona la propiedad, escribe un mensaje personalizado y envía. Recibirás notificaciones cuando el prospect abra el link y podrás ver cuánto tiempo pasó viendo la propiedad.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-blue-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cuándo debo convertir un prospect a cliente?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Convierte un prospect a cliente cuando: ha firmado un contrato de exclusividad, está listo para cerrar un negocio, o ha demostrado interés serio (lead score {'>'} 70, múltiples interacciones, visitas realizadas).
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 h-5 text-green-600" />
+                      Comisiones
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-l-4 border-green-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo se calculan mis comisiones?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Las comisiones se calculan automáticamente al cerrar un contrato. Para arriendos: 50% de la renta mensual (1 año) o 100% (2+ años). Para ventas: 2-3% del valor de venta. Puedes negociar tasas personalizadas con cada cliente.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-green-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cuándo recibo el pago de mis comisiones?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Las comisiones se pagan según el acuerdo con cada cliente. Típicamente: al firmar el contrato (arriendos) o al cerrar la venta (propiedades). Puedes ver el estado de tus comisiones en <strong>Comisiones → Estado de Pagos</strong>.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-green-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Puedo exportar mis comisiones para contabilidad?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Sí, ve a <strong>Comisiones</strong> y usa el botón "Exportar". Puedes descargar en formato Excel, PDF o CSV, con filtros por fecha, estado y tipo de negocio.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building className="h-5 h-5 text-purple-600" />
+                      Gestión de Propiedades
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-l-4 border-purple-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo agrego una nueva propiedad?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Ve a <strong>Propiedades → Nueva Propiedad</strong>. Completa el formulario con: información básica, características, amenidades, imágenes (hasta 20 fotos), ubicación y documentos. La propiedad quedará visible inmediatamente en el catálogo.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-purple-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Puedo crear tours virtuales de las propiedades?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Sí, dentro del detalle de cada propiedad, encontrarás una opción para "Tours Virtuales". Puedes configurar recorridos 360°, agregar puntos de interés y compartir el tour con clientes potenciales.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-purple-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo gestiono las visitas a propiedades?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Ve a <strong>Solicitudes de Visita</strong> o <strong>Citas</strong>. Puedes ver visitas pendientes, confirmarlas, reagendarlas y registrar feedback post-visita. El sistema envía recordatorios automáticos a todas las partes.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 h-5 text-orange-600" />
+                      Analytics y Reportes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-l-4 border-orange-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Qué métricas puedo ver en Analytics?</h4>
+                      <p className="text-gray-600 text-sm">
+                        En <strong>Analytics</strong> puedes ver: visualizaciones de propiedades, consultas generadas, visitas realizadas, contratos cerrados, tasa de conversión, tiempo promedio de cierre, ingresos mensuales, comisión promedio y proyecciones.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-orange-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo genero reportes personalizados?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Ve a <strong>Reportes</strong>, selecciona el tipo de reporte (actividades, comisiones, propiedades, clientes), aplica filtros de fecha y categoría, y descarga en el formato que necesites (PDF, Excel, PowerPoint).
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 h-5 text-indigo-600" />
+                      Gestión General
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-l-4 border-indigo-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo actualizo mi perfil de corredor?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Ve a <strong>Configuración → Perfil</strong>. Puedes actualizar: foto de perfil, información de contacto, especialidades, zonas de cobertura, certificaciones y configuración de notificaciones.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-indigo-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Puedo usar Rent360 desde mi celular?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Sí, Rent360 es completamente responsive y funciona perfectamente en celular y tablet. Puedes gestionar prospects, responder mensajes, confirmar visitas y ver analytics desde cualquier dispositivo.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-indigo-200 pl-4 py-2">
+                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo contacto a soporte si tengo un problema técnico?</h4>
+                      <p className="text-gray-600 text-sm">
+                        Crea un ticket en la pestaña "Mis Tickets" de esta misma página. Selecciona la categoría "Técnico", describe el problema con detalles y recibirás respuesta en menos de 2 horas (horario hábil).
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* TAB: GUÍAS RÁPIDAS */}
+          <TabsContent value="guides">
+            <div className="space-y-6">
+              {/* Buscador de Guías */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      placeholder="Buscar guías rápidas..."
+                      value={guideSearchTerm}
+                      onChange={e => setGuideSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Guías Rápidas */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Target className="h-5 w-5 text-blue-600" />
+                      Guía: Crear y Gestionar Prospects
+                    </CardTitle>
+                    <CardDescription>
+                      Aprende a captar y convertir clientes potenciales en 5 pasos
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Crear Prospect</p>
+                        <p className="text-sm text-gray-600">
+                          Ir a Clientes → Potenciales → Nuevo Prospect
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Completar Información</p>
+                        <p className="text-sm text-gray-600">
+                          Nombre, email, teléfono, tipo (owner/tenant), presupuesto
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        3
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Registrar Actividades</p>
+                        <p className="text-sm text-gray-600">
+                          Llamadas, emails, reuniones - El sistema trackea todo
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        4
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Compartir Propiedades</p>
+                        <p className="text-sm text-gray-600">
+                          Links rastreables con analytics en tiempo real
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        5
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Convertir a Cliente</p>
+                        <p className="text-sm text-gray-600">
+                          Cuando lead score {'>'} 70 y hay interés confirmado
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                      Guía: Gestionar Comisiones
+                    </CardTitle>
+                    <CardDescription>
+                      Seguimiento y exportación de tus ganancias
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-green-100 text-green-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Ver Dashboard</p>
+                        <p className="text-sm text-gray-600">
+                          Ir a Comisiones → Ver resumen financiero completo
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-green-100 text-green-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Filtrar Comisiones</p>
+                        <p className="text-sm text-gray-600">
+                          Por estado (pagadas/pendientes), fecha, tipo de negocio
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-green-100 text-green-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        3
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Exportar Reportes</p>
+                        <p className="text-sm text-gray-600">
+                          Excel para contabilidad, PDF para presentaciones
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-green-100 text-green-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        4
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Proyecciones</p>
+                        <p className="text-sm text-gray-600">
+                          Sistema calcula ingresos proyectados automáticamente
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Building className="h-5 w-5 text-purple-600" />
+                      Guía: Publicar Propiedades
+                    </CardTitle>
+                    <CardDescription>
+                      Crea listados atractivos que generen consultas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Información Básica</p>
+                        <p className="text-sm text-gray-600">
+                          Título atractivo, dirección, precio, tipo de propiedad
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Características</p>
+                        <p className="text-sm text-gray-600">
+                          Habitaciones, baños, m², estacionamiento, bodegas
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        3
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Imágenes de Calidad</p>
+                        <p className="text-sm text-gray-600">
+                          Sube hasta 20 fotos profesionales y bien iluminadas
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        4
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Descripción Detallada</p>
+                        <p className="text-sm text-gray-600">
+                          Destaca amenidades, ubicación y puntos únicos
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        5
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Tour Virtual (Opcional)</p>
+                        <p className="text-sm text-gray-600">
+                          Crear recorrido 360° desde el detalle de la propiedad
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <BarChart3 className="h-5 w-5 text-orange-600" />
+                      Guía: Usar Analytics Efectivamente
+                    </CardTitle>
+                    <CardDescription>
+                      Toma decisiones basadas en datos reales
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-orange-100 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Dashboard de Analytics</p>
+                        <p className="text-sm text-gray-600">
+                          Ir a Analytics → Ver métricas de rendimiento en tiempo real
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-orange-100 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Analizar Conversiones</p>
+                        <p className="text-sm text-gray-600">
+                          Identifica qué propiedades y estrategias convierten mejor
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-orange-100 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        3
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Comparar Períodos</p>
+                        <p className="text-sm text-gray-600">
+                          Usa filtros de fecha para comparar mes actual vs anterior
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-orange-100 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        4
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Exportar Insights</p>
+                        <p className="text-sm text-gray-600">
+                          Descarga reportes para reuniones con clientes
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Calendar className="h-5 w-5 text-indigo-600" />
+                      Guía: Gestionar Visitas
+                    </CardTitle>
+                    <CardDescription>
+                      Organiza y ejecuta visitas exitosas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Ver Solicitudes</p>
+                        <p className="text-sm text-gray-600">
+                          Ir a Solicitudes de Visita → Revisar pendientes
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Confirmar o Reagendar</p>
+                        <p className="text-sm text-gray-600">
+                          Sistema envía notificaciones automáticas a todas las partes
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        3
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Realizar Visita</p>
+                        <p className="text-sm text-gray-600">
+                          Toma notas durante la visita para seguimiento
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                        4
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Registrar Feedback</p>
+                        <p className="text-sm text-gray-600">
+                          Después de la visita, registra interés y comentarios
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Lightbulb className="h-5 w-5 text-yellow-600" />
+                      Tips Pro para Corredores
+                    </CardTitle>
+                    <CardDescription>
+                      Mejores prácticas que aumentan conversiones
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="text-yellow-600">✨</div>
+                      <div>
+                        <p className="font-medium text-gray-900">Responde Rápido</p>
+                        <p className="text-sm text-gray-600">
+                          El 80% de leads se cierran con el primer respondedor
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="text-yellow-600">✨</div>
+                      <div>
+                        <p className="font-medium text-gray-900">Usa Lead Score</p>
+                        <p className="text-sm text-gray-600">
+                          Prioriza prospects con score {'>'} 70 para mejor ROI
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="text-yellow-600">✨</div>
+                      <div>
+                        <p className="font-medium text-gray-900">Fotos de Calidad</p>
+                        <p className="text-sm text-gray-600">
+                          Propiedades con 10+ fotos reciben 3x más consultas
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="text-yellow-600">✨</div>
+                      <div>
+                        <p className="font-medium text-gray-900">Seguimiento Constante</p>
+                        <p className="text-sm text-gray-600">
+                          Registra TODAS las interacciones en el sistema
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="text-yellow-600">✨</div>
+                      <div>
+                        <p className="font-medium text-gray-900">Analytics Semanal</p>
+                        <p className="text-sm text-gray-600">
+                          Revisa métricas cada semana para ajustar estrategia
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* TAB: TUTORIALES */}
+          <TabsContent value="tutorials">
+            <div className="space-y-6">
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <Video className="h-8 w-8 text-blue-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Biblioteca de Videos Tutoriales
+                      </h3>
+                      <p className="text-gray-700 mb-4">
+                        Aprende a usar Rent360 con nuestros videos paso a paso. Cada tutorial está diseñado para que puedas dominar la plataforma rápidamente.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="aspect-video bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center mb-4">
+                      <Video className="h-16 w-16 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Tour Completo de la Plataforma</CardTitle>
+                    <CardDescription>15 minutos • Nivel: Principiante</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Recorre todas las funcionalidades principales de Rent360: dashboard, navegación, gestión de prospects, propiedades, comisiones y más.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Vista general del dashboard</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Navegación básica</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Configuración inicial</span>
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <Video className="h-4 w-4 mr-2" />
+                      Ver Tutorial (Próximamente)
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="aspect-video bg-gradient-to-br from-green-500 to-green-700 rounded-lg flex items-center justify-center mb-4">
+                      <Target className="h-16 w-16 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Sistema de Prospects - Captación y Conversión</CardTitle>
+                    <CardDescription>7 minutos • Nivel: Intermedio</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Domina el CRM de Rent360: crear prospects, lead scoring, compartir propiedades con tracking y convertir a clientes activos.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Crear y clasificar prospects</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Compartir propiedades con tracking</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Pipeline de conversión</span>
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <Video className="h-4 w-4 mr-2" />
+                      Ver Tutorial (Próximamente)
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="aspect-video bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg flex items-center justify-center mb-4">
+                      <DollarSign className="h-16 w-16 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Sistema de Comisiones Explicado</CardTitle>
+                    <CardDescription>8 minutos • Nivel: Intermedio</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Aprende cómo funciona el cálculo automático de comisiones, proyecciones de ingresos y exportación de reportes financieros.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Cálculo automático de comisiones</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Proyecciones de ingresos</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Exportar para contabilidad</span>
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <Video className="h-4 w-4 mr-2" />
+                      Ver Tutorial (Próximamente)
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="aspect-video bg-gradient-to-br from-orange-500 to-orange-700 rounded-lg flex items-center justify-center mb-4">
+                      <BarChart3 className="h-16 w-16 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Analytics y Reportes Avanzados</CardTitle>
+                    <CardDescription>10 minutos • Nivel: Avanzado</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Usa analytics para tomar decisiones basadas en datos: métricas clave, gráficos interactivos, análisis de conversión y benchmarking.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Dashboard de analytics</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Gráficos interactivos</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Reportes personalizados</span>
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <Video className="h-4 w-4 mr-2" />
+                      Ver Tutorial (Próximamente)
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="aspect-video bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg flex items-center justify-center mb-4">
+                      <TrendingUp className="h-16 w-16 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Tips y Trucos para Corredores Expertos</CardTitle>
+                    <CardDescription>12 minutos • Nivel: Avanzado</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Descubre las mejores prácticas y atajos que usan los corredores más exitosos para maximizar conversiones y eficiencia.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Estrategias de conversión</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Atajos y automatizaciones</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Mejores prácticas de la industria</span>
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <Video className="h-4 w-4 mr-2" />
+                      Ver Tutorial (Próximamente)
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+                  <CardHeader>
+                    <div className="aspect-video bg-gradient-to-br from-gray-400 to-gray-600 rounded-lg flex items-center justify-center mb-4">
+                      <FileText className="h-16 w-16 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">Documentación Completa</CardTitle>
+                    <CardDescription>Lectura recomendada</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Accede a la documentación técnica completa de Rent360 con explicaciones detalladas, ejemplos de uso y referencias de API.
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      <Button variant="ghost" className="w-full justify-start text-sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Manual del Usuario (PDF)
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start text-sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Glosario de Términos
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start text-sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Best Practices
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Export Dialog */}
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
