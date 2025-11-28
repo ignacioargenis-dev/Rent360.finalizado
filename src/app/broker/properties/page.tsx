@@ -316,10 +316,8 @@ export default function BrokerPropertiesPage() {
   };
 
   const handleEditProperty = (propertyId: string, property: BrokerProperty) => {
-    // Para propiedades gestionadas, redirigir a detalles (no existe ruta de edición)
-    // Para propiedades propias, también redirigir a detalles por ahora
-    // El botón de editar solo muestra la opción si es necesario
-    router.push(`/broker/properties/${propertyId}`);
+    // Redirigir a la página de edición de la propiedad
+    router.push(`/broker/properties/${propertyId}/edit`);
   };
 
   const handleAddProperty = () => {
