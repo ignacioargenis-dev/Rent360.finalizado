@@ -2,7 +2,7 @@
 
 import { logger } from '@/lib/logger-minimal';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,13 +32,19 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Maximize2,
+  Minimize2,
   Play,
   Pause,
   ZoomIn,
   ZoomOut,
   RotateCcw,
   Info,
+  Move,
+  Minus,
+  Plus,
 } from 'lucide-react';
 import { Property } from '@/types';
 import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
@@ -84,6 +90,12 @@ export default function PropertySearch() {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [tourProperty, setTourProperty] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  // Estados para navegación inmersiva del tour
+  const [tourZoom, setTourZoom] = useState(1);
+  const [tourPan, setTourPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [showTourControls, setShowTourControls] = useState(true);
 
   useEffect(() => {
     fetchProperties();
@@ -110,6 +122,9 @@ export default function PropertySearch() {
         setLoadingTour(true);
         setVirtualTourScenes([]);
         setCurrentSceneIndex(0);
+        setTourZoom(1);
+        setTourPan({ x: 0, y: 0 });
+        setShowTourControls(true);
         try {
           // Cargar tour virtual
           const response = await fetch(`/api/properties/${selectedPropertyForTour}/virtual-tour`);
@@ -132,6 +147,50 @@ export default function PropertySearch() {
     };
     loadTourScenes();
   }, [selectedPropertyForTour, properties]);
+
+  // Resetear zoom y pan al cambiar de escena
+  useEffect(() => {
+    setTourZoom(1);
+    setTourPan({ x: 0, y: 0 });
+  }, [currentSceneIndex]);
+
+  // Handlers para navegación de imagen en el tour
+  const handleTourWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    setTourZoom(prev => Math.max(1, Math.min(4, prev + delta)));
+  }, []);
+
+  const handleTourMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (tourZoom > 1) {
+        setIsDragging(true);
+        setDragStart({ x: e.clientX - tourPan.x, y: e.clientY - tourPan.y });
+      }
+    },
+    [tourZoom, tourPan]
+  );
+
+  const handleTourMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isDragging && tourZoom > 1) {
+        setTourPan({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      }
+    },
+    [isDragging, dragStart, tourZoom]
+  );
+
+  const handleTourMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const resetTourView = useCallback(() => {
+    setTourZoom(1);
+    setTourPan({ x: 0, y: 0 });
+  }, []);
 
   const fetchProperties = async () => {
     try {
@@ -1038,9 +1097,16 @@ export default function PropertySearch() {
                 </div>
               </div>
 
-              {/* Visor principal de la escena */}
-              <div className="flex-1 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
+              {/* Visor principal de la escena con zoom y pan */}
+              <div
+                className={`flex-1 relative overflow-hidden ${tourZoom > 1 ? 'cursor-grab' : 'cursor-default'} ${isDragging ? 'cursor-grabbing' : ''}`}
+                onWheel={handleTourWheel}
+                onMouseDown={handleTourMouseDown}
+                onMouseMove={handleTourMouseMove}
+                onMouseUp={handleTourMouseUp}
+                onMouseLeave={handleTourMouseUp}
+              >
+                <div className="absolute inset-0 flex items-center justify-center select-none">
                   {virtualTourScenes[currentSceneIndex] && (
                     <img
                       src={virtualTourScenes[currentSceneIndex].imageUrl}
@@ -1048,15 +1114,67 @@ export default function PropertySearch() {
                         virtualTourScenes[currentSceneIndex].name ||
                         `Escena ${currentSceneIndex + 1}`
                       }
-                      className="w-full h-full object-contain md:object-cover transition-all duration-500"
-                      style={{ maxHeight: '100vh' }}
+                      className="w-full h-full object-contain md:object-cover transition-transform duration-200"
+                      style={{
+                        maxHeight: '100vh',
+                        transform: `scale(${tourZoom}) translate(${tourPan.x / tourZoom}px, ${tourPan.y / tourZoom}px)`,
+                        transformOrigin: 'center center',
+                      }}
+                      draggable={false}
                     />
                   )}
                 </div>
 
-                {/* Overlay con nombre de escena */}
-                {virtualTourScenes[currentSceneIndex]?.name && (
-                  <div className="absolute bottom-32 md:bottom-40 left-1/2 transform -translate-x-1/2 z-10">
+                {/* Controles de zoom flotantes */}
+                <div
+                  className={`absolute top-24 right-4 z-20 flex flex-col gap-2 transition-opacity duration-300 ${showTourControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                >
+                  <button
+                    onClick={() => setTourZoom(prev => Math.min(4, prev + 0.5))}
+                    className="p-2 bg-black/50 hover:bg-emerald-500/80 backdrop-blur-sm rounded-lg transition-all duration-300 group"
+                    title="Acercar"
+                  >
+                    <Plus className="w-5 h-5 text-white" />
+                  </button>
+                  <div className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-center">
+                    <span className="text-white text-xs font-medium">
+                      {Math.round(tourZoom * 100)}%
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setTourZoom(prev => Math.max(1, prev - 0.5))}
+                    disabled={tourZoom <= 1}
+                    className={`p-2 backdrop-blur-sm rounded-lg transition-all duration-300 ${tourZoom <= 1 ? 'bg-black/20 cursor-not-allowed' : 'bg-black/50 hover:bg-emerald-500/80'}`}
+                    title="Alejar"
+                  >
+                    <Minus
+                      className={`w-5 h-5 ${tourZoom <= 1 ? 'text-slate-600' : 'text-white'}`}
+                    />
+                  </button>
+                  {tourZoom > 1 && (
+                    <button
+                      onClick={resetTourView}
+                      className="p-2 bg-black/50 hover:bg-orange-500/80 backdrop-blur-sm rounded-lg transition-all duration-300"
+                      title="Restablecer vista"
+                    >
+                      <RotateCcw className="w-5 h-5 text-white" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Indicador de zoom activo */}
+                {tourZoom > 1 && (
+                  <div className="absolute top-24 left-4 z-20 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2">
+                    <Move className="w-4 h-4 text-emerald-400" />
+                    <span className="text-white text-xs">Arrastra para mover</span>
+                  </div>
+                )}
+
+                {/* Overlay con nombre de escena - se oculta si no están visibles los controles */}
+                {virtualTourScenes[currentSceneIndex]?.name && showTourControls && (
+                  <div
+                    className={`absolute left-1/2 transform -translate-x-1/2 z-10 transition-all duration-300 ${showTourControls ? 'bottom-32 md:bottom-40' : 'bottom-8'}`}
+                  >
                     <div className="bg-black/60 backdrop-blur-md rounded-2xl px-6 py-3 border border-white/10">
                       <p className="text-white font-medium text-center">
                         {virtualTourScenes[currentSceneIndex].name}
@@ -1104,86 +1222,132 @@ export default function PropertySearch() {
                 </button>
               </div>
 
-              {/* Footer con thumbnails y controles */}
-              <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
-                <div className="p-4 md:p-6">
-                  {/* Barra de progreso */}
-                  <div className="w-full h-1 bg-white/20 rounded-full mb-4 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${((currentSceneIndex + 1) / virtualTourScenes.length) * 100}%`,
-                      }}
-                    />
-                  </div>
-
-                  {/* Thumbnails de escenas */}
-                  <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    {virtualTourScenes.map((scene, index) => (
-                      <button
-                        key={scene.id || index}
-                        onClick={() => setCurrentSceneIndex(index)}
-                        className={`relative flex-shrink-0 group transition-all duration-300 ${
-                          index === currentSceneIndex
-                            ? 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-black scale-105'
-                            : 'opacity-60 hover:opacity-100'
-                        }`}
-                      >
-                        <img
-                          src={scene.thumbnailUrl || scene.imageUrl}
-                          alt={scene.name || `Escena ${index + 1}`}
-                          className="w-20 h-14 md:w-28 md:h-20 object-cover rounded-lg"
-                        />
-                        {/* Overlay con número */}
-                        <div
-                          className={`absolute inset-0 rounded-lg flex items-center justify-center 
-                          transition-all duration-300 ${
-                            index === currentSceneIndex
-                              ? 'bg-emerald-500/30'
-                              : 'bg-black/40 group-hover:bg-black/20'
-                          }`}
-                        >
-                          <span
-                            className={`text-sm font-bold ${index === currentSceneIndex ? 'text-white' : 'text-white/80'}`}
-                          >
-                            {index + 1}
-                          </span>
-                        </div>
-                        {/* Nombre de escena en hover */}
-                        {scene.name && (
-                          <div
-                            className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 
-                            transition-opacity duration-200 pointer-events-none"
-                          >
-                            <div className="bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                              {scene.name}
-                            </div>
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Controles adicionales */}
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-2 text-slate-400 text-sm">
-                      <Info className="w-4 h-4" />
-                      <span className="hidden md:inline">
-                        Usa las flechas o haz clic en las miniaturas para navegar
-                      </span>
-                      <span className="md:hidden">Toca para navegar</span>
-                    </div>
+              {/* Footer con thumbnails y controles - Colapsable */}
+              <div
+                className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-500 ease-in-out ${showTourControls ? 'translate-y-0' : 'translate-y-[calc(100%-48px)]'}`}
+              >
+                {/* Botón para mostrar/ocultar controles */}
+                <div className="flex justify-center -mb-1">
+                  <button
+                    onClick={() => setShowTourControls(!showTourControls)}
+                    className="bg-black/70 hover:bg-black/90 backdrop-blur-sm px-4 py-1 rounded-t-xl transition-all duration-300 group"
+                    title={showTourControls ? 'Ocultar controles' : 'Mostrar controles'}
+                  >
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() =>
-                          window.open(`/properties/${selectedPropertyForTour}`, '_blank')
-                        }
-                        className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg 
-                          transition-all duration-300 hover:scale-105"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span className="hidden md:inline">Ver Propiedad</span>
-                      </button>
+                      {showTourControls ? (
+                        <>
+                          <ChevronDown className="w-4 h-4 text-white group-hover:text-emerald-400 transition-colors" />
+                          <span className="text-white text-xs hidden md:inline group-hover:text-emerald-400 transition-colors">
+                            Ocultar
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronUp className="w-4 h-4 text-white group-hover:text-emerald-400 transition-colors" />
+                          <span className="text-white text-xs hidden md:inline group-hover:text-emerald-400 transition-colors">
+                            Mostrar escenas
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </button>
+                </div>
+
+                <div className="bg-gradient-to-t from-black/95 via-black/85 to-black/70 backdrop-blur-sm">
+                  <div className="p-4 md:p-6">
+                    {/* Barra de progreso - siempre visible */}
+                    <div className="w-full h-1 bg-white/20 rounded-full mb-4 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${((currentSceneIndex + 1) / virtualTourScenes.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+
+                    {/* Thumbnails de escenas */}
+                    <div
+                      className={`transition-all duration-300 overflow-hidden ${showTourControls ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'}`}
+                    >
+                      <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        {virtualTourScenes.map((scene, index) => (
+                          <button
+                            key={scene.id || index}
+                            onClick={() => setCurrentSceneIndex(index)}
+                            className={`relative flex-shrink-0 group transition-all duration-300 ${
+                              index === currentSceneIndex
+                                ? 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-black scale-105'
+                                : 'opacity-60 hover:opacity-100'
+                            }`}
+                          >
+                            <img
+                              src={scene.thumbnailUrl || scene.imageUrl}
+                              alt={scene.name || `Escena ${index + 1}`}
+                              className="w-20 h-14 md:w-28 md:h-20 object-cover rounded-lg"
+                            />
+                            {/* Overlay con número */}
+                            <div
+                              className={`absolute inset-0 rounded-lg flex items-center justify-center 
+                              transition-all duration-300 ${
+                                index === currentSceneIndex
+                                  ? 'bg-emerald-500/30'
+                                  : 'bg-black/40 group-hover:bg-black/20'
+                              }`}
+                            >
+                              <span
+                                className={`text-sm font-bold ${index === currentSceneIndex ? 'text-white' : 'text-white/80'}`}
+                              >
+                                {index + 1}
+                              </span>
+                            </div>
+                            {/* Nombre de escena en hover */}
+                            {scene.name && (
+                              <div
+                                className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 
+                                transition-opacity duration-200 pointer-events-none"
+                              >
+                                <div className="bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                  {scene.name}
+                                </div>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Controles adicionales */}
+                    <div
+                      className={`flex items-center justify-between transition-all duration-300 ${showTourControls ? 'mt-4' : 'mt-0'}`}
+                    >
+                      <div className="flex items-center gap-2 text-slate-400 text-sm">
+                        <Info className="w-4 h-4" />
+                        <span className="hidden md:inline">
+                          {showTourControls
+                            ? 'Usa scroll para zoom • Arrastra para mover'
+                            : 'Escena ' +
+                              (currentSceneIndex + 1) +
+                              ' de ' +
+                              virtualTourScenes.length}
+                        </span>
+                        <span className="md:hidden">
+                          {showTourControls
+                            ? 'Pellizca para zoom'
+                            : currentSceneIndex + 1 + '/' + virtualTourScenes.length}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            window.open(`/properties/${selectedPropertyForTour}`, '_blank')
+                          }
+                          className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg 
+                            transition-all duration-300 hover:scale-105"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span className="hidden md:inline">Ver Propiedad</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
