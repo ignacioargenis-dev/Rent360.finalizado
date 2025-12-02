@@ -29,6 +29,16 @@ import {
   Loader2,
   Eye,
   Camera,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Play,
+  Pause,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Info,
 } from 'lucide-react';
 import { Property } from '@/types';
 import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
@@ -71,6 +81,8 @@ export default function PropertySearch() {
   const [selectedPropertyForTour, setSelectedPropertyForTour] = useState<string | null>(null);
   const [virtualTourScenes, setVirtualTourScenes] = useState<any[]>([]);
   const [loadingTour, setLoadingTour] = useState(false);
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [tourProperty, setTourProperty] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,7 +109,9 @@ export default function PropertySearch() {
       if (selectedPropertyForTour) {
         setLoadingTour(true);
         setVirtualTourScenes([]);
+        setCurrentSceneIndex(0);
         try {
+          // Cargar tour virtual
           const response = await fetch(`/api/properties/${selectedPropertyForTour}/virtual-tour`);
           if (response.ok) {
             const data = await response.json();
@@ -106,6 +120,9 @@ export default function PropertySearch() {
               setVirtualTourScenes(tour.scenes);
             }
           }
+          // Cargar info de la propiedad
+          const propFound = properties.find(p => p.id === selectedPropertyForTour);
+          setTourProperty(propFound || null);
         } catch (err) {
           logger.error('Error loading virtual tour for search', { error: err });
         } finally {
@@ -114,7 +131,7 @@ export default function PropertySearch() {
       }
     };
     loadTourScenes();
-  }, [selectedPropertyForTour]);
+  }, [selectedPropertyForTour, properties]);
 
   const fetchProperties = async () => {
     try {
@@ -939,33 +956,268 @@ export default function PropertySearch() {
         </div>
       </div>
 
-      {/* Modal del Tour Virtual */}
+      {/* Modal Inmersivo del Tour Virtual 360° */}
       {selectedPropertyForTour && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">Tour Virtual 360°</h3>
-              <Button variant="outline" size="sm" onClick={() => setSelectedPropertyForTour(null)}>
-                Cerrar
-              </Button>
-            </div>
-            <div className="p-4">
-              {loadingTour ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-gray-600">Cargando tour virtual...</span>
-                </div>
-              ) : virtualTourScenes.length > 0 ? (
-                <VirtualTour360 propertyId={selectedPropertyForTour} scenes={virtualTourScenes} />
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <Camera className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">Tour Virtual No Disponible</p>
-                  <p className="text-sm">Esta propiedad no tiene escenas configuradas</p>
-                </div>
-              )}
-            </div>
+        <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          {/* Fondo animado con patrón */}
+          <div className="absolute inset-0 opacity-10">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `radial-gradient(circle at 25% 25%, rgba(16, 185, 129, 0.3) 0%, transparent 50%),
+                               radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)`,
+              }}
+            />
           </div>
+
+          {loadingTour ? (
+            /* Estado de carga elegante */
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="relative w-24 h-24 mx-auto mb-6">
+                  <div className="absolute inset-0 rounded-full border-4 border-emerald-500/30 animate-ping" />
+                  <div className="absolute inset-2 rounded-full border-4 border-t-emerald-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                  <Camera className="absolute inset-0 m-auto w-10 h-10 text-emerald-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Preparando Tour Virtual</h3>
+                <p className="text-slate-400">Cargando experiencia 360°...</p>
+              </div>
+            </div>
+          ) : virtualTourScenes.length > 0 ? (
+            /* Tour Virtual Inmersivo */
+            <div className="relative h-full flex flex-col">
+              {/* Header con gradiente */}
+              <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 via-black/50 to-transparent">
+                <div className="flex items-center justify-between p-4 md:p-6">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => {
+                        setSelectedPropertyForTour(null);
+                        setCurrentSceneIndex(0);
+                      }}
+                      className="p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 group"
+                    >
+                      <X className="w-6 h-6 text-white group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                    <div className="text-white">
+                      <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                        <Camera className="w-6 h-6 text-emerald-400" />
+                        Tour Virtual 360°
+                      </h2>
+                      {tourProperty && (
+                        <p className="text-sm text-slate-300 mt-1 flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          {tourProperty.title || tourProperty.address}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info de escena actual */}
+                  <div className="flex items-center gap-3">
+                    <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                      <span className="text-emerald-400 font-bold">{currentSceneIndex + 1}</span>
+                      <span className="text-slate-400">/</span>
+                      <span className="text-white">{virtualTourScenes.length}</span>
+                      <span className="text-slate-400 ml-1">escenas</span>
+                    </div>
+                    {tourProperty && (
+                      <div className="hidden lg:flex items-center gap-4 text-white/80 text-sm">
+                        <span className="flex items-center gap-1">
+                          <Bed className="w-4 h-4" /> {tourProperty.bedrooms}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Bath className="w-4 h-4" /> {tourProperty.bathrooms}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Square className="w-4 h-4" /> {tourProperty.area}m²
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Visor principal de la escena */}
+              <div className="flex-1 relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {virtualTourScenes[currentSceneIndex] && (
+                    <img
+                      src={virtualTourScenes[currentSceneIndex].imageUrl}
+                      alt={
+                        virtualTourScenes[currentSceneIndex].name ||
+                        `Escena ${currentSceneIndex + 1}`
+                      }
+                      className="w-full h-full object-contain md:object-cover transition-all duration-500"
+                      style={{ maxHeight: '100vh' }}
+                    />
+                  )}
+                </div>
+
+                {/* Overlay con nombre de escena */}
+                {virtualTourScenes[currentSceneIndex]?.name && (
+                  <div className="absolute bottom-32 md:bottom-40 left-1/2 transform -translate-x-1/2 z-10">
+                    <div className="bg-black/60 backdrop-blur-md rounded-2xl px-6 py-3 border border-white/10">
+                      <p className="text-white font-medium text-center">
+                        {virtualTourScenes[currentSceneIndex].name}
+                      </p>
+                      {virtualTourScenes[currentSceneIndex].description && (
+                        <p className="text-slate-400 text-sm text-center mt-1">
+                          {virtualTourScenes[currentSceneIndex].description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Botones de navegación lateral */}
+                <button
+                  onClick={() => setCurrentSceneIndex(prev => Math.max(0, prev - 1))}
+                  disabled={currentSceneIndex === 0}
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 md:p-4 rounded-full 
+                    transition-all duration-300 ${
+                      currentSceneIndex === 0
+                        ? 'bg-white/5 cursor-not-allowed'
+                        : 'bg-white/10 hover:bg-emerald-500/80 hover:scale-110 backdrop-blur-sm'
+                    }`}
+                >
+                  <ChevronLeft
+                    className={`w-6 h-6 md:w-8 md:h-8 ${currentSceneIndex === 0 ? 'text-slate-600' : 'text-white'}`}
+                  />
+                </button>
+
+                <button
+                  onClick={() =>
+                    setCurrentSceneIndex(prev => Math.min(virtualTourScenes.length - 1, prev + 1))
+                  }
+                  disabled={currentSceneIndex === virtualTourScenes.length - 1}
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 md:p-4 rounded-full 
+                    transition-all duration-300 ${
+                      currentSceneIndex === virtualTourScenes.length - 1
+                        ? 'bg-white/5 cursor-not-allowed'
+                        : 'bg-white/10 hover:bg-emerald-500/80 hover:scale-110 backdrop-blur-sm'
+                    }`}
+                >
+                  <ChevronRight
+                    className={`w-6 h-6 md:w-8 md:h-8 ${currentSceneIndex === virtualTourScenes.length - 1 ? 'text-slate-600' : 'text-white'}`}
+                  />
+                </button>
+              </div>
+
+              {/* Footer con thumbnails y controles */}
+              <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+                <div className="p-4 md:p-6">
+                  {/* Barra de progreso */}
+                  <div className="w-full h-1 bg-white/20 rounded-full mb-4 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${((currentSceneIndex + 1) / virtualTourScenes.length) * 100}%`,
+                      }}
+                    />
+                  </div>
+
+                  {/* Thumbnails de escenas */}
+                  <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {virtualTourScenes.map((scene, index) => (
+                      <button
+                        key={scene.id || index}
+                        onClick={() => setCurrentSceneIndex(index)}
+                        className={`relative flex-shrink-0 group transition-all duration-300 ${
+                          index === currentSceneIndex
+                            ? 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-black scale-105'
+                            : 'opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        <img
+                          src={scene.thumbnailUrl || scene.imageUrl}
+                          alt={scene.name || `Escena ${index + 1}`}
+                          className="w-20 h-14 md:w-28 md:h-20 object-cover rounded-lg"
+                        />
+                        {/* Overlay con número */}
+                        <div
+                          className={`absolute inset-0 rounded-lg flex items-center justify-center 
+                          transition-all duration-300 ${
+                            index === currentSceneIndex
+                              ? 'bg-emerald-500/30'
+                              : 'bg-black/40 group-hover:bg-black/20'
+                          }`}
+                        >
+                          <span
+                            className={`text-sm font-bold ${index === currentSceneIndex ? 'text-white' : 'text-white/80'}`}
+                          >
+                            {index + 1}
+                          </span>
+                        </div>
+                        {/* Nombre de escena en hover */}
+                        {scene.name && (
+                          <div
+                            className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 
+                            transition-opacity duration-200 pointer-events-none"
+                          >
+                            <div className="bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                              {scene.name}
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Controles adicionales */}
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-2 text-slate-400 text-sm">
+                      <Info className="w-4 h-4" />
+                      <span className="hidden md:inline">
+                        Usa las flechas o haz clic en las miniaturas para navegar
+                      </span>
+                      <span className="md:hidden">Toca para navegar</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          window.open(`/properties/${selectedPropertyForTour}`, '_blank')
+                        }
+                        className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg 
+                          transition-all duration-300 hover:scale-105"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span className="hidden md:inline">Ver Propiedad</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Sin escenas disponibles */
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center max-w-md mx-auto px-4">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
+                  <Camera className="w-12 h-12 text-slate-500" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3">Tour Virtual No Disponible</h3>
+                <p className="text-slate-400 mb-6">
+                  Esta propiedad aún no tiene un tour virtual 360° configurado.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedPropertyForTour(null)}
+                    className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                  >
+                    Cerrar
+                  </Button>
+                  <Button
+                    onClick={() => window.open(`/properties/${selectedPropertyForTour}`, '_blank')}
+                    className="bg-emerald-500 hover:bg-emerald-600"
+                  >
+                    Ver Propiedad
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
