@@ -37,37 +37,49 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     if (!virtualTour) {
       return NextResponse.json({
-        enabled: false,
-        title: '',
-        description: '',
-        scenes: [],
+        success: true,
+        tour: {
+          isEnabled: false,
+          title: '',
+          description: '',
+          scenes: [],
+          autoPlay: false,
+          showControls: true,
+          allowFullscreen: true,
+        },
       });
     }
 
     return NextResponse.json({
-      enabled: virtualTour.enabled,
-      title: virtualTour.title,
-      description: virtualTour.description,
-      scenes: virtualTour.scenes.map(scene => ({
-        id: scene.id,
-        name: scene.name,
-        imageUrl: scene.imageUrl,
-        thumbnailUrl: scene.thumbnailUrl,
-        description: scene.description,
-        audioUrl: scene.audioUrl,
-        duration: scene.duration,
-        hotspots: scene.hotspots.map(hotspot => ({
-          id: hotspot.id,
-          x: hotspot.x,
-          y: hotspot.y,
-          type: hotspot.type,
-          targetSceneId: hotspot.targetSceneId,
-          title: hotspot.title,
-          description: hotspot.description,
-          linkUrl: hotspot.linkUrl,
-          mediaUrl: hotspot.mediaUrl,
+      success: true,
+      tour: {
+        isEnabled: virtualTour.enabled,
+        title: virtualTour.title,
+        description: virtualTour.description,
+        autoPlay: false,
+        showControls: true,
+        allowFullscreen: true,
+        scenes: virtualTour.scenes.map(scene => ({
+          id: scene.id,
+          name: scene.name,
+          imageUrl: scene.imageUrl,
+          thumbnailUrl: scene.thumbnailUrl,
+          description: scene.description,
+          audioUrl: scene.audioUrl,
+          duration: scene.duration,
+          hotspots: scene.hotspots.map(hotspot => ({
+            id: hotspot.id,
+            x: hotspot.x,
+            y: hotspot.y,
+            type: hotspot.type,
+            targetSceneId: hotspot.targetSceneId,
+            title: hotspot.title,
+            description: hotspot.description,
+            linkUrl: hotspot.linkUrl,
+            mediaUrl: hotspot.mediaUrl,
+          })),
         })),
-      })),
+      },
     });
   } catch (error) {
     console.error('Error fetching virtual tour:', error);
@@ -167,4 +179,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     console.error('Error saving virtual tour:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
+}
+
+// PUT method - alias for POST (update tour configuration)
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  return POST(request, { params });
 }
