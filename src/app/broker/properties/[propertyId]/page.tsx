@@ -143,6 +143,7 @@ export default function BrokerPropertyDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [canEdit, setCanEdit] = useState(false); // ✅ Para determinar si se puede editar
+  const [virtualTourScenes, setVirtualTourScenes] = useState<any[]>([]);
 
   // Mock data for property details
   const mockProperty: PropertyDetail = {
@@ -369,6 +370,28 @@ export default function BrokerPropertyDetailPage() {
   useEffect(() => {
     loadPropertyDetails();
   }, [propertyId]);
+
+  // Cargar escenas del tour virtual cuando la propiedad está habilitada
+  useEffect(() => {
+    const loadVirtualTourScenes = async () => {
+      if (property?.virtualTourEnabled && propertyId) {
+        try {
+          const response = await fetch(`/api/properties/${propertyId}/virtual-tour`);
+          if (response.ok) {
+            const data = await response.json();
+            const tour = data.tour || data;
+            if (tour?.scenes) {
+              setVirtualTourScenes(tour.scenes);
+              logger.info('Virtual tour scenes loaded for broker', { count: tour.scenes.length });
+            }
+          }
+        } catch (err) {
+          logger.error('Error loading virtual tour scenes', { error: err });
+        }
+      }
+    };
+    loadVirtualTourScenes();
+  }, [property?.virtualTourEnabled, propertyId]);
 
   const loadPropertyDetails = async () => {
     console.log('🔍 [PROPERTY_DETAIL] Iniciando carga de detalles de la propiedad:', {
@@ -874,7 +897,15 @@ export default function BrokerPropertyDetailPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <VirtualTour360 propertyId={property.id} scenes={[]} />
+                  {virtualTourScenes.length > 0 ? (
+                    <VirtualTour360 propertyId={property.id} scenes={virtualTourScenes} />
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Camera className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium mb-2">Cargando Tour Virtual...</p>
+                      <p className="text-sm">Las escenas se cargarán en breve</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

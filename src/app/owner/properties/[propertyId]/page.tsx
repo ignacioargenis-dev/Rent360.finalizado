@@ -182,6 +182,7 @@ export default function OwnerPropertyDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
+  const [virtualTourScenes, setVirtualTourScenes] = useState<any[]>([]);
 
   // Mock data for property details
   const mockProperty: PropertyDetail = {
@@ -661,6 +662,27 @@ export default function OwnerPropertyDetailPage() {
   useEffect(() => {
     loadPropertyDetails();
   }, [loadPropertyDetails]);
+
+  // Cargar escenas del tour virtual cuando la propiedad está habilitada
+  useEffect(() => {
+    const loadVirtualTourScenes = async () => {
+      if (property?.virtualTourEnabled && propertyId) {
+        try {
+          const response = await fetch(`/api/properties/${propertyId}/virtual-tour`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.tour?.scenes) {
+              setVirtualTourScenes(data.tour.scenes);
+              logger.info('Virtual tour scenes loaded', { count: data.tour.scenes.length });
+            }
+          }
+        } catch (err) {
+          logger.error('Error loading virtual tour scenes', { error: err });
+        }
+      }
+    };
+    loadVirtualTourScenes();
+  }, [property?.virtualTourEnabled, propertyId]);
 
   // Recargar datos cuando se navega desde la página de edición
   useEffect(() => {
@@ -1155,8 +1177,23 @@ export default function OwnerPropertyDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {property.virtualTourEnabled ? (
-                  <VirtualTour360 propertyId={property.id} scenes={[]} />
+                {property.virtualTourEnabled && virtualTourScenes.length > 0 ? (
+                  <VirtualTour360 propertyId={property.id} scenes={virtualTourScenes} />
+                ) : property.virtualTourEnabled ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Camera className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium mb-2">Cargando Tour Virtual...</p>
+                    <p className="text-sm mb-4">
+                      Si no se cargan las escenas, configura imágenes 360° en el tour virtual
+                    </p>
+                    <Button
+                      onClick={() => router.push(`/owner/properties/${property.id}/virtual-tour`)}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Configurar Tour Virtual
+                    </Button>
+                  </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <Camera className="w-12 h-12 mx-auto mb-4 text-gray-300" />

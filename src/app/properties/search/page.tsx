@@ -69,6 +69,8 @@ export default function PropertySearch() {
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedPropertyForTour, setSelectedPropertyForTour] = useState<string | null>(null);
+  const [virtualTourScenes, setVirtualTourScenes] = useState<any[]>([]);
+  const [loadingTour, setLoadingTour] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -88,6 +90,31 @@ export default function PropertySearch() {
     // Apply sorting when properties or sort criteria change
     filterAndSortProperties();
   }, [properties, sortBy]);
+
+  // Cargar escenas del tour virtual cuando se selecciona una propiedad
+  useEffect(() => {
+    const loadTourScenes = async () => {
+      if (selectedPropertyForTour) {
+        setLoadingTour(true);
+        setVirtualTourScenes([]);
+        try {
+          const response = await fetch(`/api/properties/${selectedPropertyForTour}/virtual-tour`);
+          if (response.ok) {
+            const data = await response.json();
+            const tour = data.tour || data;
+            if (tour?.scenes) {
+              setVirtualTourScenes(tour.scenes);
+            }
+          }
+        } catch (err) {
+          logger.error('Error loading virtual tour for search', { error: err });
+        } finally {
+          setLoadingTour(false);
+        }
+      }
+    };
+    loadTourScenes();
+  }, [selectedPropertyForTour]);
 
   const fetchProperties = async () => {
     try {
@@ -923,7 +950,20 @@ export default function PropertySearch() {
               </Button>
             </div>
             <div className="p-4">
-              <VirtualTour360 propertyId={selectedPropertyForTour} scenes={[]} />
+              {loadingTour ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Cargando tour virtual...</span>
+                </div>
+              ) : virtualTourScenes.length > 0 ? (
+                <VirtualTour360 propertyId={selectedPropertyForTour} scenes={virtualTourScenes} />
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Camera className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">Tour Virtual No Disponible</p>
+                  <p className="text-sm">Esta propiedad no tiene escenas configuradas</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

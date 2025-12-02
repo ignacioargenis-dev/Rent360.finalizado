@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     logger.info('Obteniendo tours virtuales para admin', { userId: user.id });
 
-    // Obtener todas las propiedades con información de tour virtual
+    // Obtener todas las propiedades con información de tour virtual desde la tabla VirtualTour
     const properties = await db.property.findMany({
       select: {
         id: true,
@@ -36,6 +36,18 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        virtualTour: {
+          select: {
+            id: true,
+            enabled: true,
+            updatedAt: true,
+            scenes: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         updatedAt: 'desc',
@@ -44,18 +56,32 @@ export async function GET(request: NextRequest) {
 
     // Procesar los datos para incluir estadísticas
     const processedProperties = properties.map(property => {
+      // Contar escenas desde la tabla VirtualTour (prioridad) o del JSON legacy
       let scenesCount = 0;
       let status: 'active' | 'inactive' | 'pending' = 'inactive';
+      let lastUpdated = property.updatedAt;
 
-      if (property.virtualTourEnabled && property.virtualTourData) {
+      // Verificar escenas en la tabla VirtualTour (nuevo sistema)
+      if (property.virtualTour) {
+        scenesCount = property.virtualTour.scenes?.length || 0;
+        if (property.virtualTour.updatedAt) {
+          lastUpdated = property.virtualTour.updatedAt;
+        }
+      }
+
+      // Fallback al campo JSON legacy si no hay escenas en la tabla
+      if (scenesCount === 0 && property.virtualTourData) {
         try {
           const tourData = JSON.parse(property.virtualTourData);
           scenesCount = tourData.scenes?.length || 0;
-          status = scenesCount > 0 ? 'active' : 'pending';
         } catch (error) {
-          logger.error('Error parseando tour data', { propertyId: property.id, error });
-          status = 'pending';
+          logger.error('Error parseando tour data legacy', { propertyId: property.id, error });
         }
+      }
+
+      // Determinar el estado
+      if (property.virtualTourEnabled || property.virtualTour?.enabled) {
+        status = scenesCount > 0 ? 'active' : 'pending';
       }
 
       return {
@@ -65,10 +91,10 @@ export async function GET(request: NextRequest) {
         city: property.city,
         commune: property.commune,
         owner: property.owner,
-        virtualTourEnabled: property.virtualTourEnabled || false,
+        virtualTourEnabled: property.virtualTourEnabled || property.virtualTour?.enabled || false,
         virtualTourData: property.virtualTourData,
         scenesCount,
-        lastUpdated: property.updatedAt.toISOString(),
+        lastUpdated: lastUpdated.toISOString(),
         status,
       };
     });

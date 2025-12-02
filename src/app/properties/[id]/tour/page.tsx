@@ -41,11 +41,16 @@ export default function FullscreenVirtualTourPage() {
       if (tourResponse.ok) {
         const tourData = await tourResponse.json();
 
-        if (tourData.enabled && tourData.scenes && tourData.scenes.length > 0) {
-          setVirtualTour(tourData);
+        // Soportar ambos formatos de respuesta
+        const tour = tourData.tour || tourData;
+        const isEnabled = tour.isEnabled || tour.enabled;
+        const scenes = tour.scenes || [];
+
+        if (isEnabled && scenes.length > 0) {
+          setVirtualTour({ ...tour, scenes });
           logger.info('Tour virtual cargado exitosamente', {
             propertyId,
-            scenes: tourData.scenes.length,
+            scenes: scenes.length,
           });
         } else {
           setError('Esta propiedad no tiene un tour virtual disponible');
