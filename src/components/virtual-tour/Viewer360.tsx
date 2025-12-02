@@ -16,9 +16,9 @@ import {
 // Tipos para las escenas y hotspots
 interface Hotspot {
   id: string;
-  pitch: number; // Coordenada vertical (-90 a 90)
-  yaw: number; // Coordenada horizontal (-180 a 180)
-  type: 'scene' | 'info' | 'link';
+  pitch?: number; // Coordenada vertical (-90 a 90) - opcional, se puede calcular desde Y
+  yaw?: number; // Coordenada horizontal (-180 a 180) - opcional, se puede calcular desde X
+  type: 'scene' | 'info' | 'link' | 'media';
   targetSceneId?: string;
   title: string;
   description?: string;

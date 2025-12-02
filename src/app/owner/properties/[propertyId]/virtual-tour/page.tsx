@@ -59,6 +59,8 @@ interface Hotspot {
   id: string;
   x: number;
   y: number;
+  pitch?: number; // Coordenada vertical 3D (-90 a 90)
+  yaw?: number; // Coordenada horizontal 3D (-180 a 180)
   type: 'scene' | 'info' | 'link' | 'media';
   targetSceneId?: string;
   title: string;
