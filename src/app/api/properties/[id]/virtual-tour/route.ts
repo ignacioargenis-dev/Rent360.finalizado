@@ -140,6 +140,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
       console.log('✅ [VIRTUAL-TOUR] Tour creado/actualizado:', virtualTour.id);
 
+      // IMPORTANTE: También actualizar el campo virtualTourEnabled en la propiedad
+      // para que se refleje correctamente en los detalles de la propiedad
+      await tx.property.update({
+        where: { id: propertyId },
+        data: {
+          virtualTourEnabled: Boolean(enabled),
+        },
+      });
+
+      console.log('✅ [VIRTUAL-TOUR] Property.virtualTourEnabled actualizado:', enabled);
+
       // Eliminar escenas existentes
       await tx.virtualTourScene.deleteMany({
         where: { virtualTourId: virtualTour.id },
