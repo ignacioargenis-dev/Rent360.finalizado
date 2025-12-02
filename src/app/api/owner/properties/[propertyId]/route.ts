@@ -52,6 +52,22 @@ export async function GET(request: NextRequest, { params }: { params: { property
             phone: true,
           },
         },
+        // Incluir documentos de la propiedad
+        documents: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            fileName: true,
+            filePath: true,
+            fileSize: true,
+            mimeType: true,
+            createdAt: true,
+          },
+        },
       },
     });
 
@@ -186,7 +202,29 @@ export async function GET(request: NextRequest, { params }: { params: { property
       concierge: property.concierge,
       virtualTourEnabled: property.virtualTourEnabled || false,
       virtualTourData: property.virtualTourData,
+      // Documentos de la propiedad
+      documents: property.documents.map(doc => ({
+        id: doc.id,
+        name: doc.name,
+        type: doc.type,
+        uploadDate: doc.createdAt.toISOString().split('T')[0],
+        size: formatFileSize(doc.fileSize),
+        fileName: doc.fileName,
+        filePath: doc.filePath,
+        mimeType: doc.mimeType,
+      })),
     };
+
+    // Función auxiliar para formatear tamaño de archivo
+    function formatFileSize(bytes: number): string {
+      if (bytes === 0) {
+        return '0 Bytes';
+      }
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 
     logger.info('Detalles de propiedad obtenidos', {
       ownerId: user.id,

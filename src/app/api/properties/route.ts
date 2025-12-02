@@ -408,12 +408,169 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // TODO: Agregar logs de auditoría y notificaciones cuando los servicios estén disponibles
+    // Procesar documentos de la propiedad
+    const documentTypes = [
+      { field: 'propertyDeed', name: 'Escritura de Propiedad', type: 'PROPERTY_DEED' },
+      { field: 'certificateOfTitle', name: 'Certificado de Título', type: 'CERTIFICATE_OF_TITLE' },
+      {
+        field: 'propertyTaxReceipt',
+        name: 'Comprobante de Contribuciones',
+        type: 'PROPERTY_TAX_RECEIPT',
+      },
+      { field: 'insurancePolicy', name: 'Póliza de Seguro', type: 'INSURANCE_POLICY' },
+    ];
+
+    const cloudStorage = getCloudStorageService();
+    const uploadedDocuments: string[] = [];
+
+    // Procesar documentos individuales
+    for (const docType of documentTypes) {
+      const docFile = formData.get(docType.field) as File | null;
+      if (docFile && docFile instanceof File && docFile.size > 0) {
+        try {
+          const timestamp = Date.now();
+          const randomId = Math.random().toString(36).substring(2, 15);
+          const fileNameParts = docFile.name.split('.');
+          const extension = fileNameParts.length > 1 ? fileNameParts.pop() : 'pdf';
+          const filename = `${docType.field}_${timestamp}_${randomId}.${extension}`;
+
+          // Subir a cloud storage
+          const cloudKey = `properties/${newProperty.id}/documents/${filename}`;
+          const result = await cloudStorage.uploadFile(docFile, cloudKey, docFile.type);
+
+          // Crear registro de documento en la base de datos
+          await db.document.create({
+            data: {
+              name: docType.name,
+              type: docType.type,
+              fileName: docFile.name,
+              filePath: result.url,
+              fileSize: docFile.size,
+              mimeType: docFile.type,
+              uploadedById: decoded.id,
+              propertyId: newProperty.id,
+            },
+          });
+
+          uploadedDocuments.push(docType.name);
+          logger.info('Document uploaded successfully', {
+            propertyId: newProperty.id,
+            documentType: docType.type,
+            fileName: docFile.name,
+          });
+        } catch (docError) {
+          logger.error('Error uploading document', {
+            error: docError instanceof Error ? docError.message : String(docError),
+            propertyId: newProperty.id,
+            documentType: docType.type,
+          });
+        }
+      }
+    }
+
+    // Procesar comprobantes de servicios básicos (múltiples archivos)
+    const utilitiesBills = formData.getAll('utilitiesBills') as File[];
+    if (utilitiesBills && utilitiesBills.length > 0) {
+      for (let i = 0; i < utilitiesBills.length; i++) {
+        const bill = utilitiesBills[i];
+        if (bill instanceof File && bill.size > 0) {
+          try {
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2, 15);
+            const fileNameParts = bill.name.split('.');
+            const extension = fileNameParts.length > 1 ? fileNameParts.pop() : 'pdf';
+            const filename = `utility_bill_${i + 1}_${timestamp}_${randomId}.${extension}`;
+
+            const cloudKey = `properties/${newProperty.id}/documents/${filename}`;
+            const result = await cloudStorage.uploadFile(bill, cloudKey, bill.type);
+
+            await db.document.create({
+              data: {
+                name: `Comprobante de Servicios ${i + 1}`,
+                type: 'UTILITY_BILL',
+                fileName: bill.name,
+                filePath: result.url,
+                fileSize: bill.size,
+                mimeType: bill.type,
+                uploadedById: decoded.id,
+                propertyId: newProperty.id,
+              },
+            });
+
+            uploadedDocuments.push(`Comprobante de Servicios ${i + 1}`);
+            logger.info('Utility bill uploaded successfully', {
+              propertyId: newProperty.id,
+              billIndex: i + 1,
+              fileName: bill.name,
+            });
+          } catch (billError) {
+            logger.error('Error uploading utility bill', {
+              error: billError instanceof Error ? billError.message : String(billError),
+              propertyId: newProperty.id,
+              billIndex: i + 1,
+            });
+          }
+        }
+      }
+    }
+
+    // Procesar otros documentos (múltiples archivos)
+    const otherDocuments = formData.getAll('otherDocuments') as File[];
+    if (otherDocuments && otherDocuments.length > 0) {
+      for (let i = 0; i < otherDocuments.length; i++) {
+        const doc = otherDocuments[i];
+        if (doc instanceof File && doc.size > 0) {
+          try {
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2, 15);
+            const fileNameParts = doc.name.split('.');
+            const extension = fileNameParts.length > 1 ? fileNameParts.pop() : 'pdf';
+            const filename = `other_doc_${i + 1}_${timestamp}_${randomId}.${extension}`;
+
+            const cloudKey = `properties/${newProperty.id}/documents/${filename}`;
+            const result = await cloudStorage.uploadFile(doc, cloudKey, doc.type);
+
+            await db.document.create({
+              data: {
+                name: `Documento Adicional ${i + 1}`,
+                type: 'OTHER_DOCUMENT',
+                fileName: doc.name,
+                filePath: result.url,
+                fileSize: doc.size,
+                mimeType: doc.type,
+                uploadedById: decoded.id,
+                propertyId: newProperty.id,
+              },
+            });
+
+            uploadedDocuments.push(`Documento Adicional ${i + 1}`);
+            logger.info('Other document uploaded successfully', {
+              propertyId: newProperty.id,
+              docIndex: i + 1,
+              fileName: doc.name,
+            });
+          } catch (docError) {
+            logger.error('Error uploading other document', {
+              error: docError instanceof Error ? docError.message : String(docError),
+              propertyId: newProperty.id,
+              docIndex: i + 1,
+            });
+          }
+        }
+      }
+    }
+
+    logger.info('All documents processed', {
+      propertyId: newProperty.id,
+      uploadedDocumentsCount: uploadedDocuments.length,
+      uploadedDocuments,
+    });
 
     const endTime = Date.now();
     logger.info('Property created successfully', {
       propertyId: newProperty.id,
       ownerId: decoded.id,
+      documentsUploaded: uploadedDocuments.length,
       responseTime: endTime - startTime,
     });
 
