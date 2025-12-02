@@ -1,26 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAnyRole } from '@/lib/auth';
+import { requireAnyRole, verifyToken } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const propertyId = params.id;
-    const decoded = await requireAnyRole(request, ['OWNER', 'BROKER', 'ADMIN']);
 
-    // Verificar que la propiedad existe y pertenece al usuario
-    const property = await db.property.findFirst({
-      where: {
-        id: propertyId,
-        OR: [{ ownerId: decoded.id }, { brokerId: decoded.id }],
+    // Intentar obtener el usuario autenticado (opcional)
+    let decoded = null;
+    try {
+      decoded = verifyToken(request);
+    } catch {
+      // Usuario no autenticado - permitir acceso público a tours habilitados
+    }
+
+    // Verificar que la propiedad existe
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+      select: {
+        id: true,
+        ownerId: true,
+        brokerId: true,
+        virtualTourEnabled: true,
       },
     });
 
     if (!property) {
-      return NextResponse.json(
-        { error: 'Propiedad no encontrada o no tienes acceso' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
+
+    // Verificar permisos: usuarios autenticados propietarios/brokers pueden ver todo,
+    // usuarios públicos solo pueden ver tours habilitados
+    const isOwnerOrBroker =
+      decoded && (property.ownerId === decoded.id || property.brokerId === decoded.id);
+    const isAdmin = decoded && decoded.role === 'ADMIN';
+    const canAccessFullTour = isOwnerOrBroker || isAdmin;
 
     // Obtener configuración del tour virtual
     const virtualTour = await db.virtualTour.findFirst({
@@ -36,6 +50,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     });
 
     if (!virtualTour) {
+      return NextResponse.json({
+        success: true,
+        tour: {
+          isEnabled: false,
+          title: '',
+          description: '',
+          scenes: [],
+          autoPlay: false,
+          showControls: true,
+          allowFullscreen: true,
+        },
+      });
+    }
+
+    // Si el tour no está habilitado y el usuario no es propietario/broker/admin, denegar acceso
+    if (!virtualTour.enabled && !canAccessFullTour) {
       return NextResponse.json({
         success: true,
         tour: {
