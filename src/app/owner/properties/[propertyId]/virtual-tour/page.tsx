@@ -42,6 +42,7 @@ import {
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import Viewer360 from '@/components/virtual-tour/Viewer360';
 
 interface VirtualTourScene {
   id: string;
@@ -110,6 +111,7 @@ export default function VirtualTourConfigPage() {
     title: '',
     description: '',
   });
+  const [use360Viewer, setUse360Viewer] = useState(true); // Usar visor 360° real
 
   // Cargar configuración existente
   useEffect(() => {
@@ -972,125 +974,153 @@ export default function VirtualTourConfigPage() {
           <TabsContent value="preview" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="w-5 h-5" />
-                  Vista Previa del Tour
-                </CardTitle>
-                <CardDescription>Previsualiza cómo se verá el tour virtual</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Eye className="w-5 h-5" />
+                      Vista Previa del Tour
+                    </CardTitle>
+                    <CardDescription>Previsualiza cómo se verá el tour virtual</CardDescription>
+                  </div>
+                  {/* Toggle para visor 360° */}
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="viewer-mode" className="text-sm text-gray-600">
+                      Visor 360° real
+                    </Label>
+                    <Switch
+                      id="viewer-mode"
+                      checked={use360Viewer}
+                      onCheckedChange={setUse360Viewer}
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {tourConfig.scenes.length > 0 ? (
                   <div className="space-y-4">
-                    {/* Visor Principal con Hotspots */}
-                    <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                      <img
-                        src={tourConfig.scenes[selectedSceneIndex]?.imageUrl}
-                        alt={tourConfig.scenes[selectedSceneIndex]?.name || 'Escena del tour'}
-                        className="w-full h-full object-cover"
-                        onError={e => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
-                      />
-
-                      {/* Hotspots interactivos */}
-                      {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).map(hotspot => (
-                        <button
-                          key={hotspot.id}
-                          onClick={() => {
-                            if (hotspot.type === 'scene' && hotspot.targetSceneId) {
-                              const targetIndex = tourConfig.scenes.findIndex(
-                                s => s.id === hotspot.targetSceneId
-                              );
-                              if (targetIndex !== -1) {
-                                setSelectedSceneIndex(targetIndex);
-                              }
-                            }
+                    {use360Viewer ? (
+                      /* Visor 360° Real con Pannellum */
+                      <div className="relative w-full h-[500px] bg-black rounded-lg overflow-hidden">
+                        <Viewer360
+                          scenes={tourConfig.scenes}
+                          initialSceneIndex={selectedSceneIndex}
+                          onSceneChange={index => setSelectedSceneIndex(index)}
+                          showControls={true}
+                          autoRotate={false}
+                        />
+                      </div>
+                    ) : (
+                      /* Visor básico con Hotspots */
+                      <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                        <img
+                          src={tourConfig.scenes[selectedSceneIndex]?.imageUrl}
+                          alt={tourConfig.scenes[selectedSceneIndex]?.name || 'Escena del tour'}
+                          className="w-full h-full object-cover"
+                          onError={e => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
                           }}
-                          className="absolute transform -translate-x-1/2 -translate-y-1/2 group z-10"
-                          style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
-                          title={hotspot.title}
-                        >
-                          {/* Indicador pulsante de fondo */}
-                          <div
-                            className={`absolute inset-0 rounded-full ${
-                              hotspot.type === 'scene' ? 'bg-emerald-500' : 'bg-blue-500'
-                            } animate-ping opacity-40`}
-                          />
+                        />
 
-                          {/* Botón principal */}
-                          <div
-                            className={`relative w-12 h-12 rounded-full flex items-center justify-center 
+                        {/* Hotspots interactivos */}
+                        {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).map(hotspot => (
+                          <button
+                            key={hotspot.id}
+                            onClick={() => {
+                              if (hotspot.type === 'scene' && hotspot.targetSceneId) {
+                                const targetIndex = tourConfig.scenes.findIndex(
+                                  s => s.id === hotspot.targetSceneId
+                                );
+                                if (targetIndex !== -1) {
+                                  setSelectedSceneIndex(targetIndex);
+                                }
+                              }
+                            }}
+                            className="absolute transform -translate-x-1/2 -translate-y-1/2 group z-10"
+                            style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
+                            title={hotspot.title}
+                          >
+                            {/* Indicador pulsante de fondo */}
+                            <div
+                              className={`absolute inset-0 rounded-full ${
+                                hotspot.type === 'scene' ? 'bg-emerald-500' : 'bg-blue-500'
+                              } animate-ping opacity-40`}
+                            />
+
+                            {/* Botón principal */}
+                            <div
+                              className={`relative w-12 h-12 rounded-full flex items-center justify-center 
                             ${
                               hotspot.type === 'scene'
                                 ? 'bg-emerald-500 hover:bg-emerald-400'
                                 : 'bg-blue-500 hover:bg-blue-400'
                             } text-white shadow-xl transition-all duration-300 group-hover:scale-125 cursor-pointer`}
-                          >
-                            {hotspot.type === 'scene' ? (
-                              <Navigation className="w-6 h-6" />
-                            ) : (
-                              <Info className="w-6 h-6" />
-                            )}
-                          </div>
-
-                          {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
-                            <div className="bg-black/90 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl">
-                              <p className="font-medium">{hotspot.title}</p>
-                              {hotspot.type === 'scene' && (
-                                <p className="text-xs text-emerald-300 flex items-center gap-1">
-                                  <Play className="w-3 h-3" /> Clic para navegar
-                                </p>
+                            >
+                              {hotspot.type === 'scene' ? (
+                                <Navigation className="w-6 h-6" />
+                              ) : (
+                                <Info className="w-6 h-6" />
                               )}
                             </div>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black/90" />
-                          </div>
-                        </button>
-                      ))}
 
-                      {/* Controles de navegación */}
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedSceneIndex(prev => Math.max(0, prev - 1))}
-                          disabled={selectedSceneIndex === 0}
-                          className="text-white hover:bg-white/20"
-                        >
-                          ← Anterior
-                        </Button>
-                        <span className="text-white text-sm px-2">
-                          {selectedSceneIndex + 1} / {tourConfig.scenes.length}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setSelectedSceneIndex(prev =>
-                              Math.min(tourConfig.scenes.length - 1, prev + 1)
-                            )
-                          }
-                          disabled={selectedSceneIndex === tourConfig.scenes.length - 1}
-                          className="text-white hover:bg-white/20"
-                        >
-                          Siguiente →
-                        </Button>
-                      </div>
-                      {/* Nombre de la escena */}
-                      <div className="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded text-white text-sm">
-                        {tourConfig.scenes[selectedSceneIndex]?.name ||
-                          `Escena ${selectedSceneIndex + 1}`}
-                      </div>
-                      {/* Indicador de hotspots */}
-                      {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).length > 0 && (
-                        <div className="absolute top-4 right-4 bg-emerald-500/80 px-3 py-1 rounded text-white text-xs flex items-center gap-1">
-                          <Navigation className="w-3 h-3" />
-                          {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).length} punto(s)
-                          de navegación
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                              <div className="bg-black/90 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl">
+                                <p className="font-medium">{hotspot.title}</p>
+                                {hotspot.type === 'scene' && (
+                                  <p className="text-xs text-emerald-300 flex items-center gap-1">
+                                    <Play className="w-3 h-3" /> Clic para navegar
+                                  </p>
+                                )}
+                              </div>
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black/90" />
+                            </div>
+                          </button>
+                        ))}
+
+                        {/* Controles de navegación */}
+                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedSceneIndex(prev => Math.max(0, prev - 1))}
+                            disabled={selectedSceneIndex === 0}
+                            className="text-white hover:bg-white/20"
+                          >
+                            ← Anterior
+                          </Button>
+                          <span className="text-white text-sm px-2">
+                            {selectedSceneIndex + 1} / {tourConfig.scenes.length}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedSceneIndex(prev =>
+                                Math.min(tourConfig.scenes.length - 1, prev + 1)
+                              )
+                            }
+                            disabled={selectedSceneIndex === tourConfig.scenes.length - 1}
+                            className="text-white hover:bg-white/20"
+                          >
+                            Siguiente →
+                          </Button>
                         </div>
-                      )}
-                    </div>
+                        {/* Nombre de la escena */}
+                        <div className="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded text-white text-sm">
+                          {tourConfig.scenes[selectedSceneIndex]?.name ||
+                            `Escena ${selectedSceneIndex + 1}`}
+                        </div>
+                        {/* Indicador de hotspots */}
+                        {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).length > 0 && (
+                          <div className="absolute top-4 right-4 bg-emerald-500/80 px-3 py-1 rounded text-white text-xs flex items-center gap-1">
+                            <Navigation className="w-3 h-3" />
+                            {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).length}{' '}
+                            punto(s) de navegación
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Thumbnails de navegación */}
                     <div className="grid grid-cols-3 md:grid-cols-6 gap-2">

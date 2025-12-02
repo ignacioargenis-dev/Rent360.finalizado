@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { Property } from '@/types';
 import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
+import Viewer360 from '@/components/virtual-tour/Viewer360';
 
 interface PropertyFilters {
   city?: string;
@@ -97,6 +98,7 @@ export default function PropertySearch() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showTourControls, setShowTourControls] = useState(true);
+  const [use360Viewer, setUse360Viewer] = useState(true); // Usar visor 360° real por defecto
 
   useEffect(() => {
     fetchProperties();
@@ -1043,6 +1045,30 @@ export default function PropertySearch() {
                 <p className="text-slate-400">Cargando experiencia 360°...</p>
               </div>
             </div>
+          ) : use360Viewer && virtualTourScenes.length > 0 ? (
+            /* Visor 360° Real con Pannellum */
+            <Viewer360
+              scenes={virtualTourScenes}
+              initialSceneIndex={currentSceneIndex}
+              onSceneChange={index => setCurrentSceneIndex(index)}
+              onClose={() => {
+                setSelectedPropertyForTour(null);
+                setCurrentSceneIndex(0);
+              }}
+              showControls={true}
+              autoRotate={false}
+              propertyInfo={
+                tourProperty
+                  ? {
+                      title: tourProperty.title,
+                      address: tourProperty.address,
+                      bedrooms: tourProperty.bedrooms,
+                      bathrooms: tourProperty.bathrooms,
+                      area: tourProperty.area,
+                    }
+                  : undefined
+              }
+            />
           ) : virtualTourScenes.length > 0 ? (
             /* Tour Virtual Inmersivo */
             <div className="relative h-full flex flex-col">
