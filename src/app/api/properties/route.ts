@@ -797,6 +797,7 @@ export async function GET(request: NextRequest) {
             property.reviews.length
           : 0,
       totalReviews: property.reviews.length,
+      virtualTourEnabled: property.virtualTourEnabled || false,
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
     }));

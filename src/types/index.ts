@@ -148,6 +148,9 @@ export interface Property {
   security: boolean;
   concierge: boolean;
 
+  // Tour virtual
+  virtualTourEnabled?: boolean;
+
   // Campos opcionales para compatibilidad
   type?: string;
   brokerId?: string | null;
