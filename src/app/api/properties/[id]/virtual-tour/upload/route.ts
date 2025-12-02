@@ -58,6 +58,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
+      // Verificar que el archivo existe
+      if (!file) {
+        continue;
+      }
+
       // Validar tipo de archivo
       if (!file.type.startsWith('image/')) {
         logger.warn('Archivo no es imagen, saltando', { fileName: file.name, type: file.type });
