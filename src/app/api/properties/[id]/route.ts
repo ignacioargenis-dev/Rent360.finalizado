@@ -218,28 +218,30 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       currency: 'CLP', // Valor por defecto
 
       // Documentos de la propiedad
-      documents: property.documents.map(doc => ({
-        id: doc.id,
-        name: doc.name,
-        type: doc.type,
-        uploadDate: doc.createdAt.toISOString().split('T')[0],
-        size: formatFileSize(doc.fileSize),
-        fileName: doc.fileName,
-        filePath: doc.filePath,
-        mimeType: doc.mimeType,
-      })),
-    };
+      documents: property.documents.map(doc => {
+        // Función auxiliar para formatear tamaño de archivo
+        const formatSize = (bytes: number): string => {
+          if (bytes === 0) {
+            return '0 Bytes';
+          }
+          const k = 1024;
+          const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
 
-    // Función auxiliar para formatear tamaño de archivo
-    function formatFileSize(bytes: number): string {
-      if (bytes === 0) {
-        return '0 Bytes';
-      }
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
+        return {
+          id: doc.id,
+          name: doc.name,
+          type: doc.type,
+          uploadDate: doc.createdAt.toISOString().split('T')[0],
+          size: formatSize(doc.fileSize),
+          fileName: doc.fileName,
+          filePath: doc.filePath,
+          mimeType: doc.mimeType,
+        };
+      }),
+    };
 
     console.log('✅ [GET_PROPERTY] Detalles de propiedad obtenidos exitosamente', {
       propertyId,
