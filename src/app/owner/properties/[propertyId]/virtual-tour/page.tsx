@@ -25,7 +25,20 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
+  Navigation,
+  Target,
+  Link2,
+  MessageSquare,
+  X,
+  MousePointer,
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
@@ -88,6 +101,15 @@ export default function VirtualTourConfigPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(0);
   const [editingScene, setEditingScene] = useState<string | null>(null);
+
+  // Estados para hotspots
+  const [isAddingHotspot, setIsAddingHotspot] = useState(false);
+  const [editingHotspot, setEditingHotspot] = useState<Hotspot | null>(null);
+  const [newHotspot, setNewHotspot] = useState<Partial<Hotspot>>({
+    type: 'scene',
+    title: '',
+    description: '',
+  });
 
   // Cargar configuración existente
   useEffect(() => {
@@ -214,6 +236,89 @@ export default function VirtualTourConfigPage() {
     }));
   };
 
+  // Funciones para manejar hotspots
+  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isAddingHotspot) {
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setNewHotspot(prev => ({
+      ...prev,
+      x,
+      y,
+      id: `hotspot-${Date.now()}`,
+    }));
+  };
+
+  const addHotspotToScene = () => {
+    if (!newHotspot.x || !newHotspot.title) {
+      setError('Por favor, haz clic en la imagen y agrega un título');
+      return;
+    }
+
+    const currentScene = tourConfig.scenes[selectedSceneIndex];
+    if (!currentScene) {
+      return;
+    }
+
+    const hotspot: Hotspot = {
+      id: newHotspot.id || `hotspot-${Date.now()}`,
+      x: newHotspot.x,
+      y: newHotspot.y || 50,
+      type: newHotspot.type || 'scene',
+      targetSceneId: newHotspot.targetSceneId,
+      title: newHotspot.title,
+      description: newHotspot.description,
+    };
+
+    const updatedHotspots = [...(currentScene.hotspots || []), hotspot];
+    updateScene(currentScene.id, { hotspots: updatedHotspots });
+
+    // Resetear
+    setIsAddingHotspot(false);
+    setNewHotspot({ type: 'scene', title: '', description: '' });
+    setSuccess('Punto de navegación agregado');
+  };
+
+  const removeHotspot = (sceneId: string, hotspotId: string) => {
+    const scene = tourConfig.scenes.find(s => s.id === sceneId);
+    if (!scene) {
+      return;
+    }
+
+    const updatedHotspots = (scene.hotspots || []).filter(h => h.id !== hotspotId);
+    updateScene(sceneId, { hotspots: updatedHotspots });
+  };
+
+  const updateHotspot = (sceneId: string, hotspotId: string, updates: Partial<Hotspot>) => {
+    const scene = tourConfig.scenes.find(s => s.id === sceneId);
+    if (!scene) {
+      return;
+    }
+
+    const updatedHotspots = (scene.hotspots || []).map(h =>
+      h.id === hotspotId ? { ...h, ...updates } : h
+    );
+    updateScene(sceneId, { hotspots: updatedHotspots });
+  };
+
+  const getHotspotIcon = (type: string) => {
+    switch (type) {
+      case 'scene':
+        return <Navigation className="w-4 h-4" />;
+      case 'info':
+        return <Info className="w-4 h-4" />;
+      case 'link':
+        return <Link2 className="w-4 h-4" />;
+      default:
+        return <Target className="w-4 h-4" />;
+    }
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout>
@@ -275,6 +380,7 @@ export default function VirtualTourConfigPage() {
           <TabsList>
             <TabsTrigger value="settings">Configuración</TabsTrigger>
             <TabsTrigger value="scenes">Escenas</TabsTrigger>
+            <TabsTrigger value="navigation">Navegación</TabsTrigger>
             <TabsTrigger value="preview">Vista Previa</TabsTrigger>
           </TabsList>
 
@@ -543,6 +649,325 @@ export default function VirtualTourConfigPage() {
             </Card>
           </TabsContent>
 
+          {/* Configuración de Navegación / Hotspots */}
+          <TabsContent value="navigation" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Navigation className="w-5 h-5" />
+                  Puntos de Navegación (Hotspots)
+                </CardTitle>
+                <CardDescription>
+                  Agrega puntos de navegación para conectar las escenas como en Google Street View
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {tourConfig.scenes.length < 2 ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Necesitas al menos 2 escenas para configurar la navegación entre ellas.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <>
+                    {/* Selector de escena */}
+                    <div className="space-y-2">
+                      <Label>Selecciona una escena para agregar puntos de navegación</Label>
+                      <Select
+                        value={selectedSceneIndex.toString()}
+                        onValueChange={value => setSelectedSceneIndex(parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tourConfig.scenes.map((scene, index) => (
+                            <SelectItem key={scene.id} value={index.toString()}>
+                              {scene.name || `Escena ${index + 1}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Editor visual de hotspots */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Imagen de la escena (haz clic para agregar un punto)</Label>
+                        <Button
+                          variant={isAddingHotspot ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setIsAddingHotspot(!isAddingHotspot);
+                            setNewHotspot({ type: 'scene', title: '', description: '' });
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          {isAddingHotspot ? (
+                            <>
+                              <X className="w-4 h-4" />
+                              Cancelar
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-4 h-4" />
+                              Agregar Punto
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Imagen con hotspots */}
+                      <div
+                        className={`relative aspect-video bg-gray-900 rounded-lg overflow-hidden ${isAddingHotspot ? 'cursor-crosshair' : ''}`}
+                        onClick={handleImageClick}
+                      >
+                        {tourConfig.scenes[selectedSceneIndex] && (
+                          <img
+                            src={tourConfig.scenes[selectedSceneIndex].imageUrl}
+                            alt={tourConfig.scenes[selectedSceneIndex].name}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+
+                        {/* Hotspots existentes */}
+                        {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).map(hotspot => (
+                          <div
+                            key={hotspot.id}
+                            className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
+                            style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
+                          >
+                            <button
+                              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300
+                                ${
+                                  hotspot.type === 'scene'
+                                    ? 'bg-emerald-500 hover:bg-emerald-600 animate-pulse'
+                                    : 'bg-blue-500 hover:bg-blue-600'
+                                } text-white shadow-lg hover:scale-110`}
+                              title={hotspot.title}
+                            >
+                              {getHotspotIcon(hotspot.type)}
+                            </button>
+                            {/* Tooltip con info */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              <div className="bg-black/80 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap">
+                                <p className="font-medium">{hotspot.title}</p>
+                                {hotspot.targetSceneId && (
+                                  <p className="text-gray-300">
+                                    →{' '}
+                                    {tourConfig.scenes.find(s => s.id === hotspot.targetSceneId)
+                                      ?.name || 'Escena'}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {/* Botón eliminar */}
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                removeHotspot(tourConfig.scenes[selectedSceneIndex].id, hotspot.id);
+                              }}
+                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Nuevo hotspot temporal */}
+                        {isAddingHotspot && newHotspot.x !== undefined && (
+                          <div
+                            className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                            style={{ left: `${newHotspot.x}%`, top: `${newHotspot.y}%` }}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white animate-bounce shadow-lg">
+                              <Target className="w-5 h-5" />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Indicador de modo */}
+                        {isAddingHotspot && (
+                          <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-2">
+                            <MousePointer className="w-4 h-4" />
+                            Haz clic en la imagen para colocar el punto
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Formulario para nuevo hotspot */}
+                      {isAddingHotspot && newHotspot.x !== undefined && (
+                        <Card className="border-orange-200 bg-orange-50">
+                          <CardContent className="p-4 space-y-4">
+                            <h4 className="font-medium text-orange-800">
+                              Configurar nuevo punto de navegación
+                            </h4>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Tipo de punto</Label>
+                                <Select
+                                  value={newHotspot.type}
+                                  onValueChange={(value: 'scene' | 'info' | 'link') =>
+                                    setNewHotspot(prev => ({ ...prev, type: value }))
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="scene">
+                                      <span className="flex items-center gap-2">
+                                        <Navigation className="w-4 h-4" /> Ir a otra escena
+                                      </span>
+                                    </SelectItem>
+                                    <SelectItem value="info">
+                                      <span className="flex items-center gap-2">
+                                        <Info className="w-4 h-4" /> Información
+                                      </span>
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {newHotspot.type === 'scene' && (
+                                <div className="space-y-2">
+                                  <Label>Escena destino</Label>
+                                  <Select
+                                    value={newHotspot.targetSceneId || ''}
+                                    onValueChange={value =>
+                                      setNewHotspot(prev => ({ ...prev, targetSceneId: value }))
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecciona una escena" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {tourConfig.scenes
+                                        .filter((_, idx) => idx !== selectedSceneIndex)
+                                        .map((scene, index) => (
+                                          <SelectItem key={scene.id} value={scene.id}>
+                                            {scene.name || `Escena ${index + 1}`}
+                                          </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Título del punto</Label>
+                              <Input
+                                value={newHotspot.title || ''}
+                                onChange={e =>
+                                  setNewHotspot(prev => ({ ...prev, title: e.target.value }))
+                                }
+                                placeholder={
+                                  newHotspot.type === 'scene'
+                                    ? 'Ej: Ir a la cocina'
+                                    : 'Ej: Info del living'
+                                }
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Descripción (opcional)</Label>
+                              <Input
+                                value={newHotspot.description || ''}
+                                onChange={e =>
+                                  setNewHotspot(prev => ({ ...prev, description: e.target.value }))
+                                }
+                                placeholder="Descripción adicional"
+                              />
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={addHotspotToScene}
+                                disabled={
+                                  !newHotspot.title ||
+                                  (newHotspot.type === 'scene' && !newHotspot.targetSceneId)
+                                }
+                                className="flex-1"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Guardar Punto
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setIsAddingHotspot(false);
+                                  setNewHotspot({ type: 'scene', title: '', description: '' });
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Lista de hotspots de la escena actual */}
+                      {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Puntos de navegación en esta escena</Label>
+                          <div className="space-y-2">
+                            {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).map(
+                              hotspot => (
+                                <div
+                                  key={hotspot.id}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                        hotspot.type === 'scene'
+                                          ? 'bg-emerald-100 text-emerald-600'
+                                          : 'bg-blue-100 text-blue-600'
+                                      }`}
+                                    >
+                                      {getHotspotIcon(hotspot.type)}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-sm">{hotspot.title}</p>
+                                      {hotspot.type === 'scene' && hotspot.targetSceneId && (
+                                        <p className="text-xs text-gray-500">
+                                          →{' '}
+                                          {tourConfig.scenes.find(
+                                            s => s.id === hotspot.targetSceneId
+                                          )?.name || 'Escena'}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      removeHotspot(
+                                        tourConfig.scenes[selectedSceneIndex].id,
+                                        hotspot.id
+                                      )
+                                    }
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Vista Previa */}
           <TabsContent value="preview" className="space-y-6">
             <Card>
@@ -556,7 +981,7 @@ export default function VirtualTourConfigPage() {
               <CardContent>
                 {tourConfig.scenes.length > 0 ? (
                   <div className="space-y-4">
-                    {/* Visor Principal */}
+                    {/* Visor Principal con Hotspots */}
                     <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
                       <img
                         src={tourConfig.scenes[selectedSceneIndex]?.imageUrl}
@@ -567,6 +992,63 @@ export default function VirtualTourConfigPage() {
                           target.style.display = 'none';
                         }}
                       />
+
+                      {/* Hotspots interactivos */}
+                      {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).map(hotspot => (
+                        <button
+                          key={hotspot.id}
+                          onClick={() => {
+                            if (hotspot.type === 'scene' && hotspot.targetSceneId) {
+                              const targetIndex = tourConfig.scenes.findIndex(
+                                s => s.id === hotspot.targetSceneId
+                              );
+                              if (targetIndex !== -1) {
+                                setSelectedSceneIndex(targetIndex);
+                              }
+                            }
+                          }}
+                          className="absolute transform -translate-x-1/2 -translate-y-1/2 group z-10"
+                          style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
+                          title={hotspot.title}
+                        >
+                          {/* Indicador pulsante de fondo */}
+                          <div
+                            className={`absolute inset-0 rounded-full ${
+                              hotspot.type === 'scene' ? 'bg-emerald-500' : 'bg-blue-500'
+                            } animate-ping opacity-40`}
+                          />
+
+                          {/* Botón principal */}
+                          <div
+                            className={`relative w-12 h-12 rounded-full flex items-center justify-center 
+                            ${
+                              hotspot.type === 'scene'
+                                ? 'bg-emerald-500 hover:bg-emerald-400'
+                                : 'bg-blue-500 hover:bg-blue-400'
+                            } text-white shadow-xl transition-all duration-300 group-hover:scale-125 cursor-pointer`}
+                          >
+                            {hotspot.type === 'scene' ? (
+                              <Navigation className="w-6 h-6" />
+                            ) : (
+                              <Info className="w-6 h-6" />
+                            )}
+                          </div>
+
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                            <div className="bg-black/90 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl">
+                              <p className="font-medium">{hotspot.title}</p>
+                              {hotspot.type === 'scene' && (
+                                <p className="text-xs text-emerald-300 flex items-center gap-1">
+                                  <Play className="w-3 h-3" /> Clic para navegar
+                                </p>
+                              )}
+                            </div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black/90" />
+                          </div>
+                        </button>
+                      ))}
+
                       {/* Controles de navegación */}
                       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full">
                         <Button
@@ -600,6 +1082,14 @@ export default function VirtualTourConfigPage() {
                         {tourConfig.scenes[selectedSceneIndex]?.name ||
                           `Escena ${selectedSceneIndex + 1}`}
                       </div>
+                      {/* Indicador de hotspots */}
+                      {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).length > 0 && (
+                        <div className="absolute top-4 right-4 bg-emerald-500/80 px-3 py-1 rounded text-white text-xs flex items-center gap-1">
+                          <Navigation className="w-3 h-3" />
+                          {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).length} punto(s)
+                          de navegación
+                        </div>
+                      )}
                     </div>
 
                     {/* Thumbnails de navegación */}

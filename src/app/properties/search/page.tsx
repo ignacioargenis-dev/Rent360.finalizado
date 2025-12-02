@@ -45,6 +45,7 @@ import {
   Move,
   Minus,
   Plus,
+  Navigation,
 } from 'lucide-react';
 import { Property } from '@/types';
 import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
@@ -1124,6 +1125,87 @@ export default function PropertySearch() {
                     />
                   )}
                 </div>
+
+                {/* Hotspots interactivos - Navegación estilo Street View */}
+                {virtualTourScenes[currentSceneIndex]?.hotspots?.map((hotspot: any) => (
+                  <button
+                    key={hotspot.id}
+                    onClick={e => {
+                      e.stopPropagation();
+                      if (hotspot.type === 'scene' && hotspot.targetSceneId) {
+                        const targetIndex = virtualTourScenes.findIndex(
+                          (s: any) => s.id === hotspot.targetSceneId
+                        );
+                        if (targetIndex !== -1) {
+                          // Resetear zoom y pan al cambiar de escena
+                          setTourZoom(1);
+                          setTourPan({ x: 0, y: 0 });
+                          setCurrentSceneIndex(targetIndex);
+                        }
+                      }
+                    }}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 group z-30 pointer-events-auto"
+                    style={{
+                      left: `${hotspot.x}%`,
+                      top: `${hotspot.y}%`,
+                      // Ajustar posición según zoom y pan
+                      transform: `translate(-50%, -50%) scale(${1 / tourZoom})`,
+                    }}
+                    title={hotspot.title}
+                  >
+                    {/* Anillo pulsante exterior */}
+                    <div
+                      className={`absolute inset-0 rounded-full ${
+                        hotspot.type === 'scene' ? 'bg-emerald-500' : 'bg-blue-500'
+                      } animate-ping opacity-30`}
+                      style={{ transform: 'scale(1.5)' }}
+                    />
+
+                    {/* Círculo interior con flecha direccional */}
+                    <div
+                      className={`relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center 
+                        ${
+                          hotspot.type === 'scene'
+                            ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500'
+                            : 'bg-gradient-to-br from-blue-400 to-blue-600 hover:from-blue-300 hover:to-blue-500'
+                        } text-white shadow-2xl transition-all duration-300 
+                        group-hover:scale-125 cursor-pointer border-2 border-white/50`}
+                    >
+                      {hotspot.type === 'scene' ? (
+                        <ChevronRight className="w-8 h-8 md:w-10 md:h-10 group-hover:translate-x-1 transition-transform" />
+                      ) : (
+                        <Info className="w-6 h-6 md:w-8 md:h-8" />
+                      )}
+                    </div>
+
+                    {/* Tooltip elegante */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                      <div className="bg-black/90 backdrop-blur-md text-white px-4 py-3 rounded-xl shadow-2xl border border-white/10 whitespace-nowrap">
+                        <p className="font-semibold text-base">{hotspot.title}</p>
+                        {hotspot.description && (
+                          <p className="text-sm text-slate-300 mt-1">{hotspot.description}</p>
+                        )}
+                        {hotspot.type === 'scene' && (
+                          <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                            <Play className="w-3 h-3" /> Clic para navegar
+                          </p>
+                        )}
+                      </div>
+                      {/* Flecha del tooltip */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black/90" />
+                    </div>
+                  </button>
+                ))}
+
+                {/* Indicador de hotspots disponibles */}
+                {virtualTourScenes[currentSceneIndex]?.hotspots?.length > 0 && showTourControls && (
+                  <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-emerald-500/80 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 animate-bounce">
+                    <ChevronRight className="w-4 h-4 text-white" />
+                    <span className="text-white text-sm font-medium">
+                      {virtualTourScenes[currentSceneIndex].hotspots.length} punto(s) de navegación
+                    </span>
+                  </div>
+                )}
 
                 {/* Controles de zoom flotantes */}
                 <div
