@@ -108,7 +108,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const body = await request.json();
-    const { enabled, title, description, scenes } = body;
+    // Soportar tanto 'enabled' como 'isEnabled' del frontend
+    const enabled = body.enabled ?? body.isEnabled ?? false;
+    const { title, description, scenes } = body;
+
+    console.log('📺 [VIRTUAL-TOUR] Guardando tour virtual:', {
+      propertyId,
+      enabled,
+      title,
+      scenesCount: scenes?.length || 0,
+    });
 
     // Usar una transacción para actualizar el tour virtual
     await db.$transaction(async tx => {
@@ -116,18 +125,20 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       const virtualTour = await tx.virtualTour.upsert({
         where: { propertyId },
         update: {
-          enabled,
-          title,
-          description,
+          enabled: Boolean(enabled),
+          title: title || '',
+          description: description || '',
           updatedAt: new Date(),
         },
         create: {
           propertyId,
-          enabled,
-          title,
-          description,
+          enabled: Boolean(enabled),
+          title: title || '',
+          description: description || '',
         },
       });
+
+      console.log('✅ [VIRTUAL-TOUR] Tour creado/actualizado:', virtualTour.id);
 
       // Eliminar escenas existentes
       await tx.virtualTourScene.deleteMany({
@@ -136,20 +147,27 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
       // Crear nuevas escenas
       if (scenes && scenes.length > 0) {
+        console.log('🎬 [VIRTUAL-TOUR] Creando', scenes.length, 'escenas');
         for (let i = 0; i < scenes.length; i++) {
           const scene = scenes[i];
+          if (!scene) {
+            continue;
+          }
+
           const newScene = await tx.virtualTourScene.create({
             data: {
               virtualTourId: virtualTour.id,
-              name: scene.name,
-              imageUrl: scene.imageUrl,
-              thumbnailUrl: scene.thumbnailUrl,
-              description: scene.description,
-              audioUrl: scene.audioUrl,
-              duration: scene.duration,
+              name: scene.name || `Escena ${i + 1}`,
+              imageUrl: scene.imageUrl || '',
+              thumbnailUrl: scene.thumbnailUrl || scene.imageUrl || '',
+              description: scene.description || null,
+              audioUrl: scene.audioUrl || null,
+              duration: scene.duration || null,
               order: i,
             },
           });
+
+          console.log('✅ [VIRTUAL-TOUR] Escena creada:', newScene.id, newScene.name);
 
           // Crear hotspots si existen
           if (scene.hotspots && scene.hotspots.length > 0) {
@@ -171,13 +189,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       }
     });
 
+    console.log('✅ [VIRTUAL-TOUR] Tour virtual guardado exitosamente');
+
     return NextResponse.json({
       success: true,
       message: 'Tour virtual guardado exitosamente',
     });
   } catch (error) {
-    console.error('Error saving virtual tour:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    console.error('❌ [VIRTUAL-TOUR] Error saving virtual tour:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }
 
