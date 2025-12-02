@@ -86,6 +86,8 @@ export default function VirtualTourConfigPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedSceneIndex, setSelectedSceneIndex] = useState(0);
+  const [editingScene, setEditingScene] = useState<string | null>(null);
 
   // Cargar configuración existente
   useEffect(() => {
@@ -419,47 +421,112 @@ export default function VirtualTourConfigPage() {
                 {/* Lista de Escenas */}
                 {tourConfig.scenes.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {tourConfig.scenes.map(scene => (
-                      <Card key={scene.id} className="overflow-hidden">
-                        <div className="aspect-video bg-gray-200">
+                    {tourConfig.scenes.map((scene, index) => (
+                      <Card
+                        key={scene.id}
+                        className={`overflow-hidden transition-all ${editingScene === scene.id ? 'ring-2 ring-blue-500' : ''}`}
+                      >
+                        <div className="aspect-video bg-gray-200 relative group">
                           <img
                             src={scene.thumbnailUrl}
                             alt={scene.name}
                             className="w-full h-full object-cover"
+                            onError={e => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/api/placeholder/400/225';
+                            }}
                           />
+                          {/* Overlay con número de escena */}
+                          <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                            Escena {index + 1}
+                          </div>
+                          {/* Botón de vista previa */}
+                          <button
+                            onClick={() => setSelectedSceneIndex(index)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-all"
+                          >
+                            <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
                         </div>
                         <CardContent className="p-4">
-                          <div className="space-y-2">
-                            <Input
-                              value={scene.name}
-                              onChange={e => updateScene(scene.id, { name: e.target.value })}
-                              placeholder="Nombre de la escena"
-                            />
-                            <Textarea
-                              value={scene.description || ''}
-                              onChange={e => updateScene(scene.id, { description: e.target.value })}
-                              placeholder="Descripción de la escena"
-                              rows={2}
-                            />
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeScene(scene.id)}
-                                className="flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                Eliminar
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-1"
-                              >
-                                <Edit className="w-3 h-3" />
-                                Editar
-                              </Button>
-                            </div>
+                          <div className="space-y-3">
+                            {editingScene === scene.id ? (
+                              <>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-gray-500">Nombre</Label>
+                                  <Input
+                                    value={scene.name}
+                                    onChange={e => updateScene(scene.id, { name: e.target.value })}
+                                    placeholder="Nombre de la escena"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-gray-500">Descripción</Label>
+                                  <Textarea
+                                    value={scene.description || ''}
+                                    onChange={e =>
+                                      updateScene(scene.id, { description: e.target.value })
+                                    }
+                                    placeholder="Descripción de la escena"
+                                    rows={2}
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => setEditingScene(null)}
+                                    className="flex items-center gap-1 flex-1"
+                                  >
+                                    <CheckCircle className="w-3 h-3" />
+                                    Listo
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                      removeScene(scene.id);
+                                      setEditingScene(null);
+                                    }}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div>
+                                  <h4 className="font-medium text-gray-900">
+                                    {scene.name || `Escena ${index + 1}`}
+                                  </h4>
+                                  {scene.description && (
+                                    <p className="text-sm text-gray-500 line-clamp-2">
+                                      {scene.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingScene(scene.id)}
+                                    className="flex items-center gap-1 flex-1"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                    Editar
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removeScene(scene.id)}
+                                    className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -489,29 +556,74 @@ export default function VirtualTourConfigPage() {
               <CardContent>
                 {tourConfig.scenes.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                      <div className="text-center">
-                        <Play className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600">Vista previa del tour virtual</p>
-                        <p className="text-sm text-gray-500">
-                          {tourConfig.scenes.length} escena
-                          {tourConfig.scenes.length !== 1 ? 's' : ''} configurada
-                          {tourConfig.scenes.length !== 1 ? 's' : ''}
-                        </p>
+                    {/* Visor Principal */}
+                    <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                      <img
+                        src={tourConfig.scenes[selectedSceneIndex]?.imageUrl}
+                        alt={tourConfig.scenes[selectedSceneIndex]?.name || 'Escena del tour'}
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                      {/* Controles de navegación */}
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedSceneIndex(prev => Math.max(0, prev - 1))}
+                          disabled={selectedSceneIndex === 0}
+                          className="text-white hover:bg-white/20"
+                        >
+                          ← Anterior
+                        </Button>
+                        <span className="text-white text-sm px-2">
+                          {selectedSceneIndex + 1} / {tourConfig.scenes.length}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setSelectedSceneIndex(prev =>
+                              Math.min(tourConfig.scenes.length - 1, prev + 1)
+                            )
+                          }
+                          disabled={selectedSceneIndex === tourConfig.scenes.length - 1}
+                          className="text-white hover:bg-white/20"
+                        >
+                          Siguiente →
+                        </Button>
+                      </div>
+                      {/* Nombre de la escena */}
+                      <div className="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded text-white text-sm">
+                        {tourConfig.scenes[selectedSceneIndex]?.name ||
+                          `Escena ${selectedSceneIndex + 1}`}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {tourConfig.scenes.map(scene => (
-                        <div
+
+                    {/* Thumbnails de navegación */}
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                      {tourConfig.scenes.map((scene, index) => (
+                        <button
                           key={scene.id}
-                          className="aspect-video bg-gray-200 rounded overflow-hidden"
+                          onClick={() => setSelectedSceneIndex(index)}
+                          className={`aspect-video bg-gray-200 rounded overflow-hidden border-2 transition-all ${
+                            selectedSceneIndex === index
+                              ? 'border-blue-600 ring-2 ring-blue-200'
+                              : 'border-transparent hover:border-gray-400'
+                          }`}
                         >
                           <img
                             src={scene.thumbnailUrl}
                             alt={scene.name}
                             className="w-full h-full object-cover"
+                            onError={e => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/api/placeholder/160/90';
+                            }}
                           />
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
