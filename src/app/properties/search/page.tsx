@@ -469,11 +469,11 @@ export default function PropertySearch() {
             {property.virtualTourEnabled && (
               <Button
                 size="sm"
-                variant="outline"
                 onClick={() => handleViewVirtualTour(property.id)}
                 title="Tour Virtual 360°"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3"
               >
-                <Camera className="w-4 h-4" />
+                360°
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={() => handleShareProperty(property.id)}>

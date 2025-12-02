@@ -725,13 +725,16 @@ export default function VirtualTourConfigPage() {
                         className={`relative aspect-video bg-gray-900 rounded-lg overflow-hidden ${isAddingHotspot ? 'cursor-crosshair' : ''}`}
                         onClick={handleImageClick}
                       >
-                        {tourConfig.scenes[selectedSceneIndex] && (
-                          <img
-                            src={tourConfig.scenes[selectedSceneIndex].imageUrl}
-                            alt={tourConfig.scenes[selectedSceneIndex].name}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                        {(() => {
+                          const currentScene = tourConfig.scenes[selectedSceneIndex];
+                          return currentScene ? (
+                            <img
+                              src={currentScene.imageUrl}
+                              alt={currentScene.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : null;
+                        })()}
 
                         {/* Hotspots existentes */}
                         {(tourConfig.scenes[selectedSceneIndex]?.hotspots || []).map(hotspot => (
@@ -768,7 +771,10 @@ export default function VirtualTourConfigPage() {
                             <button
                               onClick={e => {
                                 e.stopPropagation();
-                                removeHotspot(tourConfig.scenes[selectedSceneIndex].id, hotspot.id);
+                                const currentScene = tourConfig.scenes[selectedSceneIndex];
+                                if (currentScene) {
+                                  removeHotspot(currentScene.id, hotspot.id);
+                                }
                               }}
                               className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                             >
@@ -947,12 +953,12 @@ export default function VirtualTourConfigPage() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() =>
-                                      removeHotspot(
-                                        tourConfig.scenes[selectedSceneIndex].id,
-                                        hotspot.id
-                                      )
-                                    }
+                                    onClick={() => {
+                                      const scene = tourConfig.scenes[selectedSceneIndex];
+                                      if (scene) {
+                                        removeHotspot(scene.id, hotspot.id);
+                                      }
+                                    }}
                                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                   >
                                     <Trash2 className="w-4 h-4" />
