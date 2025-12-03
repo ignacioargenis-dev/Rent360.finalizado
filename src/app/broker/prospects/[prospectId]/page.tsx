@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -49,6 +50,7 @@ import {
   Activity,
   Save,
   Trash2,
+  AlertCircle,
 } from 'lucide-react';
 
 interface Prospect {
@@ -72,6 +74,7 @@ interface Prospect {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  convertedToClientId?: string;
   user?: {
     id: string;
     name: string;
@@ -157,11 +160,24 @@ export default function ProspectDetailPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [sharingProperty, setSharingProperty] = useState(false);
 
+  // Estado para información del cliente
+  const [clientInfo, setClientInfo] = useState<any>(null);
+  const [loadingClient, setLoadingClient] = useState(false);
+
   useEffect(() => {
     if (prospectId) {
       loadProspect();
     }
   }, [prospectId]);
+
+  // Cargar información del cliente si el prospecto está convertido
+  useEffect(() => {
+    if (prospect && prospect.status === 'CONVERTED' && !prospect.convertedClient) {
+      loadClientInfo();
+    } else if (prospect && prospect.convertedClient) {
+      setClientInfo(prospect.convertedClient);
+    }
+  }, [prospect]);
 
   const loadProspect = async () => {
     try {
@@ -184,6 +200,52 @@ export default function ProspectDetailPage() {
       toast.error('Error al cargar el prospecto');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadClientInfo = async () => {
+    if (!prospect) {
+      return;
+    }
+
+    try {
+      setLoadingClient(true);
+
+      // Primero intentar usar convertedToClientId si está disponible
+      if (prospect.convertedToClientId) {
+        const response = await fetch(`/api/broker/clients/${prospect.convertedToClientId}`);
+        const data = await response.json();
+
+        if (response.ok && data.success && data.data) {
+          setClientInfo(data.data);
+          return;
+        }
+      }
+
+      // Si no hay convertedToClientId, buscar por userId
+      if (prospect.user?.id) {
+        // Buscar todos los clientes del broker y filtrar por userId
+        const response = await fetch(`/api/broker/clients`);
+        const data = await response.json();
+
+        if (response.ok && data.success && data.data && Array.isArray(data.data)) {
+          // Encontrar el cliente que corresponde a este usuario
+          const client = data.data.find((c: any) => c.userId === prospect.user?.id);
+          if (client) {
+            // Cargar detalles completos del cliente
+            const detailResponse = await fetch(`/api/broker/clients/${client.id}`);
+            const detailData = await detailResponse.json();
+
+            if (detailResponse.ok && detailData.success && detailData.data) {
+              setClientInfo(detailData.data);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading client info:', error);
+    } finally {
+      setLoadingClient(false);
     }
   };
 
@@ -732,46 +794,132 @@ export default function ProspectDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {prospect.convertedClient ? (
+                {loadingClient ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Cargando información del cliente...</p>
+                  </div>
+                ) : prospect.status === 'CONVERTED' || prospect.convertedClient || clientInfo ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-green-600" />
                       <span className="font-medium text-green-600">Cliente Activo</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Tasa de Comisión</Label>
-                        <p className="text-lg font-semibold">
-                          {prospect.convertedClient.commissionRate}%
-                        </p>
-                      </div>
+                    {(prospect.convertedClient || clientInfo) && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label>Tasa de Comisión</Label>
+                            <p className="text-lg font-semibold">
+                              {(prospect.convertedClient || clientInfo)?.commissionRate || 'N/A'}%
+                            </p>
+                          </div>
 
-                      <div>
-                        <Label>Propiedades Gestionadas</Label>
-                        <p className="text-lg font-semibold">
-                          {prospect.convertedClient.managedProperties.length}
-                        </p>
-                      </div>
-                    </div>
+                          <div>
+                            <Label>Propiedades Gestionadas</Label>
+                            <p className="text-lg font-semibold">
+                              {(
+                                prospect.convertedClient?.managedProperties ||
+                                clientInfo?.managedProperties ||
+                                []
+                              )?.length || 0}
+                            </p>
+                          </div>
 
-                    {prospect.convertedClient.managedProperties.length > 0 && (
-                      <div>
-                        <Label className="mb-2 block">Propiedades Gestionadas</Label>
-                        <div className="space-y-2">
-                          {prospect.convertedClient.managedProperties.map(managed => (
-                            <div
-                              key={managed.property.id}
-                              className="flex items-center justify-between p-3 border rounded"
-                            >
-                              <div>
-                                <h4 className="font-medium">{managed.property.title}</h4>
-                                <p className="text-sm text-gray-600">{managed.property.address}</p>
-                              </div>
-                              <Badge variant="secondary">{managed.property.status}</Badge>
+                          {(prospect.convertedClient || clientInfo)?.status && (
+                            <div>
+                              <Label>Estado de la Relación</Label>
+                              <Badge
+                                variant={
+                                  (prospect.convertedClient || clientInfo)?.status === 'ACTIVE'
+                                    ? 'default'
+                                    : 'secondary'
+                                }
+                              >
+                                {(prospect.convertedClient || clientInfo)?.status === 'ACTIVE'
+                                  ? 'Activo'
+                                  : (prospect.convertedClient || clientInfo)?.status}
+                              </Badge>
                             </div>
-                          ))}
+                          )}
+
+                          {(prospect.convertedClient || clientInfo)?.startDate && (
+                            <div>
+                              <Label>Fecha de Inicio</Label>
+                              <p className="text-sm text-gray-600">
+                                {new Date(
+                                  (prospect.convertedClient || clientInfo)?.startDate
+                                ).toLocaleDateString('es-CL')}
+                              </p>
+                            </div>
+                          )}
                         </div>
+
+                        {((
+                          prospect.convertedClient?.managedProperties ||
+                          clientInfo?.managedProperties
+                        )?.length > 0 && (
+                          <div>
+                            <Label className="mb-2 block">Propiedades Gestionadas</Label>
+                            <div className="space-y-2">
+                              {(
+                                prospect.convertedClient?.managedProperties ||
+                                clientInfo?.managedProperties
+                              )?.map((managed: any) => (
+                                <div
+                                  key={managed.property?.id || managed.id}
+                                  className="flex items-center justify-between p-3 border rounded"
+                                >
+                                  <div>
+                                    <h4 className="font-medium">
+                                      {managed.property?.title || managed.title}
+                                    </h4>
+                                    <p className="text-sm text-gray-600">
+                                      {managed.property?.address || managed.address}
+                                    </p>
+                                  </div>
+                                  <Badge variant="secondary">
+                                    {managed.property?.status || managed.status}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )) || (
+                          <div className="text-center py-4 text-gray-500">
+                            <p>No hay propiedades gestionadas para este cliente.</p>
+                          </div>
+                        )}
+
+                        {(prospect.convertedClient || clientInfo)?.id && (
+                          <div className="pt-4 border-t">
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                router.push(
+                                  `/broker/clients/${(prospect.convertedClient || clientInfo)?.id}`
+                                )
+                              }
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver Detalles Completos del Cliente
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {!prospect.convertedClient && !clientInfo && (
+                      <div className="text-center py-4">
+                        <Alert>
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>
+                            Este prospecto está marcado como convertido, pero no se encontró
+                            información del cliente. Puede que necesite ser convertido nuevamente o
+                            la relación de cliente no se creó correctamente.
+                          </AlertDescription>
+                        </Alert>
                       </div>
                     )}
                   </div>
