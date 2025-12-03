@@ -148,29 +148,46 @@ export default function Viewer360({
         yaw = converted.yaw;
       }
 
+      // Guardar referencia para el click handler
+      const targetSceneId = hotspot.targetSceneId;
+      const hotspotType = hotspot.type;
+
       return {
         id: hotspot.id,
         pitch: pitch || 0,
         yaw: yaw || 0,
-        type: hotspot.type === 'scene' ? 'scene' : 'info',
+        type: 'custom',
         text: hotspot.title,
-        sceneId: hotspot.targetSceneId,
-        cssClass: hotspot.type === 'scene' ? 'custom-hotspot-scene' : 'custom-hotspot-info',
-        createTooltipFunc: (hotSpotDiv: HTMLElement) => {
-          hotSpotDiv.classList.add('custom-tooltip');
-          const span = document.createElement('span');
-          span.innerHTML = hotspot.title;
-          hotSpotDiv.appendChild(span);
-          if (hotspot.description) {
-            const desc = document.createElement('span');
-            desc.className = 'hotspot-description';
-            desc.innerHTML = hotspot.description;
-            hotSpotDiv.appendChild(desc);
-          }
+        cssClass:
+          hotspotType === 'scene' ? 'pnlm-hotspot-custom-scene' : 'pnlm-hotspot-custom-info',
+        createTooltipFunc: (hotSpotDiv: HTMLElement, args: any) => {
+          // Crear el contenido del hotspot
+          hotSpotDiv.innerHTML = '';
+
+          // Contenedor principal
+          const container = document.createElement('div');
+          container.className =
+            hotspotType === 'scene' ? 'hotspot-circle-scene' : 'hotspot-circle-info';
+
+          // Icono
+          const icon = document.createElement('span');
+          icon.className = 'hotspot-icon';
+          icon.innerHTML = hotspotType === 'scene' ? '→' : 'i';
+          container.appendChild(icon);
+
+          hotSpotDiv.appendChild(container);
+
+          // Tooltip
+          const tooltip = document.createElement('div');
+          tooltip.className = 'hotspot-tooltip';
+          tooltip.innerHTML = `<strong>${hotspot.title}</strong>${hotspot.description ? '<br><small>' + hotspot.description + '</small>' : ''}`;
+          hotSpotDiv.appendChild(tooltip);
         },
         clickHandlerFunc: () => {
-          if (hotspot.type === 'scene' && hotspot.targetSceneId) {
-            const targetIndex = scenes.findIndex(s => s.id === hotspot.targetSceneId);
+          console.log('Hotspot clicked:', hotspot.title, 'targetSceneId:', targetSceneId);
+          if (hotspotType === 'scene' && targetSceneId) {
+            const targetIndex = scenes.findIndex(s => s.id === targetSceneId);
+            console.log('Target index:', targetIndex);
             if (targetIndex !== -1) {
               handleSceneChange(targetIndex);
             }
@@ -272,111 +289,153 @@ export default function Viewer360({
     <div className="relative w-full h-full bg-black">
       {/* Estilos personalizados para hotspots */}
       <style jsx global>{`
-        .pnlm-hotspot {
-          width: 50px !important;
-          height: 50px !important;
-          border-radius: 50% !important;
-          cursor: pointer !important;
-          transition: all 0.3s ease !important;
+        /* Resetear estilos por defecto de Pannellum */
+        .pnlm-hotspot-base {
+          background: transparent !important;
+          border: none !important;
+          width: auto !important;
+          height: auto !important;
         }
 
-        .custom-hotspot-scene {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-          border: 3px solid rgba(255, 255, 255, 0.8) !important;
+        .pnlm-hotspot-base > span {
+          display: none !important;
+        }
+
+        .pnlm-tooltip {
+          display: none !important;
+        }
+
+        /* Contenedor del hotspot */
+        .pnlm-hotspot-custom-scene,
+        .pnlm-hotspot-custom-info {
+          cursor: pointer !important;
+          background: transparent !important;
+          border: none !important;
+        }
+
+        /* Círculo del hotspot - Escena */
+        .hotspot-circle-scene {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          border: 3px solid rgba(255, 255, 255, 0.9);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
           box-shadow:
             0 0 20px rgba(16, 185, 129, 0.6),
-            0 4px 15px rgba(0, 0, 0, 0.3) !important;
-          animation: pulse-green 2s infinite !important;
+            0 4px 15px rgba(0, 0, 0, 0.4);
+          animation: hotspot-pulse 2s infinite;
         }
 
-        .custom-hotspot-scene:hover {
-          transform: scale(1.3) !important;
+        .hotspot-circle-scene:hover {
+          transform: scale(1.2);
           box-shadow:
-            0 0 30px rgba(16, 185, 129, 0.8),
-            0 6px 20px rgba(0, 0, 0, 0.4) !important;
+            0 0 30px rgba(16, 185, 129, 0.9),
+            0 6px 25px rgba(0, 0, 0, 0.5);
         }
 
-        .custom-hotspot-scene::after {
-          content: '→' !important;
-          position: absolute !important;
-          top: 50% !important;
-          left: 50% !important;
-          transform: translate(-50%, -50%) !important;
-          font-size: 24px !important;
-          color: white !important;
-          font-weight: bold !important;
+        .hotspot-circle-scene .hotspot-icon {
+          font-size: 28px;
+          color: white;
+          font-weight: bold;
         }
 
-        .custom-hotspot-info {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-          border: 3px solid rgba(255, 255, 255, 0.8) !important;
+        /* Círculo del hotspot - Info */
+        .hotspot-circle-info {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          border: 3px solid rgba(255, 255, 255, 0.9);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
           box-shadow:
-            0 0 20px rgba(59, 130, 246, 0.6),
-            0 4px 15px rgba(0, 0, 0, 0.3) !important;
+            0 0 15px rgba(59, 130, 246, 0.6),
+            0 4px 12px rgba(0, 0, 0, 0.4);
         }
 
-        .custom-hotspot-info:hover {
-          transform: scale(1.3) !important;
+        .hotspot-circle-info:hover {
+          transform: scale(1.2);
           box-shadow:
-            0 0 30px rgba(59, 130, 246, 0.8),
-            0 6px 20px rgba(0, 0, 0, 0.4) !important;
+            0 0 25px rgba(59, 130, 246, 0.9),
+            0 6px 20px rgba(0, 0, 0, 0.5);
         }
 
-        .custom-hotspot-info::after {
-          content: 'i' !important;
-          position: absolute !important;
-          top: 50% !important;
-          left: 50% !important;
-          transform: translate(-50%, -50%) !important;
-          font-size: 20px !important;
-          color: white !important;
-          font-weight: bold !important;
-          font-style: italic !important;
+        .hotspot-circle-info .hotspot-icon {
+          font-size: 22px;
+          color: white;
+          font-weight: bold;
+          font-style: italic;
         }
 
-        .pnlm-hotspot .custom-tooltip {
-          display: none;
-        }
-
-        .pnlm-hotspot:hover .custom-tooltip {
-          display: block;
+        /* Tooltip */
+        .hotspot-tooltip {
           position: absolute;
           bottom: 100%;
           left: 50%;
           transform: translateX(-50%);
-          margin-bottom: 10px;
-          background: rgba(0, 0, 0, 0.9);
+          margin-bottom: 15px;
+          background: rgba(0, 0, 0, 0.95);
           color: white;
-          padding: 10px 15px;
-          border-radius: 8px;
+          padding: 12px 18px;
+          border-radius: 10px;
           white-space: nowrap;
           font-size: 14px;
-          font-weight: 500;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.3s ease;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+          z-index: 1000;
         }
 
-        .pnlm-hotspot:hover .custom-tooltip .hotspot-description {
+        .hotspot-tooltip::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 8px solid transparent;
+          border-top-color: rgba(0, 0, 0, 0.95);
+        }
+
+        .hotspot-tooltip strong {
           display: block;
-          font-size: 12px;
-          font-weight: normal;
-          color: #94a3b8;
-          margin-top: 4px;
+          font-size: 15px;
+          margin-bottom: 2px;
         }
 
-        @keyframes pulse-green {
+        .hotspot-tooltip small {
+          color: #94a3b8;
+          font-size: 12px;
+        }
+
+        .pnlm-hotspot:hover .hotspot-tooltip {
+          opacity: 1;
+        }
+
+        /* Animación de pulso */
+        @keyframes hotspot-pulse {
           0%,
           100% {
             box-shadow:
               0 0 20px rgba(16, 185, 129, 0.6),
-              0 4px 15px rgba(0, 0, 0, 0.3);
+              0 4px 15px rgba(0, 0, 0, 0.4);
           }
           50% {
             box-shadow:
-              0 0 30px rgba(16, 185, 129, 0.9),
-              0 6px 25px rgba(0, 0, 0, 0.4);
+              0 0 35px rgba(16, 185, 129, 0.9),
+              0 6px 30px rgba(0, 0, 0, 0.5);
           }
         }
 
+        /* Estilos del contenedor Pannellum */
         .pnlm-container {
           background: #0f172a !important;
         }
@@ -392,6 +451,11 @@ export default function Viewer360({
 
         .pnlm-lbar-fill {
           background: #34d399 !important;
+        }
+
+        /* Ocultar controles por defecto */
+        .pnlm-controls-container {
+          display: none !important;
         }
       `}</style>
 
