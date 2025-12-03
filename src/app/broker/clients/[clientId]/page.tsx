@@ -66,7 +66,7 @@ interface ClientDetail {
   name: string;
   email: string;
   phone: string;
-  type: 'tenant' | 'owner';
+  type: 'tenant' | 'owner' | 'both';
   status: 'active' | 'inactive' | 'prospect';
   registrationDate: string;
   lastContact: string;
