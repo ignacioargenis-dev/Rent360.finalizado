@@ -542,21 +542,21 @@ export default function TenantPropertyComparisonPage() {
                   </span>
                   <Badge variant="secondary">{property.type}</Badge>
                 </div>
-                {(property.ownerRating > 0 || property.brokerRating > 0) && (
+                {((property.ownerRating ?? 0) > 0 || (property.brokerRating ?? 0) > 0) && (
                   <div className="mb-3 space-y-2">
-                    {property.ownerRating > 0 && property.ownerName && (
+                    {(property.ownerRating ?? 0) > 0 && property.ownerName && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Propietario:</span>
                         <div className="flex items-center gap-1">
-                          {renderStars(property.ownerRating, property.ownerTotalRatings)}
+                          {renderStars(property.ownerRating ?? 0, property.ownerTotalRatings)}
                         </div>
                       </div>
                     )}
-                    {property.brokerRating > 0 && property.brokerName && (
+                    {(property.brokerRating ?? 0) > 0 && property.brokerName && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Broker:</span>
                         <div className="flex items-center gap-1">
-                          {renderStars(property.brokerRating, property.brokerTotalRatings)}
+                          {renderStars(property.brokerRating ?? 0, property.brokerTotalRatings)}
                         </div>
                       </div>
                     )}
