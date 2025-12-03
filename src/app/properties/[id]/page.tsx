@@ -74,6 +74,8 @@ export default function PublicPropertyDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isSharedProperty, setIsSharedProperty] = useState(false);
   const [shareBrokerName, setShareBrokerName] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   const checkAuthStatus = async () => {
     try {
@@ -130,6 +132,81 @@ export default function PublicPropertyDetailPage() {
     }
   }, [propertyId]);
 
+  // Verificar si la propiedad está en favoritos
+  const checkFavoriteStatus = async () => {
+    if (!isAuthenticated || !propertyId) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users/favorites', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          const isFav = data.data.some((fav: any) => fav.id === propertyId);
+          setIsFavorite(isFav);
+        }
+      }
+    } catch (error) {
+      logger.error('Error checking favorite status:', error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) {
+      router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+
+    if (!propertyId) {
+      return;
+    }
+
+    setIsTogglingFavorite(true);
+    try {
+      if (isFavorite) {
+        // Eliminar de favoritos
+        const response = await fetch(`/api/users/favorites?propertyId=${propertyId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          setIsFavorite(false);
+          // toast.success('Propiedad eliminada de favoritos');
+        } else {
+          const error = await response.json();
+          logger.error('Error removing favorite:', error);
+        }
+      } else {
+        // Agregar a favoritos
+        const response = await fetch('/api/users/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ propertyId }),
+        });
+
+        if (response.ok) {
+          setIsFavorite(true);
+          // toast.success('Propiedad guardada en favoritos');
+        } else {
+          const error = await response.json();
+          logger.error('Error adding favorite:', error);
+        }
+      }
+    } catch (error) {
+      logger.error('Error toggling favorite:', error);
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
+
   useEffect(() => {
     checkAuthStatus();
     loadPropertyDetails();
@@ -171,6 +248,12 @@ export default function PublicPropertyDetailPage() {
       }
     }
   }, [propertyId, loadPropertyDetails]);
+
+  useEffect(() => {
+    if (isAuthenticated && propertyId) {
+      checkFavoriteStatus();
+    }
+  }, [isAuthenticated, propertyId]);
 
   const handleContact = async () => {
     // Incrementar consultas
@@ -472,9 +555,20 @@ export default function PublicPropertyDetailPage() {
                 <Share2 className="w-4 h-4 mr-2" />
                 Compartir
               </Button>
-              <Button variant="outline">
-                <Heart className="w-4 h-4 mr-2" />
-                Guardar
+              <Button
+                variant="outline"
+                onClick={handleToggleFavorite}
+                disabled={isTogglingFavorite || !isAuthenticated}
+                className={
+                  isFavorite ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : ''
+                }
+              >
+                {isTogglingFavorite ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                ) : (
+                  <Heart className={`w-4 h-4 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                )}
+                {isFavorite ? 'Guardado' : 'Guardar'}
               </Button>
             </div>
           </div>

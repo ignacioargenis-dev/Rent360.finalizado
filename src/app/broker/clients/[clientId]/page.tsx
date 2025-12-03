@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,6 +37,7 @@ import {
   FileText as DocumentIcon,
   Share2,
   Plus,
+  Heart,
 } from 'lucide-react';
 import {
   Dialog,
@@ -149,6 +150,9 @@ export default function BrokerClientDetailPage() {
   const [shareMessage, setShareMessage] = useState('');
   const [sharingProperty, setSharingProperty] = useState(false);
   const [availableProperties, setAvailableProperties] = useState<any[]>([]);
+  const [sharedProperties, setSharedProperties] = useState<any[]>([]);
+  const [favoriteProperties, setFavoriteProperties] = useState<any[]>([]);
+  const [loadingProperties, setLoadingProperties] = useState(false);
 
   // Mock data for client details
   const mockClient: ClientDetail = {
@@ -277,6 +281,12 @@ export default function BrokerClientDetailPage() {
     loadAvailableProperties();
   }, [clientId]);
 
+  useEffect(() => {
+    if (client) {
+      loadClientProperties();
+    }
+  }, [client]);
+
   const loadAvailableProperties = async () => {
     try {
       // Cargar todas las propiedades (propias y gestionadas) disponibles o en cualquier estado
@@ -297,6 +307,49 @@ export default function BrokerClientDetailPage() {
       }
     } catch (error) {
       logger.error('Error loading available properties:', error);
+    }
+  };
+
+  const loadClientProperties = async () => {
+    if (!client) {
+      return;
+    }
+
+    setLoadingProperties(true);
+    try {
+      // Cargar propiedades compartidas
+      const sharedResponse = await fetch(`/api/broker/clients/${clientId}/share-property`, {
+        credentials: 'include',
+      });
+
+      if (sharedResponse.ok) {
+        const sharedData = await sharedResponse.json();
+        if (sharedData.success && sharedData.data) {
+          setSharedProperties(sharedData.data);
+        }
+      }
+
+      // Cargar propiedades favoritas del cliente (si es inquilino)
+      if (client.type === 'tenant' || client.type === 'both') {
+        try {
+          const favoritesResponse = await fetch(`/api/broker/clients/${clientId}/favorites`, {
+            credentials: 'include',
+          });
+
+          if (favoritesResponse.ok) {
+            const favoritesData = await favoritesResponse.json();
+            if (favoritesData.success && favoritesData.data) {
+              setFavoriteProperties(favoritesData.data);
+            }
+          }
+        } catch (error) {
+          logger.warn('Error loading favorites:', error);
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading client properties:', error);
+    } finally {
+      setLoadingProperties(false);
     }
   };
 
@@ -848,67 +901,291 @@ export default function BrokerClientDetailPage() {
           </TabsContent>
 
           <TabsContent value="properties" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Propiedades de Interés</CardTitle>
-                  <Button
-                    onClick={() => setShowShareDialog(true)}
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Compartir Propiedad
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {client.properties.map(property => (
-                    <div key={property.id} className="p-4 border border-gray-200 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold">{property.title}</h3>
-                          <p className="text-sm text-gray-600 flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {property.address}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getPropertyStatusBadge(property.status)}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewProperty(property.id)}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Ver
-                          </Button>
-                        </div>
-                      </div>
-
-                      {property.viewDate && (
-                        <p className="text-sm text-gray-600 mb-2">
-                          Fecha de visita: {formatDate(property.viewDate)}
-                        </p>
-                      )}
-
-                      {property.offerAmount && (
-                        <p className="text-sm font-medium text-green-600 mb-2">
-                          Oferta: {formatCurrency(property.offerAmount)}
-                        </p>
-                      )}
-
-                      {property.notes && (
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-700">{property.notes}</p>
-                        </div>
-                      )}
+            {/* Para inquilinos: mostrar propiedades compartidas, favoritas y contratos */}
+            {client.type === 'tenant' || client.type === 'both' ? (
+              <>
+                {/* Propiedades Compartidas */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Share2 className="w-5 h-5" />
+                        Propiedades Compartidas
+                      </CardTitle>
+                      <Button
+                        onClick={() => setShowShareDialog(true)}
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        Compartir Propiedad
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <CardDescription>
+                      Historial de propiedades que has compartido con este cliente
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingProperties ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Cargando propiedades...</p>
+                      </div>
+                    ) : sharedProperties.length > 0 ? (
+                      <div className="space-y-4">
+                        {sharedProperties.map((share: any) => (
+                          <div
+                            key={share.id}
+                            className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-semibold">
+                                  {share.property?.title || 'Sin título'}
+                                </h3>
+                                <p className="text-sm text-gray-600 flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {share.property?.address || 'Sin dirección'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Compartida: {formatDate(share.sharedAt)}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {share.property?.price && (
+                                  <p className="text-lg font-semibold text-green-600">
+                                    ${share.property.price.toLocaleString('es-CL')}
+                                  </p>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewProperty(share.property?.id)}
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver
+                                </Button>
+                              </div>
+                            </div>
+                            {share.message && (
+                              <div className="p-3 bg-blue-50 rounded-lg mt-2">
+                                <p className="text-sm text-gray-700">{share.message}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Share2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No hay propiedades compartidas
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          Comparte propiedades relevantes con este cliente para aumentar su interés.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Propiedades Favoritas del Cliente */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Heart className="w-5 h-5" />
+                      Propiedades Favoritas del Cliente
+                    </CardTitle>
+                    <CardDescription>
+                      Propiedades que el cliente ha guardado como favoritas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingProperties ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Cargando favoritos...</p>
+                      </div>
+                    ) : favoriteProperties.length > 0 ? (
+                      <div className="space-y-4">
+                        {favoriteProperties.map((fav: any) => (
+                          <div
+                            key={fav.id}
+                            className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-semibold">{fav.title || 'Sin título'}</h3>
+                                <p className="text-sm text-gray-600 flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {fav.address || 'Sin dirección'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Guardada:{' '}
+                                  {fav.favoritedAt
+                                    ? formatDate(fav.favoritedAt)
+                                    : 'Fecha no disponible'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {fav.price && (
+                                  <p className="text-lg font-semibold text-green-600">
+                                    ${fav.price.toLocaleString('es-CL')}
+                                  </p>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewProperty(fav.id)}
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                              {fav.bedrooms && (
+                                <Badge variant="outline">{fav.bedrooms} dorm.</Badge>
+                              )}
+                              {fav.bathrooms && (
+                                <Badge variant="outline">{fav.bathrooms} baños</Badge>
+                              )}
+                              {fav.area && <Badge variant="outline">{fav.area} m²</Badge>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No hay propiedades favoritas
+                        </h3>
+                        <p className="text-gray-600">
+                          El cliente aún no ha guardado ninguna propiedad como favorita.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Contratos (Propiedades Arrendadas) */}
+                {client.contracts && client.contracts.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Home className="w-5 h-5" />
+                        Propiedades Arrendadas
+                      </CardTitle>
+                      <CardDescription>
+                        Propiedades en las que el cliente ha tenido o tiene contratos activos
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {client.contracts.map(contract => (
+                          <div
+                            key={contract.id}
+                            className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-semibold">{contract.propertyTitle}</h3>
+                                <p className="text-sm text-gray-600 flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {contract.propertyAddress}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {getContractStatusBadge(contract.status)}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewContract(contract.id)}
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver Contrato
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3">
+                              <div>
+                                <label className="text-gray-600">Inicio</label>
+                                <p className="font-medium">{formatDate(contract.startDate)}</p>
+                              </div>
+                              {contract.endDate && (
+                                <div>
+                                  <label className="text-gray-600">Fin</label>
+                                  <p className="font-medium">{formatDate(contract.endDate)}</p>
+                                </div>
+                              )}
+                              <div>
+                                <label className="text-gray-600">Renta Mensual</label>
+                                <p className="font-medium text-green-600">
+                                  {formatCurrency(contract.monthlyRent)}
+                                </p>
+                              </div>
+                              <div>
+                                <label className="text-gray-600">Comisión</label>
+                                <p className="font-medium">{formatCurrency(contract.commission)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : (
+              /* Para propietarios: mostrar propiedades gestionadas */
+              <Card>
+                <CardHeader>
+                  <CardTitle>Propiedades Gestionadas</CardTitle>
+                  <CardDescription>Propiedades del cliente que estás gestionando</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {client.properties && client.properties.length > 0 ? (
+                      client.properties.map(property => (
+                        <div key={property.id} className="p-4 border border-gray-200 rounded-lg">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="font-semibold">{property.title}</h3>
+                              <p className="text-sm text-gray-600 flex items-center gap-1">
+                                <MapPin className="w-4 h-4" />
+                                {property.address}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getPropertyStatusBadge(property.status)}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewProperty(property.id)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Ver
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <Home className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No hay propiedades gestionadas
+                        </h3>
+                        <p className="text-gray-600">
+                          Este cliente aún no tiene propiedades bajo tu gestión.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="contracts" className="space-y-6">

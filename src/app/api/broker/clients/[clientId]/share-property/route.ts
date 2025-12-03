@@ -265,3 +265,142 @@ export async function POST(request: NextRequest, { params }: { params: { clientI
     );
   }
 }
+
+/**
+ * GET /api/broker/clients/[clientId]/share-property
+ * Obtiene todas las propiedades compartidas con un cliente
+ */
+export async function GET(request: NextRequest, { params }: { params: { clientId: string } }) {
+  try {
+    logger.info(
+      '🔍 [SHARED_PROPERTIES_CLIENT] Iniciando GET /api/broker/clients/[clientId]/share-property'
+    );
+
+    const user = await requireAuth(request);
+
+    if (user.role !== 'BROKER') {
+      return NextResponse.json(
+        { error: 'Acceso denegado. Se requieren permisos de corredor.' },
+        { status: 403 }
+      );
+    }
+
+    const clientId = params.clientId;
+
+    // Buscar la relación brokerClient
+    let brokerClient = await db.brokerClient.findFirst({
+      where: {
+        OR: [
+          { id: clientId, brokerId: user.id },
+          { userId: clientId, brokerId: user.id, status: 'ACTIVE' },
+        ],
+      },
+      select: {
+        id: true,
+        userId: true,
+        brokerId: true,
+      },
+    });
+
+    // Si no se encuentra por brokerClient, buscar usuario directamente
+    if (!brokerClient) {
+      const clientUser = await db.user.findUnique({
+        where: { id: clientId },
+        include: {
+          contractsAsOwner: {
+            where: { brokerId: user.id },
+            take: 1,
+          },
+          contractsAsTenant: {
+            where: { brokerId: user.id },
+            take: 1,
+          },
+        },
+      });
+
+      if (
+        !clientUser ||
+        (clientUser.contractsAsOwner.length === 0 && clientUser.contractsAsTenant.length === 0)
+      ) {
+        return NextResponse.json(
+          { error: 'Cliente no encontrado o no autorizado' },
+          { status: 404 }
+        );
+      }
+
+      brokerClient = {
+        id: `temp_${clientUser.id}`,
+        userId: clientUser.id,
+        brokerId: user.id,
+      } as any;
+    }
+
+    // Obtener propiedades compartidas desde el prospecto si existe
+    const prospect = await db.brokerProspect.findFirst({
+      where: {
+        convertedToClientId: brokerClient.id,
+        brokerId: user.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    let sharedProperties = [];
+
+    if (prospect) {
+      // Obtener propiedades compartidas desde el prospecto
+      const prospectShares = await db.prospectPropertyShare.findMany({
+        where: { prospectId: prospect.id },
+        include: {
+          property: {
+            select: {
+              id: true,
+              title: true,
+              address: true,
+              price: true,
+              type: true,
+              images: true,
+              bedrooms: true,
+              bathrooms: true,
+              area: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: {
+          sharedAt: 'desc',
+        },
+      });
+
+      sharedProperties = prospectShares.map(share => ({
+        id: share.id,
+        property: share.property,
+        sharedAt: share.sharedAt.toISOString(),
+        message: share.message,
+      }));
+    }
+
+    // También buscar propiedades compartidas directamente con el usuario (si hay un sistema de mensajería)
+    // Por ahora, solo retornamos las del prospecto
+
+    logger.info('✅ [SHARED_PROPERTIES_CLIENT] Propiedades compartidas encontradas:', {
+      count: sharedProperties.length,
+      clientId,
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: sharedProperties,
+    });
+  } catch (error) {
+    logger.error('❌ [SHARED_PROPERTIES_CLIENT] Error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Error interno del servidor',
+      },
+      { status: 500 }
+    );
+  }
+}
