@@ -77,15 +77,67 @@ export default function Viewer360({
   const [currentSceneIndex, setCurrentSceneIndex] = useState(initialSceneIndex);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(true);
   const [pannellumLoaded, setPannellumLoaded] = useState(false);
   const [hoveredHotspot, setHoveredHotspot] = useState<string | null>(null);
+  const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set());
 
   // Mantener referencias actualizadas
   useEffect(() => {
     scenesRef.current = scenes;
     onSceneChangeRef.current = onSceneChange;
   }, [scenes, onSceneChange]);
+
+  // Precargar imágenes de escenas adyacentes para carga más rápida
+  useEffect(() => {
+    if (scenes.length === 0) {
+      return;
+    }
+
+    const preloadImage = (url: string) => {
+      if (preloadedImages.has(url)) {
+        return;
+      }
+
+      const img = new Image();
+      img.onload = () => {
+        setPreloadedImages(prev => new Set(prev).add(url));
+      };
+      img.src = url;
+    };
+
+    // Precargar escena actual y adyacentes
+    const currentScene = scenes[currentSceneIndex];
+    if (currentScene?.imageUrl) {
+      preloadImage(currentScene.imageUrl);
+    }
+
+    // Precargar escena anterior
+    if (currentSceneIndex > 0) {
+      const prevScene = scenes[currentSceneIndex - 1];
+      if (prevScene?.imageUrl) {
+        preloadImage(prevScene.imageUrl);
+      }
+    }
+
+    // Precargar escena siguiente
+    if (currentSceneIndex < scenes.length - 1) {
+      const nextScene = scenes[currentSceneIndex + 1];
+      if (nextScene?.imageUrl) {
+        preloadImage(nextScene.imageUrl);
+      }
+    }
+
+    // Precargar todas las escenas en segundo plano (sin bloquear)
+    setTimeout(() => {
+      scenes.forEach(scene => {
+        if (scene.imageUrl && !preloadedImages.has(scene.imageUrl)) {
+          preloadImage(scene.imageUrl);
+        }
+      });
+    }, 2000); // Esperar 2 segundos antes de precargar todas
+  }, [currentSceneIndex, scenes, preloadedImages]);
 
   // Cargar Pannellum dinámicamente (solo en cliente)
   useEffect(() => {
@@ -238,8 +290,22 @@ export default function Viewer360({
               console.log('Target index found:', targetIndex);
 
               if (targetIndex !== -1 && targetIndex < currentScenes.length) {
-                setCurrentSceneIndex(targetIndex);
-                onSceneChangeRef.current?.(targetIndex);
+                // Usar handleSceneChange para transición suave
+                const handleChange = () => {
+                  setCurrentSceneIndex(targetIndex);
+                  onSceneChangeRef.current?.(targetIndex);
+                };
+
+                // Transición con fade
+                setIsTransitioning(true);
+                setIsLoading(true);
+
+                setTimeout(() => {
+                  handleChange();
+                  setTimeout(() => {
+                    setIsTransitioning(false);
+                  }, 100);
+                }, 300);
               } else {
                 console.error('Scene not found with id:', targetSceneId, {
                   availableIds: currentScenes.map(s => s.id),
@@ -279,11 +345,12 @@ export default function Viewer360({
         yaw: 0,
         hotSpots: hotspots,
         hotSpotDebug: false,
-        sceneFadeDuration: 1000,
+        sceneFadeDuration: 500, // Transición más rápida
       });
 
       pannellumViewerRef.current.on('load', () => {
         setIsLoading(false);
+        setIsTransitioning(false);
       });
 
       pannellumViewerRef.current.on('error', (err: any) => {
@@ -307,22 +374,42 @@ export default function Viewer360({
   }, [pannellumLoaded, currentSceneIndex, scenes, autoRotate]);
 
   const handleSceneChange = useCallback(
-    (index: number) => {
-      setCurrentSceneIndex(index);
-      onSceneChange?.(index);
+    (index: number, withTransition: boolean = true) => {
+      if (index === currentSceneIndex || index < 0 || index >= scenes.length) {
+        return;
+      }
+
+      if (withTransition) {
+        setIsTransitioning(true);
+        setIsLoading(true);
+
+        // Fade out rápido
+        setTimeout(() => {
+          setCurrentSceneIndex(index);
+          onSceneChange?.(index);
+
+          // Fade in después de un breve delay
+          setTimeout(() => {
+            setIsTransitioning(false);
+          }, 100);
+        }, 300);
+      } else {
+        setCurrentSceneIndex(index);
+        onSceneChange?.(index);
+      }
     },
-    [onSceneChange]
+    [currentSceneIndex, scenes.length, onSceneChange]
   );
 
   const handlePrevScene = () => {
     if (currentSceneIndex > 0) {
-      handleSceneChange(currentSceneIndex - 1);
+      handleSceneChange(currentSceneIndex - 1, true);
     }
   };
 
   const handleNextScene = () => {
     if (currentSceneIndex < scenes.length - 1) {
-      handleSceneChange(currentSceneIndex + 1);
+      handleSceneChange(currentSceneIndex + 1, true);
     }
   };
 
@@ -518,13 +605,69 @@ export default function Viewer360({
         .pnlm-controls-container {
           display: none !important;
         }
+
+        /* Transición entre escenas */
+        .scene-transition-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            135deg,
+            rgba(15, 23, 42, 0.95) 0%,
+            rgba(16, 185, 129, 0.1) 100%
+          );
+          z-index: 100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          transition: opacity 0.3s ease;
+        }
+
+        .scene-transition-overlay.fade-out {
+          opacity: 1;
+        }
+
+        .scene-transition-overlay.fade-in {
+          opacity: 0;
+        }
+
+        .transition-spinner {
+          width: 60px;
+          height: 60px;
+          border: 4px solid rgba(16, 185, 129, 0.3);
+          border-top-color: #10b981;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        /* Optimización de carga de imágenes */
+        .pnlm-panorama {
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
+        }
       `}</style>
 
       {/* Contenedor del visor Pannellum */}
       <div ref={viewerRef} className="w-full h-full" style={{ minHeight: '400px' }} />
 
-      {/* Indicador de carga */}
-      {isLoading && (
+      {/* Overlay de transición entre escenas */}
+      {isTransitioning && (
+        <div className={`scene-transition-overlay fade-out`}>
+          <div className="text-center">
+            <div className="transition-spinner mx-auto mb-4" />
+            <p className="text-white text-sm font-medium">Cambiando de escena...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Indicador de carga inicial */}
+      {isLoading && !isTransitioning && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-20">
           <div className="text-center">
             <div className="relative w-20 h-20 mx-auto mb-4">
