@@ -623,13 +623,14 @@ export default function TenantPropertyComparisonPage() {
                           }
                         } else if (metric.key === 'ownerRating' || metric.key === 'brokerRating') {
                           // Colores para calificaciones
-                          if (value >= 4.5) {
+                          const ratingValue = typeof value === 'number' ? value : 0;
+                          if (ratingValue >= 4.5) {
                             valueColor = 'text-green-600 font-bold';
-                          } else if (value >= 4.0) {
+                          } else if (ratingValue >= 4.0) {
                             valueColor = 'text-green-500';
-                          } else if (value >= 3.5) {
+                          } else if (ratingValue >= 3.5) {
                             valueColor = 'text-yellow-500';
-                          } else if (value > 0) {
+                          } else if (ratingValue > 0) {
                             valueColor = 'text-orange-500';
                           } else {
                             valueColor = 'text-gray-400';
@@ -659,7 +660,7 @@ export default function TenantPropertyComparisonPage() {
                             ) : metric.format === 'rating' ? (
                               <div className="flex flex-col items-center gap-1">
                                 {renderStars(
-                                  value || 0,
+                                  typeof value === 'number' ? value : 0,
                                   metric.key === 'ownerRating'
                                     ? property.ownerTotalRatings
                                     : property.brokerTotalRatings
