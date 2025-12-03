@@ -984,14 +984,16 @@ export default function BúsquedaAvanzadaPage() {
                     <div className="space-y-2">
                       <Label>Tipo de Propiedad</Label>
                       <Select
-                        value={filters.propertyType}
-                        onValueChange={value => setFilters({ ...filters, propertyType: value })}
+                        value={filters.propertyType || 'all'}
+                        onValueChange={value =>
+                          setFilters({ ...filters, propertyType: value === 'all' ? '' : value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar tipo" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos</SelectItem>
+                          <SelectItem value="all">Todos</SelectItem>
                           <SelectItem value="DEPARTMENT">Departamento</SelectItem>
                           <SelectItem value="HOUSE">Casa</SelectItem>
                           <SelectItem value="STUDIO">Estudio</SelectItem>
