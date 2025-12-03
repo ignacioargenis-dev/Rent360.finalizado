@@ -335,10 +335,18 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       } as any;
     }
 
+    // Verificar que brokerClient existe
+    if (!brokerClient || !brokerClient.id) {
+      return NextResponse.json({ error: 'Cliente no encontrado o no autorizado' }, { status: 404 });
+    }
+
+    // TypeScript: asegurar que brokerClient no es null después de la verificación
+    const validBrokerClient: { id: string; userId: string; brokerId: string } = brokerClient;
+
     // Obtener propiedades compartidas desde el prospecto si existe
     const prospect = await db.brokerProspect.findFirst({
       where: {
-        convertedToClientId: brokerClient.id,
+        convertedToClientId: validBrokerClient.id,
         brokerId: user.id,
       },
       select: {
@@ -346,7 +354,25 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       },
     });
 
-    let sharedProperties = [];
+    type SharedProperty = {
+      id: string;
+      property: {
+        id: string;
+        title: string | null;
+        address: string | null;
+        price: number | null;
+        type: string | null;
+        images: string | null;
+        bedrooms: number | null;
+        bathrooms: number | null;
+        area: number | null;
+        status: string;
+      };
+      sharedAt: string;
+      message: string | null;
+    };
+
+    let sharedProperties: SharedProperty[] = [];
 
     if (prospect) {
       // Obtener propiedades compartidas desde el prospecto

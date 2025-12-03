@@ -71,6 +71,11 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       } as any;
     }
 
+    // Verificar que brokerClient existe
+    if (!brokerClient || !brokerClient.userId) {
+      return NextResponse.json({ error: 'Cliente no encontrado o no autorizado' }, { status: 404 });
+    }
+
     // Obtener propiedades favoritas del cliente
     const favorites = await db.propertyFavorite.findMany({
       where: { userId: brokerClient.userId },
