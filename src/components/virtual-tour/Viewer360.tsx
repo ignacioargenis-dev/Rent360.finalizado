@@ -72,12 +72,20 @@ export default function Viewer360({
 }: Viewer360Props) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const pannellumViewerRef = useRef<any>(null);
+  const scenesRef = useRef(scenes);
+  const onSceneChangeRef = useRef(onSceneChange);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(initialSceneIndex);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showThumbnails, setShowThumbnails] = useState(true);
   const [pannellumLoaded, setPannellumLoaded] = useState(false);
   const [hoveredHotspot, setHoveredHotspot] = useState<string | null>(null);
+
+  // Mantener referencias actualizadas
+  useEffect(() => {
+    scenesRef.current = scenes;
+    onSceneChangeRef.current = onSceneChange;
+  }, [scenes, onSceneChange]);
 
   // Cargar Pannellum dinámicamente (solo en cliente)
   useEffect(() => {
@@ -182,16 +190,31 @@ export default function Viewer360({
           tooltip.className = 'hotspot-tooltip';
           tooltip.innerHTML = `<strong>${hotspot.title}</strong>${hotspot.description ? '<br><small>' + hotspot.description + '</small>' : ''}`;
           hotSpotDiv.appendChild(tooltip);
-        },
-        clickHandlerFunc: () => {
-          console.log('Hotspot clicked:', hotspot.title, 'targetSceneId:', targetSceneId);
-          if (hotspotType === 'scene' && targetSceneId) {
-            const targetIndex = scenes.findIndex(s => s.id === targetSceneId);
-            console.log('Target index:', targetIndex);
-            if (targetIndex !== -1) {
-              handleSceneChange(targetIndex);
+
+          // Agregar event listener para el click
+          hotSpotDiv.style.cursor = 'pointer';
+          hotSpotDiv.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Hotspot clicked:', hotspot.title, 'targetSceneId:', targetSceneId);
+            if (hotspotType === 'scene' && targetSceneId) {
+              // Usar referencias actualizadas
+              const currentScenes = scenesRef.current;
+              const targetIndex = currentScenes.findIndex(s => s.id === targetSceneId);
+              console.log(
+                'Target index:',
+                targetIndex,
+                'scenes:',
+                currentScenes.map(s => s.id)
+              );
+              if (targetIndex !== -1) {
+                setCurrentSceneIndex(targetIndex);
+                onSceneChangeRef.current?.(targetIndex);
+              } else {
+                console.error('Scene not found with id:', targetSceneId);
+              }
             }
-          }
+          });
         },
       };
     });
