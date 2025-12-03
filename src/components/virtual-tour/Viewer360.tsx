@@ -196,22 +196,60 @@ export default function Viewer360({
           hotSpotDiv.addEventListener('click', e => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Hotspot clicked:', hotspot.title, 'targetSceneId:', targetSceneId);
+            console.log('Hotspot clicked:', {
+              title: hotspot.title,
+              targetSceneId,
+              hotspotType,
+              currentSceneIndex,
+            });
+
             if (hotspotType === 'scene' && targetSceneId) {
               // Usar referencias actualizadas
               const currentScenes = scenesRef.current;
-              const targetIndex = currentScenes.findIndex(s => s.id === targetSceneId);
               console.log(
-                'Target index:',
-                targetIndex,
-                'scenes:',
-                currentScenes.map(s => s.id)
+                'Available scenes:',
+                currentScenes.map(s => ({ id: s.id, name: s.name }))
               );
-              if (targetIndex !== -1) {
+
+              // Buscar por ID exacto
+              let targetIndex = currentScenes.findIndex(s => s.id === targetSceneId);
+
+              // Si no se encuentra, intentar buscar por índice relativo (fallback para tours antiguos)
+              if (targetIndex === -1) {
+                console.warn('Scene ID not found, trying fallback methods...');
+
+                // Fallback 1: Buscar por nombre si el hotspot tiene información del nombre
+                const hotspotTitle = hotspot.title.toLowerCase();
+                targetIndex = currentScenes.findIndex(
+                  s =>
+                    s.name?.toLowerCase().includes(hotspotTitle) ||
+                    hotspotTitle.includes(s.name?.toLowerCase() || '')
+                );
+
+                // Fallback 2: Si hay múltiples escenas, intentar navegar a la siguiente
+                if (targetIndex === -1 && currentScenes.length > 1) {
+                  // Navegar a la siguiente escena como fallback
+                  const nextIndex = (currentSceneIndex + 1) % currentScenes.length;
+                  console.log('Using next scene as fallback:', nextIndex);
+                  targetIndex = nextIndex;
+                }
+              }
+
+              console.log('Target index found:', targetIndex);
+
+              if (targetIndex !== -1 && targetIndex < currentScenes.length) {
                 setCurrentSceneIndex(targetIndex);
                 onSceneChangeRef.current?.(targetIndex);
               } else {
-                console.error('Scene not found with id:', targetSceneId);
+                console.error('Scene not found with id:', targetSceneId, {
+                  availableIds: currentScenes.map(s => s.id),
+                  targetId: targetSceneId,
+                  currentIndex: currentSceneIndex,
+                });
+                // Mostrar mensaje más amigable
+                console.warn(
+                  '⚠️ No se pudo encontrar la escena destino. Esto puede deberse a que el tour necesita ser guardado nuevamente para actualizar los IDs de los hotspots.'
+                );
               }
             }
           });

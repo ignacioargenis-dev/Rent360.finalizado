@@ -181,7 +181,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
       console.log('✅ [VIRTUAL-TOUR] Property.virtualTourEnabled actualizado:', enabled);
 
-      // Eliminar escenas existentes
+      // Eliminar escenas existentes (esto también elimina los hotspots por CASCADE)
       await tx.virtualTourScene.deleteMany({
         where: { virtualTourId: virtualTour.id },
       });
@@ -189,6 +189,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       // Crear nuevas escenas
       if (scenes && scenes.length > 0) {
         console.log('🎬 [VIRTUAL-TOUR] Creando', scenes.length, 'escenas');
+
+        // Mapa de IDs antiguos (del frontend) a IDs nuevos (de la BD)
+        const sceneIdMap = new Map<string, string>();
+        const newScenes: Array<{ oldId: string; newId: string; index: number }> = [];
+
+        // Primero crear todas las escenas para tener los nuevos IDs
         for (let i = 0; i < scenes.length; i++) {
           const scene = scenes[i];
           if (!scene) {
@@ -208,24 +214,66 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             },
           });
 
-          console.log('✅ [VIRTUAL-TOUR] Escena creada:', newScene.id, newScene.name);
+          // Mapear ID antiguo -> ID nuevo
+          if (scene.id) {
+            sceneIdMap.set(scene.id, newScene.id);
+          }
+          newScenes.push({ oldId: scene.id || '', newId: newScene.id, index: i });
 
-          // Crear hotspots si existen
-          if (scene.hotspots && scene.hotspots.length > 0) {
-            await tx.virtualTourHotspot.createMany({
-              data: scene.hotspots.map((hotspot: any) => ({
-                sceneId: newScene.id,
+          console.log(
+            '✅ [VIRTUAL-TOUR] Escena creada:',
+            newScene.id,
+            newScene.name,
+            'oldId:',
+            scene.id
+          );
+        }
+
+        // Ahora crear los hotspots con los IDs correctos
+        for (let i = 0; i < scenes.length; i++) {
+          const scene = scenes[i];
+          if (!scene || !scene.hotspots || scene.hotspots.length === 0) {
+            continue;
+          }
+
+          const newSceneId = newScenes[i]?.newId;
+          if (!newSceneId) {
+            continue;
+          }
+
+          // Crear hotspots mapeando los targetSceneId
+          await tx.virtualTourHotspot.createMany({
+            data: scene.hotspots.map((hotspot: any) => {
+              // Mapear targetSceneId antiguo a nuevo
+              let mappedTargetSceneId = hotspot.targetSceneId;
+              if (hotspot.targetSceneId && sceneIdMap.has(hotspot.targetSceneId)) {
+                mappedTargetSceneId = sceneIdMap.get(hotspot.targetSceneId);
+                console.log(
+                  '🔄 [VIRTUAL-TOUR] Mapeando hotspot targetSceneId:',
+                  hotspot.targetSceneId,
+                  '->',
+                  mappedTargetSceneId
+                );
+              } else if (hotspot.targetSceneId) {
+                console.warn(
+                  '⚠️ [VIRTUAL-TOUR] No se encontró mapeo para targetSceneId:',
+                  hotspot.targetSceneId
+                );
+              }
+
+              return {
+                sceneId: newSceneId,
                 x: hotspot.x,
                 y: hotspot.y,
                 type: hotspot.type,
-                targetSceneId: hotspot.targetSceneId,
+                targetSceneId: mappedTargetSceneId || null,
                 title: hotspot.title,
-                description: hotspot.description,
-                linkUrl: hotspot.linkUrl,
-                mediaUrl: hotspot.mediaUrl,
-              })),
-            });
-          }
+                description: hotspot.description || null,
+                linkUrl: hotspot.linkUrl || null,
+                mediaUrl: hotspot.mediaUrl || null,
+              };
+            }),
+          });
         }
       }
     });
