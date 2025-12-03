@@ -126,6 +126,9 @@ export default function BúsquedaAvanzadaPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [favoriteProperties, setFavoriteProperties] = useState<string[]>([]);
+  const [favoritePropertiesFull, setFavoritePropertiesFull] = useState<AdvancedSearchProperty[]>(
+    []
+  );
   const [compareProperties, setCompareProperties] = useState<string[]>([]);
 
   // Filters state
@@ -173,10 +176,68 @@ export default function BúsquedaAvanzadaPage() {
     applyFilters();
   }, [properties, filters, searchTerm]);
 
+  const loadFavoriteProperties = async () => {
+    try {
+      const response = await fetch('/api/users/favorites', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          const favoriteIds = data.data.map(
+            (fav: any) => fav.id || fav.propertyId || fav.property?.id
+          );
+          setFavoriteProperties(favoriteIds);
+
+          // Transformar las propiedades favoritas al formato esperado
+          const transformedFavorites: AdvancedSearchProperty[] = data.data.map((fav: any) => ({
+            id: fav.id || fav.propertyId || fav.property?.id,
+            title: fav.title || fav.property?.title || 'Sin título',
+            address: fav.address || fav.property?.address || '',
+            price: fav.price || fav.property?.price || 0,
+            bedrooms: fav.bedrooms || fav.property?.bedrooms || 0,
+            bathrooms: fav.bathrooms || fav.property?.bathrooms || 0,
+            area: fav.area || fav.property?.area || 0,
+            propertyType: fav.type || fav.property?.type || '',
+            images: Array.isArray(fav.images)
+              ? fav.images
+              : fav.images
+                ? JSON.parse(fav.images)
+                : ['/placeholder-property.jpg'],
+            features: [],
+            description: '',
+            availableDate: new Date().toISOString().split('T')[0],
+            latitude: undefined,
+            longitude: undefined,
+            ownerId: undefined,
+            ownerName: undefined,
+            ownerEmail: undefined,
+            status: fav.status || fav.property?.status || 'AVAILABLE',
+            brokerId: undefined,
+            brokerName: undefined,
+            brokerEmail: undefined,
+          }));
+
+          setFavoritePropertiesFull(transformedFavorites);
+        }
+      }
+    } catch (error) {
+      logger.error('Error cargando propiedades favoritas:', error);
+    }
+  };
+
   const loadPageData = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Cargar propiedades favoritas
+      await loadFavoriteProperties();
 
       logger.info('Iniciando carga de propiedades', {
         endpoint: '/api/properties?limit=50&status=AVAILABLE&includeManaged=true',
@@ -650,19 +711,62 @@ export default function BúsquedaAvanzadaPage() {
     window.URL.revokeObjectURL(url);
   }, [filteredProperties]);
 
-  const handleToggleFavorite = useCallback((propertyId: string) => {
-    setFavoriteProperties(prev => {
-      const isCurrentlyFavorite = prev.includes(propertyId);
-      const newFavorites = isCurrentlyFavorite
-        ? prev.filter(id => id !== propertyId)
-        : [...prev, propertyId];
+  const handleToggleFavorite = useCallback(
+    async (propertyId: string) => {
+      const isCurrentlyFavorite = favoriteProperties.includes(propertyId);
 
-      setSuccessMessage(isCurrentlyFavorite ? 'Removido de favoritos' : 'Agregado a favoritos');
-      setTimeout(() => setSuccessMessage(''), 2000);
+      try {
+        if (isCurrentlyFavorite) {
+          // Eliminar de favoritos
+          const response = await fetch(`/api/users/favorites?propertyId=${propertyId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
 
-      return newFavorites;
-    });
-  }, []);
+          if (response.ok) {
+            setFavoriteProperties(prev => prev.filter(id => id !== propertyId));
+            // Actualizar propiedades favoritas completas
+            setFavoritePropertiesFull(prev => prev.filter(p => p.id !== propertyId));
+            setSuccessMessage('Removido de favoritos');
+            setTimeout(() => setSuccessMessage(''), 2000);
+          } else {
+            const error = await response.json();
+            logger.error('Error removing favorite:', error);
+            setErrorMessage('Error al remover de favoritos');
+            setTimeout(() => setErrorMessage(''), 3000);
+          }
+        } else {
+          // Agregar a favoritos
+          const response = await fetch('/api/users/favorites', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ propertyId }),
+          });
+
+          if (response.ok) {
+            setFavoriteProperties(prev => [...prev, propertyId]);
+            // Recargar propiedades favoritas completas
+            await loadFavoriteProperties();
+            setSuccessMessage('Agregado a favoritos');
+            setTimeout(() => setSuccessMessage(''), 2000);
+          } else {
+            const error = await response.json();
+            logger.error('Error adding favorite:', error);
+            setErrorMessage('Error al agregar a favoritos');
+            setTimeout(() => setErrorMessage(''), 3000);
+          }
+        }
+      } catch (error) {
+        logger.error('Error toggling favorite:', error);
+        setErrorMessage('Error al actualizar favoritos');
+        setTimeout(() => setErrorMessage(''), 3000);
+      }
+    },
+    [favoriteProperties]
+  );
 
   const handleToggleCompare = useCallback((propertyId: string) => {
     setCompareProperties(prev => {
@@ -1233,10 +1337,109 @@ export default function BúsquedaAvanzadaPage() {
           </TabsContent>
 
           {/* Saved Searches Tab */}
-          <TabsContent value="saved">
+          <TabsContent value="saved" className="space-y-6">
+            {/* Propiedades Favoritas */}
             <Card>
               <CardHeader>
-                <CardTitle>Búsquedas Guardadas</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-red-500" />
+                  Propiedades Favoritas
+                </CardTitle>
+                <CardDescription>Propiedades que has guardado como favoritas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {favoritePropertiesFull.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No hay propiedades favoritas
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Marca propiedades como favoritas usando el botón del corazón para verlas aquí.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {favoritePropertiesFull.map(property => (
+                      <Card key={property.id} className="hover:shadow-lg transition-shadow">
+                        <CardContent className="p-0">
+                          <div className="relative">
+                            <img
+                              src={property.images[0] || '/placeholder-property.jpg'}
+                              alt={property.title}
+                              className="w-full h-48 object-cover rounded-t-lg"
+                            />
+                            <div className="absolute top-2 right-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleToggleFavorite(property.id)}
+                                className="bg-red-500 text-white hover:bg-red-600"
+                              >
+                                <Heart className="w-4 h-4 fill-current" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-semibold text-lg mb-1 line-clamp-1">
+                              {property.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-2 flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {property.address}
+                            </p>
+                            <div className="flex items-center gap-4 mb-3 text-sm text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <Bed className="w-4 h-4" />
+                                {property.bedrooms}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Bath className="w-4 h-4" />
+                                {property.bathrooms}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Home className="w-4 h-4" />
+                                {property.area} m²
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-xl font-bold text-blue-600">
+                                ${property.price.toLocaleString('es-CL')}
+                              </span>
+                              <Badge variant="secondary">{property.propertyType}</Badge>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                className="flex-1"
+                                onClick={() => handleViewProperty(property.id)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Ver Detalles
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => handleContactOwner(property)}
+                              >
+                                <Share2 className="w-4 h-4 mr-2" />
+                                Contactar
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Búsquedas Guardadas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookmarkPlus className="w-5 h-5" />
+                  Búsquedas Guardadas
+                </CardTitle>
                 <CardDescription>Accede rápidamente a tus búsquedas favoritas</CardDescription>
               </CardHeader>
               <CardContent>
