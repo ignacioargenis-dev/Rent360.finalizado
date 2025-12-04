@@ -31,6 +31,7 @@ import {
   FileText,
   PieChart,
   Activity,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
@@ -94,6 +95,12 @@ export default function BrokerReportsPage() {
           // La API devuelve { success: true, data: monthlyReports }
           const reportsData = data.data || data.reports || [];
 
+          logger.info('Reports data loaded', {
+            reportsCount: reportsData.length,
+            firstReport: reportsData[0],
+            dataKeys: Object.keys(data),
+          });
+
           // Transformar datos de la API al formato esperado
           const transformedReports: BrokerReport[] = reportsData.map((report: any) => ({
             period: report.period || report.date || 'Periodo',
@@ -107,16 +114,28 @@ export default function BrokerReportsPage() {
             marketPerformance: report.marketPerformance || report.performance || 0,
           }));
 
+          logger.info('Transformed reports', {
+            count: transformedReports.length,
+            periods: transformedReports.map(r => r.period),
+          });
+
           setReports(transformedReports);
         } else {
+          const errorData = await response.json().catch(() => ({}));
+          logger.warn('Failed to load reports', {
+            status: response.status,
+            error: errorData,
+          });
           // Si no hay datos reales, mostrar array vacío
           setReports([]);
         }
         setLoading(false);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error('Error loading reports data:', {
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage,
         });
+        setError(`Error al cargar reportes: ${errorMessage}`);
         // En caso de error, mostrar array vacío
         setReports([]);
         setLoading(false);
@@ -326,34 +345,58 @@ export default function BrokerReportsPage() {
   // Filter reports based on selected period
   const getFilteredReports = (): BrokerReport[] => {
     if (reports.length === 0) {
+      logger.info('No reports available for filtering');
       return [];
     }
+
+    let filtered: BrokerReport[] = [];
 
     switch (selectedPeriod) {
       case 'month':
         // Return all monthly reports (they are already monthly)
-        return reports.filter(report => {
-          const date = parseMonthName(report.period);
-          return date !== null;
-        });
+        // Don't filter by date parsing - just return all reports as they are monthly
+        filtered = reports;
+        break;
       case 'quarter':
         // Aggregate monthly reports into quarterly
-        return aggregateQuarterlyReports();
+        filtered = aggregateQuarterlyReports();
+        break;
       case 'year':
         // Aggregate monthly reports into yearly
-        return aggregateYearlyReports();
+        filtered = aggregateYearlyReports();
+        break;
       default:
         // Por defecto, mostrar todos los reportes mensuales
-        return reports.filter(report => {
+        filtered = reports.filter(report => {
           const date = parseMonthName(report.period);
           return date !== null;
         });
     }
+
+    logger.info('Filtered reports', {
+      selectedPeriod,
+      originalCount: reports.length,
+      filteredCount: filtered.length,
+      periods: filtered.map(r => r.period),
+    });
+
+    return filtered;
   };
 
   const filteredReports = getFilteredReports();
   const currentReport = filteredReports[0];
   const previousReport = filteredReports[1];
+
+  // Debug logging
+  useEffect(() => {
+    logger.info('Reports state updated', {
+      reportsCount: reports.length,
+      filteredCount: filteredReports.length,
+      currentReport: currentReport?.period,
+      selectedPeriod,
+      firstReportPeriod: reports[0]?.period,
+    });
+  }, [reports, filteredReports, currentReport, selectedPeriod]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -510,7 +553,18 @@ export default function BrokerReportsPage() {
           </div>
         </div>
 
-        {!currentReport && reports.length === 0 && !loading && (
+        {error && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6 pb-6">
+              <div className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-5 h-5" />
+                <p className="font-medium">{error}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!currentReport && reports.length === 0 && !loading && !error && (
           <Card>
             <CardContent className="pt-8 pb-8 text-center">
               <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -522,6 +576,20 @@ export default function BrokerReportsPage() {
               </p>
               <p className="text-sm text-gray-500">
                 Necesitas tener contratos activos o gestionar propiedades para generar reportes.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {!currentReport && reports.length > 0 && filteredReports.length === 0 && !loading && (
+          <Card>
+            <CardContent className="pt-8 pb-8 text-center">
+              <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No hay reportes para el período seleccionado
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Intenta cambiar el filtro de período o selecciona otro rango de fechas.
               </p>
             </CardContent>
           </Card>
