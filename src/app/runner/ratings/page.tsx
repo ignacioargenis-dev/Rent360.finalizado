@@ -486,14 +486,16 @@ export default function RunnerRatingsPage() {
               <div>
                 <Label htmlFor="minRating">Calificación Mínima</Label>
                 <Select
-                  value={filters.minRating}
-                  onValueChange={value => setFilters({ ...filters, minRating: value })}
+                  value={filters.minRating || 'all'}
+                  onValueChange={value =>
+                    setFilters({ ...filters, minRating: value === 'all' ? '' : value })
+                  }
                 >
                   <SelectTrigger id="minRating">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="5">5 estrellas</SelectItem>
                     <SelectItem value="4">4+ estrellas</SelectItem>
                     <SelectItem value="3">3+ estrellas</SelectItem>
@@ -505,14 +507,16 @@ export default function RunnerRatingsPage() {
               <div>
                 <Label htmlFor="maxRating">Calificación Máxima</Label>
                 <Select
-                  value={filters.maxRating}
-                  onValueChange={value => setFilters({ ...filters, maxRating: value })}
+                  value={filters.maxRating || 'all'}
+                  onValueChange={value =>
+                    setFilters({ ...filters, maxRating: value === 'all' ? '' : value })
+                  }
                 >
                   <SelectTrigger id="maxRating">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="1">1 estrella</SelectItem>
                     <SelectItem value="2">2 estrellas</SelectItem>
                     <SelectItem value="3">3 estrellas</SelectItem>
@@ -542,14 +546,16 @@ export default function RunnerRatingsPage() {
               <div>
                 <Label htmlFor="hasResponse">Con Respuesta</Label>
                 <Select
-                  value={filters.hasResponse}
-                  onValueChange={value => setFilters({ ...filters, hasResponse: value })}
+                  value={filters.hasResponse || 'all'}
+                  onValueChange={value =>
+                    setFilters({ ...filters, hasResponse: value === 'all' ? '' : value })
+                  }
                 >
                   <SelectTrigger id="hasResponse">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="true">Con respuesta</SelectItem>
                     <SelectItem value="false">Sin respuesta</SelectItem>
                   </SelectContent>
@@ -558,14 +564,16 @@ export default function RunnerRatingsPage() {
               <div>
                 <Label htmlFor="hasComment">Con Comentario</Label>
                 <Select
-                  value={filters.hasComment}
-                  onValueChange={value => setFilters({ ...filters, hasComment: value })}
+                  value={filters.hasComment || 'all'}
+                  onValueChange={value =>
+                    setFilters({ ...filters, hasComment: value === 'all' ? '' : value })
+                  }
                 >
                   <SelectTrigger id="hasComment">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="true">Con comentario</SelectItem>
                     <SelectItem value="false">Sin comentario</SelectItem>
                   </SelectContent>

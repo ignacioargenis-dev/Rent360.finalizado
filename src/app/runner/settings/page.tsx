@@ -181,33 +181,6 @@ export default function RunnerSettingsPage() {
   ]);
 
   useEffect(() => {
-    const loadUserData = async () => {
-      // Cargar datos bancarios
-      try {
-        const bankAccountResponse = await fetch('/api/runner/bank-account', {
-          credentials: 'include',
-        });
-
-        if (bankAccountResponse.ok) {
-          const bankAccountData = await bankAccountResponse.json();
-          if (bankAccountData.success && bankAccountData.data) {
-            setSettings(prevSettings => ({
-              ...prevSettings,
-              payment: {
-                ...prevSettings.payment,
-                bankName: bankAccountData.data.bankName || '',
-                accountType: bankAccountData.data.accountType || 'checking',
-                bankAccount: bankAccountData.data.accountNumber || '',
-                taxId: bankAccountData.data.rut || '',
-              },
-            }));
-          }
-        }
-      } catch (error) {
-        logger.warn('Error cargando datos bancarios', { error });
-      }
-    };
-
     const loadUserDataFull = async () => {
       try {
         setLoading(true);
@@ -274,26 +247,30 @@ export default function RunnerSettingsPage() {
               setSettings(prev => ({
                 ...prev,
                 payment: {
-                  bankName: bankData.data.bank || '',
+                  bankName: bankData.data.bank || bankData.data.bankName || '',
                   accountType: bankData.data.accountType || 'checking',
                   bankAccount: bankData.data.accountNumber || '',
                   paymentMethod: 'transfer',
-                  taxId: userData.user?.rut || '',
+                  taxId: userData.user?.rut || bankData.data.rut || '',
                 },
               }));
             }
           }
+        } else {
+          logger.warn('Error al cargar datos del usuario', { status: userResponse.status });
         }
       } catch (error) {
         logger.error('Error loading user data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+        setErrorMessage('Error al cargar los datos. Por favor, recarga la página.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadUserData();
+    loadUserDataFull();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Función para cargar documentos del usuario

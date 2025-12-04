@@ -134,7 +134,7 @@ export default function PerfilPage() {
       ${data?.personalInfo.location}
 
       EXPERIENCIA PROFESIONAL:
-      ${data?.experience.map((exp: any) => `- ${exp.position} en ${exp.company} (${exp.period})`).join('\n')}
+      ${(Array.isArray(data?.experience) ? data.experience : []).map((exp: any) => `- ${exp.position} en ${exp.company} (${exp.period})`).join('\n')}
 
       HABILIDADES:
       ${data?.skills.map((skill: any) => `- ${skill.name} (${skill.level})`).join('\n')}
@@ -412,14 +412,22 @@ export default function PerfilPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {data?.experience.map((exp: any, index: number) => (
-                  <div key={index} className="border-l-2 border-blue-500 pl-4">
-                    <div className="font-semibold">{exp.position}</div>
-                    <div className="text-sm text-gray-600">{exp.company}</div>
-                    <div className="text-xs text-gray-500 mb-2">{exp.period}</div>
-                    <p className="text-sm text-gray-700">{exp.description}</p>
-                  </div>
-                ))}
+                {(Array.isArray(data?.experience) ? data.experience : []).map(
+                  (exp: any, index: number) => (
+                    <div key={index} className="border-l-2 border-blue-500 pl-4">
+                      <div className="font-semibold">{exp.position}</div>
+                      <div className="text-sm text-gray-600">{exp.company}</div>
+                      <div className="text-xs text-gray-500 mb-2">{exp.period}</div>
+                      <p className="text-sm text-gray-700">{exp.description}</p>
+                    </div>
+                  )
+                )}
+                {(!data?.experience ||
+                  (Array.isArray(data.experience) && data.experience.length === 0)) && (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No hay experiencia laboral registrada
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
