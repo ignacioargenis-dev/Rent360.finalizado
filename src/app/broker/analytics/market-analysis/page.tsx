@@ -1490,12 +1490,9 @@ export default function MarketAnalysisPage() {
                 Volver a Analytics
               </Button>
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Análisis de Mercado Nacional</h1>
-              <p className="text-gray-600">
-                Datos en tiempo real basados en {marketData.length} ubicaciones
-              </p>
-            </div>
+            <p className="text-gray-600">
+              Datos en tiempo real basados en {marketData.length} ubicaciones
+            </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleRefreshData} disabled={isRefreshing}>

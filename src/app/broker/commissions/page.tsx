@@ -141,8 +141,12 @@ export default function BrokerCommissionsPage() {
 
           // Calculate stats from real data
           const paidCommissions = transformedCommissions.filter(c => c.status === 'paid').length;
-          const pendingCommissions = transformedCommissions.filter(c => c.status === 'pending').length;
-          const overdueCommissions = transformedCommissions.filter(c => c.status === 'overdue').length;
+          const pendingCommissions = transformedCommissions.filter(
+            c => c.status === 'pending'
+          ).length;
+          const overdueCommissions = transformedCommissions.filter(
+            c => c.status === 'overdue'
+          ).length;
           const totalEarnings = transformedCommissions
             .filter(c => c.status === 'paid')
             .reduce((sum, c) => sum + c.commissionAmount, 0);
@@ -342,13 +346,7 @@ export default function BrokerCommissionsPage() {
     >
       <div className="container mx-auto px-4 py-6">
         {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Comisiones</h1>
-            <p className="text-gray-600">
-              Gestiona tus ingresos por comisiones de arriendos y ventas
-            </p>
-          </div>
+        <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center mb-6 gap-4">
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExportCommissions}>
               <Download className="w-4 h-4 mr-2" />

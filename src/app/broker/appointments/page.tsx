@@ -101,19 +101,22 @@ export default function BrokerAppointmentsPage() {
           const appointmentsData = data.appointments || data.data || [];
 
           // Transformar datos de la API al formato esperado
-          const transformedAppointments: Appointment[] = appointmentsData.map((appointment: any) => ({
-            id: appointment.id || appointment.appointmentId,
-            clientName: appointment.clientName || appointment.client?.name || 'Cliente',
-            clientEmail: appointment.clientEmail || appointment.client?.email || '',
-            clientPhone: appointment.clientPhone || appointment.client?.phone || '',
-            propertyTitle: appointment.propertyTitle || appointment.property?.title || 'Propiedad',
-            propertyAddress: appointment.propertyAddress || appointment.property?.address || '',
-            dateTime: appointment.dateTime || appointment.scheduledAt,
-            type: appointment.type || appointment.appointmentType || 'viewing',
-            status: appointment.status || 'scheduled',
-            notes: appointment.notes || '',
-            createdAt: appointment.createdAt,
-          }));
+          const transformedAppointments: Appointment[] = appointmentsData.map(
+            (appointment: any) => ({
+              id: appointment.id || appointment.appointmentId,
+              clientName: appointment.clientName || appointment.client?.name || 'Cliente',
+              clientEmail: appointment.clientEmail || appointment.client?.email || '',
+              clientPhone: appointment.clientPhone || appointment.client?.phone || '',
+              propertyTitle:
+                appointment.propertyTitle || appointment.property?.title || 'Propiedad',
+              propertyAddress: appointment.propertyAddress || appointment.property?.address || '',
+              dateTime: appointment.dateTime || appointment.scheduledAt,
+              type: appointment.type || appointment.appointmentType || 'viewing',
+              status: appointment.status || 'scheduled',
+              notes: appointment.notes || '',
+              createdAt: appointment.createdAt,
+            })
+          );
 
           setAppointments(transformedAppointments);
 
@@ -284,11 +287,7 @@ export default function BrokerAppointmentsPage() {
     >
       <div className="container mx-auto px-4 py-6">
         {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Calendario de Citas</h1>
-            <p className="text-gray-600">Gestiona tus visitas, reuniones y tasaciones</p>
-          </div>
+        <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center mb-6 gap-4">
           <div className="flex gap-2">
             <Button onClick={handleNewAppointment}>
               <Plus className="w-4 h-4 mr-2" />

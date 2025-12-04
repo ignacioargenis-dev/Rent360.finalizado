@@ -312,11 +312,7 @@ export default function BrokerAnalyticsPage() {
           </div>
         )}
         {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics de Rendimiento</h1>
-            <p className="text-gray-600">Analiza el rendimiento de tus propiedades y clientes</p>
-          </div>
+        <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center mb-6 gap-4">
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleRefreshData}>
               <RefreshCw className="w-4 h-4 mr-2" />

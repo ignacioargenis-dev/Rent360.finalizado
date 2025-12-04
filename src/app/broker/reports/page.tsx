@@ -286,11 +286,7 @@ export default function BrokerReportsPage() {
     >
       <div className="container mx-auto px-4 py-6">
         {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reportes de Rendimiento</h1>
-            <p className="text-gray-600">Métricas detalladas de tu actividad inmobiliaria</p>
-          </div>
+        <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center mb-6 gap-4">
           <div className="flex gap-2">
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
               <SelectTrigger className="w-[140px]">
@@ -312,6 +308,20 @@ export default function BrokerReportsPage() {
             </Button>
           </div>
         </div>
+
+        {!currentReport && reports.length === 0 && (
+          <Card>
+            <CardContent className="pt-8 pb-8 text-center">
+              <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No hay reportes disponibles
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Los reportes se generarán automáticamente cuando tengas actividad registrada.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {currentReport && (
           <>
