@@ -38,6 +38,7 @@ import {
   User,
   ChevronRight,
   ChevronDown,
+  CheckCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
@@ -109,7 +110,8 @@ export default function SupportKnowledgePage() {
 
   useEffect(() => {
     loadKnowledgeData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCategory, filterStatus]);
 
   const loadKnowledgeData = async () => {
     try {
@@ -153,7 +155,9 @@ export default function SupportKnowledgePage() {
         });
         return;
       } catch (apiError) {
-        console.warn('API no disponible, usando datos simulados:', apiError);
+        logger.warn('API no disponible, usando datos simulados:', {
+          error: apiError instanceof Error ? apiError.message : String(apiError),
+        });
       }
 
       // Fallback a datos simulados si la API no está disponible
@@ -442,21 +446,51 @@ Si persisten los problemas, contacta a soporte:
 
   const handleCreateArticle = async () => {
     try {
+      if (!newArticle.title || !newArticle.content || !newArticle.summary) {
+        setError('Por favor completa todos los campos obligatorios');
+        return;
+      }
+
+      const response = await fetch('/api/support/knowledge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: newArticle.title,
+          content: newArticle.content,
+          summary: newArticle.summary,
+          category: newArticle.category,
+          tags: newArticle.tags,
+          isPublished: newArticle.isPublished,
+          isFeatured: newArticle.isFeatured,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al crear el artículo');
+      }
+
+      const data = await response.json();
+
+      // Agregar el nuevo artículo a la lista
       const newArticleData: KnowledgeArticle = {
-        id: Date.now().toString(),
-        title: newArticle.title,
-        content: newArticle.content,
-        summary: newArticle.summary,
-        category: newArticle.category,
-        tags: newArticle.tags,
-        author: user?.name || 'Usuario',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        views: 0,
-        helpful: 0,
-        notHelpful: 0,
-        isPublished: newArticle.isPublished,
-        isFeatured: newArticle.isFeatured,
+        id: data.article.id,
+        title: data.article.title,
+        content: data.article.content,
+        summary: data.article.summary,
+        category: data.article.category,
+        tags: data.article.tags,
+        author: data.article.author,
+        createdAt: data.article.createdAt,
+        updatedAt: data.article.updatedAt,
+        views: data.article.views,
+        helpful: data.article.helpful,
+        notHelpful: data.article.notHelpful,
+        isPublished: data.article.isPublished,
+        isFeatured: data.article.isFeatured,
       };
 
       setArticles(prev => [newArticleData, ...prev]);
@@ -470,8 +504,13 @@ Si persisten los problemas, contacta a soporte:
         isPublished: false,
         isFeatured: false,
       });
+      setError(null);
+
+      // Recargar datos para actualizar estadísticas
+      await loadKnowledgeData();
 
       logger.info('Artículo de conocimiento creado', {
+        articleId: data.article.id,
         title: newArticle.title,
         category: newArticle.category,
         isPublished: newArticle.isPublished,
@@ -480,6 +519,7 @@ Si persisten los problemas, contacta a soporte:
       logger.error('Error creando artículo:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setError(error instanceof Error ? error.message : 'Error al crear el artículo');
     }
   };
 
@@ -503,6 +543,66 @@ Si persisten los problemas, contacta a soporte:
       )
     );
     logger.info('Artículo calificado', { articleId, helpful });
+  };
+
+  const handleTogglePublishStatus = async (articleId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch('/api/support/knowledge', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          articleId,
+          isPublished: !currentStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al actualizar el estado del artículo');
+      }
+
+      const data = await response.json();
+
+      // Actualizar el artículo en la lista
+      setArticles(prev =>
+        prev.map(article =>
+          article.id === articleId
+            ? {
+                ...article,
+                isPublished: data.article.isPublished,
+                updatedAt: data.article.updatedAt,
+              }
+            : article
+        )
+      );
+
+      // Si el artículo seleccionado es el que se actualizó, actualizarlo también
+      if (selectedArticle && selectedArticle.id === articleId) {
+        setSelectedArticle({
+          ...selectedArticle,
+          isPublished: data.article.isPublished,
+          updatedAt: data.article.updatedAt,
+        });
+      }
+
+      // Recargar datos para actualizar estadísticas
+      await loadKnowledgeData();
+
+      logger.info('Estado del artículo actualizado', {
+        articleId,
+        isPublished: data.article.isPublished,
+      });
+    } catch (error) {
+      logger.error('Error actualizando estado del artículo:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError(
+        error instanceof Error ? error.message : 'Error al actualizar el estado del artículo'
+      );
+    }
   };
 
   const formatDateTime = (dateString: string) => {
@@ -866,6 +966,30 @@ Si persisten los problemas, contacta a soporte:
                               >
                                 <Eye className="w-4 h-4 mr-1" />
                                 Ver
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={article.isPublished ? 'default' : 'secondary'}
+                                onClick={() =>
+                                  handleTogglePublishStatus(article.id, article.isPublished)
+                                }
+                                className={
+                                  article.isPublished
+                                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                }
+                              >
+                                {article.isPublished ? (
+                                  <>
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Publicado
+                                  </>
+                                ) : (
+                                  <>
+                                    <Edit className="w-4 h-4 mr-1" />
+                                    Borrador
+                                  </>
+                                )}
                               </Button>
                               <Button
                                 size="sm"

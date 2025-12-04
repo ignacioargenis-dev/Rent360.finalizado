@@ -100,6 +100,9 @@ model User {
   runnerRatingsGiven RunnerRating[] @relation("RunnerRatings") // Calificaciones que dio como runner
   clientRatingsGiven RunnerRating[] @relation("ClientRatings") // Calificaciones que dio como cliente
 
+  // Relaciones de artículos de conocimiento
+  knowledgeArticles KnowledgeArticle[] @relation("KnowledgeArticleAuthor")
+
   // Relaciones de calificaciones universales bidireccionales
   ratingsGiven    UserRating[] @relation("RatingFrom") // Calificaciones que ha dado
   ratingsReceived UserRating[] @relation("RatingTo") // Calificaciones que ha recibido
@@ -2441,6 +2444,34 @@ model BrokerLeadRecommendation {
 }
 
 // Enums para el sistema de captación
+
+// Knowledge Base Article Model
+model KnowledgeArticle {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  summary     String
+  category    String   // 'general', 'billing', 'technical', 'account', 'troubleshooting'
+  tags        String[] // Array de tags
+  authorId    String
+  isPublished Boolean  @default(false) // false = borrador, true = publicado
+  isFeatured  Boolean  @default(false)
+  views       Int      @default(0)
+  helpful     Int      @default(0)
+  notHelpful  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  author User @relation("KnowledgeArticleAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([isPublished])
+  @@index([isFeatured])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("knowledge_articles")
+}
 
 enum RequestUserType {
   OWNER
