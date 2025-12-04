@@ -62,6 +62,7 @@ export default function BrokerReportsPage() {
   const [reports, setReports] = useState<BrokerReport[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUserData = async () => {
