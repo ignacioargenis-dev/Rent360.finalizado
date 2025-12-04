@@ -242,10 +242,15 @@ export default function BrokerReportsPage() {
       // Parse "Q1 2025" format
       const parseQuarter = (period: string): { quarter: number; year: number } | null => {
         const match = period.match(/Q(\d)\s+(\d{4})/);
-        if (!match) {
+        if (!match || !match[1] || !match[2]) {
           return null;
         }
-        return { quarter: parseInt(match[1]) - 1, year: parseInt(match[2]) };
+        const quarter = parseInt(match[1]);
+        const year = parseInt(match[2]);
+        if (isNaN(quarter) || isNaN(year)) {
+          return null;
+        }
+        return { quarter: quarter - 1, year };
       };
 
       const qA = parseQuarter(a.period);
