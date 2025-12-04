@@ -136,6 +136,13 @@ export default function BrokerReportsPage() {
         return null;
       }
 
+      const monthPart = parts[0];
+      const yearPart = parts[1];
+
+      if (!monthPart || !yearPart) {
+        return null;
+      }
+
       const monthNames = [
         'enero',
         'febrero',
@@ -150,8 +157,8 @@ export default function BrokerReportsPage() {
         'noviembre',
         'diciembre',
       ];
-      const monthIndex = monthNames.indexOf(parts[0]);
-      const year = parseInt(parts[1]);
+      const monthIndex = monthNames.indexOf(monthPart);
+      const year = parseInt(yearPart);
 
       if (monthIndex === -1 || isNaN(year)) {
         return null;
