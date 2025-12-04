@@ -127,41 +127,215 @@ export default function BrokerReportsPage() {
     loadReportsData();
   }, []);
 
+  // Helper function to parse month name to date
+  const parseMonthName = (monthName: string): Date | null => {
+    try {
+      // Format: "enero 2025", "febrero 2025", etc.
+      const parts = monthName.toLowerCase().trim().split(' ');
+      if (parts.length !== 2) {
+        return null;
+      }
+
+      const monthNames = [
+        'enero',
+        'febrero',
+        'marzo',
+        'abril',
+        'mayo',
+        'junio',
+        'julio',
+        'agosto',
+        'septiembre',
+        'octubre',
+        'noviembre',
+        'diciembre',
+      ];
+      const monthIndex = monthNames.indexOf(parts[0]);
+      const year = parseInt(parts[1]);
+
+      if (monthIndex === -1 || isNaN(year)) {
+        return null;
+      }
+      return new Date(year, monthIndex, 1);
+    } catch {
+      return null;
+    }
+  };
+
+  // Helper function to get quarter from month (0-11)
+  const getQuarter = (month: number): number => {
+    return Math.floor(month / 3);
+  };
+
+  // Helper function to get quarter name
+  const getQuarterName = (quarter: number, year: number): string => {
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    return `${quarters[quarter]} ${year}`;
+  };
+
+  // Aggregate monthly reports into quarterly reports
+  const aggregateQuarterlyReports = (): BrokerReport[] => {
+    const quarterlyMap = new Map<string, BrokerReport>();
+
+    reports.forEach(report => {
+      const date = parseMonthName(report.period);
+      if (!date) {
+        return;
+      }
+
+      const quarter = getQuarter(date.getMonth());
+      const quarterName = getQuarterName(quarter, date.getFullYear());
+
+      if (!quarterlyMap.has(quarterName)) {
+        quarterlyMap.set(quarterName, {
+          period: quarterName,
+          propertiesManaged: 0,
+          newClients: 0,
+          totalRevenue: 0,
+          commissionsEarned: 0,
+          propertiesRented: 0,
+          maintenanceRequests: 0,
+          clientSatisfaction: 0,
+          marketPerformance: 0,
+        });
+      }
+
+      const quarterly = quarterlyMap.get(quarterName)!;
+      quarterly.propertiesManaged += report.propertiesManaged;
+      quarterly.newClients += report.newClients;
+      quarterly.totalRevenue += report.totalRevenue;
+      quarterly.commissionsEarned += report.commissionsEarned;
+      quarterly.propertiesRented += report.propertiesRented;
+      quarterly.maintenanceRequests += report.maintenanceRequests;
+      quarterly.clientSatisfaction += report.clientSatisfaction;
+      quarterly.marketPerformance += report.marketPerformance;
+    });
+
+    // Calculate averages for satisfaction and performance
+    quarterlyMap.forEach((quarterly, key) => {
+      const monthCount = reports.filter(report => {
+        const date = parseMonthName(report.period);
+        if (!date) {
+          return false;
+        }
+        const quarter = getQuarter(date.getMonth());
+        const quarterName = getQuarterName(quarter, date.getFullYear());
+        return quarterName === key;
+      }).length;
+
+      if (monthCount > 0) {
+        quarterly.clientSatisfaction =
+          Math.round((quarterly.clientSatisfaction / monthCount) * 10) / 10;
+        quarterly.marketPerformance =
+          Math.round((quarterly.marketPerformance / monthCount) * 10) / 10;
+      }
+    });
+
+    return Array.from(quarterlyMap.values()).sort((a, b) => {
+      // Parse "Q1 2025" format
+      const parseQuarter = (period: string): { quarter: number; year: number } | null => {
+        const match = period.match(/Q(\d)\s+(\d{4})/);
+        if (!match) {
+          return null;
+        }
+        return { quarter: parseInt(match[1]) - 1, year: parseInt(match[2]) };
+      };
+
+      const qA = parseQuarter(a.period);
+      const qB = parseQuarter(b.period);
+      if (!qA || !qB) {
+        return 0;
+      }
+
+      if (qA.year !== qB.year) {
+        return qB.year - qA.year;
+      }
+      return qB.quarter - qA.quarter;
+    });
+  };
+
+  // Aggregate monthly reports into yearly reports
+  const aggregateYearlyReports = (): BrokerReport[] => {
+    const yearlyMap = new Map<string, BrokerReport>();
+
+    reports.forEach(report => {
+      const date = parseMonthName(report.period);
+      if (!date) {
+        return;
+      }
+
+      const year = date.getFullYear().toString();
+
+      if (!yearlyMap.has(year)) {
+        yearlyMap.set(year, {
+          period: year,
+          propertiesManaged: 0,
+          newClients: 0,
+          totalRevenue: 0,
+          commissionsEarned: 0,
+          propertiesRented: 0,
+          maintenanceRequests: 0,
+          clientSatisfaction: 0,
+          marketPerformance: 0,
+        });
+      }
+
+      const yearly = yearlyMap.get(year)!;
+      yearly.propertiesManaged += report.propertiesManaged;
+      yearly.newClients += report.newClients;
+      yearly.totalRevenue += report.totalRevenue;
+      yearly.commissionsEarned += report.commissionsEarned;
+      yearly.propertiesRented += report.propertiesRented;
+      yearly.maintenanceRequests += report.maintenanceRequests;
+      yearly.clientSatisfaction += report.clientSatisfaction;
+      yearly.marketPerformance += report.marketPerformance;
+    });
+
+    // Calculate averages for satisfaction and performance
+    yearlyMap.forEach((yearly, year) => {
+      const monthCount = reports.filter(report => {
+        const date = parseMonthName(report.period);
+        return date && date.getFullYear().toString() === year;
+      }).length;
+
+      if (monthCount > 0) {
+        yearly.clientSatisfaction = Math.round((yearly.clientSatisfaction / monthCount) * 10) / 10;
+        yearly.marketPerformance = Math.round((yearly.marketPerformance / monthCount) * 10) / 10;
+      }
+    });
+
+    return Array.from(yearlyMap.values()).sort((a, b) => {
+      const yearA = parseInt(a.period);
+      const yearB = parseInt(b.period);
+      return yearB - yearA;
+    });
+  };
+
   // Filter reports based on selected period
-  const getFilteredReports = () => {
+  const getFilteredReports = (): BrokerReport[] => {
     if (reports.length === 0) {
       return [];
     }
 
-    const currentYear = new Date().getFullYear();
-    const currentYearStr = currentYear.toString();
-    const previousYearStr = (currentYear - 1).toString();
-
     switch (selectedPeriod) {
       case 'month':
-        // Filtrar reportes mensuales (que no incluyan 'Q' y no sean solo el año)
-        return reports.filter(
-          report =>
-            (report.period.includes(currentYearStr) || report.period.includes(previousYearStr)) &&
-            !report.period.includes('Q') &&
-            report.period !== currentYearStr &&
-            report.period !== previousYearStr
-        );
+        // Return all monthly reports (they are already monthly)
+        return reports.filter(report => {
+          const date = parseMonthName(report.period);
+          return date !== null;
+        });
       case 'quarter':
-        return reports.filter(report => report.period.includes('Q'));
+        // Aggregate monthly reports into quarterly
+        return aggregateQuarterlyReports();
       case 'year':
-        return reports.filter(
-          report => report.period === currentYearStr || report.period === previousYearStr
-        );
+        // Aggregate monthly reports into yearly
+        return aggregateYearlyReports();
       default:
         // Por defecto, mostrar todos los reportes mensuales
-        return reports.filter(
-          report =>
-            (report.period.includes(currentYearStr) || report.period.includes(previousYearStr)) &&
-            !report.period.includes('Q') &&
-            report.period !== currentYearStr &&
-            report.period !== previousYearStr
-        );
+        return reports.filter(report => {
+          const date = parseMonthName(report.period);
+          return date !== null;
+        });
     }
   };
 
