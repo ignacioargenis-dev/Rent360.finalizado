@@ -36,6 +36,7 @@ import {
   User,
   Users,
   AlertCircle,
+  Phone,
 } from 'lucide-react';
 import {
   Dialog,
@@ -54,11 +55,18 @@ interface PropertyReport {
   propertyAddress: string;
   ownerName: string;
   ownerEmail: string;
+  ownerPhone?: string;
   reportedIssues: string[];
   status: 'active' | 'inactive' | 'reported' | 'maintenance';
   lastReportedDate?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   tenantCount: number;
+  price?: number;
+  city?: string;
+  commune?: string;
+  maintenanceCount?: number;
+  visitsCount?: number;
+  contractsCount?: number;
 }
 
 interface PropertyStats {
@@ -101,6 +109,7 @@ export default function SupportPropertiesPage() {
 
   useEffect(() => {
     loadPageData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, priorityFilter, searchTerm]);
 
   const loadPageData = async () => {
@@ -131,10 +140,31 @@ export default function SupportPropertiesPage() {
 
         const data = await response.json();
 
-        // Ensure reportedIssues is always an array
+        // Map API response to PropertyReport format
         const propertiesWithDefaults = (data.properties || []).map((property: any) => ({
-          ...property,
+          id: property.id,
+          propertyTitle: property.title || property.propertyTitle || 'Sin título',
+          propertyAddress: property.address
+            ? `${property.address}${property.commune ? `, ${property.commune}` : ''}${property.city ? `, ${property.city}` : ''}`.trim()
+            : property.propertyAddress || property.address || 'Sin dirección',
+          ownerName: property.ownerName || property.owner?.name || 'Sin propietario',
+          ownerEmail: property.ownerEmail || property.owner?.email || 'Sin email',
+          ownerPhone: property.owner?.phone || property.ownerPhone,
           reportedIssues: property.reportedIssues || [],
+          status: (property.status || 'active').toLowerCase() as
+            | 'active'
+            | 'inactive'
+            | 'reported'
+            | 'maintenance',
+          lastReportedDate: property.lastReportedDate,
+          priority: property.priority || ('low' as 'low' | 'medium' | 'high' | 'urgent'),
+          tenantCount: property.tenantCount || property.contractsCount || 0,
+          price: property.price,
+          city: property.city,
+          commune: property.commune,
+          maintenanceCount: property.maintenanceCount || 0,
+          visitsCount: property.visitsCount || 0,
+          contractsCount: property.contractsCount || 0,
         }));
 
         setProperties(propertiesWithDefaults);
@@ -726,14 +756,11 @@ export default function SupportPropertiesPage() {
 
         {/* Modal de Detalles de Propiedad */}
         {showPropertyModal && selectedProperty && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto mx-4">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Detalles de Propiedad</h2>
-                <Button variant="ghost" size="sm" onClick={() => setShowPropertyModal(false)}>
-                  <XCircle className="w-5 h-5" />
-                </Button>
-              </div>
+          <Dialog open={showPropertyModal} onOpenChange={setShowPropertyModal}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Detalles de Propiedad</DialogTitle>
+              </DialogHeader>
 
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
@@ -761,10 +788,43 @@ export default function SupportPropertiesPage() {
                         <Mail className="w-4 h-4 text-gray-500" />
                         <span>Email: {selectedProperty.ownerEmail}</span>
                       </div>
+                      {selectedProperty.ownerPhone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-500" />
+                          <span>Teléfono: {selectedProperty.ownerPhone}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-gray-500" />
                         <span>Inquilinos activos: {selectedProperty.tenantCount}</span>
                       </div>
+                      {selectedProperty.price && (
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-gray-500" />
+                          <span>
+                            Precio:{' '}
+                            {new Intl.NumberFormat('es-CL', {
+                              style: 'currency',
+                              currency: 'CLP',
+                              minimumFractionDigits: 0,
+                            }).format(selectedProperty.price)}
+                          </span>
+                        </div>
+                      )}
+                      {selectedProperty.maintenanceCount !== undefined &&
+                        selectedProperty.maintenanceCount > 0 && (
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                            <span>Mantenimientos: {selectedProperty.maintenanceCount}</span>
+                          </div>
+                        )}
+                      {selectedProperty.visitsCount !== undefined &&
+                        selectedProperty.visitsCount > 0 && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-500" />
+                            <span>Visitas: {selectedProperty.visitsCount}</span>
+                          </div>
+                        )}
                       {selectedProperty.lastReportedDate && (
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-500" />
@@ -838,20 +898,20 @@ export default function SupportPropertiesPage() {
                   )}
                 </div>
               </div>
-            </div>
-          </div>
+            </DialogContent>
+          </Dialog>
         )}
 
         {/* Modal de Crear Problema */}
         {showCreateIssueModal && selectedProperty && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Crear Nuevo Problema</h2>
-                <Button variant="ghost" size="sm" onClick={() => setShowCreateIssueModal(false)}>
-                  <XCircle className="w-5 h-5" />
-                </Button>
-              </div>
+          <Dialog open={showCreateIssueModal} onOpenChange={setShowCreateIssueModal}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Problema</DialogTitle>
+                <DialogDescription>
+                  Crea un nuevo problema para la propiedad seleccionada
+                </DialogDescription>
+              </DialogHeader>
 
               <div className="space-y-4">
                 <div>
@@ -917,8 +977,8 @@ export default function SupportPropertiesPage() {
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
