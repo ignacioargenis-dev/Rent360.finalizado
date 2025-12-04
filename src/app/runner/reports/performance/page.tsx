@@ -324,10 +324,23 @@ export default function RunnerPerformanceReport() {
                   {formatPrice(metrics.monthlyEarnings)}
                 </div>
                 <div className="text-sm text-gray-600">Ganancias Mensuales</div>
-                <div className="text-xs text-green-600 mt-1">
-                  ↑ {(((metrics.monthlyEarnings - 720000) / 720000) * 100).toFixed(1)}% vs mes
-                  anterior
-                </div>
+                {(() => {
+                  // Calcular crecimiento basado en monthlyPerformance
+                  const growth =
+                    metrics.monthlyEarnings > 0 && monthlyPerformance.length >= 2
+                      ? ((metrics.monthlyEarnings -
+                          (monthlyPerformance[monthlyPerformance.length - 2]?.earnings || 0)) /
+                          (monthlyPerformance[monthlyPerformance.length - 2]?.earnings || 1)) *
+                        100
+                      : 0;
+                  return growth !== 0 ? (
+                    <div
+                      className={`text-xs mt-1 ${growth > 0 ? 'text-green-600' : 'text-red-600'}`}
+                    >
+                      {growth > 0 ? '↑' : '↓'} {Math.abs(growth).toFixed(1)}% vs mes anterior
+                    </div>
+                  ) : null;
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -448,32 +461,56 @@ export default function RunnerPerformanceReport() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">Progreso Mensual</h4>
-                        <span className="text-sm text-gray-600">Junio 2024</span>
+                        <span className="text-sm text-gray-600">
+                          {new Date().toLocaleDateString('es-CL', {
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </span>
                       </div>
                       <div className="space-y-3">
                         <div>
                           <div className="flex justify-between text-sm mb-1">
                             <span>Meta de visitas</span>
-                            <span>62/60</span>
+                            <span>
+                              {metrics.completedVisits}/
+                              {Math.max(60, Math.ceil(metrics.completedVisits * 1.1))}
+                            </span>
                           </div>
-                          <Progress value={103} className="h-2" />
+                          <Progress
+                            value={Math.min(
+                              100,
+                              (metrics.completedVisits /
+                                Math.max(60, Math.ceil(metrics.completedVisits * 1.1))) *
+                                100
+                            )}
+                            className="h-2"
+                          />
                         </div>
                         <div>
                           <div className="flex justify-between text-sm mb-1">
                             <span>Meta de ganancias</span>
                             <span>
-                              {formatPrice(metrics.monthlyEarnings)}/{formatPrice(800000)}
+                              {formatPrice(metrics.monthlyEarnings)}/
+                              {formatPrice(
+                                Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1))
+                              )}
                             </span>
                           </div>
                           <Progress
-                            value={(metrics.monthlyEarnings / 800000) * 100}
+                            value={Math.min(
+                              100,
+                              (metrics.monthlyEarnings /
+                                Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1))) *
+                                100
+                            )}
                             className="h-2"
                           />
                         </div>
                         <div>
                           <div className="flex justify-between text-sm mb-1">
                             <span>Meta de rating</span>
-                            <span>{metrics.overallRating}/4.5</span>
+                            <span>{metrics.overallRating.toFixed(1)}/4.5</span>
                           </div>
                           <Progress value={(metrics.overallRating / 5) * 100} className="h-2" />
                         </div>
@@ -684,49 +721,144 @@ export default function RunnerPerformanceReport() {
                       <div className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h5 className="font-medium">Visitas Mensuales</h5>
-                          <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>
+                          {(() => {
+                            const goal = Math.max(60, Math.ceil(metrics.completedVisits * 1.1));
+                            const progress = (metrics.completedVisits / goal) * 100;
+                            const badgeClass =
+                              progress >= 100
+                                ? 'bg-green-100 text-green-800'
+                                : progress >= 80
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-yellow-100 text-yellow-800';
+                            const badgeText =
+                              progress >= 100
+                                ? 'Superado'
+                                : progress >= 80
+                                  ? 'En Progreso'
+                                  : 'Iniciando';
+                            return <Badge className={badgeClass}>{badgeText}</Badge>;
+                          })()}
                         </div>
-                        <p className="text-2xl font-bold text-blue-600 mb-2">62/60</p>
-                        <Progress value={103} className="h-2" />
-                        <p className="text-xs text-gray-600 mt-1">103% completado</p>
+                        <p className="text-2xl font-bold text-blue-600 mb-2">
+                          {metrics.completedVisits}/
+                          {Math.max(60, Math.ceil(metrics.completedVisits * 1.1))}
+                        </p>
+                        <Progress
+                          value={Math.min(
+                            100,
+                            (metrics.completedVisits /
+                              Math.max(60, Math.ceil(metrics.completedVisits * 1.1))) *
+                              100
+                          )}
+                          className="h-2"
+                        />
+                        <p className="text-xs text-gray-600 mt-1">
+                          {Math.min(
+                            100,
+                            Math.round(
+                              (metrics.completedVisits /
+                                Math.max(60, Math.ceil(metrics.completedVisits * 1.1))) *
+                                100
+                            )
+                          )}
+                          % completado
+                        </p>
                       </div>
 
                       <div className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h5 className="font-medium">Ganancias Mensuales</h5>
-                          <Badge className="bg-green-100 text-green-800">Superado</Badge>
+                          {(() => {
+                            const goal = Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1));
+                            const progress = (metrics.monthlyEarnings / goal) * 100;
+                            const badgeClass =
+                              progress >= 100
+                                ? 'bg-green-100 text-green-800'
+                                : progress >= 80
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-yellow-100 text-yellow-800';
+                            const badgeText =
+                              progress >= 100
+                                ? 'Superado'
+                                : progress >= 80
+                                  ? 'En Progreso'
+                                  : 'Iniciando';
+                            return <Badge className={badgeClass}>{badgeText}</Badge>;
+                          })()}
                         </div>
                         <p className="text-2xl font-bold text-green-600 mb-2">
                           {formatPrice(metrics.monthlyEarnings)}
                         </p>
                         <Progress
-                          value={(metrics.monthlyEarnings / 800000) * 100}
+                          value={Math.min(
+                            100,
+                            (metrics.monthlyEarnings /
+                              Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1))) *
+                              100
+                          )}
                           className="h-2"
                         />
-                        <p className="text-xs text-gray-600 mt-1">Meta: {formatPrice(800000)}</p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Meta:{' '}
+                          {formatPrice(Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1)))}
+                        </p>
                       </div>
 
                       <div className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h5 className="font-medium">Rating Promedio</h5>
-                          <Badge className="bg-yellow-100 text-yellow-800">Casi</Badge>
+                          {(() => {
+                            const goal = 4.5;
+                            const progress = (metrics.overallRating / 5) * 100;
+                            const badgeClass =
+                              metrics.overallRating >= goal
+                                ? 'bg-green-100 text-green-800'
+                                : metrics.overallRating >= 4.0
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : metrics.overallRating >= 3.5
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800';
+                            const badgeText =
+                              metrics.overallRating >= goal
+                                ? 'Superado'
+                                : metrics.overallRating >= 4.0
+                                  ? 'Casi'
+                                  : 'En Progreso';
+                            return <Badge className={badgeClass}>{badgeText}</Badge>;
+                          })()}
                         </div>
                         <p className="text-2xl font-bold text-yellow-600 mb-2">
-                          {metrics.overallRating}/5.0
+                          {metrics.overallRating.toFixed(1)}/5.0
                         </p>
                         <Progress value={(metrics.overallRating / 5) * 100} className="h-2" />
-                        <p className="text-xs text-gray-600 mt-1">Meta: 5.0</p>
+                        <p className="text-xs text-gray-600 mt-1">Meta: 4.5</p>
                       </div>
 
                       <div className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h5 className="font-medium">Tasa de Conversión</h5>
-                          <Badge className="bg-green-100 text-green-800">Superado</Badge>
+                          {(() => {
+                            const goal = 75;
+                            const progress = metrics.conversionRate;
+                            const badgeClass =
+                              progress >= goal
+                                ? 'bg-green-100 text-green-800'
+                                : progress >= 60
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-yellow-100 text-yellow-800';
+                            const badgeText =
+                              progress >= goal
+                                ? 'Superado'
+                                : progress >= 60
+                                  ? 'En Progreso'
+                                  : 'Iniciando';
+                            return <Badge className={badgeClass}>{badgeText}</Badge>;
+                          })()}
                         </div>
                         <p className="text-2xl font-bold text-green-600 mb-2">
                           {metrics.conversionRate.toFixed(1)}%
                         </p>
-                        <Progress value={metrics.conversionRate} className="h-2" />
+                        <Progress value={Math.min(100, metrics.conversionRate)} className="h-2" />
                         <p className="text-xs text-gray-600 mt-1">Meta: 75%</p>
                       </div>
                     </div>
