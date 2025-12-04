@@ -131,7 +131,13 @@ export default function SupportPropertiesPage() {
 
         const data = await response.json();
 
-        setProperties(data.properties || []);
+        // Ensure reportedIssues is always an array
+        const propertiesWithDefaults = (data.properties || []).map((property: any) => ({
+          ...property,
+          reportedIssues: property.reportedIssues || [],
+        }));
+
+        setProperties(propertiesWithDefaults);
         setStats(
           data.stats || {
             totalProperties: data.pagination?.total || 0,
@@ -235,7 +241,7 @@ export default function SupportPropertiesPage() {
       setProperties(prevProperties =>
         prevProperties.map(p =>
           p.id === property.id
-            ? { ...p, reportedIssues: p.reportedIssues.filter(i => i !== issue) }
+            ? { ...p, reportedIssues: (p.reportedIssues || []).filter(i => i !== issue) }
             : p
         )
       );
@@ -251,7 +257,7 @@ export default function SupportPropertiesPage() {
 
   const handleResolveAllIssues = async (property: PropertyReport) => {
     try {
-      if (property.reportedIssues.length === 0) {
+      if ((property.reportedIssues || []).length === 0) {
         return;
       }
 
@@ -260,7 +266,9 @@ export default function SupportPropertiesPage() {
 
       setProperties(prevProperties =>
         prevProperties.map(p =>
-          p.id === property.id ? { ...p, reportedIssues: [], status: 'active' as const } : p
+          p.id === property.id
+            ? { ...p, reportedIssues: [], status: 'active' as const }
+            : { ...p, reportedIssues: p.reportedIssues || [] }
         )
       );
 
@@ -300,7 +308,7 @@ export default function SupportPropertiesPage() {
             p.ownerEmail,
             p.status,
             p.priority,
-            p.reportedIssues.join('; '),
+            (p.reportedIssues || []).join('; '),
           ].join(',')
         ),
       ].join('\n');
@@ -625,13 +633,13 @@ export default function SupportPropertiesPage() {
                               </div>
                             )}
 
-                            {property.reportedIssues.length > 0 && (
+                            {(property.reportedIssues || []).length > 0 && (
                               <div className="col-span-full">
                                 <div className="flex items-center gap-2 text-sm text-red-600">
                                   <AlertCircle className="w-4 h-4" />
                                   <span className="font-medium">Problemas reportados:</span>
                                   <div className="flex flex-wrap gap-1">
-                                    {property.reportedIssues.map((issue, index) => (
+                                    {(property.reportedIssues || []).map((issue, index) => (
                                       <Badge
                                         key={index}
                                         variant="outline"
@@ -677,7 +685,7 @@ export default function SupportPropertiesPage() {
                             Crear Problema
                           </Button>
 
-                          {property.reportedIssues.length > 0 && (
+                          {(property.reportedIssues || []).length > 0 && (
                             <Button
                               size="sm"
                               variant="destructive"
@@ -773,11 +781,11 @@ export default function SupportPropertiesPage() {
 
                   <div>
                     <h4 className="font-medium text-gray-700 mb-2">Problemas Reportados</h4>
-                    {selectedProperty.reportedIssues.length === 0 ? (
+                    {(selectedProperty.reportedIssues || []).length === 0 ? (
                       <p className="text-sm text-gray-500">No hay problemas reportados</p>
                     ) : (
                       <div className="space-y-2">
-                        {selectedProperty.reportedIssues.map((issue, index) => (
+                        {(selectedProperty.reportedIssues || []).map((issue, index) => (
                           <div
                             key={index}
                             className="flex items-center justify-between p-2 bg-red-50 rounded"
@@ -818,7 +826,7 @@ export default function SupportPropertiesPage() {
                     <AlertCircle className="w-4 h-4 mr-2" />
                     Crear Problema
                   </Button>
-                  {selectedProperty.reportedIssues.length > 0 && (
+                  {(selectedProperty.reportedIssues || []).length > 0 && (
                     <Button
                       variant="destructive"
                       onClick={() => handleResolveAllIssues(selectedProperty)}
