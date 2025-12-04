@@ -91,7 +91,8 @@ export default function BrokerReportsPage() {
 
         if (response.ok) {
           const data = await response.json();
-          const reportsData = data.reports || data.data || [];
+          // La API devuelve { success: true, data: monthlyReports }
+          const reportsData = data.data || data.reports || [];
 
           // Transformar datos de la API al formato esperado
           const transformedReports: BrokerReport[] = reportsData.map((report: any) => ({
@@ -128,24 +129,38 @@ export default function BrokerReportsPage() {
 
   // Filter reports based on selected period
   const getFilteredReports = () => {
+    if (reports.length === 0) {
+      return [];
+    }
+
+    const currentYear = new Date().getFullYear();
+    const currentYearStr = currentYear.toString();
+    const previousYearStr = (currentYear - 1).toString();
+
     switch (selectedPeriod) {
       case 'month':
+        // Filtrar reportes mensuales (que no incluyan 'Q' y no sean solo el año)
         return reports.filter(
           report =>
-            report.period.includes('2024') &&
+            (report.period.includes(currentYearStr) || report.period.includes(previousYearStr)) &&
             !report.period.includes('Q') &&
-            report.period !== '2024'
+            report.period !== currentYearStr &&
+            report.period !== previousYearStr
         );
       case 'quarter':
         return reports.filter(report => report.period.includes('Q'));
       case 'year':
-        return reports.filter(report => report.period === '2024');
+        return reports.filter(
+          report => report.period === currentYearStr || report.period === previousYearStr
+        );
       default:
+        // Por defecto, mostrar todos los reportes mensuales
         return reports.filter(
           report =>
-            report.period.includes('2024') &&
+            (report.period.includes(currentYearStr) || report.period.includes(previousYearStr)) &&
             !report.period.includes('Q') &&
-            report.period !== '2024'
+            report.period !== currentYearStr &&
+            report.period !== previousYearStr
         );
     }
   };
@@ -309,7 +324,7 @@ export default function BrokerReportsPage() {
           </div>
         </div>
 
-        {!currentReport && reports.length === 0 && (
+        {!currentReport && reports.length === 0 && !loading && (
           <Card>
             <CardContent className="pt-8 pb-8 text-center">
               <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -318,6 +333,9 @@ export default function BrokerReportsPage() {
               </h3>
               <p className="text-gray-600 mb-4">
                 Los reportes se generarán automáticamente cuando tengas actividad registrada.
+              </p>
+              <p className="text-sm text-gray-500">
+                Necesitas tener contratos activos o gestionar propiedades para generar reportes.
               </p>
             </CardContent>
           </Card>

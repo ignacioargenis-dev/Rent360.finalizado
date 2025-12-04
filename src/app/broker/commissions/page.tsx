@@ -117,7 +117,8 @@ export default function BrokerCommissionsPage() {
 
         if (response.ok) {
           const data = await response.json();
-          const commissionsData = data.commissions || data.data || [];
+          // La API devuelve { success: true, data: { stats, commissions, overdueCommissions } }
+          const commissionsData = data.data?.commissions || data.commissions || data.data || [];
 
           // Transformar datos de la API al formato esperado
           const transformedCommissions: Commission[] = commissionsData.map((commission: any) => ({
