@@ -63,6 +63,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Verificar si el ticket existe y si el usuario tiene permisos
     const ticket = await db.ticket.findUnique({
       where: { id: ticketId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!ticket) {
@@ -106,6 +115,42 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         },
       },
     });
+
+    // Si el usuario que responde es SUPPORT o ADMIN, notificar al usuario que creó el ticket
+    if ((user.role === 'SUPPORT' || user.role === 'ADMIN') && ticket.userId !== user.id) {
+      try {
+        const { notificationService, NotificationType, NotificationPriority } = await import(
+          '@/lib/notifications'
+        );
+        await notificationService.createSmartNotification(
+          ticket.userId,
+          NotificationType.NEW_MESSAGE,
+          {
+            title: 'Nueva respuesta en tu ticket',
+            message: `${user.name} ha respondido a tu ticket "${ticket.title}".`,
+            ticketId: ticket.id,
+            ticketTitle: ticket.title,
+          },
+          {
+            priority: NotificationPriority.MEDIUM,
+            personalization: {
+              action: 'ticket_response',
+              ticketId: ticket.id,
+            },
+          }
+        );
+        logger.info('Notificación de respuesta de ticket enviada', {
+          ticketId: ticket.id,
+          userId: ticket.userId,
+          responderId: user.id,
+        });
+      } catch (notificationError) {
+        logger.warn('Error enviando notificación de respuesta de ticket', {
+          error: notificationError,
+          ticketId: ticket.id,
+        });
+      }
+    }
 
     return NextResponse.json(
       {

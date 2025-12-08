@@ -38,6 +38,7 @@ import {
   Check,
   X,
   Download,
+  User,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -536,6 +537,12 @@ export default function SupportTicketsPage() {
                       <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
 
                       <div className="flex items-center gap-4 text-sm text-gray-500">
+                        {ticket.user && (
+                          <span className="flex items-center gap-1">
+                            <User className="h-4 w-4" />
+                            Creado por: {ticket.user.name}
+                          </span>
+                        )}
                         <span>
                           Creado: {new Date(ticket.createdAt).toLocaleDateString('es-CL')}
                         </span>
