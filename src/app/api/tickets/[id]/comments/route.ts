@@ -109,6 +109,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     return NextResponse.json(
       {
+        success: true,
         message: 'Comentario agregado exitosamente',
         comment,
       },

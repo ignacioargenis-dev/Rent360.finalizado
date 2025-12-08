@@ -264,10 +264,23 @@ class AdvancedNotificationService {
         priority: NotificationPriority.MEDIUM,
         aiOptimized: true,
       },
+      {
+        id: 'system_alert',
+        type: NotificationType.SYSTEM_ALERT,
+        title: '{{title}}',
+        message: '{{message}}',
+        variables: ['title', 'message'],
+        channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP],
+        priority: NotificationPriority.MEDIUM,
+        aiOptimized: false,
+      },
     ];
 
     defaultTemplates.forEach(template => {
+      // Guardar por id para búsquedas por id
       this.templates.set(template.id, template);
+      // Guardar por type para búsquedas por type (usado en createSmartNotification)
+      this.templates.set(template.type, template);
     });
   }
 
