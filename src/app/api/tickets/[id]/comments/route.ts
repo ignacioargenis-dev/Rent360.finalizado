@@ -124,11 +124,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     ) {
       try {
         const { NotificationService } = await import('@/lib/notification-service');
-        const { NotificationType } = await import('@/lib/notifications');
 
         await NotificationService.create({
           userId: ticket.userId,
-          type: NotificationType.NEW_MESSAGE,
+          type: 'TICKET_RESPONSE', // Tipo específico para tickets que se mapea a la sección 'tickets' en el sidebar
           title: 'Nueva respuesta en tu ticket',
           message: `${user.name} ha respondido a tu ticket "${ticket.title}".`,
           link: `/tickets/${ticket.id}`,
