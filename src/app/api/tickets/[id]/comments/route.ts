@@ -123,26 +123,25 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       ticket.userId !== user.id
     ) {
       try {
-        const { notificationService, NotificationType, NotificationPriority } = await import(
-          '@/lib/notifications'
-        );
-        await notificationService.createSmartNotification(
-          ticket.userId,
-          NotificationType.NEW_MESSAGE,
-          {
-            title: 'Nueva respuesta en tu ticket',
-            message: `${user.name} ha respondido a tu ticket "${ticket.title}".`,
+        const { NotificationService } = await import('@/lib/notification-service');
+        const { NotificationType } = await import('@/lib/notifications');
+
+        await NotificationService.create({
+          userId: ticket.userId,
+          type: NotificationType.NEW_MESSAGE,
+          title: 'Nueva respuesta en tu ticket',
+          message: `${user.name} ha respondido a tu ticket "${ticket.title}".`,
+          link: `/tickets/${ticket.id}`,
+          metadata: {
             ticketId: ticket.id,
             ticketTitle: ticket.title,
+            action: 'ticket_response',
+            responderId: user.id,
+            responderName: user.name,
           },
-          {
-            priority: NotificationPriority.MEDIUM,
-            personalization: {
-              action: 'ticket_response',
-              ticketId: ticket.id,
-            },
-          }
-        );
+          priority: 'medium',
+        });
+
         logger.info('Notificación de respuesta de ticket enviada', {
           ticketId: ticket.id,
           userId: ticket.userId,
