@@ -117,7 +117,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
 
     // Si el usuario que responde es SUPPORT o ADMIN, notificar al usuario que creó el ticket
-    if ((user.role === 'SUPPORT' || user.role === 'ADMIN') && ticket.userId !== user.id) {
+    if (
+      (user.role === 'SUPPORT' || user.role === 'ADMIN') &&
+      ticket.userId &&
+      ticket.userId !== user.id
+    ) {
       try {
         const { notificationService, NotificationType, NotificationPriority } = await import(
           '@/lib/notifications'
