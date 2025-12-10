@@ -239,45 +239,6 @@ export default function TenantTicketsPage() {
     }
   };
 
-  const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
-    try {
-      const response = await fetch('/api/tickets', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ticketId,
-          status: newStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        loadTickets();
-        // Actualizar el ticket seleccionado si es el mismo
-        if (selectedTicket && selectedTicket.id === ticketId) {
-          setSelectedTicket(prev =>
-            prev ? { ...prev, status: newStatus.toUpperCase() as any } : null
-          );
-        }
-        logger.info(`Ticket ${newStatus} exitosamente`);
-      } else {
-        logger.error('Error actualizando ticket:', { error: data.error });
-      }
-    } catch (error) {
-      logger.error('Error actualizando ticket:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  };
-
   const handleExportTickets = () => {
     logger.info('Abriendo opciones de exportación de tickets de soporte');
     setShowExportDialog(true);

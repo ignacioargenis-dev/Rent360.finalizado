@@ -107,15 +107,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const { status, priority, assignedToId, category } = data;
 
+    // Normalizar el status a mayúsculas para consistencia con la base de datos
+    const normalizedStatus = status ? status.toUpperCase() : undefined;
+
     // Actualizar ticket
     const ticket = await db.ticket.update({
       where: { id: ticketId },
       data: {
-        ...(status && { status }),
-        ...(priority && { priority }),
+        ...(normalizedStatus && { status: normalizedStatus }),
+        ...(priority && { priority: priority.toUpperCase() }),
         ...(assignedToId && { assignedToId }),
         ...(category && { category }),
-        ...(status === 'resolved' && { resolvedAt: new Date() }),
+        ...(normalizedStatus === 'RESOLVED' && { resolvedAt: new Date() }),
       },
       include: {
         user: {

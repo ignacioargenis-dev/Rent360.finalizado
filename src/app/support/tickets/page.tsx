@@ -192,7 +192,10 @@ export default function SupportTicketsPage() {
 
   const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
     try {
-      const response = await fetch('/api/tickets', {
+      // Convertir el status a mayúsculas para que coincida con el formato de la base de datos
+      const statusUpper = newStatus.toUpperCase();
+
+      const response = await fetch(`/api/tickets/${ticketId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -200,23 +203,22 @@ export default function SupportTicketsPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          ticketId,
-          status: newStatus,
+          status: statusUpper,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Error ${response.status}: ${errorData.error || response.statusText}`);
       }
 
       const data = await response.json();
-      if (data.success) {
+      if (data.ticket || data.message) {
         loadTickets();
         // Actualizar el ticket seleccionado si es el mismo
         if (selectedTicket && selectedTicket.id === ticketId) {
-          setSelectedTicket(prev =>
-            prev ? { ...prev, status: newStatus.toUpperCase() as any } : null
-          );
+          const updatedTicket = data.ticket || { ...selectedTicket, status: statusUpper };
+          setSelectedTicket(updatedTicket);
         }
         logger.info(`Ticket ${newStatus} exitosamente`);
       } else {

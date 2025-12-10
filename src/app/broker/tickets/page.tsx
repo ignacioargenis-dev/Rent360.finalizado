@@ -254,45 +254,6 @@ export default function BrokerTicketsPage() {
     }
   };
 
-  const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
-    try {
-      const response = await fetch('/api/tickets', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ticketId,
-          status: newStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        loadTickets();
-        // Actualizar el ticket seleccionado si es el mismo
-        if (selectedTicket && selectedTicket.id === ticketId) {
-          setSelectedTicket(prev =>
-            prev ? { ...prev, status: newStatus.toUpperCase() as any } : null
-          );
-        }
-        logger.info(`Ticket ${newStatus} exitosamente`);
-      } else {
-        logger.error('Error actualizando ticket:', { error: data.error });
-      }
-    } catch (error) {
-      logger.error('Error actualizando ticket:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  };
-
   const handleExportTickets = () => {
     logger.info('Abriendo opciones de exportación de tickets de soporte');
     setShowExportDialog(true);
@@ -452,413 +413,422 @@ export default function BrokerTicketsPage() {
 
           {/* TAB: MIS TICKETS */}
           <TabsContent value="tickets">
-        <div className="flex justify-between items-center mb-8">
-          <div></div>
+            <div className="flex justify-between items-center mb-8">
+              <div></div>
 
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Nuevo Ticket
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Crear Nuevo Ticket</DialogTitle>
-                <DialogDescription>
-                  Describe tu problema o consulta y nuestro equipo de soporte te ayudará.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="subject">Asunto</Label>
-                  <Input
-                    id="subject"
-                    placeholder="Resumen breve del problema"
-                    value={newTicket.subject}
-                    onChange={e => setNewTicket(prev => ({ ...prev, subject: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="category">Categoría</Label>
-                  <Select
-                    value={newTicket.category}
-                    onValueChange={(value: any) =>
-                      setNewTicket(prev => ({ ...prev, category: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="technical">Técnico</SelectItem>
-                      <SelectItem value="billing">Facturación</SelectItem>
-                      <SelectItem value="bug_report">Reporte de Error</SelectItem>
-                      <SelectItem value="feature_request">Solicitud de Funcionalidad</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="priority">Prioridad</Label>
-                  <Select
-                    value={newTicket.priority}
-                    onValueChange={(value: any) =>
-                      setNewTicket(prev => ({ ...prev, priority: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Baja</SelectItem>
-                      <SelectItem value="medium">Media</SelectItem>
-                      <SelectItem value="high">Alta</SelectItem>
-                      <SelectItem value="urgent">Urgente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Descripción</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe detalladamente tu problema o consulta..."
-                    rows={6}
-                    value={newTicket.description}
-                    onChange={e => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                  {validationError && (
-                    <p className="text-sm text-red-600 mt-1">{validationError}</p>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancelar
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nuevo Ticket
                   </Button>
-                  <Button
-                    onClick={handleCreateTicket}
-                    disabled={!newTicket.subject.trim() || !newTicket.description.trim()}
-                  >
-                    Crear Ticket
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Crear Nuevo Ticket</DialogTitle>
+                    <DialogDescription>
+                      Describe tu problema o consulta y nuestro equipo de soporte te ayudará.
+                    </DialogDescription>
+                  </DialogHeader>
 
-        {/* Filtros */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="search">Buscar</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="search"
-                    placeholder="Buscar en tickets..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="status">Estado</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="open">Abierto</SelectItem>
-                    <SelectItem value="in_progress">En Progreso</SelectItem>
-                    <SelectItem value="resolved">Resuelto</SelectItem>
-                    <SelectItem value="closed">Cerrado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="priority">Prioridad</Label>
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="urgent">Urgente</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="medium">Media</SelectItem>
-                    <SelectItem value="low">Baja</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="category">Categoría</Label>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="technical">Técnico</SelectItem>
-                    <SelectItem value="billing">Facturación</SelectItem>
-                    <SelectItem value="bug_report">Reporte de Error</SelectItem>
-                    <SelectItem value="feature_request">Solicitud de Funcionalidad</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lista de tickets */}
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Cargando tickets...</p>
-          </div>
-        ) : filteredTickets.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tickets</h3>
-              <p className="text-gray-600 mb-4">
-                {searchTerm ||
-                statusFilter !== 'all' ||
-                priorityFilter !== 'all' ||
-                categoryFilter !== 'all'
-                  ? 'No se encontraron tickets que coincidan con los filtros aplicados.'
-                  : 'Aún no has creado ningún ticket de soporte.'}
-              </p>
-              {!searchTerm &&
-                statusFilter === 'all' &&
-                priorityFilter === 'all' &&
-                categoryFilter === 'all' && (
-                  <Button onClick={() => setShowCreateDialog(true)}>Crear tu primer ticket</Button>
-                )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {filteredTickets.map(ticket => (
-              <Card
-                key={ticket.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => {
-                  setSelectedTicket(ticket);
-                  setShowTicketDialog(true);
-                }}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        {getStatusIcon(ticket.status)}
-                        <h3 className="text-lg font-medium text-gray-900">{ticket.title}</h3>
-                        <Badge className={getStatusColor(ticket.status)}>
-                          {ticket.status === 'OPEN'
-                            ? 'Abierto'
-                            : ticket.status === 'IN_PROGRESS'
-                              ? 'En Progreso'
-                              : ticket.status === 'RESOLVED'
-                                ? 'Resuelto'
-                                : 'Cerrado'}
-                        </Badge>
-                        <Badge className={getPriorityColor(ticket.priority)}>
-                          {ticket.priority === 'URGENT'
-                            ? 'Urgente'
-                            : ticket.priority === 'HIGH'
-                              ? 'Alta'
-                              : ticket.priority === 'MEDIUM'
-                                ? 'Media'
-                                : 'Baja'}
-                        </Badge>
-                      </div>
-
-                      <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
-
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>
-                          Creado: {new Date(ticket.createdAt).toLocaleDateString('es-CL')}
-                        </span>
-                        <span>
-                          Actualizado: {new Date(ticket.updatedAt).toLocaleDateString('es-CL')}
-                        </span>
-                        <span>Respuestas: {ticket.comments.length}</span>
-                      </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="subject">Asunto</Label>
+                      <Input
+                        id="subject"
+                        placeholder="Resumen breve del problema"
+                        value={newTicket.subject}
+                        onChange={e => setNewTicket(prev => ({ ...prev, subject: e.target.value }))}
+                      />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
-                        Ver Detalles
+                    <div>
+                      <Label htmlFor="category">Categoría</Label>
+                      <Select
+                        value={newTicket.category}
+                        onValueChange={(value: any) =>
+                          setNewTicket(prev => ({ ...prev, category: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">General</SelectItem>
+                          <SelectItem value="technical">Técnico</SelectItem>
+                          <SelectItem value="billing">Facturación</SelectItem>
+                          <SelectItem value="bug_report">Reporte de Error</SelectItem>
+                          <SelectItem value="feature_request">
+                            Solicitud de Funcionalidad
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="priority">Prioridad</Label>
+                      <Select
+                        value={newTicket.priority}
+                        onValueChange={(value: any) =>
+                          setNewTicket(prev => ({ ...prev, priority: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Baja</SelectItem>
+                          <SelectItem value="medium">Media</SelectItem>
+                          <SelectItem value="high">Alta</SelectItem>
+                          <SelectItem value="urgent">Urgente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Descripción</Label>
+                      <Textarea
+                        id="description"
+                        placeholder="Describe detalladamente tu problema o consulta..."
+                        rows={6}
+                        value={newTicket.description}
+                        onChange={e =>
+                          setNewTicket(prev => ({ ...prev, description: e.target.value }))
+                        }
+                      />
+                      {validationError && (
+                        <p className="text-sm text-red-600 mt-1">{validationError}</p>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleCreateTicket}
+                        disabled={!newTicket.subject.trim() || !newTicket.description.trim()}
+                      >
+                        Crear Ticket
                       </Button>
                     </div>
                   </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Filtros */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Filtros
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="search">Buscar</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="search"
+                        placeholder="Buscar en tickets..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="status">Estado</Label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="open">Abierto</SelectItem>
+                        <SelectItem value="in_progress">En Progreso</SelectItem>
+                        <SelectItem value="resolved">Resuelto</SelectItem>
+                        <SelectItem value="closed">Cerrado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="priority">Prioridad</Label>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="urgent">Urgente</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="medium">Media</SelectItem>
+                        <SelectItem value="low">Baja</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Categoría</Label>
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="technical">Técnico</SelectItem>
+                        <SelectItem value="billing">Facturación</SelectItem>
+                        <SelectItem value="bug_report">Reporte de Error</SelectItem>
+                        <SelectItem value="feature_request">Solicitud de Funcionalidad</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de tickets */}
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Cargando tickets...</p>
+              </div>
+            ) : filteredTickets.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tickets</h3>
+                  <p className="text-gray-600 mb-4">
+                    {searchTerm ||
+                    statusFilter !== 'all' ||
+                    priorityFilter !== 'all' ||
+                    categoryFilter !== 'all'
+                      ? 'No se encontraron tickets que coincidan con los filtros aplicados.'
+                      : 'Aún no has creado ningún ticket de soporte.'}
+                  </p>
+                  {!searchTerm &&
+                    statusFilter === 'all' &&
+                    priorityFilter === 'all' &&
+                    categoryFilter === 'all' && (
+                      <Button onClick={() => setShowCreateDialog(true)}>
+                        Crear tu primer ticket
+                      </Button>
+                    )}
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="space-y-4">
+                {filteredTickets.map(ticket => (
+                  <Card
+                    key={ticket.id}
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => {
+                      setSelectedTicket(ticket);
+                      setShowTicketDialog(true);
+                    }}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            {getStatusIcon(ticket.status)}
+                            <h3 className="text-lg font-medium text-gray-900">{ticket.title}</h3>
+                            <Badge className={getStatusColor(ticket.status)}>
+                              {ticket.status === 'OPEN'
+                                ? 'Abierto'
+                                : ticket.status === 'IN_PROGRESS'
+                                  ? 'En Progreso'
+                                  : ticket.status === 'RESOLVED'
+                                    ? 'Resuelto'
+                                    : 'Cerrado'}
+                            </Badge>
+                            <Badge className={getPriorityColor(ticket.priority)}>
+                              {ticket.priority === 'URGENT'
+                                ? 'Urgente'
+                                : ticket.priority === 'HIGH'
+                                  ? 'Alta'
+                                  : ticket.priority === 'MEDIUM'
+                                    ? 'Media'
+                                    : 'Baja'}
+                            </Badge>
+                          </div>
 
-        {/* Dialog para ver ticket */}
-        <Dialog open={showTicketDialog} onOpenChange={setShowTicketDialog}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            {selectedTicket && (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-3">
-                    {getStatusIcon(selectedTicket.status)}
-                    {selectedTicket.title}
-                  </DialogTitle>
-                  <DialogDescription>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge className={getStatusColor(selectedTicket.status)}>
-                        {selectedTicket.status === 'OPEN'
-                          ? 'Abierto'
-                          : selectedTicket.status === 'IN_PROGRESS'
-                            ? 'En Progreso'
-                            : selectedTicket.status === 'RESOLVED'
-                              ? 'Resuelto'
-                              : 'Cerrado'}
-                      </Badge>
-                      <Badge className={getPriorityColor(selectedTicket.priority)}>
-                        {selectedTicket.priority === 'URGENT'
-                          ? 'Urgente'
-                          : selectedTicket.priority === 'HIGH'
-                            ? 'Alta'
-                            : selectedTicket.priority === 'MEDIUM'
-                              ? 'Media'
-                              : 'Baja'}
-                      </Badge>
-                    </div>
-                  </DialogDescription>
-                </DialogHeader>
+                          <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
 
-                <div className="space-y-6">
-                  {/* Descripción del ticket */}
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Descripción</h4>
-                    <p className="text-gray-600 whitespace-pre-wrap">
-                      {selectedTicket.description}
-                    </p>
-                  </div>
-
-                  {/* Respuestas */}
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-4">Conversación</h4>
-                    <div className="space-y-4">
-                      {selectedTicket.comments.map(response => (
-                        <div key={response.id} className="border-l-4 border-blue-200 pl-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-gray-900">{response.user.name}</span>
-                            <span className="text-sm text-gray-500">
-                              {new Date(response.createdAt).toLocaleString('es-CL')}
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>
+                              Creado: {new Date(ticket.createdAt).toLocaleDateString('es-CL')}
                             </span>
-                            {response.isInternal && (
-                              <Badge variant="secondary" className="text-xs">
-                                Interno
-                              </Badge>
-                            )}
+                            <span>
+                              Actualizado: {new Date(ticket.updatedAt).toLocaleDateString('es-CL')}
+                            </span>
+                            <span>Respuestas: {ticket.comments.length}</span>
                           </div>
-                          <p className="text-gray-600 whitespace-pre-wrap">{response.content}</p>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Formulario para responder */}
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Responder</h4>
-                    <div className="space-y-3">
-                      <Textarea
-                        placeholder="Escribe tu respuesta..."
-                        rows={4}
-                        value={newResponse}
-                        onChange={e => setNewResponse(e.target.value)}
-                      />
-                      <div className="flex justify-between">
-                        {/* Botones de acción para soporte/admin */}
-                        {['ADMIN', 'SUPPORT'].includes(user?.role || '') && (
-                          <div className="flex gap-2">
-                            {selectedTicket.status !== 'IN_PROGRESS' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleUpdateTicketStatus(selectedTicket.id, 'in_progress')
-                                }
-                                className="flex items-center gap-2"
-                              >
-                                <Clock className="h-4 w-4" />
-                                En Progreso
-                              </Button>
-                            )}
-                            {selectedTicket.status !== 'RESOLVED' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleUpdateTicketStatus(selectedTicket.id, 'resolved')
-                                }
-                                className="flex items-center gap-2 text-green-600 hover:text-green-700"
-                              >
-                                <Check className="h-4 w-4" />
-                                Marcar Resuelto
-                              </Button>
-                            )}
-                            {selectedTicket.status !== 'CLOSED' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleUpdateTicketStatus(selectedTicket.id, 'closed')
-                                }
-                                className="flex items-center gap-2 text-gray-600 hover:text-gray-700"
-                              >
-                                <X className="h-4 w-4" />
-                                Cerrar
-                              </Button>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button variant="outline" onClick={() => setShowTicketDialog(false)}>
-                            Cerrar
-                          </Button>
-                          <Button
-                            onClick={handleSubmitResponse}
-                            disabled={!newResponse.trim() || submittingResponse}
-                          >
-                            {submittingResponse ? 'Enviando...' : 'Enviar Respuesta'}
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm">
+                            Ver Detalles
                           </Button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
-          </DialogContent>
-        </Dialog>
 
+            {/* Dialog para ver ticket */}
+            <Dialog open={showTicketDialog} onOpenChange={setShowTicketDialog}>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                {selectedTicket && (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-3">
+                        {getStatusIcon(selectedTicket.status)}
+                        {selectedTicket.title}
+                      </DialogTitle>
+                      <DialogDescription>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge className={getStatusColor(selectedTicket.status)}>
+                            {selectedTicket.status === 'OPEN'
+                              ? 'Abierto'
+                              : selectedTicket.status === 'IN_PROGRESS'
+                                ? 'En Progreso'
+                                : selectedTicket.status === 'RESOLVED'
+                                  ? 'Resuelto'
+                                  : 'Cerrado'}
+                          </Badge>
+                          <Badge className={getPriorityColor(selectedTicket.priority)}>
+                            {selectedTicket.priority === 'URGENT'
+                              ? 'Urgente'
+                              : selectedTicket.priority === 'HIGH'
+                                ? 'Alta'
+                                : selectedTicket.priority === 'MEDIUM'
+                                  ? 'Media'
+                                  : 'Baja'}
+                          </Badge>
+                        </div>
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                      {/* Descripción del ticket */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">Descripción</h4>
+                        <p className="text-gray-600 whitespace-pre-wrap">
+                          {selectedTicket.description}
+                        </p>
+                      </div>
+
+                      {/* Respuestas */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-4">Conversación</h4>
+                        <div className="space-y-4">
+                          {selectedTicket.comments.map(response => (
+                            <div key={response.id} className="border-l-4 border-blue-200 pl-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-medium text-gray-900">
+                                  {response.user.name}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  {new Date(response.createdAt).toLocaleString('es-CL')}
+                                </span>
+                                {response.isInternal && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Interno
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-gray-600 whitespace-pre-wrap">
+                                {response.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Formulario para responder */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">Responder</h4>
+                        <div className="space-y-3">
+                          <Textarea
+                            placeholder="Escribe tu respuesta..."
+                            rows={4}
+                            value={newResponse}
+                            onChange={e => setNewResponse(e.target.value)}
+                          />
+                          <div className="flex justify-between">
+                            {/* Botones de acción para soporte/admin */}
+                            {['ADMIN', 'SUPPORT'].includes(user?.role || '') && (
+                              <div className="flex gap-2">
+                                {selectedTicket.status !== 'IN_PROGRESS' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleUpdateTicketStatus(selectedTicket.id, 'in_progress')
+                                    }
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Clock className="h-4 w-4" />
+                                    En Progreso
+                                  </Button>
+                                )}
+                                {selectedTicket.status !== 'RESOLVED' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleUpdateTicketStatus(selectedTicket.id, 'resolved')
+                                    }
+                                    className="flex items-center gap-2 text-green-600 hover:text-green-700"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                    Marcar Resuelto
+                                  </Button>
+                                )}
+                                {selectedTicket.status !== 'CLOSED' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleUpdateTicketStatus(selectedTicket.id, 'closed')
+                                    }
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-700"
+                                  >
+                                    <X className="h-4 w-4" />
+                                    Cerrar
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="flex gap-2">
+                              <Button variant="outline" onClick={() => setShowTicketDialog(false)}>
+                                Cerrar
+                              </Button>
+                              <Button
+                                onClick={handleSubmitResponse}
+                                disabled={!newResponse.trim() || submittingResponse}
+                              >
+                                {submittingResponse ? 'Enviando...' : 'Enviar Respuesta'}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* TAB: PREGUNTAS FRECUENTES */}
@@ -890,27 +860,44 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="border-l-4 border-blue-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo creo un nuevo prospect?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo creo un nuevo prospect?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Ve a <strong>Clientes → Potenciales</strong> y haz click en "Nuevo Prospect". Completa la información básica: nombre, email, teléfono y tipo (propietario o inquilino). El sistema automáticamente asignará un lead score basado en la información proporcionada.
+                        Ve a <strong>Clientes → Potenciales</strong> y haz click en &quot;Nuevo
+                        Prospect&quot;. Completa la información básica: nombre, email, teléfono y
+                        tipo (propietario o inquilino). El sistema automáticamente asignará un lead
+                        score basado en la información proporcionada.
                       </p>
                     </div>
                     <div className="border-l-4 border-blue-200 pl-4 py-2">
                       <h4 className="font-medium text-gray-900 mb-2">¿Qué es el Lead Score?</h4>
                       <p className="text-gray-600 text-sm">
-                        El Lead Score es una puntuación automática de 0-100 que indica la probabilidad de que un prospect se convierta en cliente. Se basa en: información de contacto completa, interacciones registradas, propiedades compartidas, tiempo de respuesta y estado del prospect.
+                        El Lead Score es una puntuación automática de 0-100 que indica la
+                        probabilidad de que un prospect se convierta en cliente. Se basa en:
+                        información de contacto completa, interacciones registradas, propiedades
+                        compartidas, tiempo de respuesta y estado del prospect.
                       </p>
                     </div>
                     <div className="border-l-4 border-blue-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo comparto propiedades con tracking?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo comparto propiedades con tracking?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Dentro del detalle del prospect, ve a la sección "Compartir Propiedades". Selecciona la propiedad, escribe un mensaje personalizado y envía. Recibirás notificaciones cuando el prospect abra el link y podrás ver cuánto tiempo pasó viendo la propiedad.
+                        Dentro del detalle del prospect, ve a la sección &quot;Compartir
+                        Propiedades&quot;. Selecciona la propiedad, escribe un mensaje personalizado
+                        y envía. Recibirás notificaciones cuando el prospect abra el link y podrás
+                        ver cuánto tiempo pasó viendo la propiedad.
                       </p>
                     </div>
                     <div className="border-l-4 border-blue-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cuándo debo convertir un prospect a cliente?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cuándo debo convertir un prospect a cliente?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Convierte un prospect a cliente cuando: ha firmado un contrato de exclusividad, está listo para cerrar un negocio, o ha demostrado interés serio (lead score {'>'} 70, múltiples interacciones, visitas realizadas).
+                        Convierte un prospect a cliente cuando: ha firmado un contrato de
+                        exclusividad, está listo para cerrar un negocio, o ha demostrado interés
+                        serio (lead score {'>'} 70, múltiples interacciones, visitas realizadas).
                       </p>
                     </div>
                   </CardContent>
@@ -925,21 +912,35 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="border-l-4 border-green-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo se calculan mis comisiones?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo se calculan mis comisiones?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Las comisiones se calculan automáticamente al cerrar un contrato. Para arriendos: 50% de la renta mensual (1 año) o 100% (2+ años). Para ventas: 2-3% del valor de venta. Puedes negociar tasas personalizadas con cada cliente.
+                        Las comisiones se calculan automáticamente al cerrar un contrato. Para
+                        arriendos: 50% de la renta mensual (1 año) o 100% (2+ años). Para ventas:
+                        2-3% del valor de venta. Puedes negociar tasas personalizadas con cada
+                        cliente.
                       </p>
                     </div>
                     <div className="border-l-4 border-green-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cuándo recibo el pago de mis comisiones?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cuándo recibo el pago de mis comisiones?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Las comisiones se pagan según el acuerdo con cada cliente. Típicamente: al firmar el contrato (arriendos) o al cerrar la venta (propiedades). Puedes ver el estado de tus comisiones en <strong>Comisiones → Estado de Pagos</strong>.
+                        Las comisiones se pagan según el acuerdo con cada cliente. Típicamente: al
+                        firmar el contrato (arriendos) o al cerrar la venta (propiedades). Puedes
+                        ver el estado de tus comisiones en{' '}
+                        <strong>Comisiones → Estado de Pagos</strong>.
                       </p>
                     </div>
                     <div className="border-l-4 border-green-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Puedo exportar mis comisiones para contabilidad?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Puedo exportar mis comisiones para contabilidad?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Sí, ve a <strong>Comisiones</strong> y usa el botón "Exportar". Puedes descargar en formato Excel, PDF o CSV, con filtros por fecha, estado y tipo de negocio.
+                        Sí, ve a <strong>Comisiones</strong> y usa el botón &quot;Exportar&quot;.
+                        Puedes descargar en formato Excel, PDF o CSV, con filtros por fecha, estado
+                        y tipo de negocio.
                       </p>
                     </div>
                   </CardContent>
@@ -954,21 +955,34 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="border-l-4 border-purple-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo agrego una nueva propiedad?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo agrego una nueva propiedad?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Ve a <strong>Propiedades → Nueva Propiedad</strong>. Completa el formulario con: información básica, características, amenidades, imágenes (hasta 20 fotos), ubicación y documentos. La propiedad quedará visible inmediatamente en el catálogo.
+                        Ve a <strong>Propiedades → Nueva Propiedad</strong>. Completa el formulario
+                        con: información básica, características, amenidades, imágenes (hasta 20
+                        fotos), ubicación y documentos. La propiedad quedará visible inmediatamente
+                        en el catálogo.
                       </p>
                     </div>
                     <div className="border-l-4 border-purple-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Puedo crear tours virtuales de las propiedades?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Puedo crear tours virtuales de las propiedades?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Sí, dentro del detalle de cada propiedad, encontrarás una opción para "Tours Virtuales". Puedes configurar recorridos 360°, agregar puntos de interés y compartir el tour con clientes potenciales.
+                        Sí, dentro del detalle de cada propiedad, encontrarás una opción para
+                        &quot;Tours Virtuales&quot;. Puedes configurar recorridos 360°, agregar
+                        puntos de interés y compartir el tour con clientes potenciales.
                       </p>
                     </div>
                     <div className="border-l-4 border-purple-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo gestiono las visitas a propiedades?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo gestiono las visitas a propiedades?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Ve a <strong>Solicitudes de Visita</strong> o <strong>Citas</strong>. Puedes ver visitas pendientes, confirmarlas, reagendarlas y registrar feedback post-visita. El sistema envía recordatorios automáticos a todas las partes.
+                        Ve a <strong>Solicitudes de Visita</strong> o <strong>Citas</strong>. Puedes
+                        ver visitas pendientes, confirmarlas, reagendarlas y registrar feedback
+                        post-visita. El sistema envía recordatorios automáticos a todas las partes.
                       </p>
                     </div>
                   </CardContent>
@@ -983,15 +997,24 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="border-l-4 border-orange-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Qué métricas puedo ver en Analytics?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Qué métricas puedo ver en Analytics?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        En <strong>Analytics</strong> puedes ver: visualizaciones de propiedades, consultas generadas, visitas realizadas, contratos cerrados, tasa de conversión, tiempo promedio de cierre, ingresos mensuales, comisión promedio y proyecciones.
+                        En <strong>Analytics</strong> puedes ver: visualizaciones de propiedades,
+                        consultas generadas, visitas realizadas, contratos cerrados, tasa de
+                        conversión, tiempo promedio de cierre, ingresos mensuales, comisión promedio
+                        y proyecciones.
                       </p>
                     </div>
                     <div className="border-l-4 border-orange-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo genero reportes personalizados?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo genero reportes personalizados?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Ve a <strong>Reportes</strong>, selecciona el tipo de reporte (actividades, comisiones, propiedades, clientes), aplica filtros de fecha y categoría, y descarga en el formato que necesites (PDF, Excel, PowerPoint).
+                        Ve a <strong>Reportes</strong>, selecciona el tipo de reporte (actividades,
+                        comisiones, propiedades, clientes), aplica filtros de fecha y categoría, y
+                        descarga en el formato que necesites (PDF, Excel, PowerPoint).
                       </p>
                     </div>
                   </CardContent>
@@ -1006,21 +1029,33 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="border-l-4 border-indigo-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo actualizo mi perfil de corredor?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo actualizo mi perfil de corredor?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Ve a <strong>Configuración → Perfil</strong>. Puedes actualizar: foto de perfil, información de contacto, especialidades, zonas de cobertura, certificaciones y configuración de notificaciones.
+                        Ve a <strong>Configuración → Perfil</strong>. Puedes actualizar: foto de
+                        perfil, información de contacto, especialidades, zonas de cobertura,
+                        certificaciones y configuración de notificaciones.
                       </p>
                     </div>
                     <div className="border-l-4 border-indigo-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Puedo usar Rent360 desde mi celular?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Puedo usar Rent360 desde mi celular?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Sí, Rent360 es completamente responsive y funciona perfectamente en celular y tablet. Puedes gestionar prospects, responder mensajes, confirmar visitas y ver analytics desde cualquier dispositivo.
+                        Sí, Rent360 es completamente responsive y funciona perfectamente en celular
+                        y tablet. Puedes gestionar prospects, responder mensajes, confirmar visitas
+                        y ver analytics desde cualquier dispositivo.
                       </p>
                     </div>
                     <div className="border-l-4 border-indigo-200 pl-4 py-2">
-                      <h4 className="font-medium text-gray-900 mb-2">¿Cómo contacto a soporte si tengo un problema técnico?</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        ¿Cómo contacto a soporte si tengo un problema técnico?
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Crea un ticket en la pestaña "Mis Tickets" de esta misma página. Selecciona la categoría "Técnico", describe el problema con detalles y recibirás respuesta en menos de 2 horas (horario hábil).
+                        Crea un ticket en la pestaña &quot;Mis Tickets&quot; de esta misma página.
+                        Selecciona la categoría &quot;Técnico&quot;, describe el problema con
+                        detalles y recibirás respuesta en menos de 2 horas (horario hábil).
                       </p>
                     </div>
                   </CardContent>
@@ -1124,9 +1159,7 @@ export default function BrokerTicketsPage() {
                       <DollarSign className="h-5 w-5 text-green-600" />
                       Guía: Gestionar Comisiones
                     </CardTitle>
-                    <CardDescription>
-                      Seguimiento y exportación de tus ganancias
-                    </CardDescription>
+                    <CardDescription>Seguimiento y exportación de tus ganancias</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-start gap-3">
@@ -1251,9 +1284,7 @@ export default function BrokerTicketsPage() {
                       <BarChart3 className="h-5 w-5 text-orange-600" />
                       Guía: Usar Analytics Efectivamente
                     </CardTitle>
-                    <CardDescription>
-                      Toma decisiones basadas en datos reales
-                    </CardDescription>
+                    <CardDescription>Toma decisiones basadas en datos reales</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-start gap-3">
@@ -1309,9 +1340,7 @@ export default function BrokerTicketsPage() {
                       <Calendar className="h-5 w-5 text-indigo-600" />
                       Guía: Gestionar Visitas
                     </CardTitle>
-                    <CardDescription>
-                      Organiza y ejecuta visitas exitosas
-                    </CardDescription>
+                    <CardDescription>Organiza y ejecuta visitas exitosas</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-start gap-3">
@@ -1367,9 +1396,7 @@ export default function BrokerTicketsPage() {
                       <Lightbulb className="h-5 w-5 text-yellow-600" />
                       Tips Pro para Corredores
                     </CardTitle>
-                    <CardDescription>
-                      Mejores prácticas que aumentan conversiones
-                    </CardDescription>
+                    <CardDescription>Mejores prácticas que aumentan conversiones</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-start gap-3">
@@ -1435,7 +1462,8 @@ export default function BrokerTicketsPage() {
                         Biblioteca de Videos Tutoriales
                       </h3>
                       <p className="text-gray-700 mb-4">
-                        Aprende a usar Rent360 con nuestros videos paso a paso. Cada tutorial está diseñado para que puedas dominar la plataforma rápidamente.
+                        Aprende a usar Rent360 con nuestros videos paso a paso. Cada tutorial está
+                        diseñado para que puedas dominar la plataforma rápidamente.
                       </p>
                     </div>
                   </div>
@@ -1453,7 +1481,8 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-600 mb-4">
-                      Recorre todas las funcionalidades principales de Rent360: dashboard, navegación, gestión de prospects, propiedades, comisiones y más.
+                      Recorre todas las funcionalidades principales de Rent360: dashboard,
+                      navegación, gestión de prospects, propiedades, comisiones y más.
                     </p>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1479,12 +1508,15 @@ export default function BrokerTicketsPage() {
                     <div className="aspect-video bg-gradient-to-br from-green-500 to-green-700 rounded-lg flex items-center justify-center mb-4">
                       <Target className="h-16 w-16 text-white" />
                     </div>
-                    <CardTitle className="text-lg">Sistema de Prospects - Captación y Conversión</CardTitle>
+                    <CardTitle className="text-lg">
+                      Sistema de Prospects - Captación y Conversión
+                    </CardTitle>
                     <CardDescription>7 minutos • Nivel: Intermedio</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-600 mb-4">
-                      Domina el CRM de Rent360: crear prospects, lead scoring, compartir propiedades con tracking y convertir a clientes activos.
+                      Domina el CRM de Rent360: crear prospects, lead scoring, compartir propiedades
+                      con tracking y convertir a clientes activos.
                     </p>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1515,7 +1547,8 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-600 mb-4">
-                      Aprende cómo funciona el cálculo automático de comisiones, proyecciones de ingresos y exportación de reportes financieros.
+                      Aprende cómo funciona el cálculo automático de comisiones, proyecciones de
+                      ingresos y exportación de reportes financieros.
                     </p>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1546,7 +1579,8 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-600 mb-4">
-                      Usa analytics para tomar decisiones basadas en datos: métricas clave, gráficos interactivos, análisis de conversión y benchmarking.
+                      Usa analytics para tomar decisiones basadas en datos: métricas clave, gráficos
+                      interactivos, análisis de conversión y benchmarking.
                     </p>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1572,12 +1606,15 @@ export default function BrokerTicketsPage() {
                     <div className="aspect-video bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg flex items-center justify-center mb-4">
                       <TrendingUp className="h-16 w-16 text-white" />
                     </div>
-                    <CardTitle className="text-lg">Tips y Trucos para Corredores Expertos</CardTitle>
+                    <CardTitle className="text-lg">
+                      Tips y Trucos para Corredores Expertos
+                    </CardTitle>
                     <CardDescription>12 minutos • Nivel: Avanzado</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-600 mb-4">
-                      Descubre las mejores prácticas y atajos que usan los corredores más exitosos para maximizar conversiones y eficiencia.
+                      Descubre las mejores prácticas y atajos que usan los corredores más exitosos
+                      para maximizar conversiones y eficiencia.
                     </p>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1608,7 +1645,8 @@ export default function BrokerTicketsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-600 mb-4">
-                      Accede a la documentación técnica completa de Rent360 con explicaciones detalladas, ejemplos de uso y referencias de API.
+                      Accede a la documentación técnica completa de Rent360 con explicaciones
+                      detalladas, ejemplos de uso y referencias de API.
                     </p>
                     <div className="space-y-2 mb-4">
                       <Button variant="ghost" className="w-full justify-start text-sm">
