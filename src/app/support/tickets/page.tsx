@@ -217,7 +217,16 @@ export default function SupportTicketsPage() {
         loadTickets();
         // Actualizar el ticket seleccionado si es el mismo
         if (selectedTicket && selectedTicket.id === ticketId) {
-          const updatedTicket = data.ticket || { ...selectedTicket, status: statusUpper };
+          const updatedTicket = data.ticket
+            ? {
+                ...data.ticket,
+                comments: data.ticket.comments || selectedTicket.comments || [],
+              }
+            : {
+                ...selectedTicket,
+                status: statusUpper,
+                comments: selectedTicket.comments || [],
+              };
           setSelectedTicket(updatedTicket);
         }
         logger.info(`Ticket ${newStatus} exitosamente`);
@@ -614,7 +623,7 @@ export default function SupportTicketsPage() {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-4">Conversación</h4>
                     <div className="space-y-4">
-                      {selectedTicket.comments.map(response => (
+                      {(selectedTicket.comments || []).map(response => (
                         <div key={response.id} className="border-l-4 border-blue-200 pl-4">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="font-medium text-gray-900">{response.user.name}</span>

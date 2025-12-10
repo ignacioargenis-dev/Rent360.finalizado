@@ -137,6 +137,21 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             avatar: true,
           },
         },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
         // property: {
         //   select: {
         //     id: true,
