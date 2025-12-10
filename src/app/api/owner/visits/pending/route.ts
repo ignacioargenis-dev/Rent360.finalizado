@@ -24,11 +24,9 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenantId');
 
     // Construir filtros
-    // Buscar visitas pendientes donde el runnerId temporal es el propietario/corredor
-    // (esto indica que aún no se ha asignado un runner real)
+    // Buscar visitas pendientes para las propiedades del propietario/corredor
     const whereClause: any = {
       status: 'PENDING', // Solo visitas pendientes
-      runnerId: user.id, // El runnerId temporal es el propietario/corredor
     };
 
     if (propertyId) {
@@ -61,27 +59,31 @@ export async function GET(request: NextRequest) {
 
       const managedPropertyIds = managedProperties.map(mp => mp.propertyId);
 
-      // Buscar visitas en propiedades donde:
-      // 1. brokerId directo es el usuario, O
-      // 2. propertyId está en las propiedades gestionadas
-      whereClause.OR = [
+      // Construir condiciones OR para propiedades
+      const propertyConditions: any[] = [
         {
           property: {
             brokerId: user.id,
           },
         },
-        ...(managedPropertyIds.length > 0
-          ? [
-              {
-                propertyId: {
-                  in: managedPropertyIds,
-                },
-              },
-            ]
-          : []),
       ];
-      // Remover la condición property del whereClause principal ya que usamos OR
-      delete whereClause.property;
+
+      // Agregar propiedades gestionadas solo si hay alguna
+      if (managedPropertyIds.length > 0) {
+        propertyConditions.push({
+          propertyId: {
+            in: managedPropertyIds,
+          },
+        });
+      }
+
+      // Usar OR solo si hay más de una condición
+      if (propertyConditions.length > 1) {
+        whereClause.OR = propertyConditions;
+      } else {
+        // Si solo hay una condición, usar directamente
+        whereClause.property = propertyConditions[0].property;
+      }
     }
 
     // Obtener visitas pendientes con información completa
@@ -131,7 +133,7 @@ export async function GET(request: NextRequest) {
         property: visit.property,
         tenantId: visit.tenantId,
         tenant: visit.tenant,
-        scheduledAt: visit.scheduledAt.toISOString(),
+        scheduledAt: visit.scheduledAt?.toISOString() || null,
         duration: visit.duration,
         status: visit.status,
         notes: visit.notes,

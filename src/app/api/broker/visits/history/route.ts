@@ -36,20 +36,19 @@ export async function GET(request: NextRequest) {
     const managedPropertyIds = managedProperties.map(mp => mp.propertyId);
 
     // Construir filtro de propiedad
-    const propertyFilter: any = {
-      OR: [
-        { brokerId: user.id },
-        ...(managedPropertyIds.length > 0
-          ? [
-              {
-                id: {
-                  in: managedPropertyIds,
-                },
-              },
-            ]
-          : []),
-      ],
-    };
+    const propertyConditions: any[] = [{ brokerId: user.id }];
+
+    // Agregar propiedades gestionadas solo si hay alguna
+    if (managedPropertyIds.length > 0) {
+      propertyConditions.push({
+        id: {
+          in: managedPropertyIds,
+        },
+      });
+    }
+
+    const propertyFilter: any =
+      propertyConditions.length > 1 ? { OR: propertyConditions } : propertyConditions[0];
 
     if (propertyId) {
       propertyFilter.id = propertyId;
@@ -108,7 +107,7 @@ export async function GET(request: NextRequest) {
         property: visit.property,
         tenant: visit.tenant,
         runner: visit.runner,
-        scheduledAt: visit.scheduledAt.toISOString(),
+        scheduledAt: visit.scheduledAt?.toISOString() || null,
         duration: visit.duration,
         status: visit.status,
         notes: visit.notes,

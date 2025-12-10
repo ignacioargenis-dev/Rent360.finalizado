@@ -16,17 +16,29 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     const userId = user.id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Usuario no autenticado' },
+        { status: 401 }
+      );
+    }
+
     const notifications = await NotificationService.getUnread(userId);
+
+    // Asegurar que notifications es un array
+    const notificationsArray = Array.isArray(notifications) ? notifications : [];
 
     return NextResponse.json({
       success: true,
-      data: notifications,
-      count: notifications.length,
+      data: notificationsArray,
+      count: notificationsArray.length,
     });
   } catch (error: any) {
     logger.error('Error fetching notifications', {
-      error: error.message,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      userId: (error as any)?.userId,
     });
 
     return NextResponse.json(
