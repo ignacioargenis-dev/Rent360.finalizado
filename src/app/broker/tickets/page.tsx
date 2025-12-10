@@ -764,63 +764,16 @@ export default function BrokerTicketsPage() {
                             value={newResponse}
                             onChange={e => setNewResponse(e.target.value)}
                           />
-                          <div className="flex justify-between">
-                            {/* Botones de acción para soporte/admin */}
-                            {['ADMIN', 'SUPPORT'].includes(user?.role || '') && (
-                              <div className="flex gap-2">
-                                {selectedTicket.status !== 'IN_PROGRESS' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleUpdateTicketStatus(selectedTicket.id, 'in_progress')
-                                    }
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Clock className="h-4 w-4" />
-                                    En Progreso
-                                  </Button>
-                                )}
-                                {selectedTicket.status !== 'RESOLVED' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleUpdateTicketStatus(selectedTicket.id, 'resolved')
-                                    }
-                                    className="flex items-center gap-2 text-green-600 hover:text-green-700"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                    Marcar Resuelto
-                                  </Button>
-                                )}
-                                {selectedTicket.status !== 'CLOSED' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleUpdateTicketStatus(selectedTicket.id, 'closed')
-                                    }
-                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-700"
-                                  >
-                                    <X className="h-4 w-4" />
-                                    Cerrar
-                                  </Button>
-                                )}
-                              </div>
-                            )}
-
-                            <div className="flex gap-2">
-                              <Button variant="outline" onClick={() => setShowTicketDialog(false)}>
-                                Cerrar
-                              </Button>
-                              <Button
-                                onClick={handleSubmitResponse}
-                                disabled={!newResponse.trim() || submittingResponse}
-                              >
-                                {submittingResponse ? 'Enviando...' : 'Enviar Respuesta'}
-                              </Button>
-                            </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setShowTicketDialog(false)}>
+                              Cerrar
+                            </Button>
+                            <Button
+                              onClick={handleSubmitResponse}
+                              disabled={!newResponse.trim() || submittingResponse}
+                            >
+                              {submittingResponse ? 'Enviando...' : 'Enviar Respuesta'}
+                            </Button>
                           </div>
                         </div>
                       </div>
