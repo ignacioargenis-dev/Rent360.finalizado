@@ -11,6 +11,24 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import {
   BarChart3,
   Star,
   TrendingUp,
@@ -22,7 +40,6 @@ import {
   Users,
   CheckCircle,
   AlertTriangle,
-  Download,
   Trophy,
   Zap,
 } from 'lucide-react';
@@ -89,7 +106,33 @@ export default function RunnerPerformanceReport() {
 
   const [feedback, setFeedback] = useState<Feedback[]>([]);
 
+  const [goals, setGoals] = useState<
+    Array<{
+      id: string;
+      goalType: string;
+      targetValue: number;
+      currentValue: number;
+      period: string;
+      periodStart: string;
+      periodEnd: string;
+      isActive: boolean;
+      isAchieved: boolean;
+      achievedAt: string | null;
+      notes: string | null;
+      progress: number;
+    }>
+  >([]);
+
   const [loading, setLoading] = useState(true);
+  const [showGoalDialog, setShowGoalDialog] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [goalForm, setGoalForm] = useState({
+    goalType: 'VISITS',
+    targetValue: '',
+    period: 'MONTHLY',
+    notes: '',
+  });
+  const [savingGoal, setSavingGoal] = useState(false);
 
   useEffect(() => {
     // Load user data
@@ -181,6 +224,14 @@ export default function RunnerPerformanceReport() {
         setMonthlyPerformance(monthlyData);
         setAchievements(achievementsData);
         setFeedback(feedbackData);
+
+        // Cargar metas desde la respuesta
+        if (data.goals && Array.isArray(data.goals)) {
+          setGoals(data.goals);
+        } else {
+          // Si no hay metas en la respuesta, cargarlas por separado
+          await loadGoals();
+        }
       } catch (error) {
         logger.error('Error loading performance data:', {
           error: error instanceof Error ? error.message : String(error),
@@ -224,6 +275,219 @@ export default function RunnerPerformanceReport() {
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  // Cargar metas activas (mensuales por defecto)
+  const loadGoals = async () => {
+    try {
+      const response = await fetch('/api/runner/goals?period=MONTHLY&isActive=true', {
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.goals) {
+          setGoals(result.goals);
+        }
+      }
+    } catch (error) {
+      logger.error('Error cargando metas:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const getGoalTypeName = (goalType: string) => {
+    const names: Record<string, string> = {
+      VISITS: 'Visitas',
+      EARNINGS: 'Ganancias',
+      RATING: 'Rating',
+      CONVERSION_RATE: 'Tasa de Conversión',
+      ON_TIME_RATE: 'Puntualidad',
+      RESPONSE_TIME: 'Tiempo de Respuesta',
+    };
+    return names[goalType] || goalType;
+  };
+
+  const formatGoalValue = (goalType: string, value: number) => {
+    switch (goalType) {
+      case 'EARNINGS':
+        return formatPrice(value);
+      case 'RATING':
+        return `${value.toFixed(1)}/5.0`;
+      case 'CONVERSION_RATE':
+      case 'ON_TIME_RATE':
+        return `${value.toFixed(1)}%`;
+      case 'RESPONSE_TIME':
+        return `${value.toFixed(0)}m`;
+      default:
+        return value.toString();
+    }
+  };
+
+  const handleOpenCreateGoal = () => {
+    setEditingGoalId(null);
+    setGoalForm({
+      goalType: 'VISITS',
+      targetValue: '',
+      period: 'MONTHLY',
+      notes: '',
+    });
+    setShowGoalDialog(true);
+  };
+
+  const handleEditGoal = (goalId: string) => {
+    const goal = goals.find(g => g.id === goalId);
+    if (!goal) {
+      return;
+    }
+    setEditingGoalId(goalId);
+    setGoalForm({
+      goalType: goal.goalType,
+      targetValue: goal.targetValue.toString(),
+      period: goal.period,
+      notes: goal.notes || '',
+    });
+    setShowGoalDialog(true);
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    const confirmDelete = window.confirm('¿Deseas desactivar esta meta?');
+    if (!confirmDelete) {
+      return;
+    }
+    try {
+      const resp = await fetch(`/api/runner/goals/${goalId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (resp.ok) {
+        setGoals(prev => prev.filter(g => g.id !== goalId));
+      }
+    } catch (error) {
+      logger.error('Error desactivando meta:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const handleSaveGoal = async () => {
+    if (!goalForm.targetValue) {
+      return;
+    }
+    setSavingGoal(true);
+    try {
+      const payload = {
+        goalType: goalForm.goalType,
+        targetValue: parseFloat(goalForm.targetValue),
+        period: goalForm.period,
+        notes: goalForm.notes || null,
+      };
+
+      const resp = await fetch(
+        editingGoalId ? `/api/runner/goals/${editingGoalId}` : '/api/runner/goals',
+        {
+          method: editingGoalId ? 'PUT' : 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (resp.ok) {
+        const result = await resp.json();
+        if (editingGoalId) {
+          setGoals(prev => prev.map(g => (g.id === editingGoalId ? { ...g, ...result.goal } : g)));
+        } else {
+          setGoals(prev => [...prev, result.goal]);
+        }
+        setShowGoalDialog(false);
+      }
+    } catch (error) {
+      logger.error('Error guardando meta:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setSavingGoal(false);
+    }
+  };
+
+  // Función para cargar metas
+  const loadGoals = async () => {
+    try {
+      const response = await fetch('/api/runner/goals?period=MONTHLY&isActive=true', {
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.goals) {
+          setGoals(result.goals);
+        }
+      }
+    } catch (error) {
+      logger.error('Error cargando metas:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  // Función para obtener el nombre de la meta
+  const getGoalTypeName = (goalType: string) => {
+    const names: { [key: string]: string } = {
+      VISITS: 'Visitas Mensuales',
+      EARNINGS: 'Ganancias Mensuales',
+      RATING: 'Rating Promedio',
+      CONVERSION_RATE: 'Tasa de Conversión',
+      ON_TIME_RATE: 'Puntualidad',
+      RESPONSE_TIME: 'Tiempo de Respuesta',
+    };
+    return names[goalType] || goalType;
+  };
+
+  // Función para obtener el valor actual de la meta desde las métricas
+  const getCurrentValueForGoal = (goalType: string) => {
+    switch (goalType) {
+      case 'VISITS':
+        return metrics.completedVisits;
+      case 'EARNINGS':
+        return metrics.monthlyEarnings;
+      case 'RATING':
+        return metrics.overallRating;
+      case 'CONVERSION_RATE':
+        return metrics.conversionRate;
+      case 'ON_TIME_RATE':
+        return metrics.onTimeRate;
+      case 'RESPONSE_TIME':
+        return metrics.averageResponseTime;
+      default:
+        return 0;
+    }
+  };
+
+  // Función para formatear el valor de la meta
+  const formatGoalValue = (goalType: string, value: number) => {
+    switch (goalType) {
+      case 'EARNINGS':
+        return formatPrice(value);
+      case 'RATING':
+        return `${value.toFixed(1)}/5.0`;
+      case 'CONVERSION_RATE':
+      case 'ON_TIME_RATE':
+        return `${value.toFixed(1)}%`;
+      case 'RESPONSE_TIME':
+        return `${value.toFixed(0)}m`;
+      default:
+        return value.toString();
+    }
   };
 
   const getRatingColor = (rating: number) => {
@@ -469,51 +733,27 @@ export default function RunnerPerformanceReport() {
                         </span>
                       </div>
                       <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Meta de visitas</span>
-                            <span>
-                              {metrics.completedVisits}/
-                              {Math.max(60, Math.ceil(metrics.completedVisits * 1.1))}
-                            </span>
+                        {(goals.length > 0 ? goals.slice(0, 4) : []).map(goal => (
+                          <div key={goal.id}>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span>{getGoalTypeName(goal.goalType)}</span>
+                              <span>
+                                {formatGoalValue(goal.goalType, goal.currentValue)} /{' '}
+                                {formatGoalValue(goal.goalType, goal.targetValue)}
+                              </span>
+                            </div>
+                            <Progress value={Math.min(100, goal.progress)} className="h-2" />
+                            <div className="text-xs text-gray-600 mt-1">
+                              {Math.min(100, Math.round(goal.progress))}% completado ·{' '}
+                              {goal.isAchieved ? 'Completada' : 'En progreso'}
+                            </div>
                           </div>
-                          <Progress
-                            value={Math.min(
-                              100,
-                              (metrics.completedVisits /
-                                Math.max(60, Math.ceil(metrics.completedVisits * 1.1))) *
-                                100
-                            )}
-                            className="h-2"
-                          />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Meta de ganancias</span>
-                            <span>
-                              {formatPrice(metrics.monthlyEarnings)}/
-                              {formatPrice(
-                                Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1))
-                              )}
-                            </span>
-                          </div>
-                          <Progress
-                            value={Math.min(
-                              100,
-                              (metrics.monthlyEarnings /
-                                Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1))) *
-                                100
-                            )}
-                            className="h-2"
-                          />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Meta de rating</span>
-                            <span>{metrics.overallRating.toFixed(1)}/4.5</span>
-                          </div>
-                          <Progress value={(metrics.overallRating / 5) * 100} className="h-2" />
-                        </div>
+                        ))}
+                        {goals.length === 0 && (
+                          <p className="text-sm text-gray-500">
+                            Aún no tienes metas activas. Crea una meta en la pestaña Metas.
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -714,213 +954,148 @@ export default function RunnerPerformanceReport() {
                 <CardDescription>Establece y sigue tus metas de rendimiento</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h4 className="font-semibold mb-4">Metas del Mes Actual</h4>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-medium">Visitas Mensuales</h5>
-                          {(() => {
-                            const goal = Math.max(60, Math.ceil(metrics.completedVisits * 1.1));
-                            const progress = (metrics.completedVisits / goal) * 100;
-                            const badgeClass =
-                              progress >= 100
-                                ? 'bg-green-100 text-green-800'
-                                : progress >= 80
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-yellow-100 text-yellow-800';
-                            const badgeText =
-                              progress >= 100
-                                ? 'Superado'
-                                : progress >= 80
-                                  ? 'En Progreso'
-                                  : 'Iniciando';
-                            return <Badge className={badgeClass}>{badgeText}</Badge>;
-                          })()}
-                        </div>
-                        <p className="text-2xl font-bold text-blue-600 mb-2">
-                          {metrics.completedVisits}/
-                          {Math.max(60, Math.ceil(metrics.completedVisits * 1.1))}
-                        </p>
-                        <Progress
-                          value={Math.min(
-                            100,
-                            (metrics.completedVisits /
-                              Math.max(60, Math.ceil(metrics.completedVisits * 1.1))) *
-                              100
-                          )}
-                          className="h-2"
-                        />
-                        <p className="text-xs text-gray-600 mt-1">
-                          {Math.min(
-                            100,
-                            Math.round(
-                              (metrics.completedVisits /
-                                Math.max(60, Math.ceil(metrics.completedVisits * 1.1))) *
-                                100
-                            )
-                          )}
-                          % completado
-                        </p>
-                      </div>
-
-                      <div className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-medium">Ganancias Mensuales</h5>
-                          {(() => {
-                            const goal = Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1));
-                            const progress = (metrics.monthlyEarnings / goal) * 100;
-                            const badgeClass =
-                              progress >= 100
-                                ? 'bg-green-100 text-green-800'
-                                : progress >= 80
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-yellow-100 text-yellow-800';
-                            const badgeText =
-                              progress >= 100
-                                ? 'Superado'
-                                : progress >= 80
-                                  ? 'En Progreso'
-                                  : 'Iniciando';
-                            return <Badge className={badgeClass}>{badgeText}</Badge>;
-                          })()}
-                        </div>
-                        <p className="text-2xl font-bold text-green-600 mb-2">
-                          {formatPrice(metrics.monthlyEarnings)}
-                        </p>
-                        <Progress
-                          value={Math.min(
-                            100,
-                            (metrics.monthlyEarnings /
-                              Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1))) *
-                              100
-                          )}
-                          className="h-2"
-                        />
-                        <p className="text-xs text-gray-600 mt-1">
-                          Meta:{' '}
-                          {formatPrice(Math.max(800000, Math.ceil(metrics.monthlyEarnings * 1.1)))}
-                        </p>
-                      </div>
-
-                      <div className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-medium">Rating Promedio</h5>
-                          {(() => {
-                            const goal = 4.5;
-                            const progress = (metrics.overallRating / 5) * 100;
-                            const badgeClass =
-                              metrics.overallRating >= goal
-                                ? 'bg-green-100 text-green-800'
-                                : metrics.overallRating >= 4.0
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : metrics.overallRating >= 3.5
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800';
-                            const badgeText =
-                              metrics.overallRating >= goal
-                                ? 'Superado'
-                                : metrics.overallRating >= 4.0
-                                  ? 'Casi'
-                                  : 'En Progreso';
-                            return <Badge className={badgeClass}>{badgeText}</Badge>;
-                          })()}
-                        </div>
-                        <p className="text-2xl font-bold text-yellow-600 mb-2">
-                          {metrics.overallRating.toFixed(1)}/5.0
-                        </p>
-                        <Progress value={(metrics.overallRating / 5) * 100} className="h-2" />
-                        <p className="text-xs text-gray-600 mt-1">Meta: 4.5</p>
-                      </div>
-
-                      <div className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-medium">Tasa de Conversión</h5>
-                          {(() => {
-                            const goal = 75;
-                            const progress = metrics.conversionRate;
-                            const badgeClass =
-                              progress >= goal
-                                ? 'bg-green-100 text-green-800'
-                                : progress >= 60
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-yellow-100 text-yellow-800';
-                            const badgeText =
-                              progress >= goal
-                                ? 'Superado'
-                                : progress >= 60
-                                  ? 'En Progreso'
-                                  : 'Iniciando';
-                            return <Badge className={badgeClass}>{badgeText}</Badge>;
-                          })()}
-                        </div>
-                        <p className="text-2xl font-bold text-green-600 mb-2">
-                          {metrics.conversionRate.toFixed(1)}%
-                        </p>
-                        <Progress value={Math.min(100, metrics.conversionRate)} className="h-2" />
-                        <p className="text-xs text-gray-600 mt-1">Meta: 75%</p>
-                      </div>
-                    </div>
+                    <p className="text-sm text-gray-600">
+                      Crea metas y haz seguimiento de tu avance.
+                    </p>
                   </div>
-
-                  <div className="pt-4 border-t">
-                    <h4 className="font-semibold mb-4">Recomendaciones de Mejora</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                        <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div>
-                          <h5 className="font-medium text-blue-900">
-                            Reduce el tiempo de respuesta
-                          </h5>
-                          <p className="text-sm text-blue-700">
-                            Actualmente respondes en {metrics.averageResponseTime} minutos. Intenta
-                            reducirlo a menos de 10 minutos para mejorar tu rating.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-                        <TrendingUp className="w-5 h-5 text-green-600 mt-0.5" />
-                        <div>
-                          <h5 className="font-medium text-green-900">
-                            Mantén el excelente rendimiento
-                          </h5>
-                          <p className="text-sm text-green-700">
-                            Tu tasa de conversión del {metrics.conversionRate.toFixed(1)}% está
-                            excelente. Sigue así para alcanzar el logro &ldquo;Experto en Conversión
-                            Plus&rdquo;.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg">
-                        <Target className="w-5 h-5 text-yellow-600 mt-0.5" />
-                        <div>
-                          <h5 className="font-medium text-yellow-900">Mejora la puntualidad</h5>
-                          <p className="text-sm text-yellow-700">
-                            Tu puntualidad del {metrics.onTimeRate.toFixed(1)}% es buena, pero
-                            puedes alcanzar el 98% para desbloquear el logro &ldquo;Perfect
-                            Timing&rdquo;.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-center">
-                    <Button
-                      onClick={() => {
-                        alert(
-                          'Descargando reporte de rendimiento en PDF... La descarga comenzará en breve.'
-                        );
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Descargar Reporte Completo
-                    </Button>
-                  </div>
+                  <Button onClick={handleOpenCreateGoal}>Nueva meta</Button>
                 </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {goals.map(goal => {
+                    const progress = Math.min(100, Math.round(goal.progress));
+                    return (
+                      <div key={goal.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-xs uppercase text-gray-500">{goal.period}</p>
+                            <h4 className="font-semibold text-lg">
+                              {getGoalTypeName(goal.goalType)}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {formatGoalValue(goal.goalType, goal.currentValue)} /{' '}
+                              {formatGoalValue(goal.goalType, goal.targetValue)}
+                            </p>
+                          </div>
+                          <Badge className={goal.isAchieved ? 'bg-green-100 text-green-800' : ''}>
+                            {goal.isAchieved ? 'Completada' : 'En progreso'}
+                          </Badge>
+                        </div>
+
+                        <Progress value={progress} className="h-2" />
+                        <p className="text-xs text-gray-600">{progress}% completado</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(goal.periodStart).toLocaleDateString('es-CL')} -{' '}
+                          {new Date(goal.periodEnd).toLocaleDateString('es-CL')}
+                        </p>
+                        {goal.notes && <p className="text-sm text-gray-700">Notas: {goal.notes}</p>}
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditGoal(goal.id)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                          >
+                            Desactivar
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {goals.length === 0 && (
+                  <p className="text-sm text-gray-500 mt-4">
+                    No tienes metas activas. Crea tu primera meta para comenzar a medir tu progreso.
+                  </p>
+                )}
+
+                <Dialog open={showGoalDialog} onOpenChange={setShowGoalDialog}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{editingGoalId ? 'Editar meta' : 'Nueva meta'}</DialogTitle>
+                      <DialogDescription>Define tus objetivos y su período.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="grid gap-2">
+                        <Label>Tipo de meta</Label>
+                        <Select
+                          value={goalForm.goalType}
+                          onValueChange={value =>
+                            setGoalForm(prev => ({ ...prev, goalType: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="VISITS">Visitas</SelectItem>
+                            <SelectItem value="EARNINGS">Ganancias</SelectItem>
+                            <SelectItem value="RATING">Rating</SelectItem>
+                            <SelectItem value="CONVERSION_RATE">Tasa de Conversión</SelectItem>
+                            <SelectItem value="ON_TIME_RATE">Puntualidad</SelectItem>
+                            <SelectItem value="RESPONSE_TIME">Tiempo de Respuesta</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>Valor objetivo</Label>
+                        <Input
+                          type="number"
+                          value={goalForm.targetValue}
+                          onChange={e =>
+                            setGoalForm(prev => ({ ...prev, targetValue: e.target.value }))
+                          }
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>Período</Label>
+                        <Select
+                          value={goalForm.period}
+                          onValueChange={value => setGoalForm(prev => ({ ...prev, period: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona período" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="WEEKLY">Semanal</SelectItem>
+                            <SelectItem value="MONTHLY">Mensual</SelectItem>
+                            <SelectItem value="QUARTERLY">Trimestral</SelectItem>
+                            <SelectItem value="YEARLY">Anual</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>Notas (opcional)</Label>
+                        <Textarea
+                          value={goalForm.notes}
+                          onChange={e => setGoalForm(prev => ({ ...prev, notes: e.target.value }))}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter className="mt-4">
+                      <Button variant="outline" onClick={() => setShowGoalDialog(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleSaveGoal} disabled={savingGoal}>
+                        {savingGoal ? 'Guardando...' : 'Guardar'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
           </TabsContent>

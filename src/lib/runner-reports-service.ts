@@ -1217,4 +1217,166 @@ export class RunnerReportsService {
       return [];
     }
   }
+
+  /**
+   * Obtiene las metas activas del runner para un período específico
+   */
+  static async getRunnerGoals(
+    runnerId: string,
+    period?: 'MONTHLY' | 'WEEKLY' | 'QUARTERLY' | 'YEARLY'
+  ): Promise<
+    Array<{
+      id: string;
+      goalType: string;
+      targetValue: number;
+      currentValue: number;
+      period: string;
+      periodStart: Date;
+      periodEnd: Date;
+      isActive: boolean;
+      isAchieved: boolean;
+      achievedAt: Date | null;
+      notes: string | null;
+      progress: number;
+    }>
+  > {
+    try {
+      const now = new Date();
+      const whereClause: any = {
+        runnerId,
+        isActive: true,
+        periodStart: {
+          lte: now,
+        },
+        periodEnd: {
+          gte: now,
+        },
+      };
+
+      if (period) {
+        whereClause.period = period;
+      }
+
+      const goals = await db.runnerGoal.findMany({
+        where: whereClause,
+        orderBy: [{ periodStart: 'desc' }, { goalType: 'asc' }],
+      });
+
+      return goals.map(goal => ({
+        id: goal.id,
+        goalType: goal.goalType,
+        targetValue: goal.targetValue,
+        currentValue: goal.currentValue,
+        period: goal.period,
+        periodStart: goal.periodStart,
+        periodEnd: goal.periodEnd,
+        isActive: goal.isActive,
+        isAchieved: goal.isAchieved,
+        achievedAt: goal.achievedAt,
+        notes: goal.notes,
+        progress:
+          goal.targetValue > 0 ? Math.min(100, (goal.currentValue / goal.targetValue) * 100) : 0,
+      }));
+    } catch (error) {
+      logger.error('Error obteniendo metas del runner:', error as Error);
+      return [];
+    }
+  }
+
+  /**
+   * Actualiza los valores actuales de las metas basándose en las métricas reales
+   */
+  static async updateRunnerGoalsProgress(
+    runnerId: string,
+    metrics: RunnerPerformanceMetrics
+  ): Promise<void> {
+    try {
+      const now = new Date();
+      const activeGoals = await db.runnerGoal.findMany({
+        where: {
+          runnerId,
+          isActive: true,
+          periodStart: {
+            lte: now,
+          },
+          periodEnd: {
+            gte: now,
+          },
+        },
+      });
+
+      for (const goal of activeGoals) {
+        let currentValue = goal.currentValue;
+        let shouldUpdate = false;
+
+        switch (goal.goalType) {
+          case 'VISITS':
+            currentValue = metrics.completedVisits;
+            shouldUpdate = true;
+            break;
+          case 'EARNINGS':
+            currentValue = metrics.monthlyEarnings;
+            shouldUpdate = true;
+            break;
+          case 'RATING':
+            currentValue = metrics.averageRating;
+            shouldUpdate = true;
+            break;
+          case 'CONVERSION_RATE':
+            currentValue = metrics.completionRate;
+            shouldUpdate = true;
+            break;
+          case 'ON_TIME_RATE':
+            currentValue = metrics.onTimeRate;
+            shouldUpdate = true;
+            break;
+          case 'RESPONSE_TIME':
+            currentValue = metrics.responseTimeAverage;
+            shouldUpdate = true;
+            break;
+        }
+
+        if (shouldUpdate) {
+          const isAchieved = currentValue >= goal.targetValue;
+          const updateData: any = {
+            currentValue,
+            isAchieved,
+          };
+
+          // Si se alcanzó la meta y no estaba marcada como alcanzada
+          if (isAchieved && !goal.isAchieved) {
+            updateData.achievedAt = new Date();
+          }
+
+          // Si ya no se cumple la meta (por ejemplo, si se actualizó el targetValue)
+          if (!isAchieved && goal.isAchieved) {
+            updateData.achievedAt = null;
+          }
+
+          await db.runnerGoal.update({
+            where: { id: goal.id },
+            data: updateData,
+          });
+
+          // Si se alcanzó la meta, enviar notificación
+          if (isAchieved && !goal.isAchieved) {
+            try {
+              await NotificationService.create({
+                userId: runnerId,
+                type: NotificationType.SYSTEM_ALERT,
+                title: '¡Meta alcanzada! 🎉',
+                message: `Has alcanzado tu meta de ${goal.goalType}: ${currentValue.toFixed(2)}/${goal.targetValue}`,
+                link: `/runner/reports/performance?tab=goals`,
+                priority: 'high',
+              });
+            } catch (notifError) {
+              logger.warn('Error enviando notificación de meta alcanzada:', notifError);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Error actualizando progreso de metas:', error as Error);
+    }
+  }
 }

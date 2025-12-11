@@ -32,17 +32,28 @@ export async function GET(request: NextRequest) {
           periodStart ? new Date(periodStart) : undefined,
           periodEnd ? new Date(periodEnd) : undefined
         );
-        // Incluir datos mensuales, feedback y achievements
-        const [monthlyPerformance, feedback, achievements] = await Promise.all([
+
+        // Actualizar progreso de metas con métricas actuales
+        await RunnerReportsService.updateRunnerGoalsProgress(user.id, performanceMetrics);
+
+        // Incluir datos mensuales, feedback, achievements y metas
+        const [monthlyPerformance, feedback, achievements, goals] = await Promise.all([
           RunnerReportsService.generateMonthlyPerformance(user.id, 6),
           RunnerReportsService.getRunnerFeedback(user.id, 10),
           RunnerReportsService.calculateRunnerAchievements(user.id, performanceMetrics),
+          RunnerReportsService.getRunnerGoals(user.id, 'MONTHLY'),
         ]);
         reportData = {
           ...performanceMetrics,
           monthlyPerformance,
           feedback,
           achievements,
+          goals: goals.map(goal => ({
+            ...goal,
+            periodStart: goal.periodStart.toISOString(),
+            periodEnd: goal.periodEnd.toISOString(),
+            achievedAt: goal.achievedAt?.toISOString() || null,
+          })),
         };
         break;
 

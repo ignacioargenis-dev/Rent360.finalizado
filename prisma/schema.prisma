@@ -139,6 +139,7 @@ model User {
 
   // Relaciones de incentivos para runners
   runnerIncentives RunnerIncentive[]
+  runnerGoals      RunnerGoal[]
 
   // Relaciones del sistema de prospects y clientes del corredor
   brokerProspects           BrokerProspect[]           @relation("BrokerProspects")
@@ -1815,6 +1816,34 @@ model RunnerIncentive {
   @@index([incentiveRuleId])
   @@index([status])
   @@map("runner_incentives")
+}
+
+// Runner Goal model - Metas de rendimiento para runners
+model RunnerGoal {
+  id        String   @id @default(cuid())
+  runnerId  String
+  goalType  String   // VISITS, EARNINGS, RATING, CONVERSION_RATE, ON_TIME_RATE, RESPONSE_TIME
+  targetValue Float  // Valor objetivo
+  currentValue Float @default(0) // Valor actual (se actualiza periódicamente)
+  period    String   // MONTHLY, WEEKLY, QUARTERLY, YEARLY
+  periodStart DateTime // Inicio del período
+  periodEnd   DateTime // Fin del período
+  isActive  Boolean  @default(true)
+  isAchieved Boolean @default(false)
+  achievedAt DateTime?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  runner User @relation(fields: [runnerId], references: [id], onDelete: Cascade)
+
+  @@index([runnerId])
+  @@index([goalType])
+  @@index([period])
+  @@index([isActive])
+  @@index([periodStart, periodEnd])
+  @@map("runner_goals")
 }
 
 // ENUMS DEL SISTEMA LEGAL
