@@ -416,43 +416,6 @@ export default function RunnerPerformanceReport() {
     }
   };
 
-  // Función para cargar metas
-  const loadGoals = async () => {
-    try {
-      const response = await fetch('/api/runner/goals?period=MONTHLY&isActive=true', {
-        credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.goals) {
-          setGoals(result.goals);
-        }
-      }
-    } catch (error) {
-      logger.error('Error cargando metas:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  };
-
-  // Función para obtener el nombre de la meta
-  const getGoalTypeName = (goalType: string) => {
-    const names: { [key: string]: string } = {
-      VISITS: 'Visitas Mensuales',
-      EARNINGS: 'Ganancias Mensuales',
-      RATING: 'Rating Promedio',
-      CONVERSION_RATE: 'Tasa de Conversión',
-      ON_TIME_RATE: 'Puntualidad',
-      RESPONSE_TIME: 'Tiempo de Respuesta',
-    };
-    return names[goalType] || goalType;
-  };
-
   // Función para obtener el valor actual de la meta desde las métricas
   const getCurrentValueForGoal = (goalType: string) => {
     switch (goalType) {
@@ -470,23 +433,6 @@ export default function RunnerPerformanceReport() {
         return metrics.averageResponseTime;
       default:
         return 0;
-    }
-  };
-
-  // Función para formatear el valor de la meta
-  const formatGoalValue = (goalType: string, value: number) => {
-    switch (goalType) {
-      case 'EARNINGS':
-        return formatPrice(value);
-      case 'RATING':
-        return `${value.toFixed(1)}/5.0`;
-      case 'CONVERSION_RATE':
-      case 'ON_TIME_RATE':
-        return `${value.toFixed(1)}%`;
-      case 'RESPONSE_TIME':
-        return `${value.toFixed(0)}m`;
-      default:
-        return value.toString();
     }
   };
 
