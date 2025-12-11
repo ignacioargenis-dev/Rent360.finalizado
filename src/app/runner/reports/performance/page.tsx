@@ -68,6 +68,7 @@ interface MonthlyPerformance {
 
 interface Achievement {
   id: string;
+  achievementId?: string;
   title: string;
   description: string;
   icon: string;
@@ -201,7 +202,8 @@ export default function RunnerPerformanceReport() {
 
         // Transformar achievements
         const achievementsData: Achievement[] = (data.achievements || []).map((ach: any) => ({
-          id: ach.id,
+          id: ach.id || ach.achievementId,
+          achievementId: ach.achievementId,
           title: ach.title,
           description: ach.description,
           icon: ach.icon,
@@ -837,11 +839,46 @@ export default function RunnerPerformanceReport() {
                           {achievement.value && !achievement.achieved && (
                             <div className="mt-2">
                               <Progress
-                                value={(metrics.totalVisits / achievement.value) * 100}
+                                value={Math.min(
+                                  100,
+                                  (() => {
+                                    const achievementId =
+                                      achievement.achievementId || achievement.id;
+                                    switch (achievementId) {
+                                      case 'first_50_visits':
+                                      case 'legendary_runner':
+                                        return (metrics.totalVisits / achievement.value) * 100;
+                                      case 'millionaire':
+                                        return (metrics.totalEarnings / achievement.value) * 100;
+                                      case 'conversion_expert':
+                                        return (metrics.conversionRate / achievement.value) * 100;
+                                      case 'perfect_timing':
+                                        return (metrics.onTimeRate / achievement.value) * 100;
+                                      default:
+                                        return 0;
+                                    }
+                                  })()
+                                )}
                                 className="h-2"
                               />
                               <p className="text-xs text-gray-600 mt-1">
-                                Progreso: {metrics.totalVisits}/{achievement.value}
+                                Progreso:{' '}
+                                {(() => {
+                                  const achievementId = achievement.achievementId || achievement.id;
+                                  switch (achievementId) {
+                                    case 'first_50_visits':
+                                    case 'legendary_runner':
+                                      return `${metrics.totalVisits}/${achievement.value}`;
+                                    case 'millionaire':
+                                      return `${formatPrice(metrics.totalEarnings)}/${formatPrice(achievement.value)}`;
+                                    case 'conversion_expert':
+                                      return `${metrics.conversionRate.toFixed(1)}%/${achievement.value}%`;
+                                    case 'perfect_timing':
+                                      return `${metrics.onTimeRate.toFixed(1)}%/${achievement.value}%`;
+                                    default:
+                                      return '0/0';
+                                  }
+                                })()}
                               </p>
                             </div>
                           )}

@@ -140,6 +140,7 @@ model User {
   // Relaciones de incentivos para runners
   runnerIncentives RunnerIncentive[]
   runnerGoals      RunnerGoal[]
+  runnerAchievements RunnerAchievement[]
 
   // Relaciones del sistema de prospects y clientes del corredor
   brokerProspects           BrokerProspect[]           @relation("BrokerProspects")
@@ -1844,6 +1845,28 @@ model RunnerGoal {
   @@index([isActive])
   @@index([periodStart, periodEnd])
   @@map("runner_goals")
+}
+
+// Runner Achievement model - Logros alcanzados por runners
+model RunnerAchievement {
+  id          String   @id @default(cuid())
+  runnerId    String
+  achievementId String // ID del logro (ej: 'first_50_visits', 'star_runner', etc.)
+  title       String
+  description String
+  icon        String
+  achievedAt  DateTime @default(now())
+  metadata    Json?    // Datos adicionales del logro (valor alcanzado, etc.)
+  createdAt   DateTime @default(now())
+
+  // Relaciones
+  runner User @relation(fields: [runnerId], references: [id], onDelete: Cascade)
+
+  @@unique([runnerId, achievementId]) // Un runner no puede tener el mismo logro duplicado
+  @@index([runnerId])
+  @@index([achievementId])
+  @@index([achievedAt])
+  @@map("runner_achievements")
 }
 
 // ENUMS DEL SISTEMA LEGAL

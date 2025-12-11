@@ -617,7 +617,7 @@ export class RunnerReportsService {
   }
 
   /**
-   * Calcula logros del runner basados en métricas reales
+   * Calcula logros del runner basados en métricas reales y persiste los nuevos logros
    */
   static async calculateRunnerAchievements(
     runnerId: string,
@@ -625,6 +625,7 @@ export class RunnerReportsService {
   ): Promise<
     Array<{
       id: string;
+      achievementId: string;
       title: string;
       description: string;
       icon: string;
@@ -633,134 +634,173 @@ export class RunnerReportsService {
       value?: number;
     }>
   > {
-    const achievements = [];
+    try {
+      // Definir todos los logros posibles con sus criterios
+      const allAchievements = [
+        {
+          achievementId: 'first_50_visits',
+          title: 'Primeras 50 Visitas',
+          description: 'Completaste tus primeras 50 visitas',
+          icon: '🎯',
+          condition: () => metrics.totalVisits >= 50,
+          value: 50,
+          metadata: { visits: metrics.totalVisits },
+        },
+        {
+          achievementId: 'star_runner',
+          title: 'Runner Estrella',
+          description: 'Mantén un rating de 4.5+ con al menos 10 visitas',
+          icon: '⭐',
+          condition: () => metrics.averageRating >= 4.5 && metrics.totalVisits >= 10,
+          metadata: { rating: metrics.averageRating, visits: metrics.totalVisits },
+        },
+        {
+          achievementId: 'conversion_expert',
+          title: 'Experto en Conversión',
+          description: 'Alcanza 80% de tasa de completitud',
+          icon: '📈',
+          condition: () => metrics.completionRate >= 80,
+          value: 80,
+          metadata: { conversionRate: metrics.completionRate },
+        },
+        {
+          achievementId: 'millionaire',
+          title: 'Millonario',
+          description: 'Acumula $1,000,000 en ganancias',
+          icon: '💰',
+          condition: () => metrics.totalEarnings >= 1000000,
+          value: 1000000,
+          metadata: { earnings: metrics.totalEarnings },
+        },
+        {
+          achievementId: 'perfect_timing',
+          title: 'Perfect Timing',
+          description: 'Alcanza 98% de puntualidad',
+          icon: '⏰',
+          condition: () => metrics.onTimeRate >= 98,
+          value: 98,
+          metadata: { onTimeRate: metrics.onTimeRate },
+        },
+        {
+          achievementId: 'legendary_runner',
+          title: 'Runner Legendario',
+          description: 'Completa 200 visitas',
+          icon: '🏆',
+          condition: () => metrics.totalVisits >= 200,
+          value: 200,
+          metadata: { visits: metrics.totalVisits },
+        },
+      ];
 
-    // Logro: Primeras 50 visitas
-    if (metrics.totalVisits >= 50) {
-      achievements.push({
-        id: '1',
-        title: 'Primeras 50 Visitas',
-        description: 'Completaste tus primeras 50 visitas',
-        icon: '🎯',
-        achieved: true,
-        value: 50,
+      // Obtener logros ya alcanzados desde la BD
+      const existingAchievements = await db.runnerAchievement.findMany({
+        where: { runnerId },
+        orderBy: { achievedAt: 'desc' },
       });
-    } else {
-      achievements.push({
-        id: '1',
-        title: 'Primeras 50 Visitas',
-        description: 'Completaste tus primeras 50 visitas',
-        icon: '🎯',
-        achieved: false,
-        value: 50,
-      });
+
+      const existingAchievementIds = new Set(existingAchievements.map(a => a.achievementId));
+
+      // Evaluar cada logro y persistir los nuevos
+      const achievements = await Promise.all(
+        allAchievements.map(async achievementDef => {
+          const isAchieved = achievementDef.condition();
+          const wasAlreadyAchieved = existingAchievementIds.has(achievementDef.achievementId);
+
+          // Si se alcanza por primera vez, persistirlo
+          if (isAchieved && !wasAlreadyAchieved) {
+            try {
+              await db.runnerAchievement.create({
+                data: {
+                  runnerId,
+                  achievementId: achievementDef.achievementId,
+                  title: achievementDef.title,
+                  description: achievementDef.description,
+                  icon: achievementDef.icon,
+                  metadata: achievementDef.metadata || {},
+                },
+              });
+
+              // Enviar notificación
+              try {
+                await NotificationService.create({
+                  userId: runnerId,
+                  type: NotificationType.SYSTEM_ALERT,
+                  title: '¡Nuevo Logro Desbloqueado! 🏆',
+                  message: `Has desbloqueado el logro: ${achievementDef.title}`,
+                  link: `/runner/reports/performance?tab=achievements`,
+                  priority: 'high',
+                });
+              } catch (notifError) {
+                logger.warn('Error enviando notificación de logro:', {
+                  error: notifError instanceof Error ? notifError.message : String(notifError),
+                });
+              }
+            } catch (dbError) {
+              logger.error('Error persistiendo logro:', {
+                error: dbError instanceof Error ? dbError.message : String(dbError),
+                achievementId: achievementDef.achievementId,
+              });
+            }
+          }
+
+          // Buscar el logro existente para obtener la fecha
+          const existingAchievement = existingAchievements.find(
+            a => a.achievementId === achievementDef.achievementId
+          );
+
+          return {
+            id: existingAchievement?.id || achievementDef.achievementId,
+            achievementId: achievementDef.achievementId,
+            title: achievementDef.title,
+            description: achievementDef.description,
+            icon: achievementDef.icon,
+            achieved: isAchieved,
+            date: existingAchievement?.achievedAt.toISOString(),
+            value: achievementDef.value,
+          };
+        })
+      );
+
+      return achievements;
+    } catch (error) {
+      logger.error('Error calculando logros del runner:', error as Error);
+      return [];
     }
+  }
 
-    // Logro: Runner Estrella (rating 4.5+)
-    if (metrics.averageRating >= 4.5 && metrics.totalVisits >= 10) {
-      achievements.push({
-        id: '2',
-        title: 'Runner Estrella',
-        description: 'Mantén un rating de 4.5+',
-        icon: '⭐',
-        achieved: true,
+  /**
+   * Obtiene los logros alcanzados por un runner
+   */
+  static async getRunnerAchievements(runnerId: string): Promise<
+    Array<{
+      id: string;
+      achievementId: string;
+      title: string;
+      description: string;
+      icon: string;
+      achievedAt: string;
+      metadata: any;
+    }>
+  > {
+    try {
+      const achievements = await db.runnerAchievement.findMany({
+        where: { runnerId },
+        orderBy: { achievedAt: 'desc' },
       });
-    } else {
-      achievements.push({
-        id: '2',
-        title: 'Runner Estrella',
-        description: 'Mantén un rating de 4.5+',
-        icon: '⭐',
-        achieved: false,
-      });
+
+      return achievements.map(a => ({
+        id: a.id,
+        achievementId: a.achievementId,
+        title: a.title,
+        description: a.description,
+        icon: a.icon,
+        achievedAt: a.achievedAt.toISOString(),
+        metadata: a.metadata as any,
+      }));
+    } catch (error) {
+      logger.error('Error obteniendo logros del runner:', error as Error);
+      return [];
     }
-
-    // Logro: Experto en Conversión (tasa de completitud alta)
-    const conversionRate = metrics.completionRate;
-    if (conversionRate >= 80) {
-      achievements.push({
-        id: '3',
-        title: 'Experto en Conversión',
-        description: 'Alcanza 80% de tasa de completitud',
-        icon: '📈',
-        achieved: true,
-        value: 80,
-      });
-    } else {
-      achievements.push({
-        id: '3',
-        title: 'Experto en Conversión',
-        description: 'Alcanza 80% de tasa de completitud',
-        icon: '📈',
-        achieved: false,
-        value: 80,
-      });
-    }
-
-    // Logro: Millonario
-    if (metrics.totalEarnings >= 1000000) {
-      achievements.push({
-        id: '4',
-        title: 'Millonario',
-        description: 'Acumula $1,000,000 en ganancias',
-        icon: '💰',
-        achieved: true,
-        value: 1000000,
-      });
-    } else {
-      achievements.push({
-        id: '4',
-        title: 'Millonario',
-        description: 'Acumula $1,000,000 en ganancias',
-        icon: '💰',
-        achieved: false,
-        value: 1000000,
-      });
-    }
-
-    // Logro: Perfect Timing
-    if (metrics.onTimeRate >= 98) {
-      achievements.push({
-        id: '5',
-        title: 'Perfect Timing',
-        description: 'Alcanza 98% de puntualidad',
-        icon: '⏰',
-        achieved: true,
-        value: 98,
-      });
-    } else {
-      achievements.push({
-        id: '5',
-        title: 'Perfect Timing',
-        description: 'Alcanza 98% de puntualidad',
-        icon: '⏰',
-        achieved: false,
-        value: 98,
-      });
-    }
-
-    // Logro: Runner Legendario
-    if (metrics.totalVisits >= 200) {
-      achievements.push({
-        id: '6',
-        title: 'Runner Legendario',
-        description: 'Completa 200 visitas',
-        icon: '🏆',
-        achieved: true,
-        value: 200,
-      });
-    } else {
-      achievements.push({
-        id: '6',
-        title: 'Runner Legendario',
-        description: 'Completa 200 visitas',
-        icon: '🏆',
-        achieved: false,
-        value: 200,
-      });
-    }
-
-    return achievements;
   }
 
   /**

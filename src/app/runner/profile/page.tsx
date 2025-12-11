@@ -61,6 +61,7 @@ import {
   Download,
   Upload,
   RefreshCw,
+  Award,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
@@ -74,6 +75,17 @@ export default function PerfilPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showAddSkillDialog, setShowAddSkillDialog] = useState(false);
+
+  const [achievements, setAchievements] = useState<
+    Array<{
+      id: string;
+      achievementId: string;
+      title: string;
+      description: string;
+      icon: string;
+      achievedAt: string;
+    }>
+  >([]);
 
   const [newSkill, setNewSkill] = useState({
     name: '',
@@ -191,6 +203,7 @@ export default function PerfilPage() {
           experience: result.experience || [],
           certifications: result.certifications || [],
           equipment: result.equipment || [],
+          achievements: result.achievements || [],
         });
       } else {
         throw new Error('Error en respuesta de la API');
@@ -432,6 +445,43 @@ export default function PerfilPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Insignias y Logros */}
+        {achievements.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-5 h-5" />
+                Insignias y Logros
+              </CardTitle>
+              <CardDescription>
+                Reconocimientos por tu trayectoria y excelencia como Runner360
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {achievements.map(achievement => (
+                  <div
+                    key={achievement.id}
+                    className="flex flex-col items-center p-4 border rounded-lg bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow"
+                    title={`${achievement.title} - ${achievement.description}`}
+                  >
+                    <div className="text-4xl mb-2">{achievement.icon}</div>
+                    <div className="text-xs font-semibold text-center text-gray-800 mb-1">
+                      {achievement.title}
+                    </div>
+                    <div className="text-xs text-gray-500 text-center">
+                      {new Date(achievement.achievedAt).toLocaleDateString('es-CL', {
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Certificaciones */}
