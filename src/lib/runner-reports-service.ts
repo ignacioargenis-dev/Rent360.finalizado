@@ -1370,7 +1370,9 @@ export class RunnerReportsService {
                 priority: 'high',
               });
             } catch (notifError) {
-              logger.warn('Error enviando notificación de meta alcanzada:', notifError);
+              logger.warn('Error enviando notificación de meta alcanzada:', {
+                error: notifError instanceof Error ? notifError.message : String(notifError),
+              });
             }
           }
         }
