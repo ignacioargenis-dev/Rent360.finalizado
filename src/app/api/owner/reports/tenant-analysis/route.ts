@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
         createdAt: { gte: startDate },
       },
       include: {
-        rater: {
+        fromUser: {
           select: {
             name: true,
           },
