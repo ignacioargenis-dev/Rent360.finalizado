@@ -725,8 +725,9 @@ export default function OwnerReportsPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (propertyPerformance.length > 0) {
-                    handleViewPropertyDetails(propertyPerformance[0].id);
+                  const firstProperty = propertyPerformance[0];
+                  if (firstProperty?.id) {
+                    handleViewPropertyDetails(firstProperty.id);
                   } else {
                     logger.info('No hay propiedades para ver detalles');
                   }
