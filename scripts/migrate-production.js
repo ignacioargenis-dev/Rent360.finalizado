@@ -47,8 +47,10 @@ async function runMigrations() {
     });
 
     console.log('🎉 Proceso de migraciones completado exitosamente');
+    process.exit(0);
   } catch (error) {
     console.error('❌ Error durante las migraciones:', error.message);
+    console.error('Stack:', error.stack);
 
     // En caso de error, intentar un push forzado como último recurso
     try {
@@ -58,9 +60,12 @@ async function runMigrations() {
         timeout: 30000,
       });
       console.log('✅ Push forzado completado');
+      process.exit(0);
     } catch (pushError) {
       console.error('❌ Push forzado también falló:', pushError.message);
       console.log('⚠️  Continuando con la aplicación a pesar de los errores de migración...');
+      // No salir con error para permitir que el servidor inicie
+      process.exit(0);
     }
   }
 }
