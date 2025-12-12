@@ -114,9 +114,13 @@ export async function GET(request: NextRequest) {
       endedContracts.length > 0 ? Math.round((renewals / endedContracts.length) * 100) : 100;
 
     // Obtener calificaciones de inquilinos
+    const tenantIds = activeContracts
+      .map(c => c.tenantId)
+      .filter((id): id is string => id !== null && id !== undefined);
+
     const tenantRatings = await db.userRating.findMany({
       where: {
-        toUserId: { in: activeContracts.map(c => c.tenantId).filter(Boolean) },
+        toUserId: { in: tenantIds },
         createdAt: { gte: startDate },
       },
       include: {
