@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     // Calcular satisfacción promedio
     const satisfactionScore =
       tenantRatings.length > 0
-        ? tenantRatings.reduce((sum, r) => sum + r.rating, 0) / tenantRatings.length
+        ? tenantRatings.reduce((sum, r) => sum + r.overallRating, 0) / tenantRatings.length
         : 0;
 
     // Top performers (inquilinos con mejor calificación y pagos puntuales)
@@ -162,7 +162,9 @@ export async function GET(request: NextRequest) {
         }).length;
 
         const avgRating =
-          ratings.length > 0 ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length : 0;
+          ratings.length > 0
+            ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length
+            : 0;
 
         const onTimeRate = payments.length > 0 ? (onTimePayments / payments.length) * 100 : 100;
 
@@ -206,7 +208,7 @@ export async function GET(request: NextRequest) {
 
         const avgRating =
           recentRatings.length > 0
-            ? recentRatings.reduce((sum, r) => sum + r.rating, 0) / recentRatings.length
+            ? recentRatings.reduce((sum, r) => sum + r.overallRating, 0) / recentRatings.length
             : 5;
 
         if (overduePayments > 0 || avgRating < 3) {

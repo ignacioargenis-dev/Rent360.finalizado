@@ -304,12 +304,12 @@ async function fetchStatsData(user: any, period: string) {
           createdAt: { gte: startDate },
         },
         select: {
-          rating: true,
+          overallRating: true,
         },
       });
       stats.tenantSatisfaction =
         tenantRatings.length > 0
-          ? tenantRatings.reduce((sum, r) => sum + r.rating, 0) / tenantRatings.length
+          ? tenantRatings.reduce((sum, r) => sum + r.overallRating, 0) / tenantRatings.length
           : 0;
 
       // Estructurar datos en formato overview
