@@ -165,8 +165,18 @@ export default function AnalyticsPage() {
 
   // Generar datos para gráfico de ingresos (últimos 6 meses)
   const generateRevenueChartData = (data: any) => {
+    // Usar datos reales históricos si están disponibles
+    if (data?.financialData && Array.isArray(data.financialData) && data.financialData.length > 0) {
+      return data.financialData.map((item: any) => ({
+        month: item.month,
+        ingresos: item.revenue || 0,
+        gastos: item.expenses || 0,
+        neto: item.net || (item.revenue || 0) - (item.expenses || 0),
+      }));
+    }
+
+    // Fallback: si no hay datos históricos, mostrar solo el mes actual
     const currentDate = new Date();
-    const monthlyRevenue = data?.monthlyRevenue || 0;
     const months = [
       'Ene',
       'Feb',
@@ -181,15 +191,18 @@ export default function AnalyticsPage() {
       'Nov',
       'Dic',
     ];
+    const monthlyRevenue = data?.monthlyRevenue || 0;
+    const totalMaintenanceCosts = data?.totalMaintenanceCosts || 0;
 
     return Array.from({ length: 6 }, (_, i) => {
       const monthIndex = (currentDate.getMonth() - 5 + i + 12) % 12;
-      const variance = 0.8 + Math.random() * 0.4; // Variación del 80% al 120%
+      // Solo el último mes tiene datos reales, los anteriores muestran 0
+      const isCurrentMonth = i === 5;
       return {
         month: months[monthIndex],
-        ingresos: Math.round(monthlyRevenue * variance),
-        gastos: Math.round(monthlyRevenue * variance * 0.2), // Gastos estimados en 20%
-        neto: Math.round(monthlyRevenue * variance * 0.8),
+        ingresos: isCurrentMonth ? monthlyRevenue : 0,
+        gastos: isCurrentMonth ? totalMaintenanceCosts : 0,
+        neto: isCurrentMonth ? monthlyRevenue - totalMaintenanceCosts : 0,
       };
     });
   };
@@ -208,17 +221,29 @@ export default function AnalyticsPage() {
 
   // Generar distribución de propiedades
   const generatePropertiesDistribution = (data: any) => {
-    // En producción, esto vendría de la API
-    const totalProps = data?.totalProperties || 0;
-    if (totalProps === 0) {
-      return [];
+    // Usar distribución real desde la API
+    if (
+      data?.propertyDistribution &&
+      Array.isArray(data.propertyDistribution) &&
+      data.propertyDistribution.length > 0
+    ) {
+      const colorMap: Record<string, string> = {
+        Departamentos: '#3b82f6',
+        Casas: '#8b5cf6',
+        Estudios: '#10b981',
+        Habitaciones: '#f59e0b',
+        Oficinas: '#ec4899',
+      };
+
+      return data.propertyDistribution.map((item: any) => ({
+        name: item.name,
+        value: item.value,
+        color: colorMap[item.name] || '#6b7280',
+      }));
     }
 
-    return [
-      { name: 'Departamentos', value: Math.round(totalProps * 0.6), color: '#3b82f6' },
-      { name: 'Casas', value: Math.round(totalProps * 0.3), color: '#8b5cf6' },
-      { name: 'Oficinas', value: Math.round(totalProps * 0.1), color: '#ec4899' },
-    ];
+    // Fallback: si no hay datos, retornar array vacío
+    return [];
   };
 
   if (loading) {
@@ -333,14 +358,30 @@ export default function AnalyticsPage() {
   // Función para guardar configuración de alertas
   const handleSaveAlertsConfig = async () => {
     try {
-      // Simular guardado
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      logger.info('Configuración de alertas guardada:', { alertsConfig });
-      setSuccessMessage('Configuración de alertas guardada correctamente');
+      const response = await fetch('/api/owner/analytics/alerts', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(alertsConfig),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la configuración');
+      }
+
+      const result = await response.json();
+      logger.info('Configuración de alertas guardada:', { alertsConfig, result });
+      setSuccessMessage(result.message || 'Configuración de alertas guardada correctamente');
       setShowAlertsConfigModal(false);
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      logger.error('Error al guardar configuración de alertas:', { error });
+      logger.error('Error al guardar configuración de alertas:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       setErrorMessage('Error al guardar la configuración');
       setTimeout(() => setErrorMessage(''), 3000);
     }
@@ -349,14 +390,30 @@ export default function AnalyticsPage() {
   // Función para guardar metas y objetivos
   const handleSaveGoalsConfig = async () => {
     try {
-      // Simular guardado
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      logger.info('Metas y objetivos guardados:', { goalsConfig });
-      setSuccessMessage('Metas y objetivos guardados correctamente');
+      const response = await fetch('/api/owner/analytics/goals', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(goalsConfig),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar las metas');
+      }
+
+      const result = await response.json();
+      logger.info('Metas y objetivos guardados:', { goalsConfig, result });
+      setSuccessMessage(result.message || 'Metas y objetivos guardados correctamente');
       setShowGoalsModal(false);
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      logger.error('Error al guardar metas y objetivos:', { error });
+      logger.error('Error al guardar metas y objetivos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       setErrorMessage('Error al guardar las metas');
       setTimeout(() => setErrorMessage(''), 3000);
     }
@@ -413,12 +470,17 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {data?.totalProperties > 0
-                  ? Math.round((data?.totalContracts / data?.totalProperties) * 100)
-                  : 0}
+                {data?.occupancyRate ??
+                  (data?.totalProperties > 0
+                    ? Math.round((data?.totalContracts / data?.totalProperties) * 100)
+                    : 0)}
                 %
               </div>
-              <p className="text-xs text-muted-foreground">+2.1% desde el mes pasado</p>
+              <p className="text-xs text-muted-foreground">
+                {data?.occupancyChangePercent !== undefined
+                  ? `${data.occupancyChangePercent >= 0 ? '+' : ''}${data.occupancyChangePercent.toFixed(1)}% desde el mes pasado`
+                  : 'Sin datos comparativos'}
+              </p>
             </CardContent>
           </Card>
 
@@ -429,7 +491,11 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(data?.monthlyRevenue || 0)}</div>
-              <p className="text-xs text-muted-foreground">+5.2% desde el mes pasado</p>
+              <p className="text-xs text-muted-foreground">
+                {data?.revenueChangePercent !== undefined
+                  ? `${data.revenueChangePercent >= 0 ? '+' : ''}${data.revenueChangePercent.toFixed(1)}% desde el mes pasado`
+                  : 'Sin datos comparativos'}
+              </p>
             </CardContent>
           </Card>
 
@@ -637,7 +703,12 @@ export default function AnalyticsPage() {
                     },
                     {
                       name: 'Pagos',
-                      valor: Math.max(100 - (data?.paymentDelays || 0) * 20, 0),
+                      valor:
+                        data?.paymentDelays !== undefined
+                          ? Math.max(100 - data.paymentDelays * 10, 0)
+                          : data?.paymentRate !== undefined
+                            ? Math.round(data.paymentRate)
+                            : 0,
                       color: '#3b82f6',
                     },
                   ]}
@@ -1304,7 +1375,12 @@ export default function AnalyticsPage() {
                     }
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    Actual: {data?.overview?.occupancyRate || 87}%
+                    Actual:{' '}
+                    {data?.occupancyRate !== undefined
+                      ? `${data.occupancyRate}%`
+                      : data?.overview?.occupancyRate !== undefined
+                        ? `${data.overview.occupancyRate}%`
+                        : 'N/A'}
                   </p>
                 </div>
 
@@ -1319,7 +1395,12 @@ export default function AnalyticsPage() {
                     }
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    Actual: {formatCurrency(data?.overview?.monthlyRevenue || 4800000)}
+                    Actual:{' '}
+                    {data?.monthlyRevenue !== undefined
+                      ? formatCurrency(data.monthlyRevenue)
+                      : data?.overview?.monthlyRevenue !== undefined
+                        ? formatCurrency(data.overview.monthlyRevenue)
+                        : 'N/A'}
                   </p>
                 </div>
 
@@ -1338,7 +1419,10 @@ export default function AnalyticsPage() {
                     }
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    Actual: {data?.tenantSatisfaction || 4.2}/5
+                    Actual:{' '}
+                    {data?.tenantSatisfaction !== undefined
+                      ? `${data.tenantSatisfaction.toFixed(1)}/5`
+                      : 'N/A'}
                   </p>
                 </div>
 
@@ -1355,7 +1439,12 @@ export default function AnalyticsPage() {
                       }))
                     }
                   />
-                  <p className="text-xs text-gray-600 mt-1">Actual: 2.4 días promedio</p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Actual:{' '}
+                    {data?.averageMaintenanceResponseTime !== undefined
+                      ? `${(data.averageMaintenanceResponseTime / 24).toFixed(1)} días promedio`
+                      : 'N/A'}
+                  </p>
                 </div>
               </div>
 
@@ -1368,14 +1457,22 @@ export default function AnalyticsPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Ocupación</span>
                       <span className="text-sm font-semibold">
-                        {data?.overview?.occupancyRate || 87}% / {goalsConfig.targetOccupancy}%
+                        {(() => {
+                          const current = data?.occupancyRate ?? data?.overview?.occupancyRate ?? 0;
+                          return `${current}% / ${goalsConfig.targetOccupancy}%`;
+                        })()}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-blue-600 h-2 rounded-full"
                         style={{
-                          width: `${Math.min(((data?.overview?.occupancyRate || 87) / goalsConfig.targetOccupancy) * 100, 100)}%`,
+                          width: `${Math.min(
+                            ((data?.occupancyRate ?? data?.overview?.occupancyRate ?? 0) /
+                              goalsConfig.targetOccupancy) *
+                              100,
+                            100
+                          )}%`,
                         }}
                       ></div>
                     </div>
@@ -1383,15 +1480,23 @@ export default function AnalyticsPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Ingresos</span>
                       <span className="text-sm font-semibold">
-                        {formatCurrency(data?.overview?.monthlyRevenue || 4800000)} /{' '}
-                        {formatCurrency(goalsConfig.targetRevenue)}
+                        {(() => {
+                          const current =
+                            data?.monthlyRevenue ?? data?.overview?.monthlyRevenue ?? 0;
+                          return `${formatCurrency(current)} / ${formatCurrency(goalsConfig.targetRevenue)}`;
+                        })()}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-green-600 h-2 rounded-full"
                         style={{
-                          width: `${Math.min(((data?.overview?.monthlyRevenue || 4800000) / goalsConfig.targetRevenue) * 100, 100)}%`,
+                          width: `${Math.min(
+                            ((data?.monthlyRevenue ?? data?.overview?.monthlyRevenue ?? 0) /
+                              goalsConfig.targetRevenue) *
+                              100,
+                            100
+                          )}%`,
                         }}
                       ></div>
                     </div>

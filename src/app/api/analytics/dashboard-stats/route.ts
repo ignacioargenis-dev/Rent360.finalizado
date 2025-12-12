@@ -274,22 +274,169 @@ async function fetchStatsData(user: any, period: string) {
 
       stats.averageMaintenanceCost = maintenanceStats._avg.estimatedCost || 0;
 
-      // Datos financieros detallados
-      const paymentsByMonth = await db.payment.groupBy({
-        by: ['createdAt'],
+      // Calcular gastos reales de mantenimiento
+      const totalMaintenanceCosts = await db.maintenance.aggregate({
+        where: {
+          property: { ownerId: user.id },
+          status: 'COMPLETED',
+          completedDate: { gte: startDate },
+        },
+        _sum: {
+          actualCost: true,
+          estimatedCost: true,
+        },
+      });
+      stats.totalMaintenanceCosts =
+        (totalMaintenanceCosts._sum.actualCost || 0) +
+        (totalMaintenanceCosts._sum.estimatedCost || 0);
+
+      // Calcular pagos vencidos (paymentDelays)
+      const now = new Date();
+      const overduePayments = await db.payment.count({
+        where: {
+          contract: { ownerId: user.id },
+          status: { in: ['PENDING', 'OVERDUE'] },
+          dueDate: { lt: now },
+        },
+      });
+      stats.paymentDelays = overduePayments;
+
+      // Calcular tiempo promedio de respuesta de mantenimiento
+      const completedMaintenances = await db.maintenance.findMany({
+        where: {
+          property: { ownerId: user.id },
+          status: 'COMPLETED',
+          completedDate: { gte: startDate },
+        },
+        select: {
+          createdAt: true,
+          completedDate: true,
+        },
+      });
+      if (completedMaintenances.length > 0) {
+        const totalResponseHours = completedMaintenances.reduce((sum, m) => {
+          if (m.completedDate) {
+            const hours = (m.completedDate.getTime() - m.createdAt.getTime()) / (1000 * 60 * 60);
+            return sum + hours;
+          }
+          return sum;
+        }, 0);
+        stats.averageMaintenanceResponseTime = totalResponseHours / completedMaintenances.length;
+      } else {
+        stats.averageMaintenanceResponseTime = 0;
+      }
+
+      // Distribución real de tipos de propiedades
+      const propertyTypes = await db.property.groupBy({
+        by: ['type'],
+        where: { ownerId: user.id },
+        _count: { _all: true },
+      });
+      stats.propertyDistribution = propertyTypes.map(pt => ({
+        name:
+          pt.type === 'APARTMENT'
+            ? 'Departamentos'
+            : pt.type === 'HOUSE'
+              ? 'Casas'
+              : pt.type === 'STUDIO'
+                ? 'Estudios'
+                : pt.type === 'ROOM'
+                  ? 'Habitaciones'
+                  : pt.type === 'COMMERCIAL'
+                    ? 'Oficinas'
+                    : pt.type,
+        value: pt._count._all,
+        type: pt.type,
+      }));
+
+      // Datos financieros detallados por mes (últimos 6 meses)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const paymentsByMonth = await db.payment.findMany({
         where: {
           contract: { ownerId: user.id },
           status: 'PAID',
-          createdAt: { gte: startDate },
+          createdAt: { gte: sixMonthsAgo },
         },
-        _sum: { amount: true },
+        select: {
+          amount: true,
+          createdAt: true,
+        },
         orderBy: { createdAt: 'asc' },
       });
 
-      stats.financialData = paymentsByMonth.map(payment => ({
-        month: payment.createdAt.toISOString().slice(0, 7),
-        revenue: payment._sum.amount || 0,
-      }));
+      // Agrupar por mes
+      const monthlyData: Record<string, { revenue: number; expenses: number }> = {};
+      const months = [
+        'Ene',
+        'Feb',
+        'Mar',
+        'Abr',
+        'May',
+        'Jun',
+        'Jul',
+        'Ago',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dic',
+      ];
+
+      // Inicializar últimos 6 meses
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthKey = date.toISOString().slice(0, 7);
+        monthlyData[monthKey] = { revenue: 0, expenses: 0 };
+      }
+
+      // Agregar ingresos por mes
+      paymentsByMonth.forEach(payment => {
+        const monthKey = payment.createdAt.toISOString().slice(0, 7);
+        if (monthlyData[monthKey]) {
+          monthlyData[monthKey].revenue += payment.amount;
+        }
+      });
+
+      // Agregar gastos de mantenimiento por mes
+      const maintenancesByMonth = await db.maintenance.findMany({
+        where: {
+          property: { ownerId: user.id },
+          status: 'COMPLETED',
+          completedDate: { gte: sixMonthsAgo },
+        },
+        select: {
+          actualCost: true,
+          estimatedCost: true,
+          completedDate: true,
+        },
+      });
+
+      maintenancesByMonth.forEach(maintenance => {
+        if (maintenance.completedDate) {
+          const monthKey = maintenance.completedDate.toISOString().slice(0, 7);
+          if (monthlyData[monthKey]) {
+            monthlyData[monthKey].expenses +=
+              (maintenance.actualCost || 0) + (maintenance.estimatedCost || 0);
+          }
+        }
+      });
+
+      // Convertir a array ordenado
+      stats.financialData = Object.keys(monthlyData)
+        .sort()
+        .map(monthKey => {
+          const date = new Date(monthKey + '-01');
+          const monthIndex = date.getMonth();
+          return {
+            month: months[monthIndex],
+            monthKey,
+            revenue: monthlyData[monthKey].revenue,
+            expenses: monthlyData[monthKey].expenses,
+            net: monthlyData[monthKey].revenue - monthlyData[monthKey].expenses,
+          };
+        });
 
       // Calcular tasa de ocupación
       const occupiedProperties = await db.property.count({
@@ -320,12 +467,98 @@ async function fetchStatsData(user: any, period: string) {
           ? tenantRatings.reduce((sum, r) => sum + r.overallRating, 0) / tenantRatings.length
           : 0;
 
+      // Calcular porcentaje de cambio mensual (comparar mes actual vs anterior)
+      const currentMonth = new Date();
+      currentMonth.setDate(1);
+      currentMonth.setHours(0, 0, 0, 0);
+      const lastMonth = new Date(currentMonth);
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+      const currentMonthRevenue = await db.payment.aggregate({
+        where: {
+          contract: { ownerId: user.id },
+          status: 'PAID',
+          createdAt: {
+            gte: currentMonth,
+            lt: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1),
+          },
+        },
+        _sum: { amount: true },
+      });
+
+      const lastMonthRevenue = await db.payment.aggregate({
+        where: {
+          contract: { ownerId: user.id },
+          status: 'PAID',
+          createdAt: {
+            gte: lastMonth,
+            lt: currentMonth,
+          },
+        },
+        _sum: { amount: true },
+      });
+
+      const currentRevenue = currentMonthRevenue._sum.amount || 0;
+      const previousRevenue = lastMonthRevenue._sum.amount || 0;
+      stats.revenueChangePercent =
+        previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+
+      // Calcular cambio en ocupación
+      const currentOccupied = await db.property.count({
+        where: {
+          ownerId: user.id,
+          contracts: {
+            some: {
+              status: 'ACTIVE',
+              startDate: { lte: currentMonth },
+            },
+          },
+        },
+      });
+
+      const lastMonthOccupied = await db.property.count({
+        where: {
+          ownerId: user.id,
+          contracts: {
+            some: {
+              status: 'ACTIVE',
+              startDate: { lte: lastMonth },
+            },
+          },
+        },
+      });
+
+      stats.occupancyChangePercent =
+        lastMonthOccupied > 0
+          ? ((currentOccupied - lastMonthOccupied) / lastMonthOccupied) * 100
+          : 0;
+
+      // Calcular tasa de pago (pagos a tiempo vs total)
+      const totalPaymentsCount = await db.payment.count({
+        where: {
+          contract: { ownerId: user.id },
+          createdAt: { gte: startDate },
+        },
+      });
+
+      const onTimePayments = await db.payment.count({
+        where: {
+          contract: { ownerId: user.id },
+          status: 'PAID',
+          paidDate: { not: null },
+          createdAt: { gte: startDate },
+        },
+      });
+
+      stats.paymentRate = totalPaymentsCount > 0 ? (onTimePayments / totalPaymentsCount) * 100 : 0;
+
       // Estructurar datos en formato overview
       stats.overview = {
         totalRevenue: stats.monthlyRevenue,
         occupancyRate: stats.occupancyRate,
         totalTenants: ownerContracts,
         totalProperties: ownerProperties,
+        monthlyRevenue: stats.monthlyRevenue,
       };
 
       break;
