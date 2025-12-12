@@ -261,21 +261,23 @@ export default function OwnerReportsPage() {
 
       // Transformar propiedades con datos reales
       const transformedProperties: PropertyPerformance[] =
-        currentData.properties?.map((prop: any) => {
-          const propMaintenanceCosts = prop.maintenanceCosts || 0;
-          const propMonthlyRevenue = prop.monthlyRevenue || prop.revenue || 0;
-          return {
-            id: prop.id,
-            title: prop.title || prop.name || 'Sin título',
-            address: prop.address || prop.location || 'Sin dirección',
-            occupancyRate: prop.occupancy || prop.occupancyRate || 0,
-            monthlyRevenue: propMonthlyRevenue,
-            totalRevenue: prop.totalRevenue || propMonthlyRevenue * 12,
-            averageRating: prop.averageRating || prop.rating || 0,
-            maintenanceCosts: propMaintenanceCosts,
-            netProfit: propMonthlyRevenue * 12 - propMaintenanceCosts,
-          };
-        }) || [];
+        currentData.properties
+          ?.filter((prop: any) => prop.id) // ✅ Filtrar propiedades sin ID
+          .map((prop: any) => {
+            const propMaintenanceCosts = prop.maintenanceCosts || 0;
+            const propMonthlyRevenue = prop.monthlyRevenue || prop.revenue || 0;
+            return {
+              id: prop.id, // ✅ Asegurar que el ID existe
+              title: prop.title || prop.name || 'Sin título',
+              address: prop.address || prop.location || 'Sin dirección',
+              occupancyRate: prop.occupancy || prop.occupancyRate || 0,
+              monthlyRevenue: propMonthlyRevenue,
+              totalRevenue: prop.totalRevenue || propMonthlyRevenue * 12,
+              averageRating: prop.averageRating || prop.rating || 0,
+              maintenanceCosts: propMaintenanceCosts,
+              netProfit: propMonthlyRevenue * 12 - propMaintenanceCosts,
+            };
+          }) || [];
 
       // Resumen financiero con datos reales
       const transformedFinancialSummary: FinancialSummary = {
@@ -798,7 +800,15 @@ export default function OwnerReportsPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleViewPropertyReport(property.id)}
+                        onClick={() => {
+                          if (property.id) {
+                            handleViewPropertyReport(property.id);
+                          } else {
+                            logger.error('Property ID is missing', { property });
+                            alert('Error: No se pudo obtener el ID de la propiedad');
+                          }
+                        }}
+                        disabled={!property.id}
                       >
                         <BarChart3 className="w-4 h-4 mr-2" />
                         Ver Reporte
@@ -806,7 +816,15 @@ export default function OwnerReportsPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleConfigureProperty(property.id)}
+                        onClick={() => {
+                          if (property.id) {
+                            handleConfigureProperty(property.id);
+                          } else {
+                            logger.error('Property ID is missing', { property });
+                            alert('Error: No se pudo obtener el ID de la propiedad');
+                          }
+                        }}
+                        disabled={!property.id}
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         Configurar

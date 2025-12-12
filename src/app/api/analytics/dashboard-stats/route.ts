@@ -201,11 +201,19 @@ async function fetchStatsData(user: any, period: string) {
         })
         .then(properties =>
           properties.map(prop => ({
+            id: prop.id, // ✅ Incluir el ID para navegación
             title: prop.title,
             location: `${prop.address}, ${prop.city}`,
+            address: prop.address, // ✅ Incluir address para compatibilidad
+            city: prop.city, // ✅ Incluir city para compatibilidad
             revenue: prop.price,
+            monthlyRevenue: prop.price, // ✅ Alias para compatibilidad
             occupancy: prop._count.contracts > 0 ? 100 : 0,
+            occupancyRate: prop._count.contracts > 0 ? 100 : 0, // ✅ Alias para compatibilidad
             status: prop.status,
+            averageRating: 0, // ✅ Valor por defecto
+            maintenanceCosts: 0, // ✅ Valor por defecto
+            totalRevenue: prop.price * 12, // ✅ Calcular total revenue
           }))
         );
 
