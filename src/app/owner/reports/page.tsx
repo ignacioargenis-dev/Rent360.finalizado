@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,6 +70,7 @@ interface TenantAnalysis {
 
 export default function OwnerReportsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [metrics, setMetrics] = useState<ReportMetric[]>([]);
   const [propertyPerformance, setPropertyPerformance] = useState<PropertyPerformance[]>([]);
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary>({
@@ -407,17 +409,19 @@ export default function OwnerReportsPage() {
 
   const handleViewPropertyDetails = (propertyId: string) => {
     logger.info('Viendo detalles de propiedad', { propertyId });
-    window.location.href = `/owner/properties/${propertyId}`;
+    router.push(`/owner/properties/${propertyId}`);
   };
 
   const handleViewPropertyReport = (propertyId: string) => {
     logger.info('Viendo reporte de propiedad', { propertyId });
-    window.location.href = `/owner/properties/${propertyId}/reports`;
+    // Redirigir a los detalles de la propiedad, donde se puede ver información detallada
+    router.push(`/owner/properties/${propertyId}`);
   };
 
   const handleConfigureProperty = (propertyId: string) => {
-    logger.info('Configurando reportes de propiedad', { propertyId });
-    window.location.href = `/owner/properties/${propertyId}/settings`;
+    logger.info('Configurando propiedad', { propertyId });
+    // Redirigir a la página de edición de la propiedad
+    router.push(`/owner/properties/${propertyId}/edit`);
   };
 
   const handleCustomReport = () => {
