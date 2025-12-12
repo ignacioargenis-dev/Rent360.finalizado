@@ -1622,22 +1622,22 @@ Rent360 - Sistema de Gestión Inmobiliaria
 
       {/* Modal de Configuración de Pagos */}
       <Dialog open={showConfigModal} onOpenChange={setShowConfigModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Configuración de Pagos</DialogTitle>
             <DialogDescription>
               Configura los parámetros generales para la gestión de pagos
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-6 overflow-y-auto flex-1 pr-2 -mr-2">
             {/* Configuración de Plazos de Pago */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Plazos de Pago</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="gracePeriod">Período de Gracia (días)</Label>
                     <Input id="gracePeriod" type="number" defaultValue="3" min="0" max="30" />
@@ -1692,7 +1692,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                   <input type="checkbox" id="autoReminders" defaultChecked className="rounded" />
                   <Label htmlFor="autoReminders">Habilitar recordatorios automáticos</Label>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="firstReminder">Primer Recordatorio (días antes)</Label>
                     <Input id="firstReminder" type="number" defaultValue="7" min="1" max="30" />
@@ -1710,7 +1710,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
             </Card>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 pt-4 border-t mt-4">
             <Button variant="outline" onClick={() => setShowConfigModal(false)}>
               Cancelar
             </Button>
