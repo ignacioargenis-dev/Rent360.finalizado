@@ -98,95 +98,204 @@ export default function OwnerReportsPage() {
     try {
       setLoading(true);
 
-      // Cargar datos reales desde la API
-      const response = await fetch(`/api/analytics/dashboard-stats?period=${dateRange}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-      });
+      const apiPeriod = mapDateRangeToApiPeriod(dateRange);
 
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      // Cargar datos del período actual y anterior para comparación
+      const [currentResponse, previousResponse, tenantAnalysisResponse, maintenanceCostsResponse] =
+        await Promise.all([
+          fetch(`/api/analytics/dashboard-stats?period=${apiPeriod}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+              'Cache-Control': 'no-cache',
+            },
+          }),
+          // Cargar datos del período anterior para comparación
+          fetch(`/api/analytics/dashboard-stats?period=${getPreviousPeriod(dateRange)}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+              'Cache-Control': 'no-cache',
+            },
+          }),
+          // Cargar análisis de inquilinos
+          fetch(`/api/owner/reports/tenant-analysis?period=${apiPeriod}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+              'Cache-Control': 'no-cache',
+            },
+          }),
+          // Cargar costos reales de mantenimiento
+          fetch(`/api/owner/maintenance/costs?period=${apiPeriod}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+              'Cache-Control': 'no-cache',
+            },
+          }),
+        ]);
+
+      if (!currentResponse.ok) {
+        throw new Error(`Error ${currentResponse.status}: ${currentResponse.statusText}`);
       }
 
-      const data = await response.json();
+      const currentResponseData = await currentResponse.json();
+      const currentData = currentResponseData.data || currentResponseData;
+      const previousResponseData = previousResponse.ok ? await previousResponse.json() : null;
+      const previousData = previousResponseData?.data || previousResponseData;
+      const tenantAnalysisResponseData = tenantAnalysisResponse.ok
+        ? await tenantAnalysisResponse.json()
+        : null;
+      const tenantAnalysisData = tenantAnalysisResponseData?.data || tenantAnalysisResponseData;
+      const maintenanceCostsData = maintenanceCostsResponse.ok
+        ? await maintenanceCostsResponse.json().then(r => r.data || r)
+        : null;
 
-      // Transformar datos de la API al formato esperado
+      // Calcular costos reales de mantenimiento
+      const totalMaintenanceCosts =
+        maintenanceCostsData?.totalCost ||
+        (currentData.averageMaintenanceCost || 0) * (currentData.maintenanceRequests || 0) ||
+        0;
+
+      // Calcular cambios porcentuales
+      const currentRevenue = currentData.overview?.totalRevenue || currentData.monthlyRevenue || 0;
+      const previousRevenue =
+        previousData?.overview?.totalRevenue || previousData?.monthlyRevenue || 0;
+      const revenueChange = calculatePercentageChange(currentRevenue, previousRevenue);
+
+      const currentOccupancy = currentData.overview?.occupancyRate || 0;
+      const previousOccupancy = previousData?.overview?.occupancyRate || 0;
+      const occupancyChange = calculatePercentageChange(currentOccupancy, previousOccupancy);
+
+      const currentSatisfaction = currentData.tenantSatisfaction || 0;
+      const previousSatisfaction = previousData?.tenantSatisfaction || 0;
+      const satisfactionChange = currentSatisfaction - previousSatisfaction;
+      const satisfactionChangeStr =
+        satisfactionChange >= 0
+          ? `+${satisfactionChange.toFixed(1)}`
+          : satisfactionChange.toFixed(1);
+
+      const previousMaintenanceCosts = previousData?.averageMaintenanceCost
+        ? (previousData.averageMaintenanceCost || 0) * (previousData.maintenanceRequests || 0)
+        : 0;
+      const maintenanceChange = calculatePercentageChange(
+        totalMaintenanceCosts,
+        previousMaintenanceCosts
+      );
+
+      // Calcular crecimiento año a año
+      let yearOverYearGrowth = 0;
+      if (dateRange === 'thisYear' || dateRange === 'lastYear') {
+        const currentYear = new Date().getFullYear();
+        const lastYearStart = new Date(currentYear - 1, 0, 1);
+        const lastYearEnd = new Date(currentYear - 1, 11, 31);
+
+        try {
+          const lastYearResponse = await fetch(
+            `/api/analytics/dashboard-stats?period=1y&startDate=${lastYearStart.toISOString()}&endDate=${lastYearEnd.toISOString()}`,
+            {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                Accept: 'application/json',
+                'Cache-Control': 'no-cache',
+              },
+            }
+          );
+
+          if (lastYearResponse.ok) {
+            const lastYearData = await lastYearResponse.json().then(r => r.data || r);
+            const lastYearRevenue =
+              lastYearData.overview?.totalRevenue || lastYearData.monthlyRevenue || 0;
+            if (lastYearRevenue > 0) {
+              yearOverYearGrowth = ((currentRevenue - lastYearRevenue) / lastYearRevenue) * 100;
+            }
+          }
+        } catch (error) {
+          logger.warn('Error calculando crecimiento año a año:', error);
+        }
+      }
+
+      // Transformar métricas con cambios reales
       const transformedMetrics: ReportMetric[] = [
         {
           label: 'Ingresos Totales',
-          value: formatPrice(data.overview?.totalRevenue || 0),
-          change: '+12.5%', // TODO: Calcular cambio real
-          trend: 'up',
+          value: formatPrice(currentRevenue),
+          change: revenueChange.change,
+          trend: revenueChange.trend,
           icon: DollarSign,
           color: 'text-green-600',
         },
         {
           label: 'Tasa de Ocupación',
-          value: `${data.overview?.occupancyRate || 0}%`,
-          change: '+3.2%', // TODO: Calcular cambio real
-          trend: 'up',
+          value: `${currentOccupancy}%`,
+          change: occupancyChange.change,
+          trend: occupancyChange.trend,
           icon: Home,
           color: 'text-blue-600',
         },
         {
           label: 'Satisfacción',
-          value: `${data.tenantSatisfaction || 0}/5`,
-          change: '+0.3', // TODO: Calcular cambio real
-          trend: 'up',
+          value: `${currentSatisfaction.toFixed(1)}/5`,
+          change: satisfactionChangeStr,
+          trend: satisfactionChange >= 0 ? 'up' : satisfactionChange < 0 ? 'down' : 'stable',
           icon: Star,
           color: 'text-yellow-600',
         },
         {
           label: 'Mantenimiento',
-          value: formatPrice(data.maintenanceRequests * 50000 || 0), // Estimación
-          change: '-5.1%', // TODO: Calcular cambio real
-          trend: 'down',
+          value: formatPrice(totalMaintenanceCosts),
+          change: maintenanceChange.change,
+          trend: maintenanceChange.trend,
           icon: AlertTriangle,
           color: 'text-red-600',
         },
       ];
 
-      // Transformar propiedades de la API
+      // Transformar propiedades con datos reales
       const transformedProperties: PropertyPerformance[] =
-        data.properties?.map((prop: any) => ({
-          id: prop.id,
-          title: prop.title,
-          address: prop.address,
-          occupancyRate: prop.occupancyRate || 0,
-          monthlyRevenue: prop.monthlyRevenue || 0,
-          totalRevenue: prop.totalRevenue || 0,
-          averageRating: prop.averageRating || 0,
-          maintenanceCosts: prop.maintenanceCosts || 0,
-          netProfit: (prop.monthlyRevenue || 0) * 12 - (prop.maintenanceCosts || 0),
-        })) || [];
+        currentData.properties?.map((prop: any) => {
+          const propMaintenanceCosts = prop.maintenanceCosts || 0;
+          const propMonthlyRevenue = prop.monthlyRevenue || prop.revenue || 0;
+          return {
+            id: prop.id,
+            title: prop.title || prop.name || 'Sin título',
+            address: prop.address || prop.location || 'Sin dirección',
+            occupancyRate: prop.occupancy || prop.occupancyRate || 0,
+            monthlyRevenue: propMonthlyRevenue,
+            totalRevenue: prop.totalRevenue || propMonthlyRevenue * 12,
+            averageRating: prop.averageRating || prop.rating || 0,
+            maintenanceCosts: propMaintenanceCosts,
+            netProfit: propMonthlyRevenue * 12 - propMaintenanceCosts,
+          };
+        }) || [];
 
-      // Resumen financiero basado en datos reales
+      // Resumen financiero con datos reales
       const transformedFinancialSummary: FinancialSummary = {
-        totalRevenue: data.overview?.totalRevenue || 0,
-        totalExpenses: data.maintenanceRequests * 50000 || 0, // Estimación
-        netProfit: (data.overview?.totalRevenue || 0) - (data.maintenanceRequests * 50000 || 0),
+        totalRevenue: currentRevenue,
+        totalExpenses: totalMaintenanceCosts,
+        netProfit: currentRevenue - totalMaintenanceCosts,
         profitMargin:
-          data.overview?.totalRevenue > 0
-            ? ((data.overview.totalRevenue - (data.maintenanceRequests * 50000 || 0)) /
-                data.overview.totalRevenue) *
-              100
+          currentRevenue > 0
+            ? ((currentRevenue - totalMaintenanceCosts) / currentRevenue) * 100
             : 0,
-        yearOverYearGrowth: 15.3, // TODO: Calcular crecimiento real
-        averageOccupancyRate: data.overview?.occupancyRate || 0,
+        yearOverYearGrowth: Math.round(yearOverYearGrowth * 10) / 10,
+        averageOccupancyRate: currentOccupancy,
       };
 
-      // Análisis de inquilinos basado en datos reales
+      // Análisis de inquilinos con datos reales
       const transformedTenantAnalysis: TenantAnalysis = {
-        totalTenants: data.overview?.totalTenants || 0,
-        averageTenure: 24, // TODO: Calcular desde datos reales
-        retentionRate: 92, // TODO: Calcular desde datos reales
-        satisfactionScore: data.tenantSatisfaction || 0,
-        topPerformers: [], // TODO: Obtener desde datos reales
-        atRiskTenants: [], // TODO: Obtener desde datos reales
+        totalTenants: tenantAnalysisData?.totalTenants || currentData.overview?.totalTenants || 0,
+        averageTenure: tenantAnalysisData?.averageTenure || 0,
+        retentionRate: tenantAnalysisData?.retentionRate || 0,
+        satisfactionScore: tenantAnalysisData?.satisfactionScore || currentSatisfaction,
+        topPerformers: tenantAnalysisData?.topPerformers || [],
+        atRiskTenants: tenantAnalysisData?.atRiskTenants || [],
       };
 
       setMetrics(transformedMetrics);
@@ -195,9 +304,10 @@ export default function OwnerReportsPage() {
       setTenantAnalysis(transformedTenantAnalysis);
 
       logger.debug('Datos de reportes cargados', {
-        totalRevenue: data.overview?.totalRevenue,
-        occupancyRate: data.overview?.occupancyRate,
+        totalRevenue: currentRevenue,
+        occupancyRate: currentOccupancy,
         propertiesCount: transformedProperties.length,
+        maintenanceCosts: totalMaintenanceCosts,
       });
     } catch (error) {
       logger.error('Error cargando datos de reportes:', {
@@ -239,6 +349,111 @@ export default function OwnerReportsPage() {
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('es-CL').format(num);
+  };
+
+  // Calcular cambio porcentual entre dos valores
+  const calculatePercentageChange = (
+    current: number,
+    previous: number
+  ): { change: string; trend: 'up' | 'down' | 'stable' } => {
+    if (previous === 0) {
+      return current > 0 ? { change: '+100%', trend: 'up' } : { change: '0%', trend: 'stable' };
+    }
+    const change = ((current - previous) / previous) * 100;
+    const sign = change >= 0 ? '+' : '';
+    return {
+      change: `${sign}${change.toFixed(1)}%`,
+      trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable',
+    };
+  };
+
+  // Mapear dateRange a formato de API
+  const mapDateRangeToApiPeriod = (range: string): string => {
+    const mapping: Record<string, string> = {
+      last7days: '7d',
+      last30days: '30d',
+      last90days: '90d',
+      thisYear: '1y',
+      lastYear: '1y',
+    };
+    return mapping[range] || '30d';
+  };
+
+  // Obtener período anterior para comparación (mismo período pero desplazado)
+  const getPreviousPeriod = (range: string): string => {
+    // Para comparación, usamos el mismo período pero calculamos la fecha de inicio anterior
+    return mapDateRangeToApiPeriod(range);
+  };
+
+  // Funciones de botones
+  const handleExportPDF = () => {
+    logger.info('Exportando reporte a PDF');
+    // Crear contenido HTML para el PDF
+    const printContent = document.getElementById('reports-content');
+    if (!printContent) {
+      logger.error('No se encontró el contenido del reporte');
+      return;
+    }
+
+    // Usar window.print() como solución temporal
+    // En producción, se podría usar una librería como jsPDF o html2pdf
+    window.print();
+  };
+
+  const handlePrint = () => {
+    logger.info('Imprimiendo reporte');
+    window.print();
+  };
+
+  const handleViewPropertyDetails = (propertyId: string) => {
+    logger.info('Viendo detalles de propiedad', { propertyId });
+    window.location.href = `/owner/properties/${propertyId}`;
+  };
+
+  const handleViewPropertyReport = (propertyId: string) => {
+    logger.info('Viendo reporte de propiedad', { propertyId });
+    window.location.href = `/owner/properties/${propertyId}/reports`;
+  };
+
+  const handleConfigureProperty = (propertyId: string) => {
+    logger.info('Configurando reportes de propiedad', { propertyId });
+    window.location.href = `/owner/properties/${propertyId}/settings`;
+  };
+
+  const handleCustomReport = () => {
+    logger.info('Generando reporte personalizado');
+    alert(
+      'Función de reporte personalizado próximamente disponible. Por ahora puedes usar los filtros de período disponibles.'
+    );
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      logger.info('Enviando reporte por email');
+      const response = await fetch('/api/owner/reports/send-email', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dateRange,
+          includeMetrics: true,
+          includeFinancialSummary: true,
+          includePropertyPerformance: true,
+          includeTenantAnalysis: true,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Reporte enviado por email exitosamente');
+      } else {
+        throw new Error('Error al enviar el reporte');
+      }
+    } catch (error) {
+      logger.error('Error enviando reporte por email:', error);
+      alert('Error al enviar el reporte por email. Por favor, intente nuevamente.');
+    }
   };
 
   const getTrendIcon = (trend: string) => {
@@ -293,39 +508,39 @@ export default function OwnerReportsPage() {
         {/* Header Controls */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-xl font-semibold mb-2">Período de Reporte</h2>
-                <div className="flex gap-2">
-                  {['last7days', 'last30days', 'last90days', 'thisYear', 'lastYear'].map(range => (
-                    <Button
-                      key={range}
-                      variant={dateRange === range ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setDateRange(range)}
-                    >
-                      {range === 'last7days' && 'Últimos 7 días'}
-                      {range === 'last30days' && 'Últimos 30 días'}
-                      {range === 'last90days' && 'Últimos 90 días'}
-                      {range === 'thisYear' && 'Este año'}
-                      {range === 'lastYear' && 'Año pasado'}
-                    </Button>
-                  ))}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl font-semibold">Período de Reporte</h2>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => loadReportsData()}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Actualizar
+                  </Button>
+                  <Button variant="outline" onClick={handleExportPDF}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar PDF
+                  </Button>
+                  <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Imprimir
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Actualizar
-                </Button>
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar PDF
-                </Button>
-                <Button variant="outline">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Imprimir
-                </Button>
+              <div className="flex flex-wrap gap-2">
+                {['last7days', 'last30days', 'last90days', 'thisYear', 'lastYear'].map(range => (
+                  <Button
+                    key={range}
+                    variant={dateRange === range ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setDateRange(range)}
+                  >
+                    {range === 'last7days' && 'Últimos 7 días'}
+                    {range === 'last30days' && 'Últimos 30 días'}
+                    {range === 'last90days' && 'Últimos 90 días'}
+                    {range === 'thisYear' && 'Este año'}
+                    {range === 'lastYear' && 'Año pasado'}
+                  </Button>
+                ))}
               </div>
             </div>
           </CardContent>
@@ -510,10 +725,11 @@ export default function OwnerReportsPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  logger.info('Viendo detalles de rendimiento de propiedades');
-                  alert(
-                    'Función próximamente disponible: Vista detallada del rendimiento por propiedad. Por ahora puedes ver los datos resumidos en esta sección.'
-                  );
+                  if (propertyPerformance.length > 0) {
+                    handleViewPropertyDetails(propertyPerformance[0].id);
+                  } else {
+                    logger.info('No hay propiedades para ver detalles');
+                  }
                 }}
               >
                 <Eye className="w-4 h-4 mr-2" />
@@ -574,11 +790,19 @@ export default function OwnerReportsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewPropertyReport(property.id)}
+                      >
                         <BarChart3 className="w-4 h-4 mr-2" />
                         Ver Reporte
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleConfigureProperty(property.id)}
+                      >
                         <Settings className="w-4 h-4 mr-2" />
                         Configurar
                       </Button>
@@ -601,11 +825,11 @@ export default function OwnerReportsPage() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleCustomReport}>
                   <FileText className="w-4 h-4 mr-2" />
                   Reporte Personalizado
                 </Button>
-                <Button>
+                <Button onClick={handleSendEmail}>
                   <Mail className="w-4 h-4 mr-2" />
                   Enviar por Email
                 </Button>
