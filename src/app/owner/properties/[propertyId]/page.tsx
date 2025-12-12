@@ -406,31 +406,37 @@ export default function OwnerPropertyDetailPage() {
     status,
     maintenanceHistory,
     financialData,
+    currentTenant,
   }: {
     monthlyRent?: number;
     price?: number;
     status?: string;
     maintenanceHistory?: MaintenanceRecord[];
     financialData?: PropertyDetail['financialData'];
+    currentTenant?: TenantInfo | null;
   }): PropertyDetail['financialData'] => {
+    // Si la API ya proporciona financialData, usarlo (ya tiene cálculo real)
     if (financialData) {
       return financialData;
     }
+
+    // Calcular datos financieros basados en información disponible
     const monthlyRevenue = monthlyRent ?? price ?? 0;
     const maintenanceCosts = (maintenanceHistory || []).reduce(
       (sum, record) => sum + (record.cost || 0),
       0
     );
-    const normalizedStatus = status?.toLowerCase();
-    const occupancyRate =
-      normalizedStatus === 'rented' ? 100 : normalizedStatus === 'available' ? 80 : 0;
+
+    // ✅ Calcular tasa de ocupación real: 100% si tiene inquilino activo, 0% si no
+    // Esto es más preciso que usar solo el status
+    const occupancyRate = currentTenant ? 100 : 0;
 
     return {
       monthlyRevenue,
       yearlyRevenue: monthlyRevenue * 12,
       occupancyRate,
       maintenanceCosts,
-      netIncome: monthlyRevenue - maintenanceCosts,
+      netIncome: monthlyRevenue * 12 - maintenanceCosts,
     };
   };
 
@@ -484,6 +490,7 @@ export default function OwnerPropertyDetailPage() {
         status: data.status,
         maintenanceHistory,
         financialData: data.financialData,
+        currentTenant: data.currentTenant,
       }),
       documents: Array.isArray(data.documents) ? data.documents : [],
       notes: Array.isArray(data.notes) ? data.notes : [],
@@ -561,6 +568,7 @@ export default function OwnerPropertyDetailPage() {
         status: propertyData.status,
         maintenanceHistory,
         financialData: propertyData.financialData,
+        currentTenant: propertyData.currentTenant,
       }),
       documents: propertyData.documents || [],
       notes: propertyData.notes || [],

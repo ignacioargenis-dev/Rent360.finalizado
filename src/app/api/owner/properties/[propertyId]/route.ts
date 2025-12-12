@@ -120,6 +120,20 @@ export async function GET(request: NextRequest, { params }: { params: { property
       take: 10,
     });
 
+    // Calcular tasa de ocupación real basada en contratos activos
+    // Para una propiedad individual: 100% si tiene contrato activo, 0% si no
+    const hasActiveContract = property.contracts.length > 0;
+    const occupancyRate = hasActiveContract ? 100 : 0;
+
+    // Calcular datos financieros reales
+    const monthlyRevenue = property.contracts[0]?.monthlyRent || property.price || 0;
+    const totalMaintenanceCosts = maintenanceHistory.reduce(
+      (sum, m) => sum + (m.estimatedCost || 0),
+      0
+    );
+    const yearlyRevenue = monthlyRevenue * 12;
+    const netIncome = yearlyRevenue - totalMaintenanceCosts;
+
     // Transformar datos al formato esperado
     const propertyDetail = {
       id: property.id,
@@ -202,6 +216,14 @@ export async function GET(request: NextRequest, { params }: { params: { property
       concierge: property.concierge,
       virtualTourEnabled: property.virtualTourEnabled || false,
       virtualTourData: property.virtualTourData,
+      // Datos financieros calculados
+      financialData: {
+        monthlyRevenue,
+        yearlyRevenue,
+        occupancyRate,
+        maintenanceCosts: totalMaintenanceCosts,
+        netIncome,
+      },
       // Documentos de la propiedad
       documents: property.documents.map(doc => {
         // Función auxiliar para formatear tamaño de archivo
