@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger-minimal';
-import { emailService } from '@/lib/email-service';
+import { EmailService } from '@/lib/email-service';
 
 /**
  * POST /api/owner/reports/send-email
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     // Enviar email
     try {
-      await emailService.sendEmail({
+      await EmailService.sendEmail({
         to: user.email,
         subject: `Reporte Rent360 - ${dateRange}`,
         html: emailContent,

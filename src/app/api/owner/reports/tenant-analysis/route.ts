@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     // Obtener calificaciones de inquilinos
     const tenantRatings = await db.userRating.findMany({
       where: {
-        ratedUserId: { in: activeContracts.map(c => c.tenantId).filter(Boolean) },
+        toUserId: { in: activeContracts.map(c => c.tenantId).filter(Boolean) },
         createdAt: { gte: startDate },
       },
       include: {
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 
         const ratings = await db.userRating.findMany({
           where: {
-            ratedUserId: contract.tenantId,
+            toUserId: contract.tenantId,
             createdAt: { gte: startDate },
           },
         });
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
 
         const recentRatings = await db.userRating.findMany({
           where: {
-            ratedUserId: contract.tenantId,
+            toUserId: contract.tenantId,
             createdAt: { gte: startDate },
           },
         });

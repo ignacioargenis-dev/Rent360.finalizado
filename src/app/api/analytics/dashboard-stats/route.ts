@@ -300,7 +300,7 @@ async function fetchStatsData(user: any, period: string) {
       // Calcular satisfacción de inquilinos
       const tenantRatings = await db.userRating.findMany({
         where: {
-          ratedUserId: user.id,
+          toUserId: user.id,
           createdAt: { gte: startDate },
         },
         select: {
