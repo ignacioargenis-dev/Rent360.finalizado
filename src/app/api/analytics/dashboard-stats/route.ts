@@ -429,12 +429,22 @@ async function fetchStatsData(user: any, period: string) {
         .map(monthKey => {
           const date = new Date(monthKey + '-01');
           const monthIndex = date.getMonth();
+          const monthData = monthlyData[monthKey];
+          if (!monthData) {
+            return {
+              month: months[monthIndex] || monthKey,
+              monthKey,
+              revenue: 0,
+              expenses: 0,
+              net: 0,
+            };
+          }
           return {
-            month: months[monthIndex],
+            month: months[monthIndex] || monthKey,
             monthKey,
-            revenue: monthlyData[monthKey].revenue,
-            expenses: monthlyData[monthKey].expenses,
-            net: monthlyData[monthKey].revenue - monthlyData[monthKey].expenses,
+            revenue: monthData.revenue,
+            expenses: monthData.expenses,
+            net: monthData.revenue - monthData.expenses,
           };
         });
 
